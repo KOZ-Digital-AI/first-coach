@@ -65,7 +65,14 @@
 --   * (session_id, player_id) is a composite foreign key to sessions (id, player_id): an event can only
 --     reference a session that belongs to the same player, whoever is asking. player_id also references
 --     player_profiles directly, so that a player's whole log can be read (session_events_by_player) and
---     erased without going through sessions.
+--     erased without going through sessions. The key is ON UPDATE CASCADE, so changing a session's id
+--     would rewrite the session_id of its events, which the append-only trigger refuses: a session id is
+--     effectively immutable once the session has an event (before that it can be changed). A writer must
+--     therefore never upsert a session with ON CONFLICT (player_id, date) DO UPDATE SET id = ...; keep
+--     the stored id and update only items / finished_at.
+--   * The idempotent insert ON CONFLICT (client_uuid) DO NOTHING skips only a duplicate client_uuid: it
+--     does not swallow a foreign key error, so an event for a session that does not exist (or belongs
+--     to another player) still raises. The writer checks the session first.
 --   * `at` is the client's timestamp (may be days older than received_at when replayed offline);
 --     received_at is the server's, defaulting to now. value is REAL and nullable (the contract's
 --     z.number().optional()); item_id is nullable (a `result` for the session's skill test has no item).
@@ -94,6 +101,10 @@
 --     player. It is also not an UPDATE, so on session_events it slips past the append-only trigger.
 --     Never use it on these tables: upsert a session with INSERT ... ON CONFLICT (player_id, date) DO
 --     UPDATE, and insert events with ON CONFLICT (client_uuid) DO NOTHING.
+--   * UPDATE OR REPLACE player_profiles SET player_id = <an id that already has a profile> is the same
+--     hazard through the recovery re-key: the profile that owns that id is deleted first, and its
+--     sessions and events go with it by cascade (the recovering player's own rows are then re-keyed onto
+--     the id). POST /api/player/recover must check that the target id has no profile before re-keying.
 --   * ALTER TABLE session_events ADD COLUMN is fine for a new nullable column, but the trigger lists the
 --     columns it protects: drop and recreate session_events_append_only with the new column in its
 --     WHEN list, otherwise the column is not frozen (005_sessions.test.ts pins the guard with positive
