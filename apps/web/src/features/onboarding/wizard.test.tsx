@@ -7,7 +7,7 @@ import { I18nextProvider } from 'react-i18next';
 import { createApi } from '../../lib/api';
 import { createI18n } from '../../lib/i18n';
 import problemMessages from '../../lib/problem.messages';
-import { OnboardingWizard, Route } from '../../routes/train/onboarding';
+import { Route, type WizardDeps, WizardDepsContext } from '../../routes/train/onboarding';
 import baselineMessages from './baseline-step.messages';
 import conditionsMessages from './conditions-step.messages';
 import profileMessages from './profile-step.messages';
@@ -139,7 +139,7 @@ const MODULES = {
 type Setup = {
   server?: Partial<Server>;
   locale?: Locale;
-  storage?: NonNullable<Parameters<typeof OnboardingWizard>[0]['deps']>['storage'];
+  storage?: WizardDeps['storage'];
   ensureSession?: () => Promise<unknown>;
 };
 
@@ -175,13 +175,16 @@ function mountWizard(setup: Setup = {}) {
   const i18n = createI18n({ modules: MODULES, languages: [locale], storage: memoryStorage(), root: { lang: '' }, dev: false });
   const api = createApi({ fetch: fetchImpl, language: () => locale, online: () => true });
 
+  // The page is the route's own component. Its collaborators arrive through the route module's context seam (the wizard
+  // itself is not exported: a non-Route export would pull zod, the auth client and the API client into the entry bundle).
+  const Page = Route.options.component;
+  if (Page === undefined) throw new Error('the /train/onboarding route has no component');
   const tree = () => (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <I18nextProvider i18n={i18n}>
-        <OnboardingWizard
-          navigate={navigate}
-          deps={{ api, ensureSession, ...(setup.storage === undefined ? {} : { storage: setup.storage }) }}
-        />
+        <WizardDepsContext.Provider value={{ api, ensureSession, navigate, ...(setup.storage === undefined ? {} : { storage: setup.storage }) }}>
+          <Page />
+        </WizardDepsContext.Provider>
       </I18nextProvider>
     </QueryClientProvider>
   );
