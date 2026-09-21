@@ -1,9 +1,27 @@
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA, type VitePWAOptions } from 'vite-plugin-pwa';
+
+// The build version (fc-mol-eay.9): the persisted query cache is dropped when it changes (lib/query-persist.ts reads
+// import.meta.env.VITE_BUILD_VERSION). First the build's own VITE_BUILD_VERSION / BUILD_VERSION (the Dockerfile ARG), else the
+// git short sha of the checkout, else "dev" (which never busts). Evaluated once, when the config is loaded.
+function buildVersion(): string {
+  for (const name of ['VITE_BUILD_VERSION', 'BUILD_VERSION']) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  try {
+    const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    if (sha) return sha;
+  } catch {
+    // not a git checkout (e.g. a docker build context without .git)
+  }
+  return 'dev';
+}
 
 // PWA (fc-mol-eay.1). Exported so tests read it as data.
 //
@@ -60,6 +78,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA(pwaOptions),
   ],
+  define: { 'import.meta.env.VITE_BUILD_VERSION': JSON.stringify(buildVersion()) },
   resolve: {
     alias: {
       '@api-types': fileURLToPath(new URL('../api/src/shared', import.meta.url)),
