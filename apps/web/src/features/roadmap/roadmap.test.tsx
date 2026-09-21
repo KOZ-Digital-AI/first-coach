@@ -151,7 +151,8 @@ function mountRoadmap(setup: Setup = {}) {
 
   // Retries are ON in the test client (two, a millisecond apart), so a screen that leaves the automatic retry on is caught.
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 2, retryDelay: 1, gcTime: Infinity } } });
-  if (setup.seed !== undefined) queryClient.setQueryData(['me'], setup.seed);
+  // A restored, persisted answer is older than the 30 s the roadmap treats as fresh (fc-mol-9l4.16), so it is refreshed behind the screen.
+  if (setup.seed !== undefined) queryClient.setQueryData(['me'], setup.seed, { updatedAt: Date.now() - 60_000 });
 
   const Page = Route.options.component;
   if (Page === undefined) throw new Error('the /train/roadmap route has no component');

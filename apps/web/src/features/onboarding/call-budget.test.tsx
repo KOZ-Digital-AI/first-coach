@@ -292,7 +292,8 @@ describe('a fresh visitor, from START TRAINING to MY ROADMAP', () => {
   test('the wizard leaves the roadmap in the ["me"] cache, which is what the roadmap screen shows', async () => {
     const net = network({ cookie: false, onboarded: false });
     const app = await freshVisitorToRoadmap(net);
-    expect(app.queryClient.getQueryData(['me'])).toEqual(START_RESPONSE);
+    const cached: unknown = app.queryClient.getQueryData(['me']);
+    expect(cached).toEqual(START_RESPONSE);
     expect(app.visited.at(-1)).toBe('/train/roadmap');
     expect(screen.getByText('4 weeks · 3 sessions/week · 20 min/session')).toBeTruthy();
   });
