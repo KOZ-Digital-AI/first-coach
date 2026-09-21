@@ -126,7 +126,7 @@ describe("logAiCall: the row", () => {
     expect(only().kind).toBe(kind);
   });
 
-  test.each(AI_FALLBACK_CODES)("fallback code %s is stored and the chosen ids are then empty", (code) => {
+  test.each([...AI_FALLBACK_CODES])("fallback code %s is stored and the chosen ids are then empty", (code) => {
     expect(
       logAiCall(db, entry({ fallbackCode: code, validatorResult: null, tokensIn: null, tokensOut: null })),
     ).toBe(true);
