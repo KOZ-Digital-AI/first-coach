@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test';
 import { createApi } from '../../lib/api';
 import { ApiProblem } from '../../lib/problem';
 import { i18n } from '../../lib/i18n';
@@ -71,7 +71,7 @@ function rig(where: Where, overrides: Partial<SessionExpiredDeps> = {}) {
   const log: string[] = [];
   const storage = memoryStorage();
   /** The clock every timestamp comes from; tests move it. */
-  const clock = { now: 1_700_000_000_000 };
+  const clock = { now: Date.now() };
   const assigned: string[] = [];
   const navigations: string[] = [];
   const toasts: string[] = [];
@@ -694,7 +694,7 @@ describe('default navigation (a full page load): the expiry notice is handed to 
     ['corrupt JSON', '{nope'],
     ['no timestamp', '{}'],
     ['a text timestamp', '{"savedAt":"yesterday"}'],
-    ['a timestamp in the future', `{"savedAt":${1_700_000_000_000 + 3_600_000}}`],
+    ['a timestamp in the future', `{"savedAt":${Date.now() + 3_600_000}}`],
   ])('takeExpiredNotice returns null for %s', (_name, raw) => {
     const r = rig({ pathname: '/' });
     if (raw !== null) r.storage.setItem('fc:session-expired-notice', raw);
@@ -788,7 +788,7 @@ describe('drafts expire and can be cleared', () => {
   test.each([
     ['no timestamp', '{"value":{"a":1}}'],
     ['a text timestamp', '{"savedAt":"now","value":{"a":1}}'],
-    ['a timestamp in the future', `{"savedAt":${1_700_000_000_000 + 3_600_000},"value":{"a":1}}`],
+    ['a timestamp in the future', `{"savedAt":${Date.now() + 3_600_000},"value":{"a":1}}`],
   ])('a stored draft with %s is not trusted', (_name, raw) => {
     const r = rig({ pathname: '/' });
     r.storage.setItem('fc:draft:form', raw);
@@ -896,6 +896,8 @@ describe('repeated coach-area 401s act once until a fresh page load or resetSess
   });
 
   test('a navigation that throws does not use up the latch: the next 401 tries again', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => undefined);
+    cleanups.push(() => logged.mockRestore());
     const r = rig({ pathname: '/admin' });
     let attempts = 0;
     r.deps.navigate = (url) => {
@@ -911,6 +913,7 @@ describe('repeated coach-area 401s act once until a fresh page load or resetSess
     await rejection(api.get('/api/two', { schema: anySchema }));
 
     expect(r.navigations).toEqual(['/account/sign-in?redirect=%2Fadmin']);
+    expect(logged).toHaveBeenCalledTimes(1); // the failed navigation is reported, not swallowed
   });
 
   test('each install has its own latch', async () => {
