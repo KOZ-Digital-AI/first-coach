@@ -186,8 +186,11 @@ _e2e_wait_api() { # <pid> <log> <port>
   done
 }
 
+# The harness OWNS NODE_ENV and BETTER_AUTH_URL for the child (a caller's values are overridden): Better Auth
+# fails closed, so only NODE_ENV=development boots without BETTER_AUTH_SECRET (never set or printed here), and
+# BETTER_AUTH_URL must be exactly the origin the browser and curl use (API_URL), or its origin check answers 403.
 _e2e_launch_api() { # <port>; sets E2E_API_PID (exec: the recorded pid IS the bun process, cwd is the temp dir)
-  (cd "$E2E_TMP" && PORT="$1" APP_DB_PATH="$DB_PATH" MEDIA_DIR="$MEDIA_DIR" MASTRA_DB_PATH="$E2E_TMP/mastra.db" \
+  (cd "$E2E_TMP" && NODE_ENV=development BETTER_AUTH_URL="http://127.0.0.1:$1" PORT="$1" APP_DB_PATH="$DB_PATH" MEDIA_DIR="$MEDIA_DIR" MASTRA_DB_PATH="$E2E_TMP/mastra.db" \
     BACKUP_DIR="$E2E_TMP/backups" WEB_DIST="$E2E_WEB_DIST_USED" exec bun "$E2E_API_ENTRY") >"$E2E_TMP/api.log" 2>&1 </dev/null &
   E2E_API_PID=$!
 }
