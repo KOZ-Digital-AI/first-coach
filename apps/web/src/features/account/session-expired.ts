@@ -8,6 +8,7 @@
  *   takeExpiredNotice();                                       // the sign-in page: { message } once after an expiry, else null
  *   clearDrafts();                                             // sign-out: no draft may outlive the user who wrote it
  *   resetSessionExpired();                                     // sign-in success: arms the handler again
+ *   beginSignOut();                                            // before the sign-out request: holds the handler off, drops drafts
  *
  * Areas (`areaOf(pathname)`, by FIRST path segment, lower-cased and percent-decoded because TanStack Router matches paths
  * case-insensitively): `admin` and `contribute` are COACH areas; `account` (sign-in itself) is the ACCOUNT area; everything
@@ -249,9 +250,30 @@ const defaultNotify = (message: string): void => {
 
 const latchResets = new Set<() => void>();
 
-/** Arms every installed handler again (a fresh sign-in): the next coach-area 401 redirects once more. */
+/** Set by `beginSignOut`, cleared by `resetSessionExpired`. Module-wide, so a handler installed meanwhile is held off too. */
+let signingOut = false;
+
+/** Arms every installed handler again (a fresh sign-in, or a sign-out that did not happen): the next coach-area 401 redirects once more. */
 export function resetSessionExpired(): void {
+  signingOut = false;
   for (const release of [...latchResets]) release();
+}
+
+/**
+ * The person is leaving on purpose. Call it BEFORE the sign-out request goes out:
+ * - the 401 handler is held off (no draft saved, no notice, no toast, no navigation) until `resetSessionExpired()`. Without
+ *   this, a coach-area request that is in flight, or one refetched when the cache is cleared, comes back 401 and sends the
+ *   person to the sign-in page (a full page load that ends the sign-out half done) with their draft saved in sessionStorage
+ *   for the next person on the device. The handler still forgets the remembered player session on every 401.
+ * - every in-memory draft source is unregistered and every saved `fc:draft:*` is removed (`clearDrafts`), so nothing the
+ *   leaving person typed can be saved later or found by the next one. If the sign-out then fails, those drafts stay gone:
+ *   forms re-register when they mount again.
+ * Never throws.
+ */
+export function beginSignOut(storage: DraftStorage | null = browserStorage()): void {
+  signingOut = true;
+  draftSources.clear();
+  clearDrafts(storage);
 }
 
 /** Registers the handler for 401s. Returns the unsubscribe function. */
@@ -269,7 +291,7 @@ export function installSessionExpired(deps: SessionExpiredDeps = {}): () => void
       // nothing to do: the redirect below matters more
     }
     const where = currentLocation(deps);
-    if (where === undefined || areaOf(where.pathname) !== 'coach' || handled) return;
+    if (where === undefined || areaOf(where.pathname) !== 'coach' || handled || signingOut) return;
     handled = true;
 
     const storage = storageOf(deps);

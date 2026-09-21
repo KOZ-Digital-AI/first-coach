@@ -5,6 +5,7 @@ import { i18n } from '../../lib/i18n';
 import sessionMessages from './session-expired.messages';
 import {
   areaOf,
+  beginSignOut,
   clearDrafts,
   installSessionExpired,
   registerDraft,
@@ -928,5 +929,147 @@ describe('repeated coach-area 401s act once until a fresh page load or resetSess
     await rejection(apiOver(fakeFetch(() => json(401)).fetch, second.deps).get('/api/x', { schema: anySchema }));
 
     expect(second.navigations).toHaveLength(1);
+  });
+});
+
+describe('beginSignOut: a person leaving must not be caught by the expiry handler, nor leave a draft behind', () => {
+  const nextMacrotask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+  const draftKeys = (storage: ReturnType<typeof memoryStorage>) => [...storage.data.keys()].filter((key) => key.startsWith('fc:draft:'));
+
+  test('a coach-area 401 after it saves no draft, shows no message and navigates nowhere', async () => {
+    cleanups.push(resetSessionExpired);
+    const r = rig({ pathname: '/admin/settings' });
+    install(r.deps);
+    let reads = 0;
+    cleanups.push(registerDraft('form', () => (reads += 1)));
+    beginSignOut(r.storage);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    await nextMacrotask();
+    await rejection(api.get('/api/two', { schema: anySchema }));
+
+    expect(r.navigations).toEqual([]);
+    expect(r.assigned).toEqual([]);
+    expect(r.toasts).toEqual([]);
+    expect(reads).toBe(0);
+    expect(draftKeys(r.storage)).toEqual([]);
+  });
+
+  test('with the default full-page navigation it neither leaves the page nor writes the notice flag', async () => {
+    cleanups.push(resetSessionExpired);
+    const r = rig({ pathname: '/contribute' }, { navigate: undefined });
+    install(r.deps);
+    beginSignOut(r.storage);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+
+    expect(r.assigned).toEqual([]);
+    expect(r.storage.data.size).toBe(0);
+    expect(takeExpiredNotice(r.deps)).toBeNull();
+  });
+
+  test('a handler installed after it starts is held off too, until resetSessionExpired()', async () => {
+    cleanups.push(resetSessionExpired);
+    beginSignOut(memoryStorage());
+    const r = rig({ pathname: '/admin' });
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    expect(r.navigations).toEqual([]);
+
+    resetSessionExpired();
+    await nextMacrotask();
+    await rejection(api.get('/api/two', { schema: anySchema }));
+    expect(r.navigations).toEqual(['/account/sign-in?redirect=%2Fadmin']);
+  });
+
+  test('a 401 still makes the handler forget the remembered player session', async () => {
+    cleanups.push(resetSessionExpired);
+    const r = rig({ pathname: '/admin' });
+    install(r.deps);
+    beginSignOut(r.storage);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+
+    expect(r.session.resets).toBeGreaterThan(0);
+  });
+
+  test('removes every saved fc:draft:* and nothing else; takeDraft then finds nothing', () => {
+    const storage = memoryStorage();
+    storage.setItem('fc:draft:a', JSON.stringify({ savedAt: Date.now(), value: 1 }));
+    storage.setItem('fc:draft:b', JSON.stringify({ savedAt: Date.now(), value: 2 }));
+    storage.setItem('fc:lang', 'kk');
+    cleanups.push(resetSessionExpired);
+
+    beginSignOut(storage);
+
+    expect(draftKeys(storage)).toEqual([]);
+    expect(storage.getItem('fc:lang')).toBe('kk');
+    expect(takeDraft('a', storage)).toBeUndefined();
+    expect(takeDraft('b', storage)).toBeUndefined();
+  });
+
+  test('unregisters the in-memory draft sources: the previous user\'s form is never read again, a later form is', async () => {
+    cleanups.push(resetSessionExpired);
+    const r = rig({ pathname: '/contribute' });
+    install(r.deps);
+    let oldReads = 0;
+    cleanups.push(
+      registerDraft('previous-user', () => {
+        oldReads += 1;
+        return { secret: 'previous coach draft' };
+      }),
+    );
+    beginSignOut(r.storage);
+    cleanups.push(registerDraft('next-user', () => ({ fresh: true })));
+    resetSessionExpired(); // the handler is armed again: a later expiry saves what is registered NOW
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+
+    expect(oldReads).toBe(0);
+    expect(takeDraft('previous-user', r.storage)).toBeUndefined();
+    expect(takeDraft('next-user', r.storage, () => r.clock.now)).toEqual({ fresh: true });
+  });
+
+  test('resetSessionExpired() lifts the hold: the next coach-area 401 redirects once', async () => {
+    cleanups.push(resetSessionExpired);
+    const r = rig({ pathname: '/admin' });
+    install(r.deps);
+    beginSignOut(r.storage);
+    resetSessionExpired();
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    await nextMacrotask();
+    await rejection(api.get('/api/two', { schema: anySchema }));
+
+    expect(r.navigations).toEqual(['/account/sign-in?redirect=%2Fadmin']);
+    expect(r.toasts).toHaveLength(1);
+  });
+
+  test('never throws: no storage, or a storage that fails', () => {
+    cleanups.push(resetSessionExpired);
+    expect(() => beginSignOut(null)).not.toThrow();
+    const broken = {
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => {
+        throw new Error('blocked');
+      },
+      removeItem: () => {
+        throw new Error('blocked');
+      },
+      key: () => {
+        throw new Error('blocked');
+      },
+      length: 1,
+    };
+    expect(() => beginSignOut(broken)).not.toThrow();
   });
 });
