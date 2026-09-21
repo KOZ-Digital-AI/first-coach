@@ -200,6 +200,15 @@ describe('a live session id wins over the remembered one', () => {
     expect((screen.getByRole('button', { name: DOWNLOAD }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  test('a live session whose user has an EMPTY id is no id: the remembered player is used', async () => {
+    onLine = false;
+    rememberLastPlayer(LAST);
+    downloadedFor(LAST);
+    answer = { data: { user: { id: '' } }, isPending: false };
+    mount();
+    await waitFor(() => expect(badge()).not.toBeNull());
+  });
+
   test('a live session with the same id as the remembered one shows that player\'s badge', async () => {
     rememberLastPlayer(LIVE);
     downloadedFor(LIVE);
