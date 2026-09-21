@@ -2,7 +2,7 @@
   "name": "@first-coach/api",
   "private": true,
   "scripts": {
-    "dev": "bun --watch src/index.ts",
+    "dev": "NODE_ENV=development bun --watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
