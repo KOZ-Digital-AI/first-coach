@@ -293,6 +293,8 @@ describe('success: the numbers from the response', () => {
     const region = text(headline());
     expect(region).toMatch(/[−-]3\.2%/);
     expect(region).not.toContain('+3.2%');
+    // One sign only: a negative number is written as its size after the minus, never "−-3.2%".
+    expect(region).not.toMatch(/[−-]{2}/);
     expect(region).toContain('The typical retest is below the first result.');
   });
 
@@ -530,6 +532,18 @@ describe('kk, ru and en', () => {
 
     await renderLoaded('en');
     expect(text(screen.getByRole('main'))).toContain('1,240');
+  });
+
+  test('the week dates are written in the language of the screen', async () => {
+    for (const locale of ['ru', 'kk'] as const) {
+      serveImpact();
+      const view = await renderLoaded(locale);
+      const expected = (iso: string) => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`));
+      const rows = weekRows(locale);
+      expect(text(rows[0]!)).toContain(expected('2026-06-29'));
+      expect(text(rows[11]!)).toContain(expected('2026-09-14'));
+      view.unmount();
+    }
   });
 
   test('the empty and error states are also written in every locale', async () => {
