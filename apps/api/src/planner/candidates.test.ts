@@ -11,6 +11,7 @@ import type { Settings } from '../admin/settings';
 import { EQUIPMENT, SPACES, TRUST_STATUSES } from '../shared/primitives';
 import type { Equipment, Space, TrustStatus } from '../shared/primitives';
 import type { SkillGraph } from '../shared/commons';
+import { AGE_MAX, AGE_MIN } from '../shared/domain';
 import { TRUST_RANK, candidates, minStatusBandForAge } from './candidates';
 
 // The real seed (config/commons) is loaded on a migrated in-memory database and read back through
@@ -72,7 +73,8 @@ const OWNED: Record<Equipment, readonly Equipment[]> = {
   cones: ['nothing', 'ball', 'cones'],
   full_field: ['nothing', 'ball', 'ball_wall', 'cones', 'full_field'],
 };
-const SPACE_SIZE: Record<Space, number> = { home_3x3: 0, yard: 1, field: 2, gym: 3 };
+// A gym hall is treated as a yard, not as a field: it has no run-up.
+const SPACE_SIZE: Record<Space, number> = { home_3x3: 1, yard: 2, gym: 2, field: 3 };
 const EXPERIENCE_NUMBER = { beginner: 1, basic: 2, intermediate: 3 } as const;
 const BAND_OF = (age: number) => (age <= 9 ? 'u10' : age <= 13 ? 'u14' : 'adult');
 
@@ -102,7 +104,6 @@ function deepFreeze<T>(value: T): T {
 
 describe('minStatusBandForAge', () => {
   test.each([
-    [0, 'u10'],
     [5, 'u10'],
     [7, 'u10'],
     [9, 'u10'],
@@ -116,12 +117,23 @@ describe('minStatusBandForAge', () => {
     expect(minStatusBandForAge(age)).toBe(band);
   });
 
-  test.each([-1, 9.5, Number.NaN, Number.POSITIVE_INFINITY])('age %p is a RangeError', (age) => {
+  test.each([-1, 0, 4, 100, 9.5, Number.NaN, Number.POSITIVE_INFINITY])('age %p is a RangeError', (age) => {
     expect(() => minStatusBandForAge(age)).toThrow(RangeError);
   });
 
-  test('candidates refuses an invalid age the same way', () => {
-    expect(() => candidates(profile({ age: 9.5 }), {}, DEFAULT_SETTINGS, versions, graph)).toThrow(RangeError);
+  test('the accepted range is the shared AGE_MIN..AGE_MAX', () => {
+    expect([AGE_MIN, AGE_MAX]).toEqual([5, 99]);
+    expect(minStatusBandForAge(AGE_MIN)).toBe('u10');
+    expect(minStatusBandForAge(AGE_MAX)).toBe('adult');
+  });
+
+  test.each([0, 4, 100, 9.5, -1, Number.NaN])('candidates refuses age %p the same way', (age) => {
+    expect(() => candidates(profile({ age }), {}, DEFAULT_SETTINGS, versions, graph)).toThrow(RangeError);
+  });
+
+  test('candidates accepts AGE_MIN and AGE_MAX', () => {
+    expect(() => candidates(profile({ age: AGE_MIN }), {}, DEFAULT_SETTINGS, versions, graph)).not.toThrow();
+    expect(() => candidates(profile({ age: AGE_MAX }), {}, DEFAULT_SETTINGS, versions, graph)).not.toThrow();
   });
 });
 
@@ -261,6 +273,19 @@ describe('the real seed', () => {
     expect(together.length).toBeGreaterThan(alone.length);
   });
 
+  test('a gym player is not offered a field-only drill but is offered yard drills; a field player is offered both', () => {
+    const high = { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 };
+    const kit = { age: 12, equipment: 'full_field' as Equipment, partner: true };
+    const fieldOnly = versions.filter((v) => v.spaces.every((s) => s === 'field'));
+    expect(slugs(fieldOnly)).toContain('dribbling-speed-dash-stop');
+    const gym = candidates({ ...kit, space: 'gym' }, high, DEFAULT_SETTINGS, versions, graph);
+    for (const v of fieldOnly) expect(slugs(gym)).not.toContain(v.slug);
+    expect(gym.some((v) => v.spaces.includes('yard'))).toBe(true);
+    const field = candidates({ ...kit, space: 'field' }, high, DEFAULT_SETTINGS, versions, graph);
+    for (const v of fieldOnly) expect(slugs(field)).toContain(v.slug);
+    expect(field.some((v) => v.spaces.includes('yard'))).toBe(true);
+  });
+
   test('a home_3x3 player is only given drills that can be done in a home_3x3 space', () => {
     const pool = candidates(profile({ space: 'home_3x3', equipment: 'full_field', partner: true, age: 12 }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
     expect(pool.length).toBeGreaterThan(0);
@@ -275,15 +300,28 @@ describe('space', () => {
   const only = (spaces: Space[]) => variant({ spaces, space: spaces[0]!, level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null });
   const fits = (drillSpaces: Space[], player: Space) => candidates(profile({ space: player }), {}, DEFAULT_SETTINGS, [only(drillSpaces)], graph).length === 1;
 
-  test('a drill fits a player whose space is at least as large as the smallest space the drill supports', () => {
+  test('a drill fits a player whose space is at least as large as the smallest space the drill supports; gym counts as yard', () => {
     expect(fits(['yard'], 'home_3x3')).toBe(false);
     expect(fits(['yard'], 'yard')).toBe(true);
+    expect(fits(['yard'], 'gym')).toBe(true);
     expect(fits(['yard'], 'field')).toBe(true);
     expect(fits(['field'], 'yard')).toBe(false);
-    expect(fits(['field'], 'gym')).toBe(true);
-    expect(fits(['gym'], 'field')).toBe(false);
+    expect(fits(['field'], 'gym')).toBe(false);
+    expect(fits(['field'], 'field')).toBe(true);
+    expect(fits(['gym'], 'yard')).toBe(true);
+    expect(fits(['gym'], 'home_3x3')).toBe(false);
+    expect(fits(['gym'], 'field')).toBe(true);
+  });
+
+  test('the smallest listed space decides, whatever its position in the list', () => {
     expect(fits(['field', 'yard'], 'yard')).toBe(true);
-    expect(fits(['field', 'gym'], 'yard')).toBe(false);
+    expect(fits(['yard', 'field'], 'yard')).toBe(true);
+    expect(fits(['gym', 'yard'], 'yard')).toBe(true);
+    expect(fits(['yard', 'gym'], 'home_3x3')).toBe(false);
+    expect(fits(['field', 'gym'], 'yard')).toBe(true);
+    expect(fits(['gym', 'field'], 'home_3x3')).toBe(false);
+    expect(fits(['field', 'home_3x3'], 'home_3x3')).toBe(true);
+    expect(fits(['home_3x3', 'field'], 'home_3x3')).toBe(true);
   });
 });
 
@@ -335,6 +373,14 @@ describe('level', () => {
     expect(pick({ 'weak-foot': 5 }, dribbling())).toEqual(['dribbling-basic', 'dribbling-beginner']);
   });
 
+  test('a track named like an Object.prototype member counts as level 1 and misbehaves in no way', () => {
+    // The track is set apart from `skills` so the drill stays in the real graph.
+    for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+      const list = (['beginner', 'basic', 'intermediate'] as const).map((l) => ({ ...at(l, 'dribbling'), track: name, slug: `${name}-${l}` }));
+      expect(pick({}, list), name).toEqual([`${name}-basic`, `${name}-beginner`]);
+    }
+  });
+
   test('a drill without a track counts as level 1', () => {
     expect(pick({ dribbling: 5 }, (['beginner', 'basic', 'intermediate'] as const).map((l) => at(l, null)))).toEqual(['null-basic', 'null-beginner']);
   });
@@ -343,7 +389,7 @@ describe('level', () => {
 describe('prerequisites', () => {
   const skilled = (skills: string[]) =>
     variant({ skills, track: skills[0] ?? null, slug: skills.join('+'), level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3' });
-  const given = (levels: Record<string, number>, v: PublishedVersion, g: SkillGraph | null = graph) => candidates(profile(), levels, DEFAULT_SETTINGS, [v], g ?? undefined).length === 1;
+  const given = (levels: Record<string, number>, v: PublishedVersion, g: SkillGraph = graph) => candidates(profile(), levels, DEFAULT_SETTINGS, [v], g).length === 1;
 
   test('the real graph has the prerequisite the cases below rely on', () => {
     expect(graph.nodes.find((n) => n.slug === 'inside-touches')?.prerequisites).toEqual([{ skill: 'basic-touches', minLevel: 2 }]);
@@ -371,12 +417,33 @@ describe('prerequisites', () => {
     expect(given({ 'basic-touches': 2 }, v)).toBe(true);
   });
 
-  test('a skill the graph does not know has no prerequisites', () => {
-    expect(given({}, skilled(['no-such-skill']))).toBe(true);
+  test('a drill training a skill the graph does not know is excluded (fail closed), whatever the levels', () => {
+    expect(given({}, skilled(['no-such-skill']))).toBe(false);
+    expect(given({ 'no-such-skill': 5 }, skilled(['no-such-skill']))).toBe(false);
+    expect(given({}, skilled(['dribbling', 'no-such-skill']))).toBe(false);
+    expect(given({}, skilled(['no-such-skill', 'dribbling']))).toBe(false);
+    expect(given({}, skilled(['dribbling']), { ...graph, nodes: [] })).toBe(false);
   });
 
-  test('with no graph supplied prerequisites are not checked', () => {
-    expect(given({}, skilled(['inside-touches']), null)).toBe(true);
+  test('the graph is a required argument: calling without one throws instead of skipping the rule', () => {
+    // @ts-expect-error graph is required
+    expect(() => candidates(profile(), {}, DEFAULT_SETTINGS, [skilled(['inside-touches'])])).toThrow();
+  });
+
+  test('every sub-skill of the real graph that has prerequisites is excluded until they are all met', () => {
+    const withPrerequisites = graph.nodes.filter((n) => n.prerequisites.length > 0);
+    expect(withPrerequisites.length).toBeGreaterThan(0);
+    expect(withPrerequisites.some((n) => n.prerequisites.some((pre) => pre.minLevel >= 2))).toBe(true);
+    for (const node of withPrerequisites) {
+      const drill = skilled([node.slug]);
+      const met = Object.fromEntries(node.prerequisites.map((pre) => [pre.skill, pre.minLevel]));
+      expect(given({}, drill), `${node.slug} with no levels`).toBe(false);
+      expect(given(met, drill), `${node.slug} with every prerequisite met`).toBe(true);
+      for (const pre of node.prerequisites) {
+        expect(given({ ...met, [pre.skill]: pre.minLevel - 1 }, drill), `${node.slug} short of ${pre.skill}`).toBe(false);
+        expect(given({ ...met, [pre.skill]: pre.minLevel + 1 }, drill), `${node.slug} above ${pre.skill}`).toBe(true);
+      }
+    }
   });
 });
 
@@ -415,6 +482,46 @@ describe('order', () => {
     const backward = slugs(candidates(p, levels, DEFAULT_SETTINGS, [...versions].reverse(), graph));
     expect(backward).toEqual(forward);
     expect(new Set(forward).size).toBe(forward.length);
+  });
+});
+
+describe('one version per drill', () => {
+  const version = (versionId: string, semver: string, over: Partial<PublishedVersion> = {}) => {
+    const base = versions[0]!;
+    return variant({ versionId, attribution: { ...base.attribution, semver }, level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3', ...over });
+  };
+  const ids = (list: readonly PublishedVersion[]) => list.map((v) => v.versionId);
+
+  test('duplicates of one drill collapse to the highest semver, compared numerically', () => {
+    const a = version('x-v1.2.0', '1.2.0');
+    const b = version('x-v1.10.0', '1.10.0');
+    const c = version('x-v1.9.9', '1.9.9');
+    expect(ids(candidates(profile(), {}, DEFAULT_SETTINGS, [a, b, c], graph))).toEqual(['x-v1.10.0']);
+    expect(ids(candidates(profile(), {}, DEFAULT_SETTINGS, [c, b, a], graph))).toEqual(['x-v1.10.0']);
+    expect(ids(candidates(profile(), {}, DEFAULT_SETTINGS, [b, a, c], graph))).toEqual(['x-v1.10.0']);
+  });
+
+  test('a release beats its own pre-release', () => {
+    const pre = version('x-v2.0.0-rc.1', '2.0.0-rc.1');
+    const release = version('x-v2.0.0', '2.0.0');
+    expect(ids(candidates(profile(), {}, DEFAULT_SETTINGS, [release, pre], graph))).toEqual(['x-v2.0.0']);
+    expect(ids(candidates(profile(), {}, DEFAULT_SETTINGS, [pre, release], graph))).toEqual(['x-v2.0.0']);
+  });
+
+  test('the newest version supersedes older ones even when it is the one that fails a rule', () => {
+    const old = version('x-v1.0.0', '1.0.0');
+    const newest = version('x-v2.0.0', '2.0.0', { ageMin: 15 });
+    expect(candidates(profile({ age: 12 }), {}, DEFAULT_SETTINGS, [old, newest], graph)).toEqual([]);
+  });
+
+  test('different drills are all kept', () => {
+    const one = version('a-v1.0.0', '1.0.0', { drillId: 'a', slug: 'a' });
+    const two = version('b-v1.0.0', '1.0.0', { drillId: 'b', slug: 'b' });
+    expect(slugs(candidates(profile(), {}, DEFAULT_SETTINGS, [two, one], graph))).toEqual(['a', 'b']);
+  });
+
+  test('the real seed has one version per drill, so nothing is collapsed', () => {
+    expect(new Set(versions.map((v) => v.drillId)).size).toBe(versions.length);
   });
 });
 
