@@ -301,6 +301,11 @@
           "kk": "Алдымен жылын: отыз секунд жеңіл жүріп ал және допты жайлап итер, сонда доп баяу қайтады.",
           "ru": "Сначала разомнись: тридцать секунд походи лёгким шагом и толкай мяч мягко, чтобы он возвращался медленно.",
           "en": "Warm up first with thirty seconds of easy walking, and keep the pushes gentle so the ball comes back slowly."
+        },
+        {
+          "kk": "Жұмсақ допты жайлап итер де, жолдардан, көліктерден және көшелерден аулақ бол.",
+          "ru": "Толкай мягкий мяч аккуратно и держись подальше от дорог, машин и улиц.",
+          "en": "Push the soft ball gently, and keep away from roads, cars and streets."
         }
       ],
       "progressionSlugs": [
@@ -425,6 +430,11 @@
           "kk": "Алдымен жылын: орныңда жеңіл жүгіріп, жамбасыңды айналдыр, ал кері шегінгенде тегіс, бос жерде тұр.",
           "ru": "Сначала разомнись: легко побегай на месте и покрути тазом, а отходить назад можно только по ровному свободному месту.",
           "en": "Warm up first with easy jogging on the spot and hip circles, and step back only on flat, clear ground."
+        },
+        {
+          "kk": "Әр пасты жұмсақ әрі жайлап бер және жолдардан, көліктерден, көшелерден алыс жерде ойна.",
+          "ru": "Отдавай каждый пас мягко и играй подальше от дорог, машин и улиц.",
+          "en": "Keep every pass soft and gentle, and play well away from roads, cars and streets."
         }
       ],
       "progressionSlugs": [
@@ -551,6 +561,11 @@
           "kk": "Алдымен жеңіл жүгіріп жылын, ал допты тегіс жерде жеңіл табанмен тоқтат, сонда тірек аяғың тайып кетпейді.",
           "ru": "Сначала разомнись лёгким бегом, а мяч останавливай лёгкой подошвой на ровной земле, чтобы опорная нога не скользила.",
           "en": "Warm up first with easy jogging, and stop the ball with a light sole on flat ground so your standing foot does not slip."
+        },
+        {
+          "kk": "Жұмсақ доп алып, пасты жайлап бер. Жолдардан, көліктерден және көшелерден алыс жерде ойна.",
+          "ru": "Возьми мягкий мяч и отдавай пасы аккуратно. Играй вдали от дорог, машин и улиц.",
+          "en": "Use a soft ball and pass gently. Play far from roads, cars and streets."
         }
       ],
       "progressionSlugs": [
@@ -616,6 +631,11 @@
           "kk": "Алдымен жеңіл жүгіріп, тобығыңды айналдырып жылын, допқа секіріп барма: баяу басып кел, сонда тірек аяғың берік жерде тұрады.",
           "ru": "Сначала разомнись лёгкой пробежкой и вращением стоп и не прыгай на мяч: подходи медленно, чтобы опорная нога стояла на твёрдой земле.",
           "en": "Warm up first with a gentle jog and ankle circles, and never hop onto the ball: step in slowly so your standing foot has firm ground."
+        },
+        {
+          "kk": "Жұмсақ доп алып, пастарды жайлап бер; доп домалап кетсе де, жолдардан, көліктерден және көшелерден аулақ бол.",
+          "ru": "Играй мягким мячом, отдавай пасы аккуратно и держись подальше от дорог, машин и улиц, даже если мяч укатился.",
+          "en": "Use a soft ball and gentle passes, and stay away from roads, cars and streets even when the ball rolls off."
         }
       ],
       "regressionSlugs": [
