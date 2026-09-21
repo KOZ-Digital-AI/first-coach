@@ -956,11 +956,11 @@ describe('006_contributions: contributions', () => {
     expect(ContributionPayloadView.parse(JSON.parse(stored)).name).toBe('Wall passing');
   });
 
-  test('STRICT refuses a wrong storage class (BLOB payload, integer state, blob id)', () => {
+  test('STRICT refuses a BLOB in a TEXT column; an integer is coerced to text and then meets the CHECKs', () => {
     const db = migrated();
     expect(thrown(() => addContribution(db, { payload: new Uint8Array([123, 125]) })).message).toMatch(/cannot store BLOB value in TEXT column contributions\.payload|CHECK constraint failed|datatype mismatch/i);
-    expect(thrown(() => addContribution(db, { id: 'i1', state: 1 })).message).toMatch(/cannot store INT.* value in TEXT column contributions\.state|datatype mismatch/i);
-    expect(thrown(() => addContribution(db, { id: 'i2', submitter_user_id: 5 })).message).toMatch(/cannot store INT.* value in TEXT column|datatype mismatch/i);
+    expect(thrown(() => addContribution(db, { id: 'i0', submitter_user_id: new Uint8Array([65]) })).message).toMatch(/cannot store BLOB value in TEXT column contributions\.submitter_user_id|datatype mismatch/i);
+    expect(thrown(() => addContribution(db, { id: 'i1', state: 1 })).message).toMatch(/CHECK constraint failed/); // stored as '1', not a state
     expect(count(db, 'contributions')).toBe(0);
   });
 
@@ -1160,7 +1160,7 @@ describe('006_contributions: contribution_attachments', () => {
     const db = withContribution();
     let n = 0;
     for (const bytes of [0, 1, 1048576, 2 ** 40]) addAttachment(db, { id: `b${++n}`, stored_path: `p/${n}`, bytes });
-    for (const bytes of [-1, -1048576, 1.5, 'abc', '10']) {
+    for (const bytes of [-1, -1048576, 1.5, 'abc', '-3']) {
       expect(accepted(() => addAttachment(db, { id: `bad${++n}`, stored_path: `p/${n}`, bytes })), JSON.stringify(bytes)).toBe(false);
     }
     expect(thrown(() => addAttachment(db, { id: 'neg', stored_path: 'p/neg', bytes: -1 })).message).toMatch(/CHECK constraint failed/);
@@ -1175,10 +1175,10 @@ describe('006_contributions: contribution_attachments', () => {
     }
   });
 
-  test('STRICT refuses a wrong storage class (BLOB stored_path, integer mime)', () => {
+  test('STRICT refuses a BLOB in a TEXT column (stored_path, mime)', () => {
     const db = withContribution();
     expect(accepted(() => addAttachment(db, { id: 'x1', stored_path: new Uint8Array([1, 2]) }))).toBe(false);
-    expect(accepted(() => addAttachment(db, { id: 'x2', stored_path: 'p/x2', mime: 7 }))).toBe(false);
+    expect(accepted(() => addAttachment(db, { id: 'x2', stored_path: 'p/x2', mime: new Uint8Array([7]) }))).toBe(false);
     expect(count(db, 'contribution_attachments')).toBe(0);
   });
 
