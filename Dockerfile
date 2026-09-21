@@ -33,6 +33,8 @@ RUN bun install --production --frozen-lockfile --filter @first-coach/api
 COPY tsconfig.base.json ./
 COPY apps/api/tsconfig.json apps/api/tsconfig.json
 COPY apps/api/src apps/api/src
+# The 20-seed boot hook resolves config/commons relative to apps/api/src/boot.
+COPY config config
 COPY --from=build /app/apps/web/dist apps/web/dist
 
 # Everything writable lives under /data. No VOLUME instruction: Railway attaches its
