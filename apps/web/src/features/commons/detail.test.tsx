@@ -689,7 +689,7 @@ const WORDS: Record<Locale, { goal: string; safety: string; how: string; open: (
   },
 };
 
-describe.each(LOCALES)('in %s', (locale) => {
+for (const locale of LOCALES) describe(`in ${locale}`, () => {
   const words = WORDS[locale];
 
   test('asks for the drill in this language and shows its title and the headings in it', async () => {
