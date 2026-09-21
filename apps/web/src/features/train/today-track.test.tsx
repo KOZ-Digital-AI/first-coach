@@ -204,6 +204,8 @@ describe('the fields are optional: a row without them renders as before', () => 
     expect(within(row!).getByText('Drill item-1')).toBeTruthy();
     expect(within(row!).queryByText(/Level/)).toBeNull();
     expect(row!.textContent).not.toMatch(/undefined|null/);
+    // Nothing sits between the index badge and the title where the track would be.
+    expect(row!.textContent).toMatch(/^1Drill item-1Goal of item-1/);
   });
 
   test('a session restored from the persisted cache without the fields still lists its drills', async () => {
