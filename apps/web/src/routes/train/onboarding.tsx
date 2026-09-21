@@ -1,7 +1,7 @@
 import { PlayerProfile } from '@api-types/domain';
 import { ENDPOINTS, OnboardingOptions, type StartRequest, StartResponse } from '@api-types/onboarding';
 import { ExperienceLevel, Goal } from '@api-types/primitives';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { clsx } from 'clsx';
 import { createContext, type ReactNode, useContext, useEffect, useId, useRef, useState } from 'react';
@@ -32,7 +32,9 @@ import { ApiProblem, describeProblem, type ProblemView } from '../../lib/problem
  *     into sessionStorage under DRAFT_KEY, parsed with Zod on the way back in, and the stored draft is thrown away when it
  *     does not parse (or storage is unavailable: then the wizard just works without a draft).
  *  3. Steps are picked by index. The LAST step (baseline) submits: ensurePlayerSession(), then POST /api/player/start, then
- *     the draft is cleared and the player goes to /train/roadmap.
+ *     the draft is cleared and the player goes to /train/roadmap. The start response (`{ profile, roadmap }`, the same shape
+ *     GET /api/player/me answers) is written into the ['me'] query cache first, so the roadmap screen shows it without asking
+ *     the API again while that entry is fresh (fc-mol-9l4.16: the journey's call budget is sign-in, options, start).
  *  4. A 422/400 whose problem-details pointers name request fields jumps to the EARLIEST step that owns one of them and
  *     lists the rejected answers there (each step keeps its own copy of what is still wrong until that answer changes).
  *     Anything else (network, 5xx, a body that is not a StartResponse, a failed sign-in) stays on the last step as an
@@ -55,6 +57,8 @@ import { ApiProblem, describeProblem, type ProblemView } from '../../lib/problem
 const SPORT = 'football';
 const DRAFT_KEY = 'fc:onboarding-draft';
 const ROADMAP_PATH = '/train/roadmap';
+/** The roadmap screen's query key (its GET /api/player/me answer, persisted): the start response is written under it. */
+const ME_QUERY_KEY = ['me'] as const;
 
 /** Question steps: profile (0), conditions (1), baseline (2). */
 const LAST_STEP = 2;
@@ -230,6 +234,7 @@ function OnboardingWizard({ navigate, deps: overrides }: OnboardingWizardProps) 
   const { t, i18n } = useTranslation('wizard');
   const locale = toLocale(i18n.language) ?? DEFAULT_LOCALE;
   const [deps] = useState(() => resolveDeps(overrides));
+  const queryClient = useQueryClient();
   const noteId = useId();
 
   const options = useQuery({
@@ -338,7 +343,8 @@ function OnboardingWizard({ navigate, deps: overrides }: OnboardingWizardProps) 
     };
     try {
       await deps.ensureSession();
-      await deps.api.post(ENDPOINTS.start.path, { body: request, schema: StartResponse });
+      const started = await deps.api.post(ENDPOINTS.start.path, { body: request, schema: StartResponse });
+      queryClient.setQueryData(ME_QUERY_KEY, started);
       clearDraft(deps.storage);
       setFailure(null);
       setStatus('done');

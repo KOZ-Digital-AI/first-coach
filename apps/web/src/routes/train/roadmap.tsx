@@ -49,6 +49,13 @@ import { describeProblem, ApiProblem, type Translate } from '../../lib/problem';
  */
 
 const ME_KEY = ['me'] as const;
+/**
+ * How long the ['me'] answer counts as fresh (fc-mol-9l4.16). The wizard writes its POST /api/player/start response under this
+ * key right before it sends the player here, so within this window the roadmap is shown as is and GET /api/player/me is not
+ * asked for again; an older entry is shown and refreshed behind it, and a reload (an empty cache) fetches. A plan only changes
+ * when the player onboards again or retests, both of which go through their own screens.
+ */
+const ME_STALE_MS = 30_000;
 const ME_PATH = '/api/player/me';
 const TRAIN_PATH = '/train';
 const ONBOARDING_PATH = '/train/onboarding';
@@ -145,6 +152,7 @@ function RoadmapPage({ deps }: { deps: RoadmapDeps }) {
       }
       return deps.api.get(ME_PATH, { schema: StartResponse, signal });
     },
+    staleTime: ME_STALE_MS,
     retry: false,
     refetchOnWindowFocus: false,
     networkMode: 'always',

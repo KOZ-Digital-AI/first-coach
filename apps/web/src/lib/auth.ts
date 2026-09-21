@@ -22,6 +22,13 @@
  *     (another tab won, or the server said "already anonymous") that session is the answer; if not, the ORIGINAL sign-in
  *     error is the rejection's cause.
  *
+ * ensurePlayerSessionOutcome() (additive, fc-mol-9l4.16) is ensurePlayerSession() plus one fact: `{ session, created }`.
+ * `created` is true only when THIS attempt had to sign in anonymously (a brand-new player, who cannot be onboarded yet, so a
+ * screen may skip asking the API "are you onboarded?"). It is false for a session that already existed, for one another tab
+ * created (the recovered re-read), and for every call made after the attempt has settled: "just created" is a one-shot fact
+ * of the call that triggered the creation, never a property of the memoised session (a player who has since onboarded must
+ * not be sent back to onboarding). It resolves the very session ensurePlayerSession() does; nothing about that call changed.
+ *
  * Every rejection is a `PlayerSessionError`: `kind` is 'offline' when the cause is a network failure (fetch rejects with a
  * TypeError) or `online()` is false (default `navigator.onLine !== false`, read when the failure happens), else 'failed';
  * `cause` is what the client reported (a fresh Error for a malformed payload: the payload itself is never attached, it could
@@ -61,6 +68,12 @@ type Reply = { data?: unknown; error?: unknown };
 export interface PlayerAuthClient {
   getSession(): Promise<Reply>;
   signIn: { anonymous(): Promise<Reply> };
+}
+
+/** What ensurePlayerSessionOutcome resolves: the session, and whether this attempt created it (see the header). */
+export interface PlayerSessionOutcome {
+  session: PlayerSession;
+  created: boolean;
 }
 
 /** The part of `navigator.locks` that is used (the real LockManager is assignable to it). */
@@ -109,6 +122,10 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
   const { client } = deps;
   const online = deps.online ?? browserOnline;
   let attempt: Promise<PlayerSession> | undefined;
+  /** True once the current attempt has resolved: later callers get the memo, and nothing was created for them. */
+  let attemptSettled = false;
+  /** The sessions an anonymous sign-in returned (never one that was only read), so `created` can tell them apart. */
+  const signedIn = new WeakSet<PlayerSession>();
 
   const fail = (message: string, cause?: unknown) =>
     new PlayerSessionError(message, { kind: isNetworkFailure(cause) || !online() ? 'offline' : 'failed', cause });
@@ -136,6 +153,7 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
     }
     if (failed(reply.error)) throw fail(SIGN_IN_FAILED, reply.error);
     if (!isSession(reply.data)) throw fail(SIGN_IN_NO_USER);
+    signedIn.add(reply.data);
     return reply.data;
   }
 
@@ -173,13 +191,27 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
 
   function ensurePlayerSession(): Promise<PlayerSession> {
     if (attempt) return attempt;
-    const started: Promise<PlayerSession> = underLock().catch((error: unknown) => {
-      // Only this attempt's own slot: a reset may already have replaced it with a newer attempt.
-      if (attempt === started) attempt = undefined;
-      throw error;
-    });
+    attemptSettled = false;
+    const started: Promise<PlayerSession> = underLock().then(
+      (session) => {
+        if (attempt === started) attemptSettled = true;
+        return session;
+      },
+      (error: unknown) => {
+        // Only this attempt's own slot: a reset may already have replaced it with a newer attempt.
+        if (attempt === started) attempt = undefined;
+        throw error;
+      },
+    );
     attempt = started;
     return started;
+  }
+
+  /** ensurePlayerSession() that also says whether this call's attempt created the (anonymous) session. */
+  async function ensurePlayerSessionOutcome(): Promise<PlayerSessionOutcome> {
+    const joinsAttempt = attempt === undefined || !attemptSettled;
+    const session = await ensurePlayerSession();
+    return { session, created: joinsAttempt && signedIn.has(session) };
   }
 
   /** Forgets the remembered session: the next ensurePlayerSession() reads it again. */
@@ -187,7 +219,7 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
     attempt = undefined;
   }
 
-  return { ensurePlayerSession, resetPlayerSession };
+  return { ensurePlayerSession, ensurePlayerSessionOutcome, resetPlayerSession };
 }
 
 /** The page origin when it is a usable http(s) one, else undefined (Better Auth then uses the relative `/api/auth`). */
@@ -215,6 +247,6 @@ export function createPlayerAuthClient(options: PlayerAuthClientOptions = {}) {
 /** The app-wide client: same origin, real fetch. */
 export const authClient = createPlayerAuthClient({ baseURL: authBaseUrl(globalThis.location) });
 
-export const { ensurePlayerSession, resetPlayerSession } = createPlayerAuth({ client: authClient });
+export const { ensurePlayerSession, ensurePlayerSessionOutcome, resetPlayerSession } = createPlayerAuth({ client: authClient });
 
 export const useSession = authClient.useSession;
