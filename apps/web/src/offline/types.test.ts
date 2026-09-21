@@ -73,7 +73,10 @@ const makeTodaySession = (): Record<string, unknown> => ({
     currentLevelLabel: 'Foundation',
     sessionsPerWeek: 3,
     minutesPerSession: 20,
-    focus: [{ skill: 'weakfoot', level: 1, targetLevel: 2, reason: 'Your stated goal.' }],
+    focus: [
+      { skill: 'weakfoot', level: 1, targetLevel: 2, reason: 'Your stated goal.' },
+      { skill: 'passing', level: 1, targetLevel: 2, reason: 'One of the weakest areas.' },
+    ],
   },
 });
 
