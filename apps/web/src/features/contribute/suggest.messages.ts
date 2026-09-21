@@ -1,0 +1,190 @@
+import type { MessageBundle } from '../../lib/i18n';
+
+// Copy of the "Suggest improvement" button and dialog on the drill detail page (features/contribute/drill-detail-extra.tsx).
+// Namespace `suggest` (from the file name), registered by the eager glob in lib/i18n.ts, so no central catalogue is edited.
+// It is deliberately not `form` (the contribute form) or `mine` (My contributions): a base name is a namespace and must be unique.
+//
+// Generic failures (offline, rate limit, server) live in lib/problem.messages.ts and are shown through describeProblem; only the
+// sentences that belong to this dialog are worded here. The server's own English is never shown.
+// KAZAKH (and Russian) TEXT STILL NEEDS A NATIVE-SPEAKER REVIEW. No noun has to agree with a number; `{{max}}` is a whole number of
+// megabytes (MB is written the way each language writes it), `{{name}}` is the drill's own title in the active language.
+// The two attestation errors are the same sentence on purpose: each is shown next to its own checkbox.
+export default {
+  kk: {
+    trigger: {
+      title: 'Бұл жаттығуды жақсартуға көмектесіңіз',
+      lead: 'Түсіндіруді анығырақ етуге, жеңілірек нұсқа немесе аударма қосуға болады ма? Бізге айтыңыз. Ештеңе өзгермес бұрын тексеруші әр ұсынысты оқиды.',
+      button: 'Жақсартуды ұсыну',
+      signInHint: 'Өзгеріс ұсыну үшін жаттықтырушы аккаунтымен кіріңіз. Ойыншыларға аккаунт керек емес.',
+      sessionError: 'Аккаунтыңызды тексере алмадық.',
+      retry: 'Қайталау',
+    },
+    dialog: {
+      title: 'Жаттығуды жақсарту ұсынысы',
+      for: '«{{name}}» жаттығуы үшін',
+      loading: 'Ұсыныс формасы жүктелуде',
+    },
+    error: { title: 'Ұсыныс формасын аша алмадық', retry: 'Қайталау' },
+    empty: { title: 'Ұсыныстар қазір қабылданбайды', hint: 'Сәлден кейін қайта кіріп көріңіз.' },
+    fields: {
+      kind: { label: 'Жақсартудың қандай түрі?', placeholder: 'Таңдаңыз' },
+      text: { label: 'Сіздің ұсынысыңыз', hint: 'Қосқыңыз немесе өзгерткіңіз келетін мәтінді қарапайым сөзбен жазыңыз.' },
+      video: { label: 'Бейне (міндетті емес)', hint: 'MP4, WebM немесе MOV, {{max}} МБ-қа дейін.' },
+      author: { label: 'Атыңыз', hint: 'Ұсыныс қабылданса, автор ретінде көрсетіледі.' },
+      rights: 'Мұны мен жаздым немесе бөлісуге құқығым бар және оның CC BY-SA 4.0 лицензиясымен жарияланатынымен келісемін.',
+      noCommercial: 'Онда жарнама да, коммерциялық ештеңе де жоқ.',
+    },
+    kinds: {
+      explanation: 'Басқаша түсіндіру',
+      progression: 'Жаңа күрделендіру',
+      simpler_variant: 'Жеңілірек нұсқа',
+      age_adaptation: 'Басқа жасқа бейімдеу',
+      translation: 'Аударма',
+      video: 'Жаңа бейне',
+      accessibility: 'Қолжетімділікке бейімдеу',
+      safety: 'Қауіпсіздікті жақсарту',
+    },
+    errors: {
+      kind: 'Жақсартудың түрін таңдаңыз.',
+      text: 'Ұсынысыңызды жазыңыз.',
+      author: 'Атыңызды жазыңыз.',
+      rights: 'Ұсынысты жіберу үшін мұны растаңыз.',
+      noCommercial: 'Ұсынысты жіберу үшін мұны растаңыз.',
+      videoType: 'Бұл файл түрі қабылданбайды. MP4, WebM немесе MOV бейнесін таңдаңыз.',
+      videoSize: 'Бейне {{max}} МБ шегінен асады.',
+      field: 'Осы өрісті тексеріңіз.',
+      formTitle: 'Ұсынысыңыз жіберілмеді',
+      rejected: 'Ұсынысыңыздағы бір нәрсе қабылданбады. Тексеріп, қайталап көріңіз.',
+      duplicate: 'Бұл ұсынысты бұрын жібергенсіз. Ол тексерушіні күтіп тұр.',
+    },
+    actions: {
+      send: 'Ұсынысты жіберу',
+      cancel: 'Бас тарту',
+      close: 'Жабу',
+      sending: 'Ұсыныс жіберілуде. Бейне бір минутқа созылуы мүмкін.',
+      mine: 'Менің жіберген әдістерім',
+    },
+    success: {
+      title: 'Рақмет',
+      body: 'Тексеруші ұсынысыңызды оқиды. Жаттығу тек ол қабылдаған жағдайда ғана өзгереді.',
+    },
+  },
+  ru: {
+    trigger: {
+      title: 'Помогите улучшить это упражнение',
+      lead: 'Можно объяснить понятнее, сделать проще или перевести? Расскажите нам. Прежде чем что-то изменится, проверяющий читает каждое предложение.',
+      button: 'Предложить улучшение',
+      signInHint: 'Чтобы предложить изменение, войдите с аккаунтом тренера. Игрокам аккаунт не нужен.',
+      sessionError: 'Не удалось проверить ваш аккаунт.',
+      retry: 'Повторить',
+    },
+    dialog: {
+      title: 'Предложение по улучшению',
+      for: 'Для упражнения «{{name}}»',
+      loading: 'Загружается форма предложения',
+    },
+    error: { title: 'Не удалось открыть форму предложения', retry: 'Повторить' },
+    empty: { title: 'Сейчас предложения не принимаются', hint: 'Загляните чуть позже.' },
+    fields: {
+      kind: { label: 'Какое это улучшение?', placeholder: 'Выберите' },
+      text: { label: 'Ваше предложение', hint: 'Напишите текст, который вы добавили бы или изменили, простыми словами.' },
+      video: { label: 'Видео (необязательно)', hint: 'MP4, WebM или MOV, до {{max}} МБ.' },
+      author: { label: 'Ваше имя', hint: 'Будет указано как имя автора, если предложение примут.' },
+      rights: 'Я написал(а) это сам(а) или имею право этим делиться, и согласен(на), что текст будет опубликован под лицензией CC BY-SA 4.0.',
+      noCommercial: 'В нём нет рекламы и ничего коммерческого.',
+    },
+    kinds: {
+      explanation: 'Другое объяснение',
+      progression: 'Новое усложнение',
+      simpler_variant: 'Упрощённый вариант',
+      age_adaptation: 'Адаптация под другой возраст',
+      translation: 'Перевод',
+      video: 'Новое видео',
+      accessibility: 'Адаптация для доступности',
+      safety: 'Улучшение безопасности',
+    },
+    errors: {
+      kind: 'Выберите вид улучшения.',
+      text: 'Напишите ваше предложение.',
+      author: 'Напишите ваше имя.',
+      rights: 'Подтвердите это, чтобы отправить предложение.',
+      noCommercial: 'Подтвердите это, чтобы отправить предложение.',
+      videoType: 'Этот тип файла не принимается. Выберите видео MP4, WebM или MOV.',
+      videoSize: 'Видео больше {{max}} МБ.',
+      field: 'Проверьте это поле.',
+      formTitle: 'Предложение не отправлено',
+      rejected: 'Что-то в предложении не принято. Проверьте его и попробуйте ещё раз.',
+      duplicate: 'Вы уже отправляли это предложение. Оно ждёт проверяющего.',
+    },
+    actions: {
+      send: 'Отправить предложение',
+      cancel: 'Отмена',
+      close: 'Закрыть',
+      sending: 'Отправляем предложение. Видео может загружаться около минуты.',
+      mine: 'Мои методики',
+    },
+    success: {
+      title: 'Спасибо',
+      body: 'Проверяющий прочитает ваше предложение. Упражнение изменится, только если он его примет.',
+    },
+  },
+  en: {
+    trigger: {
+      title: 'Help improve this drill',
+      lead: 'A clearer explanation, an easier version, a translation? Tell us. A reviewer reads every suggestion before anything changes.',
+      button: 'Suggest improvement',
+      signInHint: 'Sign in with a coach account to suggest a change. Players never need an account.',
+      sessionError: 'We could not check your account.',
+      retry: 'Try again',
+    },
+    dialog: {
+      title: 'Suggest an improvement',
+      for: 'For “{{name}}”',
+      loading: 'Loading the suggestion form',
+    },
+    error: { title: 'We could not open the suggestion form', retry: 'Try again' },
+    empty: { title: 'Suggestions are not open right now', hint: 'Please come back a little later.' },
+    fields: {
+      kind: { label: 'What kind of improvement?', placeholder: 'Choose one' },
+      text: { label: 'Your suggestion', hint: 'Write the text you would add or change, in plain words.' },
+      video: { label: 'Video (optional)', hint: 'MP4, WebM or MOV, up to {{max}} MB.' },
+      author: { label: 'Your name', hint: 'Shown as the author if your suggestion is accepted.' },
+      rights: 'I wrote this or I have the right to share it, and I agree that it is published under CC BY-SA 4.0.',
+      noCommercial: 'It contains no advertising and nothing commercial.',
+    },
+    kinds: {
+      explanation: 'A different explanation',
+      progression: 'A new progression',
+      simpler_variant: 'A simpler variant',
+      age_adaptation: 'An adaptation for another age',
+      translation: 'A translation',
+      video: 'A new video',
+      accessibility: 'An accessibility adaptation',
+      safety: 'A safety improvement',
+    },
+    errors: {
+      kind: 'Choose the kind of improvement.',
+      text: 'Write your suggestion.',
+      author: 'Write your name.',
+      rights: 'Please confirm this to send your suggestion.',
+      noCommercial: 'Please confirm this to send your suggestion.',
+      videoType: 'This file type is not accepted. Choose an MP4, WebM or MOV video.',
+      videoSize: 'This video is larger than {{max}} MB.',
+      field: 'Please check this field.',
+      formTitle: 'Your suggestion was not sent',
+      rejected: 'Something in your suggestion was not accepted. Check it and try again.',
+      duplicate: 'You have already sent this suggestion. It is waiting for a reviewer.',
+    },
+    actions: {
+      send: 'Send suggestion',
+      cancel: 'Cancel',
+      close: 'Close',
+      sending: 'Sending your suggestion. A video can take a minute.',
+      mine: 'See my contributions',
+    },
+    success: {
+      title: 'Thank you',
+      body: 'A reviewer will read your suggestion. The drill changes only if they accept it.',
+    },
+  },
+} satisfies MessageBundle;
