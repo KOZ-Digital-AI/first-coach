@@ -1,5 +1,5 @@
 import type { Database } from "bun:sqlite";
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -528,5 +528,55 @@ describe("POST /api/player/session-events: only the player's own sessions", () =
     expect(eventCount(player.id)).toBe(0);
     expect(eventCount(owner.id)).toBe(0);
     expect(sessionRow(own.id).items).not.toContain('"done":true');
+  });
+});
+
+describe("POST /api/player/session-events: what is not an event's fault", () => {
+  test("a player whose roadmap is gone has no session to report on: a 404 that names the event, and nothing is written", async () => {
+    const player = await onboardedPlayer();
+    const session = await todayOk(player);
+    db.query("DELETE FROM roadmaps WHERE player_id = ?").run(player.id);
+    const clientUuid = eventId();
+    const body = await expectProblem(await post({ events: [event(session.id, "session_finished", { clientUuid })] }, { cookie: player.cookie }), 404);
+    expect(pointers(body)).toContain("/events/0");
+    expect(texts(body)).toContain(clientUuid);
+    expect(eventCount(player.id)).toBe(0);
+    expect(sessionRow(session.id).finished_at).toBeNull();
+  });
+
+  test("an unexpected failure is a 500 problem that names no event (the outbox would drop a named one)", async () => {
+    const player = await onboardedPlayer();
+    const session = await todayOk(player);
+    db.run("DROP TABLE session_events");
+    const quiet = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const body = await expectProblem(await post({ events: [event(session.id, "session_finished")] }, { cookie: player.cookie }), 500);
+      expect(body.errors).toBeUndefined();
+    } finally {
+      quiet.mockRestore();
+    }
+  });
+
+  test("the returned session fills a text that lacks the profile's locale, as GET /api/player/today does", async () => {
+    const player = await onboardedPlayer({ locale: "kk" });
+    const first = await todayOk(player);
+    const old = db.query("SELECT id FROM drill_versions WHERE id = ?").get(first.items[0]!.drillVersionId) as { id: string };
+    // A version of that drill whose goal exists in ru only, and the session pointed at it.
+    db.query(
+      `INSERT INTO drill_versions (id, drill_id, semver, parent_version_id, status, content, equipment, space, partner, age_min, age_max,
+                                   level, minutes, license, author_name, author_user_id, source, source_url, origin, change_summary, created_at)
+       SELECT 'ru-only-version', drill_id, '8.8.8', id, status, json_remove(content, '$.goal.kk', '$.goal.en'),
+              equipment, space, partner, age_min, age_max, level, minutes, license, author_name, author_user_id, source, source_url,
+              'seed', NULL, created_at
+         FROM drill_versions WHERE id = ?`,
+    ).run(old.id);
+    db.query("UPDATE sessions SET items = json_set(items, '$[0].drillVersionId', 'ru-only-version') WHERE player_id = ?").run(player.id);
+
+    const body = await postOk(player, [event(first.id, "drill_done", { itemId: first.items[0]!.itemId })]);
+    const goal = body.session.items[0]!.content.goal;
+    expect(goal.ru).toBeDefined();
+    expect(goal.kk).toBe(goal.ru!);
+    expect(goal.en).toBe(goal.ru!);
+    expect(body.session.items[0]!.done).toBe(true);
   });
 });
