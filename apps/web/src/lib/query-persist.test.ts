@@ -35,7 +35,11 @@ function fakeIdb(): FakeIdb {
   };
 }
 
-type Stored = { timestamp: number; buster: string; clientState: { queries: { queryKey: unknown[] }[]; mutations: unknown[] } };
+type Stored = {
+  timestamp: number;
+  buster: string;
+  clientState: { queries: { queryKey: unknown[]; queryHash: string }[]; mutations: unknown[] };
+};
 
 const cleanups: Array<() => void> = [];
 
@@ -140,8 +144,8 @@ describe('persisted query cache: allow-list', () => {
     writer.setQueryData(['today'], { id: 's1' });
     await until(() => storedKeys(store, 'p1').length === 1);
     const blob = stored(store, 'p1') as Stored;
-    const template = blob.clientState.queries[0] as { queryKey: unknown[] };
-    blob.clientState.queries.push({ ...template, queryKey: ['admin', 'users'] });
+    const template = blob.clientState.queries[0] as { queryKey: unknown[]; queryHash: string };
+    blob.clientState.queries.push({ ...template, queryKey: ['admin', 'users'], queryHash: JSON.stringify(['admin', 'users']) });
     store.data.set(queryCacheKey('p1'), blob);
 
     const reader = await attach(store, 'p1');
@@ -176,6 +180,35 @@ describe('persisted query cache: mutations', () => {
 
     const second = await attach(store, 'p1');
     expect(second.getMutationCache().getAll()).toEqual([]);
+  });
+});
+
+describe('persisted query cache: mutations in a stored blob', () => {
+  test('a restore never brings back a mutation found in the store (older build, tampering)', async () => {
+    const store = fakeIdb();
+    const writer = await attach(store, 'p1');
+    writer.setQueryData(['today'], { id: 's1' });
+    await until(() => storedKeys(store, 'p1').length === 1);
+    const blob = stored(store, 'p1') as Stored;
+    blob.clientState.mutations.push({
+      mutationKey: ['session-events'],
+      state: {
+        context: undefined,
+        data: undefined,
+        error: null,
+        failureCount: 0,
+        failureReason: null,
+        isPaused: true,
+        status: 'pending',
+        variables: { n: 1 },
+        submittedAt: 0,
+      },
+    });
+    store.data.set(queryCacheKey('p1'), blob);
+
+    const reader = await attach(store, 'p1');
+    expect(read(reader, ['today'])).toEqual({ id: 's1' });
+    expect(reader.getMutationCache().getAll()).toEqual([]);
   });
 });
 
