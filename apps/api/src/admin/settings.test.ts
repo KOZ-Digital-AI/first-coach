@@ -272,6 +272,21 @@ describe('settings: getSettings', () => {
     expect(getSettings(db)).toEqual({ ...CRITERIA_DEFAULTS, uploadMaxMb: 80, retestIntervalsDays: [3, 9] });
   });
 
+  test('stored keys named like Object.prototype members are unknown keys: ignored without throwing and without a report', () => {
+    const db = migrated('all');
+    const names = ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf', 'isPrototypeOf', 'prototype'];
+    for (const name of names) putRaw(db, name, '{"x":1}'); // bound parameters: SQLite stores the key as plain text
+    expect(count(db)).toBe(names.length);
+    const reports: InvalidStoredSetting[] = [];
+
+    expect(() => getSettings(db)).not.toThrow();
+    expect(getSettings(db, { onInvalid: (r) => reports.push(r) })).toEqual(CRITERIA_DEFAULTS);
+    expect(reports).toEqual([]);
+    // and they do not disturb a real key stored next to them
+    putRaw(db, 'uploadMaxMb', '80');
+    expect(getSettings(db).uploadMaxMb).toBe(80);
+  });
+
   test('a stored key this build does not know is ignored: not returned, not reported', () => {
     const db = migrated('all');
     putRaw(db, 'fromANewerBuild', '{"x":1}');
@@ -664,6 +679,27 @@ describe('settings: updateSettings', () => {
 
       expect(updateSettings(db, { uploadMaxMb: 90 }, D1).uploadMaxMb).toBe(90);
       expect(stored(db)).toEqual({ uploadMaxMb: 90 });
+    });
+
+    test('joined to a caller\'s transaction, a failing patch is undone by itself: the caller catches the error, commits, and no key of the patch survives', () => {
+      const db = migrated('all');
+      db.run(`CREATE TEMP TRIGGER fail_ai_planner BEFORE INSERT ON main.settings WHEN NEW.key = 'aiPlannerEnabled' BEGIN SELECT RAISE(ABORT, 'boom'); END`);
+      let caught: Error | undefined;
+
+      db.transaction(() => {
+        try {
+          // uploadMaxMb is written before aiPlannerEnabled fails: only a savepoint around the write loop can undo it
+          updateSettings(db, { uploadMaxMb: 77, aiPlannerEnabled: false }, D1);
+        } catch (e) {
+          caught = e as Error;
+        }
+      })();
+
+      expect(caught?.message).toMatch(/boom/);
+      expect(db.inTransaction).toBe(false); // the caller's transaction really committed
+      expect(count(db, `key = 'uploadMaxMb'`)).toBe(0);
+      expect(count(db)).toBe(0);
+      expect(getSettings(db)).toEqual(CRITERIA_DEFAULTS);
     });
 
     test('called inside a caller\'s own transaction it joins it: the caller rolling back undoes the settings too', () => {
