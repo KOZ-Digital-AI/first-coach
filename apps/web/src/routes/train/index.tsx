@@ -15,7 +15,7 @@ import { Tag } from '../../components/ui/tag';
 import { TrustBadge } from '../../features/commons/TrustBadge';
 import { makeEvent, submitEvents, TODAY_QUERY_KEY } from '../../features/train/events-client';
 import { type Api, api as appApi } from '../../lib/api';
-import { ensurePlayerSession } from '../../lib/auth';
+import { ensurePlayerSessionOutcome } from '../../lib/auth';
 import { DEFAULT_LOCALE, formatNumber, toLocale } from '../../lib/i18n';
 import { ApiProblem, describeProblem } from '../../lib/problem';
 import { type TodaySlotProps, useSlot } from '../../lib/slots';
@@ -30,7 +30,10 @@ import { type TodaySlotProps, useSlot } from '../../lib/slots';
  *     the player's local day). It never retries by itself: Try again is the way out. A cached session is shown at once and
  *     refreshed behind it; a refresh that fails keeps the cached session on screen with a notice.
  *  2. A player who is not onboarded (the server answers 404 "not onboarded") is sent to /train/onboarding (history replace, so
- *     Back does not bounce them here again).
+ *     Back does not bounce them here again). A player whose anonymous session THIS visit just created (ensureSession resolves
+ *     `{ created: true }`, fc-mol-9l4.16) cannot be onboarded yet, so the answer is known without asking: the same redirect,
+ *     with no GET /api/player/today (the onboarding call budget is sign-in, options, start). A session that already existed
+ *     still probes /today as before.
  *  3. Tapping a drill goes to the drill player, /train/drill/<itemId>. Finishing is one session_finished event through the
  *     events client and then /train/summary. The button is disabled until every drill is done and while the request is in
  *     flight; a ref also refuses a second finish in the same tick. A failed finish keeps the SAME event, so Try again
@@ -71,7 +74,10 @@ const TRACKS: ReadonlySet<string> = new Set(['ball-mastery', 'dribbling', 'passi
 
 export type TodayDeps = {
   api: Pick<Api, 'get'>;
-  /** Resolves once the player has a (possibly anonymous) session. */
+  /**
+   * Resolves once the player has a (possibly anonymous) session. What it resolves MAY be a PlayerSessionOutcome: `created: true`
+   * says this very call made the anonymous session, so there is nothing to probe (any other value means "probe as usual").
+   */
   ensureSession: () => Promise<unknown>;
   /** The device's IANA time zone, or undefined when it cannot be read (then no X-Timezone header is sent). */
   timeZone: () => string | undefined;
@@ -95,6 +101,9 @@ function browserTimeZone(): string | undefined {
     return undefined;
   }
 }
+
+/** True when ensureSession says it just created the session (a PlayerSessionOutcome with `created: true`). */
+const wasCreated = (outcome: unknown): boolean => typeof outcome === 'object' && outcome !== null && (outcome as { created?: unknown }).created === true;
 
 /** `weak-foot` -> `Weak foot` (the skill tree's rule: the contract has no localised skill name). */
 function humanise(slug: string): string {
@@ -199,7 +208,7 @@ function TodayPage() {
   const injected = useContext(TodayDepsContext);
   const [deps] = useState(() => ({
     api: appApi,
-    ensureSession: ensurePlayerSession,
+    ensureSession: ensurePlayerSessionOutcome,
     timeZone: browserTimeZone,
     events: { makeEvent, submitEvents },
     ...injected,
@@ -214,7 +223,9 @@ function TodayPage() {
     queryKey: TODAY_QUERY_KEY,
     queryFn: async ({ signal }) => {
       // A first visit has no session at all; the server's answer to this call is what counts, so a failure here is not final.
-      await deps.ensureSession().catch(() => undefined);
+      const session = await deps.ensureSession().catch(() => undefined);
+      // A player created a moment ago has no plan: the answer to the probe would be this 404, so it is not asked for.
+      if (wasCreated(session)) throw new ApiProblem({ kind: 'not_found', status: 404 });
       const zone = deps.timeZone();
       return deps.api.get(`${ENDPOINTS.getToday.path}?${new URLSearchParams({ locale })}`, {
         schema: ENDPOINTS.getToday.response,
