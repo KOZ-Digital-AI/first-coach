@@ -420,6 +420,8 @@ describe('008_ai_calls: candidate_ids and chosen_ids (JSON arrays of ids, never 
       expect(accepts({ [column]: `["${'a'.repeat(7000)}"]` }), 'one 7000-character id').toBe(false);
       expect(accepts({ [column]: `["${'a.b_c-9'.repeat(20)}"]` }), 'mixed id characters, 140').toBe(false);
       expect(accepts({ [column]: `[${'7'.repeat(129)}]` }), 'a 129-digit number').toBe(false);
+      expect(accepts({ [column]: `["${'ABC'.repeat(43)}"]` }), 'upper-case run, 129').toBe(false);
+      expect(accepts({ [column]: `["${'XYZ'.repeat(42)}Q"]` }), 'upper-case id, 127').toBe(true);
     });
 
     test(`${column} still accepts many ordinary ids: the cap is per element, not on the total`, () => {
