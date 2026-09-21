@@ -8,8 +8,8 @@ open-source PWA for self-directed football skill training: a child (or a
 parent, or a volunteer coach) picks a skill, follows a short drill, and sees
 progress, with no paid coach and no subscription required.
 
-> The product is still being built. Commands and endpoints below describe the
-> planned setup and may change until the first release.
+> The product is pre-release. Commands and endpoints below describe the setup
+> as it works today and may change before the first release.
 
 ## Two open parts
 
@@ -31,12 +31,21 @@ cp .env.example .env
 bun run dev
 ```
 
-The API listens on port 4111 and serves everything under `/api`. The web dev
-server proxies `/api` requests to it, so you only open the web dev server in
-your browser.
+The API listens on port 4111 and serves everything under `/api`, plus `/health`.
+The web dev server proxies `/api` and `/health` requests to it, so you only open
+the web dev server in your browser.
 
 An OpenAI key in `.env` is optional. The product works with the LLM off; the
-key only enables extra AI-assisted features.
+key only enables the AI-assisted features: the AI planner that personalises
+today's session, the drill explainer and the Beta AI Video Coach. Set
+`OPENAI_API_KEY`, and optionally `OPENAI_MODEL` (text, default `gpt-4o-mini`)
+and `OPENAI_VISION_MODEL` (video, default the text model). The AI planner only
+picks from drills the server has already chosen, and when it fails the player
+gets the ordinary rule-based session. An admin can switch the AI planner and the video
+coach off in the admin settings screen (`/admin/settings`).
+
+Operating a deployment (Railway, backups, admin accounts, takedown requests) is
+described in [docs/runbook.md](docs/runbook.md).
 
 ## Use the commons in another app
 
@@ -56,7 +65,7 @@ You do not need GitHub or any developer skills to contribute a method.
 
 1. Sign in on the site.
 2. Open the CONTRIBUTE A METHOD form and describe your drill or method.
-3. Add a video.
+3. Optionally add a video (or up to three image or PDF files).
 4. Confirm that you own the rights to what you are submitting.
 5. Submit. A reviewer approves it before it appears in the commons.
 
