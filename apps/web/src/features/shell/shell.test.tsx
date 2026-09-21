@@ -15,7 +15,7 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react');
+const { act, cleanup, fireEvent, render, screen, within } = await import('@testing-library/react');
 
 type Locale = (typeof LOCALES)[number];
 
@@ -334,7 +334,9 @@ describe('active route', () => {
   test('the indicator follows the route when it changes', async () => {
     const { router } = await renderShell({ path: '/train' });
     expect(activeLabels(primaryNav())).toEqual(['Train']);
-    await router.navigate({ to: '/video' as never });
+    await act(async () => {
+      await router.navigate({ to: '/video' as never });
+    });
     await screen.findByText('page /video');
     expect(activeLabels(primaryNav())).toEqual(['Video Coach · Beta']);
     expect(activeLabels(tabBar())).toEqual(['Video Coach · Beta']);
