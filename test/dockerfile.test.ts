@@ -456,6 +456,16 @@ describe("Dockerfile runtime configuration", () => {
     expect(env.BACKUP_DIR).toBe("/data/backups");
   });
 
+  test("the runtime stage sets NODE_ENV=production (env validation and secure cookies treat the image as production)", () => {
+    expect(envOf(stagesOf().runtime).NODE_ENV).toBe("production");
+  });
+
+  test("the build stage never sets NODE_ENV: `bun install --frozen-lockfile` would then skip the devDependencies typecheck and the web build need", () => {
+    const { build } = stagesOf();
+    expect(envOf(build)).not.toHaveProperty("NODE_ENV");
+    expect(build.instructions.filter(({ args }) => args.includes("NODE_ENV"))).toEqual([]);
+  });
+
   test("accepts BUILD_VERSION as a build arg (default dev) and exports it to the environment", () => {
     const { runtime } = stagesOf();
     const argAt = runtime.instructions.findIndex(
