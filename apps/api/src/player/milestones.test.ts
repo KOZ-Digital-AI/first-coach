@@ -413,8 +413,9 @@ describe('THOUSAND_TOUCHES', () => {
     addProfile('p2');
     addResult('p1', BALL_MASTERY, 600, at(1));
     addResult('p2', BALL_MASTERY, 600, at(2));
-    expect(achieved('p1', 'THOUSAND_TOUCHES')).toBeUndefined();
-    expect(achieved('p2', 'THOUSAND_TOUCHES')).toBe(at(2));
+    addResult('p2', JUGGLING, 400, at(3));
+    expect(achieved('p1', 'THOUSAND_TOUCHES')).toBeUndefined(); // 600, not 1600
+    expect(achieved('p2', 'THOUSAND_TOUCHES')).toBe(at(3));
   });
 });
 
