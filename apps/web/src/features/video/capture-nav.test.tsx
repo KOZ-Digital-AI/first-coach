@@ -533,6 +533,8 @@ describe('privacy is unchanged by the hand-over', () => {
     act(() => advance(3000));
     await findButton('Stop recording');
     act(() => advance(11000));
+    // the clock is read on a short poll: Stop is enabled once the poll has seen the 11 s
+    await waitFor(() => expect(button('Stop recording').disabled).toBe(false));
     await view.user.click(button('Stop recording'));
     await heading('Ready to send?');
     await view.user.click(button('Send for analysis'));
