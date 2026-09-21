@@ -169,6 +169,7 @@ async function trainedPlayer(over: Partial<PlayerProfile> = {}): Promise<Player 
   ]);
   db.run("INSERT INTO consents (player_id, kind, granted) VALUES (?, 'modelImprovement', 1)", [player.id]);
   db.run("INSERT INTO ai_calls (player_id, kind, model, candidate_ids, chosen_ids, latency_ms) VALUES (?, 'plan', 'test-model', '[\"dv-1\"]', '[\"dv-1\"]', 1)", [player.id]);
+  db.run("INSERT INTO video_analyses (id, player_id, skill_slug, rubric_version, confidence, scores, focus_next, recommended, features_summary, client_uuid) VALUES (?, ?, 'first-touch', 1, 'low', '[{\"key\":\"balance\"}]', 'again', '[]', '{}', ?)", [`va-${nextRow}`, player.id, uuid(nextRow++)]);
   return { ...player, start: StartResponse.parse(await res.json()) };
 }
 
