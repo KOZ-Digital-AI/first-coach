@@ -387,6 +387,8 @@ describe('Delete my data: the confirm gate', () => {
     await user.type(wordBox(), 'DELET');
     fireEvent.submit(dialog.querySelector('form')!);
     fireEvent.submit(dialog.querySelector('form')!);
+    // The request would leave on a later tick: give it one before saying nothing was sent.
+    await new Promise((resolve) => setTimeout(resolve, 30));
     expect(deletes()).toEqual([]);
   });
 
