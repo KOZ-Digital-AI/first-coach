@@ -247,6 +247,91 @@ describe("contributors", () => {
   });
 });
 
+describe("admin endpoints are closed to everyone but an admin", () => {
+  type Probe = { method: "GET" | "POST"; path: string; body: (victim: string, token: string) => unknown };
+  const probes: Probe[] = [
+    { method: "POST", path: "/api/auth/admin/set-role", body: (userId) => ({ userId, role: "admin" }) },
+    { method: "GET", path: "/api/auth/admin/list-users", body: () => undefined },
+    { method: "GET", path: "/api/auth/admin/get-user", body: () => undefined },
+    {
+      method: "POST",
+      path: "/api/auth/admin/create-user",
+      body: () => ({ email: "made@example.com", password: PASSWORD, name: "Made", role: "admin" }),
+    },
+    { method: "POST", path: "/api/auth/admin/update-user", body: (userId) => ({ userId, data: { name: "x" } }) },
+    { method: "POST", path: "/api/auth/admin/ban-user", body: (userId) => ({ userId }) },
+    { method: "POST", path: "/api/auth/admin/unban-user", body: (userId) => ({ userId }) },
+    { method: "POST", path: "/api/auth/admin/impersonate-user", body: (userId) => ({ userId }) },
+    { method: "POST", path: "/api/auth/admin/remove-user", body: (userId) => ({ userId }) },
+    {
+      method: "POST",
+      path: "/api/auth/admin/set-user-password",
+      body: (userId) => ({ userId, newPassword: "brand-new-password-1" }),
+    },
+    { method: "POST", path: "/api/auth/admin/list-user-sessions", body: (userId) => ({ userId }) },
+    { method: "POST", path: "/api/auth/admin/revoke-user-session", body: (_u, sessionToken) => ({ sessionToken }) },
+    { method: "POST", path: "/api/auth/admin/revoke-user-sessions", body: (userId) => ({ userId }) },
+  ];
+
+  test("every admin endpoint answers 401/403 to a contributor, an anonymous player and no cookie", async () => {
+    const contributor = cookieOf(await signUp("contrib@example.com"));
+    const player = cookieOf(await post("/api/auth/sign-in/anonymous", {}));
+    const victimRes = await signUp("victim@example.com");
+    const victim = await userIdOf(victimRes.clone());
+    const token = cookieOf(victimRes).split("=")[1] ?? "x";
+    const actors: [string, string | undefined][] = [
+      ["contributor", contributor],
+      ["anonymous", player],
+      ["no cookie", undefined],
+    ];
+
+    const outcomes: string[] = [];
+    for (const probe of probes) {
+      for (const [actor, cookie] of actors) {
+        const body = probe.body(victim, token);
+        const res =
+          probe.method === "GET"
+            ? await app.request(
+                probe.path + (probe.path.endsWith("get-user") ? `?id=${victim}` : ""),
+                { headers: { origin: DEV_ORIGIN, ...(cookie ? { cookie } : {}) } },
+              )
+            : await post(probe.path, body, cookie);
+        outcomes.push(`${probe.method} ${probe.path} as ${actor}: ${[401, 403].includes(res.status) ? "denied" : res.status}`);
+      }
+    }
+
+    expect(outcomes).toHaveLength(probes.length * 3);
+    expect(outcomes.filter((line) => !line.endsWith(": denied"))).toEqual([]);
+    expect(roleOf("victim@example.com")).toBe("contributor");
+    expect(roleOf("made@example.com")).toBeUndefined();
+    const users = db.query("SELECT count(*) AS n FROM user").get() as { n: number };
+    expect(users.n).toBe(3); // contributor, player, victim: nothing created or removed
+  });
+});
+
+describe("GET is mounted under /api/auth", () => {
+  test("GET /api/auth/get-session answers 200 with null and with the session's user", async () => {
+    const anon = await app.request("/api/auth/get-session");
+    expect(anon.status).toBe(200);
+    expect(anon.headers.get("content-type")).toContain("application/json");
+    expect(await anon.json()).toBeNull();
+
+    const up = await signUp("getter@example.com");
+    const withCookie = await app.request("/api/auth/get-session", { headers: { cookie: cookieOf(up) } });
+
+    expect(withCookie.status).toBe(200);
+    const body = (await withCookie.json()) as { user: { email: string } };
+    expect(body.user.email).toBe("getter@example.com");
+  });
+
+  test("GET /api/auth/ok answers 200 { ok: true }", async () => {
+    const res = await app.request("/api/auth/ok");
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+  });
+});
+
 describe("cookies and origins", () => {
   test("outside production the session cookie is not Secure-prefixed and lacks Secure", async () => {
     const { handle, call } = await standalone(false);
@@ -411,21 +496,68 @@ describe("resolveAuthConfig", () => {
     );
   });
 
-  test("an https BETTER_AUTH_URL counts as production even without NODE_ENV", () => {
+  test("fails closed: no NODE_ENV and nothing else set is production and demands a secret", () => {
+    expect(() => resolveAuthConfig(db, {})).toThrow("BETTER_AUTH_SECRET");
     expect(() => resolveAuthConfig(db, { BETTER_AUTH_URL: PROD_URL })).toThrow("BETTER_AUTH_SECRET");
-    const config = resolveAuthConfig(db, { BETTER_AUTH_SECRET: SECRET, BETTER_AUTH_URL: PROD_URL });
-    expect(config.production).toBe(true);
-    expect(config.baseURL).toBe(PROD_URL);
-    expect(config.secret).toBe(SECRET);
   });
 
-  test("dev and test fall back to a non-production config on localhost:4111", () => {
-    const config = resolveAuthConfig(db, {});
+  test("fails closed: a secret and an http URL without NODE_ENV is production, never the dev fallback", async () => {
+    const config = resolveAuthConfig(db, { BETTER_AUTH_SECRET: SECRET, BETTER_AUTH_URL: "http://x" });
 
+    expect(config.production).toBe(true);
+    expect(config.secret).toBe(SECRET);
+    expect(config.baseURL).toBe("http://x");
+    expect(config.trustedOrigins).not.toContain("http://localhost:5173");
+    const handle = open(":memory:");
+    const auth = createAuth({ ...config, db: handle });
+    await ensureAuthSchema(auth, handle);
+    const res = await auth.handler(
+      new Request("http://x/api/auth/sign-in/anonymous", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: "http://x" },
+        body: "{}",
+      }),
+    );
+    const cookie = res.headers.getSetCookie()[0] ?? "";
+    expect(cookie.startsWith("__Secure-better-auth.session_token=")).toBe(true);
+    expect(cookie).toContain("Secure");
+  });
+
+  test.each(["Production", "PRODUCTION", "staging", "", "production ", "dev"])(
+    "fails closed: NODE_ENV %p is production",
+    (nodeEnv) => {
+      expect(() => resolveAuthConfig(db, { NODE_ENV: nodeEnv })).toThrow("BETTER_AUTH_SECRET");
+      const config = resolveAuthConfig(db, {
+        NODE_ENV: nodeEnv,
+        BETTER_AUTH_SECRET: SECRET,
+        BETTER_AUTH_URL: "http://x",
+      });
+      expect(config.production).toBe(true);
+    },
+  );
+
+  test.each(["development", "test"])(
+    "NODE_ENV %p with nothing else set gets the dev fallbacks and is not production",
+    (nodeEnv) => {
+      const config = resolveAuthConfig(db, { NODE_ENV: nodeEnv });
+
+      expect(config.production).toBe(false);
+      expect(config.baseURL).toBe(DEV_ORIGIN);
+      expect(config.secret.length).toBeGreaterThanOrEqual(32);
+      expect(config.trustedOrigins).toContain("http://localhost:5173");
+    },
+  );
+
+  test("an explicit secret and URL are honoured in development", () => {
+    const config = resolveAuthConfig(db, {
+      NODE_ENV: "development",
+      BETTER_AUTH_SECRET: SECRET,
+      BETTER_AUTH_URL: "http://localhost:9999",
+    });
+
+    expect(config.secret).toBe(SECRET);
+    expect(config.baseURL).toBe("http://localhost:9999");
     expect(config.production).toBe(false);
-    expect(config.baseURL).toBe(DEV_ORIGIN);
-    expect(config.secret.length).toBeGreaterThanOrEqual(32);
-    expect(config.trustedOrigins).toContain("http://localhost:5173");
   });
 
   test("production trusts only BETTER_AUTH_TRUSTED_ORIGINS, never the vite dev origin", () => {
@@ -437,5 +569,30 @@ describe("resolveAuthConfig", () => {
     });
 
     expect(config.trustedOrigins).toEqual(["https://a.example", "https://b.example"]);
+  });
+
+  test.each(["*", "https://*.example.com", "https://a.example, *"])(
+    "production rejects a wildcard in BETTER_AUTH_TRUSTED_ORIGINS (%p)",
+    (origins) => {
+      expect(() =>
+        resolveAuthConfig(db, {
+          NODE_ENV: "production",
+          BETTER_AUTH_SECRET: SECRET,
+          BETTER_AUTH_URL: PROD_URL,
+          BETTER_AUTH_TRUSTED_ORIGINS: origins,
+        }),
+      ).toThrow("BETTER_AUTH_TRUSTED_ORIGINS");
+    },
+  );
+
+  test("an empty BETTER_AUTH_TRUSTED_ORIGINS adds no origins", () => {
+    const config = resolveAuthConfig(db, {
+      NODE_ENV: "production",
+      BETTER_AUTH_SECRET: SECRET,
+      BETTER_AUTH_URL: PROD_URL,
+      BETTER_AUTH_TRUSTED_ORIGINS: "  ",
+    });
+
+    expect(config.trustedOrigins).toEqual([]);
   });
 });
