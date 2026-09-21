@@ -144,6 +144,14 @@ describe('connectivity banner', () => {
     expect(screen.queryByText(RESTORED_EN)).toBeNull();
   });
 
+  test('by default the confirmation stays visible for a few seconds after the flush settles, not just an instant', async () => {
+    render(withI18n('en', <ConnectivityBanner flush={instantFlush()} />));
+    await goOffline();
+    await goOnline();
+    await act(() => sleep(150));
+    expect(screen.getByText(RESTORED_EN)).toBeTruthy();
+  });
+
   test('a flush that rejects (no player yet, storage failure) neither crashes nor leaves the confirmation stuck', async () => {
     const { flush, reject } = deferredFlush();
     renderBanner({ flush, dismissAfterMs: DISMISS_MS });
