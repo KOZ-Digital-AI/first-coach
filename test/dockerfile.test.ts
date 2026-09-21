@@ -239,7 +239,7 @@ export function isIgnored(patterns: string[], path: string): boolean {
   let ignored = false;
   for (const raw of patterns) {
     const negated = raw.startsWith("!");
-    const body = posix.normalize((negated ? raw.slice(1) : raw).trim()).replace(/^\/+/, "");
+    const body = posix.normalize((negated ? raw.slice(1) : raw).trim()).replace(/^\/+/, "").replace(/\/+$/, "");
     const regexp = patternRegExp(body);
     const hit = parts.some((_, i) => regexp.test(parts.slice(0, i + 1).join("/")));
     if (hit) ignored = !negated;
@@ -447,6 +447,49 @@ describe("Dockerfile runtime stage", () => {
   });
 });
 
+describe("Dockerfile runtime stage: commons seed", () => {
+  // The 20-seed boot hook resolves config/commons relative to apps/api/src/boot, so the
+  // repo-root config/ directory must sit at /app/config in the image.
+  const SEED_SOURCES = ["config", "./config", "config/", "./config/"];
+
+  /** COPYs of `stage` that bring the repo-root config directory to `/app/config`. */
+  const configCopies = (stage: Stage): Copy[] =>
+    stage.instructions
+      .filter(({ keyword }) => keyword === "COPY" || keyword === "ADD")
+      .map(({ args }) => parseCopy(args))
+      .filter(
+        (copy) =>
+          copy.sources.length === 1 &&
+          SEED_SOURCES.includes(copy.sources[0] as string) &&
+          posix.resolve(workdirAtEnd(stage), copy.dest) === `${APP_DIR}/config`,
+      );
+
+  test("the FINAL stage COPYs the repo-root config/ to /app/config, from the build context", () => {
+    const { runtime } = stagesOf();
+    const copies = configCopies(runtime);
+    expect(copies.length).toBeGreaterThan(0);
+    // From the build context, not from another stage (the build stage does not carry config).
+    expect(copies.some((copy) => copy.from === undefined)).toBe(true);
+  });
+
+  test("the seed files that COPY carries exist in the repo (the COPY is not vacuous)", () => {
+    const skillGraph = readRoot("config/commons/football/skill-graph.json");
+    expect(skillGraph.trim().length).toBeGreaterThan(0);
+    expect(() => JSON.parse(skillGraph)).not.toThrow();
+  });
+
+  test("the destination lands the seed where 20-seed.boot.ts looks: /app/apps/api/src/boot/../../../../config/commons", () => {
+    // Pins the DEFAULT_SEED_DIR arithmetic the Dockerfile relies on.
+    expect(readRoot("apps/api/src/boot/20-seed.boot.ts")).toContain('"../../../../config/commons"');
+    expect(posix.resolve("/app/apps/api/src/boot", "../../../../config/commons")).toBe("/app/config/commons");
+    const { runtime } = stagesOf();
+    const copy = configCopies(runtime)[0];
+    expect(copy).toBeDefined();
+    const dest = posix.resolve(workdirAtEnd(runtime), copy?.dest ?? "");
+    expect(posix.join(dest, "commons")).toBe("/app/config/commons");
+  });
+});
+
 describe("Dockerfile runtime configuration", () => {
   test("ENV points every writable path at /data", () => {
     const env = envOf(stagesOf().runtime);
@@ -571,4 +614,23 @@ describe(".dockerignore", () => {
     expect(sources.length).toBeGreaterThan(0);
     expect(sources.filter((source) => isIgnored(patterns, source))).toEqual([]);
   });
+});
+
+describe(".dockerignore keeps the commons seed", () => {
+  test("the matcher would catch every form that excludes config/ (self-check)", () => {
+    for (const pattern of ["config", "/config", "config/", "config/**", "**/config", "config/*"]) {
+      expect({ pattern, ignored: isIgnored([pattern], "config/commons/football/skill-graph.json") }).toEqual({
+        pattern,
+        ignored: true,
+      });
+    }
+    expect(isIgnored(["config", "!config"], "config/commons/football/skill-graph.json")).toBe(false);
+  });
+
+  test.each(["config", "config/commons", "config/commons/football", "config/commons/football/skill-graph.json"])(
+    "keeps %s in the build context",
+    (path) => {
+      expect(isIgnored(dockerignore(), path)).toBe(false);
+    },
+  );
 });
