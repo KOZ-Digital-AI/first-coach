@@ -318,6 +318,28 @@ function locate(mediaDir: string, storedPath: string): string | undefined {
   return join(parent, basename(target));
 }
 
+/** `<random>.<ext of an allowed type>`: exactly what storeUpload names a file (the random part is at most 64 characters). */
+const STORED_NAME = new RegExp(`^[A-Za-z0-9_-]{1,64}\\.(?:${Object.values(TYPES).map((type) => type.ext).join("|")})$`);
+
+/**
+ * The absolute path of a stored upload, for reading it, or undefined. Defined only for a name of the
+ * stored-name shape (`<random>.<ext>`, so never a separator, `..`, NUL or an odd extension), inside the
+ * real mediaDir, that is a REGULAR file: a symlink (dangling or not), a directory, a missing file, a
+ * missing mediaDir and any non-string are all undefined. It never throws for a bad name and never returns
+ * a path outside mediaDir. A mediaDir that is itself a symlink to the volume is followed (it is trusted
+ * configuration); nothing inside it is.
+ */
+export function resolveStoredFile(mediaDir: string, storedPath: string): string | undefined {
+  if (typeof storedPath !== "string" || !STORED_NAME.test(storedPath)) return undefined;
+  try {
+    const target = locate(mediaDir, storedPath);
+    return target !== undefined && lstatSync(target).isFile() ? target : undefined;
+  } catch (error) {
+    if (error instanceof UnsafePathError || (error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+}
+
 /**
  * Removes a stored file. Idempotent (already gone is fine). Throws UnsafePathError for a path outside
  * mediaDir (`..`, absolute, through a symlinked directory) and for a directory. A symlink entry is

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "prebuild": "bun ../../scripts/fetch-pose-model.ts",
     "build": "vite build",
     "typecheck": "(test ! -f src/routes/__root.tsx || tsr generate) && tsc --noEmit",
     "test": "bun test"
