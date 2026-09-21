@@ -37,6 +37,8 @@
 //     seed its stored edges are reconciled to exactly the seed's set (missing ones inserted,
 //     unlisted ones deleted), otherwise a reversed prerequisite would leave both edges and the
 //     stored graph cyclic. Skills the seed does not list keep their rows and edges.
+//   - skill_tests.thresholds is the canonical JSON of the seed test's `thresholds`, or SQL NULL when
+//     the seed test has none (removing them from the seed clears the column).
 //   - sports.name is not part of the seed: it is filled from the slug on insert and left alone.
 //   - sports.graph_version = `<seed version>+<first 12 hex of sha256 of the canonical graph>`. The
 //     hash makes the version move whenever nodes or the seed's own version move, even when the
@@ -634,14 +636,15 @@ class Writer {
 
   private writeTest(test: SeedTest): void {
     const changed = this.run(
-      `INSERT INTO skill_tests (id, slug, skill_id, metric, unit, direction, protocol, equipment, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO skill_tests (id, slug, skill_id, metric, unit, direction, protocol, equipment, thresholds, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (slug) DO UPDATE SET
          skill_id = excluded.skill_id, metric = excluded.metric, unit = excluded.unit,
-         direction = excluded.direction, protocol = excluded.protocol, equipment = excluded.equipment
+         direction = excluded.direction, protocol = excluded.protocol, equipment = excluded.equipment,
+         thresholds = excluded.thresholds
        WHERE skill_id IS NOT excluded.skill_id OR metric IS NOT excluded.metric OR unit IS NOT excluded.unit
           OR direction IS NOT excluded.direction OR protocol IS NOT excluded.protocol
-          OR equipment IS NOT excluded.equipment`,
+          OR equipment IS NOT excluded.equipment OR thresholds IS NOT excluded.thresholds`,
       [
         this.idOf("skill_tests", test.slug),
         test.slug,
@@ -651,6 +654,9 @@ class Writer {
         test.direction,
         canonical(test.protocol),
         test.equipment,
+        // Canonical JSON (sorted keys) like every other JSON column, so an unchanged seed is
+        // byte-identical whatever the file's key order. No thresholds in the seed = SQL NULL.
+        test.thresholds === undefined ? null : canonical(test.thresholds),
         this.stamp,
       ],
     );

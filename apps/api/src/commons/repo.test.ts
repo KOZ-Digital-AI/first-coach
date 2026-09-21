@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { z } from 'zod';
 import type { Database } from 'bun:sqlite';
 import { aiPlanUnknownIds } from '../shared/ai';
 import { DrillDetail, DrillListResponse, SkillGraph, graphProblems } from '../shared/commons';
@@ -7,7 +8,7 @@ import { DrillContent } from '../shared/primitives';
 import type { LocalizedText } from '../shared/primitives';
 import { openDatabase } from '../db/database';
 import { MIGRATIONS_DIR, migrate } from '../db/migrate';
-import { DEFAULT_LIMIT, InvalidCursorError, MAX_LIMIT, getDrill, getSkillGraph, getStats, listDrills, listPublishedVersions } from './repo';
+import { DEFAULT_LIMIT, InvalidCursorError, MAX_LIMIT, getDrill, getSkillGraph, getSkillTests, getStats, listDrills, listPublishedVersions } from './repo';
 
 // Every test runs on a fresh in-memory database migrated with the real migrations, so the
 // repository is exercised against the exact schema (STRICT tables, CHECKs, FKs, the
@@ -724,6 +725,155 @@ describe('getSkillGraph', () => {
   test('a sport without skills is an empty graph, not null', () => {
     db.run(`INSERT INTO sports (id, slug, name, graph_version) VALUES ('sp3', 'padel', '{"en":"Padel"}', '0.1.0')`);
     expect(SkillGraph.parse(getSkillGraph(db, 'padel', 'en'))).toEqual({ sport: 'padel', version: '0.1.0', nodes: [] });
+  });
+});
+
+// --- getSkillTests ---------------------------------------------------------------------------
+
+describe('getSkillTests', () => {
+  // The row contract is built here, not imported from the repo, so a repo that returns unparsed
+  // strings or loose objects fails against an independent definition.
+  const Boundaries = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+  const Bands = z.strictObject({ upTo9: Boundaries, from10to13: Boundaries, from14: Boundaries });
+  const Row = z.strictObject({
+    slug: z.string(),
+    skill: z.string(),
+    metric: z.string(),
+    unit: z.string(),
+    direction: z.enum(['higher', 'lower']),
+    equipment: z.string(),
+    protocol: z.record(z.string(), z.string()),
+    thresholds: Bands.nullable(),
+  });
+
+
+  const HIGHER: z.infer<typeof Bands> = { upTo9: [3, 8, 15, 30], from10to13: [5, 12, 25, 50], from14: [8, 20, 40, 80] };
+  const LOWER: z.infer<typeof Bands> = { upTo9: [9, 7, 5, 4], from10to13: [8, 6, 4, 3], from14: [7, 5, 3, 2] };
+
+  interface TestSpec {
+    slug: string;
+    skillId?: string;
+    metric?: string;
+    unit?: string;
+    direction?: 'higher' | 'lower';
+    equipment?: string;
+    protocol?: string;
+    thresholds?: string | null;
+  }
+  function addTest(spec: TestSpec): void {
+    db.query(
+      `INSERT INTO skill_tests (id, slug, skill_id, metric, unit, direction, protocol, equipment, thresholds)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      spec.slug, spec.slug, spec.skillId ?? 'k-touch', spec.metric ?? 'passes', spec.unit ?? 'count', spec.direction ?? 'higher',
+      spec.protocol ?? JSON.stringify(t(`protocol of ${spec.slug}`)), spec.equipment ?? 'ball',
+      spec.thresholds === undefined ? null : spec.thresholds,
+    );
+  }
+  const parsed = (sport: string, locale?: 'kk' | 'ru' | 'en') => getSkillTests(db, sport, locale).map((row) => Row.parse(row));
+
+  test('returns the sport\'s tests with the fields the level estimator needs, the skill as its slug and the thresholds parsed', () => {
+    addTest({ slug: 'wall-pass-30s', skillId: 'k-touch', metric: 'successful passes', unit: 'passes', equipment: 'ball_wall', thresholds: JSON.stringify(HIGHER) });
+
+    expect(parsed('football', 'en')).toEqual([
+      {
+        slug: 'wall-pass-30s',
+        skill: 'first-touch',
+        metric: 'successful passes',
+        unit: 'passes',
+        direction: 'higher',
+        equipment: 'ball_wall',
+        protocol: t('protocol of wall-pass-30s'),
+        thresholds: HIGHER,
+      },
+    ]);
+  });
+
+  test('thresholds are parsed numbers, not the stored JSON text; a test without thresholds gets null', () => {
+    addTest({ slug: 'with', thresholds: JSON.stringify(LOWER), direction: 'lower' });
+    addTest({ slug: 'without' });
+
+    const rows = parsed('football', 'en');
+    expect(rows.find((r) => r.slug === 'with')?.thresholds).toEqual(LOWER);
+    expect(typeof rows.find((r) => r.slug === 'with')?.thresholds).toBe('object');
+    expect(rows.find((r) => r.slug === 'without')?.thresholds).toBeNull();
+  });
+
+  test('rows come ordered by slug, whatever the insertion order', () => {
+    for (const slug of ['c-test', 'a-test', 'b-test']) addTest({ slug });
+
+    expect(parsed('football', 'en').map((r) => r.slug)).toEqual(['a-test', 'b-test', 'c-test']);
+  });
+
+  test('only the requested sport\'s tests are returned, whichever skill of it they measure', () => {
+    addTest({ slug: 'touch-test', skillId: 'k-touch' });
+    addTest({ slug: 'juggle-test', skillId: 'k-juggle' });
+    addTest({ slug: 'futsal-test', skillId: 'k-fut' });
+
+    expect(parsed('football', 'en').map((r) => [r.slug, r.skill])).toEqual([['juggle-test', 'juggling'], ['touch-test', 'first-touch']]);
+    expect(parsed('futsal', 'en').map((r) => [r.slug, r.skill])).toEqual([['futsal-test', 'futsal-control']]);
+  });
+
+  test('an unknown sport returns [], an injection-shaped one too, and nothing is written', () => {
+    addTest({ slug: 'touch-test' });
+    const before = tableCount('skill_tests');
+
+    expect(getSkillTests(db, 'curling', 'en')).toEqual([]);
+    expect(getSkillTests(db, INJECTION, 'en')).toEqual([]);
+    expect(tableCount('skill_tests')).toBe(before);
+    expect(tableCount('sports')).toBe(2);
+  });
+
+  test('a sport without tests returns []', () => {
+    expect(getSkillTests(db, 'football', 'en')).toEqual([]);
+    expect(getSkillTests(db, 'futsal')).toEqual([]);
+  });
+
+  test('tests do not depend on drill publication: a sport with no published drill still returns its tests', () => {
+    addTest({ slug: 'touch-test' });
+    expect(tableCount('drills')).toBe(0);
+
+    expect(parsed('football', 'en').map((r) => r.slug)).toEqual(['touch-test']);
+  });
+
+  test('the protocol follows requested -> ru -> en and keeps the other locales', () => {
+    addTest({ slug: 'all-three', protocol: JSON.stringify({ kk: 'kk text', ru: 'ru text', en: 'en text' }) });
+    addTest({ slug: 'ru-en', protocol: JSON.stringify({ ru: 'ru text', en: 'en text' }) });
+    addTest({ slug: 'only-en', protocol: JSON.stringify({ en: 'en text' }) });
+    const protocolOf = (locale: 'kk' | 'ru' | 'en', slug: string) => parsed('football', locale).find((r) => r.slug === slug)?.protocol;
+
+    expect(protocolOf('kk', 'all-three')).toEqual({ kk: 'kk text', ru: 'ru text', en: 'en text' });
+    expect(protocolOf('kk', 'ru-en')).toEqual({ kk: 'ru text', ru: 'ru text', en: 'en text' });
+    expect(protocolOf('kk', 'only-en')).toEqual({ kk: 'en text', en: 'en text' });
+    expect(protocolOf('ru', 'only-en')).toEqual({ ru: 'en text', en: 'en text' });
+    expect(protocolOf('en', 'ru-en')).toEqual({ ru: 'ru text', en: 'en text' });
+  });
+
+  test('without a locale the protocol is returned as stored, nothing filled in', () => {
+    addTest({ slug: 'only-en', protocol: JSON.stringify({ en: 'en text' }) });
+
+    expect(parsed('football')[0]?.protocol).toEqual({ en: 'en text' });
+  });
+
+  test('thresholds of the wrong shape read as null for that row only, and never throw', () => {
+    addTest({ slug: 'a-good', thresholds: JSON.stringify(HIGHER) });
+    addTest({ slug: 'b-empty-object', thresholds: '{}' });
+    addTest({ slug: 'c-short-band', thresholds: JSON.stringify({ ...HIGHER, upTo9: [1, 2, 3] }) });
+    addTest({ slug: 'd-string-numbers', thresholds: JSON.stringify({ ...HIGHER, from14: ['8', '20', '40', '80'] }) });
+    addTest({ slug: 'e-extra-band', thresholds: JSON.stringify({ ...HIGHER, from18: [1, 2, 3, 4] }) });
+    addTest({ slug: 'f-good', thresholds: JSON.stringify(LOWER) });
+
+    const rows = getSkillTests(db, 'football', 'en');
+
+    expect(rows.map((r) => [r.slug, r.thresholds === null ? null : 'parsed'])).toEqual([
+      ['a-good', 'parsed'],
+      ['b-empty-object', null],
+      ['c-short-band', null],
+      ['d-string-numbers', null],
+      ['e-extra-band', null],
+      ['f-good', 'parsed'],
+    ]);
+    expect(rows[5]?.thresholds).toEqual(LOWER);
   });
 });
 
