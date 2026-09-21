@@ -4,6 +4,7 @@ import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Hono } from 'hono';
+import { DEFAULT_SETTINGS, updateSettings } from '../../admin/settings';
 import type { AppDeps } from '../../app';
 import { DEFAULT_SEED_DIR } from '../../boot/20-seed.boot';
 import { loadSeed } from '../../commons/seed-loader';
@@ -151,7 +152,7 @@ describe('GET /health', () => {
 // (number), migration (name of the latest applied schema_migrations row, e.g. "003_settings"),
 // aiAvailable (boolean only) and mediaWritable (boolean; unset MEDIA_DIR = false).
 
-const DETAIL_KEYS = ['aiAvailable', 'database', 'mediaWritable', 'migration', 'ok', 'publishedDrills', 'version'];
+const DETAIL_KEYS = ['aiAvailable', 'aiPlannerEnabled', 'database', 'mediaWritable', 'migration', 'ok', 'publishedDrills', 'version'];
 
 const latestMigrationName = (): string => {
   const files = readdirSync(MIGRATIONS_DIR)
@@ -379,5 +380,156 @@ describe('GET /health details on the real seed', () => {
       logged.mockRestore();
       unmigrated.close();
     }
+  });
+});
+
+// --- aiPlannerEnabled (fc-mol-zo6.11) ----------------------------------------------------------
+// A player's client cannot read the admin-only settings route, so GET /health carries the admin
+// switch next to aiAvailable. Each test gets its own migrated :memory: database (settings rows are
+// written), so nothing leaks between tests or into the shared seeded database above.
+
+describe('GET /health aiPlannerEnabled', () => {
+  let own: Database;
+
+  const appOn = (database: Database): Hono => {
+    const a = new Hono();
+    register(a, { db: database, version: DEPS_VERSION });
+    return a;
+  };
+  const get = async (a: Hono): Promise<{ status: number; text: string; body: Record<string, unknown> }> => {
+    const res = await a.request('/health');
+    const text = await res.text();
+    return { status: res.status, text, body: JSON.parse(text) };
+  };
+
+  beforeEach(() => {
+    own = openDatabase(':memory:');
+    migrate(own, MIGRATIONS_DIR);
+  });
+  afterEach(() => {
+    try {
+      own.close();
+    } catch {
+      // already closed by the test
+    }
+  });
+
+  test('is a boolean on the 200 body and equals the settings default (true) on a fresh database', async () => {
+    const { status, body } = await get(appOn(own));
+
+    expect(status).toBe(200);
+    expect(typeof body.aiPlannerEnabled).toBe('boolean');
+    expect(body.aiPlannerEnabled).toBe(DEFAULT_SETTINGS.aiPlannerEnabled);
+    expect(body.aiPlannerEnabled).toBe(true);
+    expect(HealthResponse.safeParse(body).success).toBe(true);
+  });
+
+  test('is false once the admin stores aiPlannerEnabled=false', async () => {
+    updateSettings(own, { aiPlannerEnabled: false });
+
+    expect((await get(appOn(own))).body.aiPlannerEnabled).toBe(false);
+  });
+
+  test('is true when the admin stores aiPlannerEnabled=true explicitly', async () => {
+    updateSettings(own, { aiPlannerEnabled: false });
+    updateSettings(own, { aiPlannerEnabled: true });
+
+    expect((await get(appOn(own))).body.aiPlannerEnabled).toBe(true);
+  });
+
+  test('is read per request: an admin change is visible to the same registered app', async () => {
+    const a = appOn(own);
+
+    expect((await get(a)).body.aiPlannerEnabled).toBe(true);
+    updateSettings(own, { aiPlannerEnabled: false });
+    expect((await get(a)).body.aiPlannerEnabled).toBe(false);
+    updateSettings(own, { aiPlannerEnabled: true });
+    expect((await get(a)).body.aiPlannerEnabled).toBe(true);
+  });
+
+  test('a stored value that fails validation reads as the default (true), like the settings getter', async () => {
+    own.run("INSERT INTO settings (key, value, updated_at) VALUES ('aiPlannerEnabled', '\"nope\"', '2026-09-21T00:00:00.000Z')");
+
+    const { status, body } = await get(appOn(own));
+
+    expect(status).toBe(200);
+    expect(body.aiPlannerEnabled).toBe(true);
+  });
+
+  test('is independent of aiAvailable (the API key)', async () => {
+    const saved = process.env.OPENAI_API_KEY;
+    try {
+      updateSettings(own, { aiPlannerEnabled: false });
+      process.env.OPENAI_API_KEY = 'sk-marker-123';
+      const withKey = (await get(appOn(own))).body;
+      expect(withKey.aiAvailable).toBe(true);
+      expect(withKey.aiPlannerEnabled).toBe(false);
+
+      updateSettings(own, { aiPlannerEnabled: true });
+      delete process.env.OPENAI_API_KEY;
+      const noKey = (await get(appOn(own))).body;
+      expect(noKey.aiAvailable).toBe(false);
+      expect(noKey.aiPlannerEnabled).toBe(true);
+    } finally {
+      if (saved === undefined) delete process.env.OPENAI_API_KEY;
+      else process.env.OPENAI_API_KEY = saved;
+    }
+  });
+
+  test('exposes no other setting: no other settings key and no settings value appears in the body', async () => {
+    updateSettings(own, {
+      uploadMaxMb: 4321,
+      videoCoachEnabled: false,
+      retestIntervalsDays: [11, 22],
+      minStatusByAgeBand: { u10: 'ACADEMY_VERIFIED' },
+    });
+
+    const { body, text } = await get(appOn(own));
+
+    for (const key of ['minStatusByAgeBand', 'uploadMaxMb', 'videoCoachEnabled', 'retestIntervalsDays', 'settings']) {
+      expect(Object.keys(body)).not.toContain(key);
+    }
+    expect(text).not.toContain('4321');
+    expect(text).not.toContain('ACADEMY_VERIFIED');
+    expect(text).not.toContain('"retestIntervalsDays"');
+  });
+
+  test('the 503 body omits aiPlannerEnabled even when the stored switch is off', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      updateSettings(own, { aiPlannerEnabled: false });
+      own.run('DELETE FROM schema_migrations');
+
+      const { status, body, text } = await get(appOn(own));
+
+      expect(status).toBe(503);
+      expect(body).toEqual({ ok: false, version: DEPS_VERSION, database: 'error' });
+      expect(text).not.toContain('aiPlannerEnabled');
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
+  test('a closed database answers 503 without aiPlannerEnabled', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      own.close();
+
+      const { status, body } = await get(appOn(own));
+
+      expect(status).toBe(503);
+      expect(body).toEqual({ ok: false, version: DEPS_VERSION, database: 'error' });
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
+  test('reading the switch writes nothing to the settings table', async () => {
+    const a = appOn(own);
+
+    await get(a);
+    await get(a);
+
+    expect(own.query('SELECT COUNT(*) AS n FROM settings').get()).toEqual({ n: 0 });
   });
 });
