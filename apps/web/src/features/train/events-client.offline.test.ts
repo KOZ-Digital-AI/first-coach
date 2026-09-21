@@ -306,6 +306,32 @@ describe('offline: nothing is lost', () => {
     });
   });
 
+  test("a summary of this very session (the server's answer to an earlier drill) already counts its minutes: only the finish is added", async () => {
+    const { client, network, queryClient } = await make();
+    queryClient.setQueryData(SUMMARY, { progress: { sessionsCompleted: 4, minutesTrained: 80, streakDays: 2 }, nextSessionDate: '2026-09-23', sessionId: SESSION_ID });
+    network.online = false;
+    await client.submitEvents([ev(1), ev(2)]);
+
+    await client.submitEvents([finishEvent(3)]);
+
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toStrictEqual({
+      progress: { sessionsCompleted: 5, minutesTrained: 80, streakDays: 2 },
+      nextSessionDate: '2026-09-23',
+      sessionId: SESSION_ID,
+    });
+  });
+
+  test.each(['2026-09-20', '2026-09-21'])('a cached next session date (%s) that is not after the session is not kept: the day after the session is', async (stale) => {
+    const { client, network, queryClient } = await make();
+    queryClient.setQueryData(SUMMARY, { progress: { sessionsCompleted: 4, minutesTrained: 80, streakDays: 2 }, nextSessionDate: stale, sessionId: 's-2026-09-19' });
+    network.online = false;
+    await client.submitEvents([ev(1), ev(2)]);
+
+    await client.submitEvents([finishEvent(3)]);
+
+    expect(queryClient.getQueryData<{ nextSessionDate: string }>(SUMMARY)?.nextSessionDate).toBe('2026-09-22');
+  });
+
   test('finishing the same session offline twice counts it once', async () => {
     const { client, network, queryClient } = await make();
     network.online = false;
