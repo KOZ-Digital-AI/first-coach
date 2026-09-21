@@ -508,6 +508,12 @@ describe('watchAuthSession: the session-change signal from a Better Auth session
     expect(seen).toEqual([]);
   });
 
+  test('still loading: the listener is not called at all (an empty-looking payload while pending is not "no session")', () => {
+    // toEqual([]) would also accept [undefined] here, so the length is asserted
+    expect(collect({ data: null, isPending: true }).seen).toHaveLength(0);
+    expect(collect({ data: { user: { id: 'p1' } }, isPending: true }).seen).toHaveLength(0);
+  });
+
   test('re-reading (isRefetching keeps the PREVIOUS person): nothing is reported until it settles', () => {
     const { fake, seen } = collect({ data: { user: { id: 'p1' } }, isPending: false });
     fake.set({ data: { user: { id: 'p1' } }, isPending: false, isRefetching: true });
