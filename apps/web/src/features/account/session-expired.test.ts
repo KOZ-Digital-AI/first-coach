@@ -3,7 +3,18 @@ import { createApi } from '../../lib/api';
 import { ApiProblem } from '../../lib/problem';
 import { i18n } from '../../lib/i18n';
 import sessionMessages from './session-expired.messages';
-import { areaOf, installSessionExpired, registerDraft, signInUrl, takeDraft, withSessionRetry, type SessionExpiredDeps } from './session-expired';
+import {
+  areaOf,
+  clearDrafts,
+  installSessionExpired,
+  registerDraft,
+  resetSessionExpired,
+  signInUrl,
+  takeDraft,
+  takeExpiredNotice,
+  withSessionRetry,
+  type SessionExpiredDeps,
+} from './session-expired';
 
 // --- global hygiene ----------------------------------------------------------------------------------------------------
 // Nothing global is patched: location, navigation, toast, storage, the auth session and fetch are all injected. The globals
@@ -46,6 +57,10 @@ function memoryStorage() {
     getItem: (key: string) => data.get(key) ?? null,
     setItem: (key: string, value: string) => void data.set(key, value),
     removeItem: (key: string) => void data.delete(key),
+    key: (index: number) => [...data.keys()][index] ?? null,
+    get length() {
+      return data.size;
+    },
   };
 }
 
@@ -55,6 +70,9 @@ type Where = { pathname: string; search?: string; hash?: string };
 function rig(where: Where, overrides: Partial<SessionExpiredDeps> = {}) {
   const log: string[] = [];
   const storage = memoryStorage();
+  /** The clock every timestamp comes from; tests move it. */
+  const clock = { now: 1_700_000_000_000 };
+  const assigned: string[] = [];
   const navigations: string[] = [];
   const toasts: string[] = [];
   /** What the draft storage held at the moment of each navigation. */
@@ -73,7 +91,18 @@ function rig(where: Where, overrides: Partial<SessionExpiredDeps> = {}) {
     },
   };
   const deps: SessionExpiredDeps = {
-    location: () => ({ pathname: where.pathname, search: where.search ?? '', hash: where.hash ?? '' }),
+    location: () => ({
+      pathname: where.pathname,
+      search: where.search ?? '',
+      hash: where.hash ?? '',
+      // What the DEFAULT navigation calls: a full page load.
+      assign: (url: string) => {
+        log.push('assign');
+        assigned.push(url);
+        storageAtNavigate.push(new Map(storage.data));
+      },
+    }),
+    now: () => clock.now,
     navigate: (url) => {
       log.push('navigate');
       navigations.push(url);
@@ -87,7 +116,7 @@ function rig(where: Where, overrides: Partial<SessionExpiredDeps> = {}) {
     session: { ensure: session.ensure, reset: session.reset },
     ...overrides,
   };
-  return { deps, log, storage, navigations, toasts, storageAtNavigate, session };
+  return { deps, log, storage, navigations, assigned, toasts, storageAtNavigate, session, clock, where };
 }
 
 const json = (status: number, body: unknown = {}) =>
@@ -145,6 +174,18 @@ describe('areaOf', () => {
   test.each(['/account/sign-in', '/account', '/account/anything'])('%s is the account area, which is neither', (path) => {
     expect(areaOf(path)).toBe('account');
   });
+
+  // TanStack Router matches paths case-insensitively, so the page a coach sees at /Admin/x is the admin area.
+  test.each(['/Admin/x', '/ADMIN', '/CONTRIBUTE', '/Contribute/Mine', '/cOnTrIbUtE/edit/1', '/%41dmin/x', '/%63ontribute'])(
+    '%s is a coach/admin area whatever its case or percent-encoding',
+    (path) => expect(areaOf(path)).toBe('coach'),
+  );
+
+  test.each(['/Administrators', '/ADMINX/y', '/Contributed', '/%E0%A4%A', '/%61dmins'])('%s is still a player route', (path) => {
+    expect(areaOf(path)).toBe('player');
+  });
+
+  test.each(['/ACCOUNT/sign-in', '/Account'])('%s is the account area', (path) => expect(areaOf(path)).toBe('account'));
 });
 
 describe('signInUrl', () => {
@@ -221,7 +262,7 @@ describe('coach and admin areas: a 401 shows the expiry message and redirects to
 
     // Already in storage when navigate ran: a hard navigation would have thrown the in-memory form away.
     expect(r.storageAtNavigate).toHaveLength(1);
-    expect([...(r.storageAtNavigate[0] ?? new Map()).values()].map((raw) => JSON.parse(raw))).toEqual([draft]);
+    expect([...(r.storageAtNavigate[0] ?? new Map()).values()].map((raw) => JSON.parse(raw).value)).toEqual([draft]);
     expect(takeDraft('contribute-form', r.storage)).toEqual(draft);
     expect(takeDraft('contribute-form', r.storage)).toBeUndefined();
   });
@@ -567,5 +608,322 @@ describe('draft registry', () => {
     await rejection(api.get('/api/x', { schema: anySchema }));
 
     expect(takeDraft('gone', r.storage)).toBeUndefined();
+  });
+});
+
+// --- the notice survives a full page load ------------------------------------------------------------------------------
+
+describe('default navigation (a full page load): the expiry notice is handed to the sign-in page', () => {
+  const MINUTE = 60_000;
+
+  /** No `navigate` injected: the default, which calls `location.assign`. */
+  function fullLoadRig(where: Where = { pathname: '/contribute/form', search: '?a=1' }, overrides: Partial<SessionExpiredDeps> = {}) {
+    return rig(where, { navigate: undefined, ...overrides });
+  }
+
+  test('end to end: the flag is in storage BEFORE the page is left, and takeExpiredNotice returns it once, then null', async () => {
+    const r = fullLoadRig();
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/contributions/mine', { schema: anySchema }));
+
+    expect(r.assigned).toEqual(['/account/sign-in?redirect=%2Fcontribute%2Fform%3Fa%3D1']);
+    // Already there when location.assign ran: a toast fired here would die with the page.
+    expect(r.storageAtNavigate).toHaveLength(1);
+    expect(r.storageAtNavigate[0]?.has('fc:session-expired-notice')).toBe(true);
+    expect(r.log.indexOf('assign')).toBeGreaterThan(-1);
+
+    // The sign-in page, after the reload:
+    expect(takeExpiredNotice({ storage: r.storage, now: r.deps.now })).toEqual({ message: EXPIRED_EN });
+    expect(takeExpiredNotice({ storage: r.storage, now: r.deps.now })).toBeNull();
+    expect(r.storage.data.has('fc:session-expired-notice')).toBe(false);
+  });
+
+  test('no in-page toast is fired for a full page load (it would be lost with the page)', async () => {
+    const r = fullLoadRig();
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/contributions/mine', { schema: anySchema }));
+
+    expect(r.toasts).toEqual([]);
+  });
+
+  test('an injected (client-side) navigation keeps the in-page toast and leaves no flag behind', async () => {
+    const r = rig({ pathname: '/admin/settings' });
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/admin/settings', { schema: anySchema }));
+
+    expect(r.toasts).toEqual([EXPIRED_EN]);
+    expect(r.storage.data.has('fc:session-expired-notice')).toBe(false);
+    expect(takeExpiredNotice({ storage: r.storage, now: r.deps.now })).toBeNull();
+  });
+
+  test('the notice is worded in the language active when the sign-in page takes it', async () => {
+    const r = fullLoadRig({ pathname: '/admin' });
+    install(r.deps);
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, r.deps).get('/api/admin/x', { schema: anySchema }));
+
+    await i18n.changeLanguage('kk');
+
+    expect(takeExpiredNotice({ storage: r.storage, now: r.deps.now })).toEqual({ message: sessionMessages.kk.message as string });
+  });
+
+  test('a notice older than 5 minutes is ignored (and removed); a fresher one is still shown', async () => {
+    const stale = fullLoadRig({ pathname: '/admin' });
+    install(stale.deps);
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, stale.deps).get('/api/admin/x', { schema: anySchema }));
+    stale.clock.now += 5 * MINUTE + 1;
+    expect(takeExpiredNotice({ storage: stale.storage, now: stale.deps.now })).toBeNull();
+    expect(stale.storage.data.has('fc:session-expired-notice')).toBe(false);
+    cleanups.pop()?.();
+    await Promise.resolve();
+
+    const fresh = fullLoadRig({ pathname: '/admin' });
+    install(fresh.deps);
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, fresh.deps).get('/api/admin/x', { schema: anySchema }));
+    fresh.clock.now += 4 * MINUTE;
+    expect(takeExpiredNotice({ storage: fresh.storage, now: fresh.deps.now })).toEqual({ message: EXPIRED_EN });
+  });
+
+  test.each([
+    ['nothing stored', null],
+    ['corrupt JSON', '{nope'],
+    ['no timestamp', '{}'],
+    ['a text timestamp', '{"savedAt":"yesterday"}'],
+    ['a timestamp in the future', `{"savedAt":${1_700_000_000_000 + 3_600_000}}`],
+  ])('takeExpiredNotice returns null for %s', (_name, raw) => {
+    const r = rig({ pathname: '/' });
+    if (raw !== null) r.storage.setItem('fc:session-expired-notice', raw);
+    expect(takeExpiredNotice({ storage: r.storage, now: r.deps.now })).toBeNull();
+  });
+
+  test('takeExpiredNotice with storage unavailable is null, never a throw', () => {
+    expect(takeExpiredNotice({ storage: null })).toBeNull();
+    const broken = {
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => undefined,
+      removeItem: () => undefined,
+      key: () => null,
+      length: 0,
+    };
+    expect(takeExpiredNotice({ storage: broken })).toBeNull();
+  });
+
+  test('fails closed: a store that cannot write the notice does not stop the redirect', async () => {
+    const r = fullLoadRig({ pathname: '/admin' }, {
+      storage: {
+        getItem: () => null,
+        setItem: () => {
+          throw new Error('quota exceeded');
+        },
+        removeItem: () => undefined,
+        key: () => null,
+        length: 0,
+      },
+    });
+    install(r.deps);
+
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, r.deps).get('/api/admin/x', { schema: anySchema }));
+
+    expect(r.assigned).toEqual(['/account/sign-in?redirect=%2Fadmin']);
+  });
+});
+
+// --- mixed-case paths through the handler and the retry ----------------------------------------------------------------
+
+describe('case-insensitive areas through the handler and the retry decorator', () => {
+  test('a coach 401 at /Admin/settings redirects, keeping the path as the browser shows it', async () => {
+    const r = rig({ pathname: '/Admin/settings' });
+    install(r.deps);
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, r.deps).get('/api/admin/settings', { schema: anySchema }));
+
+    expect(r.navigations).toEqual(['/account/sign-in?redirect=%2FAdmin%2Fsettings']);
+  });
+
+  test('a 401 at /CONTRIBUTE is never retried as a player request', async () => {
+    const r = rig({ pathname: '/CONTRIBUTE' });
+    install(r.deps);
+    const server = fakeFetch(() => json(401));
+    await rejection(apiOver(server.fetch, r.deps).get('/api/contributions/mine', { schema: anySchema }));
+
+    expect(server.calls).toHaveLength(1);
+    expect(r.session.ensures).toBe(0);
+  });
+});
+
+// --- drafts do not leak across users -----------------------------------------------------------------------------------
+
+describe('drafts expire and can be cleared', () => {
+  const MINUTE = 60_000;
+
+  async function saveDraftsAt(r: ReturnType<typeof rig>, keys: Record<string, unknown>) {
+    install(r.deps);
+    for (const [key, value] of Object.entries(keys)) cleanups.push(registerDraft(key, () => value));
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, r.deps).get('/api/x', { schema: anySchema }));
+  }
+
+  test('a draft is stamped when saved and handed back within 30 minutes', async () => {
+    const r = rig({ pathname: '/contribute/form' });
+    await saveDraftsAt(r, { form: { title: 'x' } });
+    const raw = JSON.parse(r.storage.getItem('fc:draft:form') ?? 'null');
+    expect(raw.savedAt).toBe(r.clock.now);
+
+    expect(takeDraft('form', r.storage, () => r.clock.now + 29 * MINUTE)).toEqual({ title: 'x' });
+  });
+
+  test('a draft older than 30 minutes is ignored and purged, so the next user never sees it', async () => {
+    const r = rig({ pathname: '/contribute/form' });
+    await saveDraftsAt(r, { form: { title: 'private' } });
+
+    expect(takeDraft('form', r.storage, () => r.clock.now + 30 * MINUTE + 1)).toBeUndefined();
+    expect(r.storage.data.size).toBe(0);
+  });
+
+  test.each([
+    ['no timestamp', '{"value":{"a":1}}'],
+    ['a text timestamp', '{"savedAt":"now","value":{"a":1}}'],
+    ['a timestamp in the future', `{"savedAt":${1_700_000_000_000 + 3_600_000},"value":{"a":1}}`],
+  ])('a stored draft with %s is not trusted', (_name, raw) => {
+    const r = rig({ pathname: '/' });
+    r.storage.setItem('fc:draft:form', raw);
+    expect(takeDraft('form', r.storage, () => r.clock.now)).toBeUndefined();
+  });
+
+  test('clearDrafts (sign-out) removes every draft and nothing else', async () => {
+    const r = rig({ pathname: '/contribute/form' });
+    r.storage.setItem('unrelated', 'keep');
+    await saveDraftsAt(r, { a: { n: 1 }, b: { n: 2 } });
+    expect(r.storage.data.size).toBe(3);
+
+    clearDrafts(r.storage);
+
+    expect(takeDraft('a', r.storage, r.deps.now)).toBeUndefined();
+    expect(takeDraft('b', r.storage, r.deps.now)).toBeUndefined();
+    expect([...r.storage.data.keys()]).toEqual(['unrelated']);
+  });
+
+  test('clearDrafts never throws: no storage, or a storage that fails', () => {
+    expect(() => clearDrafts(null)).not.toThrow();
+    const broken = {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: () => {
+        throw new Error('blocked');
+      },
+      key: () => {
+        throw new Error('blocked');
+      },
+      get length(): number {
+        throw new Error('blocked');
+      },
+    };
+    expect(() => clearDrafts(broken)).not.toThrow();
+  });
+});
+
+// --- one expiry, one redirect ------------------------------------------------------------------------------------------
+
+describe('repeated coach-area 401s act once until a fresh page load or resetSessionExpired()', () => {
+  const nextMacrotask = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+  test('a second 401 in a later macrotask does not save, toast or navigate again', async () => {
+    const r = rig({ pathname: '/contribute/form' });
+    install(r.deps);
+    let reads = 0;
+    cleanups.push(
+      registerDraft('form', () => {
+        reads += 1;
+        return { a: 1 };
+      }),
+    );
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    await nextMacrotask();
+    await rejection(api.get('/api/two', { schema: anySchema }));
+    await nextMacrotask();
+    await rejection(api.get('/api/three', { schema: anySchema }));
+
+    expect(r.navigations).toHaveLength(1);
+    expect(r.toasts).toHaveLength(1);
+    expect(reads).toBe(1);
+  });
+
+  test('the remembered session is still forgotten on every 401', async () => {
+    const r = rig({ pathname: '/admin' });
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    await nextMacrotask();
+    const resetsAfterFirst = r.session.resets;
+    await rejection(api.get('/api/two', { schema: anySchema }));
+
+    expect(r.session.resets).toBeGreaterThan(resetsAfterFirst);
+  });
+
+  test('resetSessionExpired() (a successful sign-in) arms it again', async () => {
+    const r = rig({ pathname: '/admin' });
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    await nextMacrotask();
+    resetSessionExpired();
+    await rejection(api.get('/api/two', { schema: anySchema }));
+
+    expect(r.navigations).toHaveLength(2);
+    expect(r.toasts).toHaveLength(2);
+  });
+
+  test('a 401 on a player route does not use up the latch', async () => {
+    const r = rig({ pathname: '/today' });
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/today', { schema: anySchema }));
+    await nextMacrotask();
+    r.where.pathname = '/admin/settings';
+    await rejection(api.get('/api/admin/settings', { schema: anySchema }));
+
+    expect(r.navigations).toEqual(['/account/sign-in?redirect=%2Fadmin%2Fsettings']);
+  });
+
+  test('a navigation that throws does not use up the latch: the next 401 tries again', async () => {
+    const r = rig({ pathname: '/admin' });
+    let attempts = 0;
+    r.deps.navigate = (url) => {
+      attempts += 1;
+      if (attempts === 1) throw new Error('router not ready');
+      r.navigations.push(url);
+    };
+    install(r.deps);
+    const api = apiOver(fakeFetch(() => json(401)).fetch, r.deps);
+
+    await rejection(api.get('/api/one', { schema: anySchema }));
+    await nextMacrotask();
+    await rejection(api.get('/api/two', { schema: anySchema }));
+
+    expect(r.navigations).toEqual(['/account/sign-in?redirect=%2Fadmin']);
+  });
+
+  test('each install has its own latch', async () => {
+    const first = rig({ pathname: '/admin' });
+    const off = installSessionExpired(first.deps);
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, first.deps).get('/api/x', { schema: anySchema }));
+    off();
+    await nextMacrotask();
+
+    const second = rig({ pathname: '/admin' });
+    install(second.deps);
+    await rejection(apiOver(fakeFetch(() => json(401)).fetch, second.deps).get('/api/x', { schema: anySchema }));
+
+    expect(second.navigations).toHaveLength(1);
   });
 });
