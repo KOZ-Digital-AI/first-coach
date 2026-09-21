@@ -14,14 +14,14 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { act, cleanup, render, screen, waitFor } = await import('@testing-library/react');
+const { act, cleanup, render, screen } = await import('@testing-library/react');
 
 type Locale = (typeof LOCALES)[number];
 
 const OFFLINE_EN = 'You are offline — training still works';
 const RESTORED_EN = 'Back online — syncing';
 /** Short hold time for the tests about dismissal; every other test uses a hold so long it never fires. */
-const DISMISS_MS = 30;
+const DISMISS_MS = 20;
 const NEVER_MS = 60_000;
 
 // --- rig -----------------------------------------------------------------------------------------------------------------
@@ -81,6 +81,8 @@ const goOnline = () =>
     window.dispatchEvent(new Event('online'));
   });
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Lets a dismissal timer fire INSIDE act, so React flushes its state update before the assertion (no polling, no act warning). */
+const afterHold = () => act(() => sleep(DISMISS_MS * 8));
 
 // --- tests ---------------------------------------------------------------------------------------------------------------
 
@@ -134,11 +136,12 @@ describe('connectivity banner', () => {
     renderBanner({ flush, dismissAfterMs: DISMISS_MS });
     await goOffline();
     await goOnline();
-    await act(() => sleep(DISMISS_MS * 3));
+    await afterHold();
     expect(screen.getByText(RESTORED_EN)).toBeTruthy(); // flush still in flight: still "syncing"
     await act(async () => resolve());
     expect(screen.getByText(RESTORED_EN)).toBeTruthy(); // brief: not removed the instant the flush settles
-    await waitFor(() => expect(screen.queryByText(RESTORED_EN)).toBeNull());
+    await afterHold();
+    expect(screen.queryByText(RESTORED_EN)).toBeNull();
   });
 
   test('a flush that rejects (no player yet, storage failure) neither crashes nor leaves the confirmation stuck', async () => {
@@ -147,7 +150,8 @@ describe('connectivity banner', () => {
     await goOffline();
     await goOnline();
     await act(async () => reject(new Error('outbox: call configureOutbox({ playerId }) before using the outbox')));
-    await waitFor(() => expect(screen.queryByText(RESTORED_EN)).toBeNull());
+    await afterHold();
+    expect(screen.queryByText(RESTORED_EN)).toBeNull();
     expect(screen.queryByText(OFFLINE_EN)).toBeNull();
   });
 
@@ -160,7 +164,7 @@ describe('connectivity banner', () => {
     expect(screen.getByText(OFFLINE_EN)).toBeTruthy();
     expect(screen.queryByText(RESTORED_EN)).toBeNull();
     await act(async () => resolve());
-    await act(() => sleep(DISMISS_MS * 3));
+    await afterHold();
     expect(screen.getByText(OFFLINE_EN)).toBeTruthy();
   });
 
@@ -169,7 +173,8 @@ describe('connectivity banner', () => {
     renderBanner({ flush, dismissAfterMs: DISMISS_MS });
     await goOffline();
     await goOnline();
-    await waitFor(() => expect(screen.queryByText(RESTORED_EN)).toBeNull());
+    await afterHold();
+    expect(screen.queryByText(RESTORED_EN)).toBeNull();
     await goOffline();
     expect(screen.getByText(OFFLINE_EN)).toBeTruthy();
     await goOnline();
