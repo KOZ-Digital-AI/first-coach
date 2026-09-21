@@ -2,12 +2,20 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:
 import { DAYS_PER_WEEK, MINUTES_PER_SESSION } from '@api-types/domain';
 import type { OnboardingOptions } from '@api-types/onboarding';
 import { EQUIPMENT, SPACES, type Locale } from '@api-types/primitives';
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, LOCALES } from '../../lib/i18n';
 import { ConditionsStep, type ConditionsValue } from './ConditionsStep';
 import messages from './conditions-step.messages';
+
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the bead's verify
+// command runs from the repo root, where there is no DOM. Register happy-dom here BEFORE Testing Library is imported
+// (same order rule as test/setup.ts and lib/i18n.test.ts); the `document` guard keeps it a no-op under the preload.
+if (typeof document === 'undefined') {
+  const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
+  GlobalRegistrator.register({ url: 'http://localhost/' });
+}
+const { cleanup, render, screen, within } = await import('@testing-library/react');
+const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
  * ConditionsStep is presentational: the option lists, the draft and every callback arrive as props.
@@ -92,6 +100,7 @@ const EN = {
 };
 
 const realFetch = globalThis.fetch;
+afterEach(cleanup);
 beforeEach(() => {
   globalThis.fetch = mock(() => {
     throw new Error('ConditionsStep must not fetch');
