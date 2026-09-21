@@ -330,7 +330,7 @@ describe("SessionEventsRequest", () => {
     makeEvent({ clientUuid: uuid(1), type: "drill_done", itemId: "item-1" }),
     makeEvent({ clientUuid: uuid(2), type: "drill_undone", itemId: "item-1" }),
     makeEvent({ clientUuid: uuid(3), type: "result", itemId: "item-2", value: 21 }),
-    makeEvent({ clientUuid: uuid(4), type: "result", value: 12 }),
+    without(makeEvent({ clientUuid: uuid(4), type: "result", value: 12 }), "itemId"),
     without(makeEvent({ clientUuid: uuid(5), type: "session_finished" }), "itemId"),
   ];
 
