@@ -183,9 +183,9 @@ describe('the real seed', () => {
   });
 
   test('a ball_wall player also gets ball drills but no cones drill, and a cones player no ball_wall drill', () => {
-    const wall = candidates(profile({ equipment: 'ball_wall', space: 'gym', age: 16, partner: true }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
+    const wall = candidates(profile({ equipment: 'ball_wall', space: 'gym', age: 12, partner: true }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
     expect(new Set(wall.map((v) => v.equipment))).toEqual(new Set(['nothing', 'ball', 'ball_wall']));
-    const cones = candidates(profile({ equipment: 'cones', space: 'gym', age: 16, partner: true }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
+    const cones = candidates(profile({ equipment: 'cones', space: 'gym', age: 12, partner: true }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
     expect(new Set(cones.map((v) => v.equipment))).toEqual(new Set(['nothing', 'ball', 'cones']));
   });
 
@@ -306,10 +306,10 @@ describe('age', () => {
 describe('trust status', () => {
   const withStatus = (status: TrustStatus, slug: string) => variant({ status, slug, level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3' });
   const one = (status: TrustStatus) => withStatus(status, status.toLowerCase());
-  const mixed = TRUST_STATUSES.map(one);
 
   test('a drill at exactly the minimum is kept, a lower one is dropped, a higher one is kept', () => {
     const p = profile({ age: 12 });
+    const mixed = TRUST_STATUSES.map(one);
     const at = (min: TrustStatus) => slugs(candidates(p, {}, settingsWith({ u14: min }), mixed, graph)).sort();
     expect(at('COMMUNITY')).toEqual(['academy_verified', 'community', 'expert_verified', 'reviewed']);
     expect(at('REVIEWED')).toEqual(['academy_verified', 'expert_verified', 'reviewed']);
@@ -322,17 +322,17 @@ describe('level', () => {
   const at = (level: PublishedVersion['level'], track: string | null) =>
     variant({ level, track, skills: track === null ? [] : [track], slug: `${track}-${level}`, equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3' });
   const pick = (levels: Record<string, number>, list: PublishedVersion[]) => slugs(candidates(profile(), levels, DEFAULT_SETTINGS, list, graph)).sort();
-  const dribbling = (['beginner', 'basic', 'intermediate'] as const).map((l) => at(l, 'dribbling'));
+  const dribbling = () => (['beginner', 'basic', 'intermediate'] as const).map((l) => at(l, 'dribbling'));
 
   test('a drill may be one level above the track level', () => {
-    expect(pick({ dribbling: 1 }, dribbling)).toEqual(['dribbling-basic', 'dribbling-beginner']);
-    expect(pick({ dribbling: 2 }, dribbling)).toEqual(['dribbling-basic', 'dribbling-beginner', 'dribbling-intermediate']);
-    expect(pick({ dribbling: 5 }, dribbling)).toEqual(['dribbling-basic', 'dribbling-beginner', 'dribbling-intermediate']);
+    expect(pick({ dribbling: 1 }, dribbling())).toEqual(['dribbling-basic', 'dribbling-beginner']);
+    expect(pick({ dribbling: 2 }, dribbling())).toEqual(['dribbling-basic', 'dribbling-beginner', 'dribbling-intermediate']);
+    expect(pick({ dribbling: 5 }, dribbling())).toEqual(['dribbling-basic', 'dribbling-beginner', 'dribbling-intermediate']);
   });
 
   test('a track missing from levels counts as level 1, and only its own track level counts', () => {
-    expect(pick({}, dribbling)).toEqual(['dribbling-basic', 'dribbling-beginner']);
-    expect(pick({ 'weak-foot': 5 }, dribbling)).toEqual(['dribbling-basic', 'dribbling-beginner']);
+    expect(pick({}, dribbling())).toEqual(['dribbling-basic', 'dribbling-beginner']);
+    expect(pick({ 'weak-foot': 5 }, dribbling())).toEqual(['dribbling-basic', 'dribbling-beginner']);
   });
 
   test('a drill without a track counts as level 1', () => {
@@ -343,7 +343,7 @@ describe('level', () => {
 describe('prerequisites', () => {
   const skilled = (skills: string[]) =>
     variant({ skills, track: skills[0] ?? null, slug: skills.join('+'), level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3' });
-  const given = (levels: Record<string, number>, v: PublishedVersion, g: SkillGraph | undefined = graph) => candidates(profile(), levels, DEFAULT_SETTINGS, [v], g).length === 1;
+  const given = (levels: Record<string, number>, v: PublishedVersion, g: SkillGraph | null = graph) => candidates(profile(), levels, DEFAULT_SETTINGS, [v], g ?? undefined).length === 1;
 
   test('the real graph has the prerequisite the cases below rely on', () => {
     expect(graph.nodes.find((n) => n.slug === 'inside-touches')?.prerequisites).toEqual([{ skill: 'basic-touches', minLevel: 2 }]);
@@ -376,7 +376,7 @@ describe('prerequisites', () => {
   });
 
   test('with no graph supplied prerequisites are not checked', () => {
-    expect(given({}, skilled(['inside-touches']), undefined)).toBe(true);
+    expect(given({}, skilled(['inside-touches']), null)).toBe(true);
   });
 });
 
