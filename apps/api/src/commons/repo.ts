@@ -30,9 +30,10 @@
 import type { Database } from 'bun:sqlite';
 import type { DrillDetail, DrillFacets, DrillListResponse, DrillSummary, SkillGraph, SkillNode } from '../shared/commons';
 import type { CommonsDrillQuery } from '../shared/commons-api';
-import type { Attribution } from '../shared/domain';
+import type { Attribution, TestDirection } from '../shared/domain';
 import type { CommonsStats } from '../shared/stats';
 import { EQUIPMENT, EXPERIENCE_LEVELS, TRUST_STATUSES, pickLocalized } from '../shared/primitives';
+import { SeedTestThresholds } from './seed-schema';
 import type { DrillContent, Equipment, ExperienceLevel, Locale, LocalizedText, Space, TrustStatus } from '../shared/primitives';
 
 export const DEFAULT_LIMIT = 20;
@@ -431,6 +432,84 @@ export function getSkillGraph(db: Database, sport: string, locale: Locale): Skil
     mistakes: localizeAll(parseJson<LocalizedText[]>(skill.mistakes), locale),
   }));
   return { sport: sportRow.slug, version: sportRow.graph_version, nodes };
+}
+
+// --- getSkillTests ---------------------------------------------------------------------------
+
+/** A skill test as the level estimator reads it: the wire SkillTest plus its parsed thresholds. */
+export interface SkillTestWithThresholds {
+  slug: string;
+  /** The slug of the skill (track) the test measures. */
+  skill: string;
+  metric: string;
+  unit: string;
+  direction: TestDirection;
+  equipment: Equipment;
+  protocol: LocalizedText;
+  /** Null when the test has none, or when the stored JSON is not the thresholds shape (see getSkillTests). */
+  thresholds: SeedTestThresholds | null;
+}
+
+interface SkillTestRow {
+  slug: string;
+  skill: string;
+  metric: string;
+  unit: string;
+  direction: string;
+  equipment: string;
+  protocol: string;
+  thresholds: string | null;
+}
+
+/** The stored thresholds text as SeedTestThresholds, or null when absent or not of that shape (never throws). */
+function parseThresholds(text: string | null): SeedTestThresholds | null {
+  if (text === null) return null;
+  try {
+    const parsed = SeedTestThresholds.safeParse(JSON.parse(text));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The skill tests of one sport, ordered by slug (the table has no sort order), each with its
+ * parsed thresholds. An unknown sport returns []. Tests are returned whatever the state of the
+ * sport's drills: publication is a drill concept, a test has none.
+ *
+ * The thresholds column is CHECKed to hold a JSON object, but not its shape: a row whose object is
+ * not SeedTestThresholds (a missing band, a band that is not four numbers, an extra key) reads as
+ * `thresholds: null` for that row, exactly like a test without thresholds, and never throws.
+ *
+ * With `locale` the protocol follows requested -> ru -> en and the requested slot is filled, all
+ * stored locales kept (as getSkillGraph); without it the protocol is returned as stored.
+ */
+export function getSkillTests(db: Database, sport: string, locale?: Locale): SkillTestWithThresholds[] {
+  const rows = db
+    .query<SkillTestRow, [string]>(
+      `SELECT t.slug AS slug, s.slug AS skill, t.metric AS metric, t.unit AS unit, t.direction AS direction,
+              t.equipment AS equipment, t.protocol AS protocol, t.thresholds AS thresholds
+         FROM skill_tests t
+         JOIN skills s ON s.id = t.skill_id
+         JOIN sports sp ON sp.id = s.sport_id
+        WHERE sp.slug = ?`,
+    )
+    .all(sport);
+  return rows
+    .sort((a, b) => compare(a.slug, b.slug))
+    .map((row) => {
+      const protocol = parseJson<LocalizedText>(row.protocol);
+      return {
+        slug: row.slug,
+        skill: row.skill,
+        metric: row.metric,
+        unit: row.unit,
+        direction: row.direction as TestDirection,
+        equipment: row.equipment as Equipment,
+        protocol: locale === undefined ? protocol : localize(protocol, locale),
+        thresholds: parseThresholds(row.thresholds),
+      };
+    });
 }
 
 // --- getStats --------------------------------------------------------------------------------

@@ -1,0 +1,41 @@
+-- 004_test_thresholds: the level thresholds of a skill test, as JSON, on skill_tests.
+--
+-- Applied by ../migrate.ts inside its own transaction: no transaction control, no PRAGMA here.
+-- Once applied anywhere this file is frozen (the runner verifies its checksum); change the
+-- schema with 005 and later. It touches nothing from 002 or 003 and no other table of 001.
+--
+-- One nullable column: skill_tests.thresholds, the JSON text of a seed test's `thresholds`
+-- ({"upTo9": [t2, t3, t4, t5], "from10to13": [...], "from14": [...]}, see SeedTestThresholds in
+-- commons/seed-schema.ts). NULL means the test has no thresholds, which is what every row that
+-- exists before this migration reads (ADD COLUMN gives existing rows NULL).
+--
+-- Conventions (as 001-003)
+--   * skill_tests is a STRICT table and stays one: ALTER TABLE ... ADD COLUMN keeps STRICT, so the
+--     column is TEXT and a BLOB is refused; a number is stored as text and then fails the CHECK.
+--   * JSON is CHECKed json_valid plus its top-level type (json_type = 'object'), like the JSON
+--     columns of 001. The CHECK is NULL-safe and type-exact: `thresholds IS NULL OR (...)`. Written
+--     without the IS NULL branch it would still accept NULL (a NULL CHECK result ACCEPTS the row),
+--     but spelt out it does not depend on that. The JSON null literal is NOT an SQL NULL: json_type
+--     of the text 'null' is 'null', not 'object', so it is refused.
+--   * json_valid means RFC 8259 JSON text: no JSON5, no NaN, no leading zeros, no trailing junk,
+--     and blank or whitespace-only text is refused. Insignificant whitespace AROUND a valid object
+--     is JSON and is accepted (as in 003, which adds no rule of its own); every reader parses it.
+--   * There is NO SQL CHECK on the shape: not on the band keys, not on "each band is an array of
+--     four numbers", not on ordering. The seed schema (Zod, commons/seed-schema.ts) is the write
+--     boundary and owns all of it. On purpose: SQLite cannot ALTER a CHECK, so a shape rule here
+--     would need a table rebuild every time a band or a level is added, and a rebuild of skill_tests
+--     must recreate the table, its skill_tests_by_skill index and its skill_id foreign key.
+--
+-- Rules for writers and later migration authors
+--   * Upsert with INSERT ... ON CONFLICT (id) DO UPDATE SET thresholds = excluded.thresholds.
+--     skill_tests is mutable (unlike drill_versions), and INSERT OR REPLACE would delete and
+--     re-insert the row. Nothing references skill_tests (test_results.test_slug has no foreign key
+--     to it, see 002), so a replace would not cascade, but keep the row.
+--   * Write NULL (not the JSON null literal) for "no thresholds".
+--   * SQLite cannot ALTER a CHECK: changing the rule on this column needs a table-rebuild
+--     migration for skill_tests. ALTER TABLE skill_tests ADD COLUMN is fine for a new nullable
+--     column; 004_test_thresholds.test.ts pins the contract with positive assertions, so it keeps
+--     passing.
+
+ALTER TABLE skill_tests ADD COLUMN thresholds TEXT
+  CHECK (thresholds IS NULL OR (json_valid(thresholds) AND json_type(thresholds) = 'object'));
