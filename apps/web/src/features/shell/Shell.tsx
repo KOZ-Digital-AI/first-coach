@@ -31,6 +31,10 @@ import { type HeaderSlotProps, type RootSlotProps, useSlot } from '../../lib/slo
  *   `isAdminSession`, the same rule as the API guard (`requireAdmin`); it only decides what to SHOW, the server still refuses.
  * - Build version: the web build carries no version of its own (the Dockerfile sets BUILD_VERSION for the API process), so
  *   `AppShell` asks `GET /health`, which reports it. Offline or unavailable: the version line is simply left out.
+ * - Privacy settings (/settings/privacy, fc-mol-bjm.12): a footer link beside the legal ones, shown to every visitor (the shell
+ *   knows no session kind, and a guest already has a player). A calm secondary entry: it is deliberately not a primary or tab-bar
+ *   item, so it never competes with training. The label lives in nav-links.messages.ts. Video Coach · Beta (/video) was already
+ *   the last item of both navigations (after Train), where the existing shell tests pin it.
  * - Nav destinations are plain strings, not literal route paths: the route beads that own /train, /commons, /contribute,
  *   /progress, /video and /admin have not all landed, and a literal `to` for a missing route does not typecheck. They are
  *   still real router links (client-side navigation, `aria-current`).
@@ -39,10 +43,11 @@ import { type HeaderSlotProps, type RootSlotProps, useSlot } from '../../lib/slo
 const CONTENT_ID = 'main-content';
 
 /** Typed `string` on purpose (see the last reading above): a literal for a route that does not exist yet does not typecheck. */
-const PATHS: Record<'home' | 'admin' | 'privacy' | 'terms' | 'recover', string> = {
+const PATHS: Record<'home' | 'admin' | 'privacy' | 'privacySettings' | 'terms' | 'recover', string> = {
   home: '/',
   admin: '/admin',
   privacy: '/legal/privacy',
+  privacySettings: '/settings/privacy',
   terms: '/legal/terms',
   recover: '/recover',
 };
@@ -126,7 +131,8 @@ function skipToContent(event: MouseEvent<HTMLAnchorElement>): void {
 }
 
 export function Shell({ children, isAdmin = false, version, slots }: ShellProps) {
-  const { t } = useTranslation('shell');
+  // `shell` first: it is the default namespace of the bare keys below. `nav-links` holds the Privacy settings label.
+  const { t } = useTranslation(['shell', 'nav-links']);
   const globHeader = useSlot('header');
   const globRoot = useSlot('root');
   const headerExtras = slots?.header ?? globHeader;
@@ -227,6 +233,11 @@ export function Shell({ children, isAdmin = false, version, slots }: ShellProps)
               <li>
                 <Link to={PATHS.terms} className={FOOTER_LINK}>
                   {t('footer.terms')}
+                </Link>
+              </li>
+              <li>
+                <Link to={PATHS.privacySettings} className={FOOTER_LINK}>
+                  {t('nav-links:privacySettings')}
                 </Link>
               </li>
               <li>
