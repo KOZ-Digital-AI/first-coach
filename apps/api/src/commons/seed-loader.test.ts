@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import type { AppDeps } from "../app";
@@ -1612,5 +1612,264 @@ describe("20-seed boot hook", () => {
     expect((error as Error).message).toContain("football/ball-control.json: drills.0.license");
     expect(count(db, "drills")).toBe(0);
     expect(lines).toEqual([]);
+  });
+});
+
+// --- track files under <sport>/drills/ (fc-mol-f2u.16) ---------------------------------------
+//
+// Layout pinned here: a sport's track files live at the sport root (<sport>/<track>.json) or in
+// <sport>/drills/<track>.json, the location the drill-content beads use. Everything under drills/ is
+// a track file (never skill-graph / tests / rubrics). Any OTHER subdirectory is a SeedError, so a
+// mistyped folder cannot silently drop drills. Dot-entries and non-.json files stay ignored.
+
+/** Writes `seed` like writeSeed, but the named track files of `sport` go to <sport>/drills/. */
+function writeSeedWithDrillsFolder(seed: Seed, sport: string, names: string[]): void {
+  writeSeed(seed);
+  mkdirSync(join(dir, sport, "drills"), { recursive: true });
+  for (const name of names) renameSync(join(dir, sport, `${name}.json`), join(dir, sport, "drills", `${name}.json`));
+}
+
+const expectNothingWritten = () => {
+  for (const table of TABLES) expect(count(db, table)).toBe(0);
+};
+
+describe("loadSeed: track files under <sport>/drills/", () => {
+  test("a track file under drills/ is loaded, and its drills are readable through the repository", () => {
+    writeSeedWithDrillsFolder({ football: football() }, "football", ["ball-control", "first-touch"]);
+    expect(readdirSync(join(dir, "football")).sort()).toEqual(["drills", "rubrics.json", "skill-graph.json", "tests.json"]);
+
+    const summary = loadSeed(db, dir, { now: T0 });
+
+    expect(summary.drills).toEqual({ inserted: 3, updated: 0, unchanged: 0 });
+    expect(summary.versions).toBe(3);
+    const detail = getDrill(db, "wall-pass", "en")!;
+    expect(detail.content.title).toEqual(t("wall-pass"));
+    expect(detail.history.map((h) => h.semver)).toEqual(["1.0.0"]);
+    expect(listDrills(db, {}, "en").total).toBe(3);
+    expect(listDrills(db, { skill: "first-touch" }, "en").items.map((item) => item.slug)).toEqual(["cushion-touch"]);
+    expect(mappingOf("cushion-touch")).toEqual([{ skill: "first-touch", primary: 1 }]);
+  });
+
+  test("a track file at the sport root still works, next to one under drills/", () => {
+    writeSeedWithDrillsFolder({ football: football() }, "football", ["first-touch"]);
+    expect(existsSync(join(dir, "football", "ball-control.json"))).toBe(true);
+
+    const summary = loadSeed(db, dir, { now: T0 });
+
+    expect(summary.drills.inserted).toBe(3);
+    expect(mappingOf("wall-pass")).toEqual([{ skill: "ball-control", primary: 1 }]);
+    expect(mappingOf("cushion-touch")).toEqual([{ skill: "first-touch", primary: 1 }]);
+    // progressions still resolve by slug across the two locations
+    expect(getDrill(db, "wall-pass", "en")!.content.progressions).toEqual([t("wall-pass-hard")]);
+  });
+
+  test("an unchanged seed in drills/ is a no-op on the second load, and a changed drill there is versioned as before", () => {
+    writeSeedWithDrillsFolder({ football: football() }, "football", ["ball-control", "first-touch"]);
+    loadSeed(db, dir, { now: T0 });
+    const before = fingerprint(db);
+    const changesBefore = changes(db);
+
+    expect(loadSeed(db, dir, { now: T1 })).toEqual({ ...ZERO, drills: { inserted: 0, updated: 0, unchanged: 3 } });
+    expect(fingerprint(db)).toEqual(before);
+    expect(changes(db)).toBe(changesBefore);
+
+    const edited = football();
+    edited.tracks["first-touch"]!.drills[0]!.title.en = "Edited";
+    writeSeedWithDrillsFolder({ football: edited }, "football", ["ball-control", "first-touch"]);
+    expect(loadSeed(db, dir, { now: T2 }).drills).toEqual({ inserted: 0, updated: 1, unchanged: 2 });
+    expect(versionsOf("cushion-touch").map((v) => v.semver)).toEqual(["1.0.0", "1.0.1"]);
+  });
+
+  test("the same drill in both locations is a duplicate-slug SeedError naming both files, and nothing is written", () => {
+    writeSeed({ football: football() });
+    mkdirSync(join(dir, "football", "drills"));
+    writeFileSync(join(dir, "football", "drills", "ball-control.json"), readFileSync(join(dir, "football", "ball-control.json")));
+
+    const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+
+    expect(error.message).toContain("football/drills/ball-control.json: drills.0.slug");
+    expect(error.message).toContain('Drill slug "wall-pass" is already used in football/ball-control.json');
+    expect(error.issues.some((i) => i.file === "football/drills/ball-control.json" && i.message.includes("football/ball-control.json"))).toBe(true);
+    expectNothingWritten();
+  });
+
+  test("the same drill in two files of drills/ is a duplicate too", () => {
+    writeSeedWithDrillsFolder({ football: football() }, "football", ["ball-control"]);
+    writeFileSync(join(dir, "football", "drills", "again.json"), readFileSync(join(dir, "football", "drills", "ball-control.json")));
+
+    const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+
+    expect(error.message).toContain("football/drills/ball-control.json");
+    expect(error.message).toContain("football/drills/again.json");
+    expect(error.message).toContain("is already used in");
+    expectNothingWritten();
+  });
+
+  test("an invalid file under drills/ rolls everything back and is named by its path from the seed root", () => {
+    const seed = football();
+    (seed.tracks["first-touch"]!.drills[0] as { license: string }).license = "nope";
+    writeSeedWithDrillsFolder({ football: seed }, "football", ["first-touch"]);
+
+    const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+
+    expect(error.message).toMatch(/^football\/drills\/first-touch\.json: drills\.0\.license: \S/m);
+    // the valid root track file was not written either
+    expectNothingWritten();
+  });
+
+  test("an invalid drills/ file leaves a loaded database exactly as it was, edits in valid files included", () => {
+    writeSeedWithDrillsFolder({ football: football() }, "football", ["first-touch"]);
+    loadSeed(db, dir, { now: T0 });
+    const before = fingerprint(db);
+    const rows = drillRows(db);
+    const changesBefore = changes(db);
+
+    const bad = football();
+    bad.tracks["ball-control"]!.drills[0]!.title.en = "Edited";
+    bad.tracks["first-touch"]!.drills[0]!.minutes = -1;
+    writeSeedWithDrillsFolder({ football: bad }, "football", ["first-touch"]);
+    const error = seedError(() => loadSeed(db, dir, { now: T1 }));
+
+    expect(error.message).toContain("football/drills/first-touch.json: drills.0.minutes");
+    expect(fingerprint(db)).toEqual(before);
+    expect(drillRows(db)).toBe(rows);
+    expect(changes(db)).toBe(changesBefore);
+  });
+
+  test("a graph problem located in a drills/ file names it (a track that is not a skill of the sport)", () => {
+    const seed = football();
+    seed.tracks["first-touch"]!.track = "no-such-skill";
+    writeSeedWithDrillsFolder({ football: seed }, "football", ["first-touch"]);
+
+    const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+
+    expect(error.message).toContain("football/drills/first-touch.json: track");
+    expectNothingWritten();
+  });
+
+  test("a drills/ file that declares another sport is reported by its path", () => {
+    const seed = football();
+    seed.tracks["first-touch"]!.sport = "futsal";
+    writeSeedWithDrillsFolder({ football: seed }, "football", ["first-touch"]);
+
+    const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+
+    expect(error.message).toContain('football/drills/first-touch.json: sport: does not match its folder "football"');
+    expectNothingWritten();
+  });
+
+  test("files under drills/ are always track files: skill-graph, tests and rubrics content there is a SeedError naming the file", () => {
+    const seed = football();
+    const cases: [string, unknown][] = [
+      ["skill-graph.json", seed.graph],
+      ["tests.json", seed.tests],
+      ["rubrics.json", seed.rubrics],
+    ];
+    for (const [name, content] of cases) {
+      writeSeed({ football: football() });
+      rawFile(`football/drills/${name}`, json(content));
+      const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+      expect(error.message).toContain(`football/drills/${name}: `);
+      expectNothingWritten();
+    }
+  });
+
+  test("dot-entries and non-.json files under drills/ are ignored, like at the sport root", () => {
+    writeSeedWithDrillsFolder({ football: football() }, "football", ["ball-control", "first-touch"]);
+    rawFile("football/drills/notes.txt", "not json\n");
+    rawFile("football/drills/README.md", "# drills\n");
+    rawFile("football/drills/.draft.json", "{ not json");
+    mkdirSync(join(dir, "football", ".cache"));
+    rawFile("football/.cache/stale.json", "{ not json");
+
+    expect(loadSeed(db, dir, { now: T0 }).drills.inserted).toBe(3);
+  });
+
+  test("an empty drills/ folder is fine", () => {
+    writeSeed({ football: football() });
+    mkdirSync(join(dir, "football", "drills"));
+    expect(loadSeed(db, dir, { now: T0 }).drills.inserted).toBe(3);
+  });
+
+  for (const [label, relative] of [
+    ["a subdirectory of the sport other than drills/", "football/extras"],
+    ["a mistyped drill folder", "football/drils"],
+    ["a subdirectory inside drills/", "football/drills/nested"],
+  ] as const) {
+    test(`${label} is a SeedError (unexpected directory) that names it, even when it holds valid track files`, () => {
+      writeSeed({ football: football() });
+      const stray = football().tracks["first-touch"]!;
+      stray.drills[0]!.slug = "stray-drill";
+      rawFile(`${relative}/stray.json`, json(stray));
+
+      const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+
+      expect(error.message).toContain(`${relative}: `);
+      expect(error.message).toContain("unexpected directory");
+      expect(error.message).toContain("seed files live in football/ or football/drills/");
+      expect(error.issues.some((i) => i.file === relative)).toBe(true);
+      expectNothingWritten();
+    });
+  }
+
+  test("an EMPTY unexpected directory is a SeedError as well", () => {
+    writeSeed({ football: football() });
+    mkdirSync(join(dir, "football", "extras"));
+    const error = seedError(() => loadSeed(db, dir, { now: T0 }));
+    expect(error.message).toContain("football/extras: ");
+    expectNothingWritten();
+  });
+
+  test("files are processed in order of their path from the seed root, whatever order they were written in", () => {
+    // Written in reverse; football/drills/a.json < football/drills/b.json < football/z-last.json.
+    const seed = football();
+    const [wall, hard] = seed.tracks["ball-control"]!.drills;
+    const cushion = seed.tracks["first-touch"]!.drills[0]!;
+    const third = drill("third-drill");
+    const at = (track: string, drills: SeedDrill[]): SeedDrillTrackFile => ({ sport: "football", track, drills });
+    writeSeed({ football: { ...seed, tracks: {} } });
+    mkdirSync(join(dir, "football", "drills"));
+    rawFile("football/z-last.json", json(at("ball-control", [third])));
+    rawFile("football/drills/b.json", json(at("first-touch", [cushion])));
+    rawFile("football/drills/a.json", json(at("ball-control", [wall!, hard!])));
+
+    loadSeed(db, dir, { now: T0 });
+
+    const order = db.query<{ slug: string }, []>("SELECT slug FROM drills ORDER BY rowid").all().map((row) => row.slug);
+    expect(order).toEqual(["wall-pass", "wall-pass-hard", "cushion-touch", "third-drill"]);
+  });
+});
+
+describe("loadSeed: the real seed under config/commons", () => {
+  const REAL_SEED = resolve(import.meta.dir, "../../../../config/commons");
+  const DRILLS_DIR = join(REAL_SEED, "football", "drills");
+
+  test("every drill file under football/drills/ is loaded, readable, and a second load is a no-op", () => {
+    const files = readdirSync(DRILLS_DIR)
+      .filter((name) => name.endsWith(".json") && !name.startsWith("."))
+      .sort();
+    expect(files.length).toBeGreaterThan(0);
+    const slugs = files.flatMap((name) => {
+      const parsed = JSON.parse(readFileSync(join(DRILLS_DIR, name), "utf8")) as { drills: { slug: string }[] };
+      return parsed.drills.map((d) => d.slug);
+    });
+    expect(slugs.length).toBeGreaterThan(0);
+
+    const first = loadSeed(db, REAL_SEED, { now: T0 });
+
+    expect(first.drills).toEqual({ inserted: slugs.length, updated: 0, unchanged: 0 });
+    expect(first.versions).toBe(slugs.length);
+    expect(count(db, "drills")).toBe(slugs.length);
+    const detail = getDrill(db, slugs[0]!, "en");
+    expect(detail).not.toBeNull();
+    expect(detail!.slug).toBe(slugs[0]!);
+    expect(listDrills(db, {}, "en").total).toBe(slugs.length);
+
+    const before = fingerprint(db);
+    const changesBefore = changes(db);
+    const second = loadSeed(db, REAL_SEED, { now: T1 });
+    expect(second).toEqual({ ...ZERO, drills: { inserted: 0, updated: 0, unchanged: slugs.length } });
+    expect(fingerprint(db)).toEqual(before);
+    expect(changes(db)).toBe(changesBefore);
   });
 });
