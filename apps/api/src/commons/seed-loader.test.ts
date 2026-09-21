@@ -508,31 +508,46 @@ describe("loadSeed: a changed drill", () => {
   test("gets a new immutable version with the patch bumped and the old one as parent; the old row is untouched", () => {
     writeSeed({ football: football() });
     loadSeed(db, dir, { now: T0 });
-    const [first] = versionsOf("wall-pass");
+    const [first] = versionsOf("cushion-touch");
     const firstJson = JSON.stringify(first);
-    const othersBefore = JSON.stringify([versionsOf("wall-pass-hard"), versionsOf("cushion-touch")]);
+    const othersBefore = JSON.stringify([versionsOf("wall-pass"), versionsOf("wall-pass-hard")]);
 
     const seed = football();
-    seed.tracks["ball-control"]!.drills[0]!.title.kk = "Қабырғаға пас";
+    seed.tracks["first-touch"]!.drills[0]!.title.kk = "Жұмсақ тию";
     writeSeed({ football: seed });
     const summary = loadSeed(db, dir, { now: T1 });
 
     expect(summary.drills).toEqual({ inserted: 0, updated: 1, unchanged: 2 });
     expect(summary.versions).toBe(1);
-    const versions = versionsOf("wall-pass");
+    const versions = versionsOf("cushion-touch");
     expect(versions.map((v) => v.semver)).toEqual(["1.0.0", "1.0.1"]);
     expect(JSON.stringify(versions[0])).toBe(firstJson);
     const [, second] = versions;
     expect(second!.parent_version_id).toBe(first!.id);
     expect(second!.created_at).toBe("2026-03-02T10:00:00.000Z");
     expect(second!.origin).toBe("seed");
-    expect(JSON.parse(second!.content).title.kk).toBe("Қабырғаға пас");
-    expect(currentOf("wall-pass").id).toBe(second!.id);
-    expect(JSON.stringify([versionsOf("wall-pass-hard"), versionsOf("cushion-touch")])).toBe(othersBefore);
+    expect(JSON.parse(second!.content).title.kk).toBe("Жұмсақ тию");
+    expect(currentOf("cushion-touch").id).toBe(second!.id);
+    expect(JSON.stringify([versionsOf("wall-pass"), versionsOf("wall-pass-hard")])).toBe(othersBefore);
 
-    const detail = getDrill(db, "wall-pass", "kk")!;
-    expect(detail.content.title!.kk).toBe("Қабырғаға пас");
+    const detail = getDrill(db, "cushion-touch", "kk")!;
+    expect(detail.content.title!.kk).toBe("Жұмсақ тию");
     expect(detail.history.map((h) => h.semver)).toEqual(["1.0.1", "1.0.0"]);
+  });
+
+  test("progression and regression text is derived from the titles it names: retitling a drill versions the drills that point at it", () => {
+    writeSeed({ football: football() });
+    loadSeed(db, dir, { now: T0 });
+
+    const seed = football();
+    seed.tracks["ball-control"]!.drills[1]!.title.en = "Wall pass, harder";
+    writeSeed({ football: seed });
+    const summary = loadSeed(db, dir, { now: T1 });
+
+    // wall-pass-hard itself, and wall-pass whose progression text is wall-pass-hard's title.
+    expect(summary.drills).toEqual({ inserted: 0, updated: 2, unchanged: 1 });
+    expect(JSON.parse(currentOf("wall-pass").content).progressions).toEqual([{ ...t("wall-pass-hard"), en: "Wall pass, harder" }]);
+    expect(versionsOf("cushion-touch")).toHaveLength(1);
   });
 
   test("a change to any stored field counts: a filter column, the attribution and the dose", () => {
