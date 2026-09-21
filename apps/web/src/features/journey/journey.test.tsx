@@ -472,6 +472,18 @@ describe('empty', () => {
     expect(screen.queryByRole('link', { name: /start training/i })).toBeNull();
   });
 
+  test('a finished session with no minutes yet is not empty, and neither are minutes with no finished session', async () => {
+    answering({ ...NOTHING_YET, metrics: { ...NOTHING_YET.metrics, sessionsCompleted: 1 } });
+    const first = renderJourney();
+    expect(await screen.findByText('Sessions completed')).toBeTruthy();
+    first.unmount();
+
+    answering({ ...NOTHING_YET, metrics: { ...NOTHING_YET.metrics, minutesTrained: 5 } });
+    renderJourney();
+    expect(await screen.findByText('Minutes trained')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /start training/i })).toBeNull();
+  });
+
   test('an achieved milestone alone is enough for the real screen: it is not empty', async () => {
     answering({ ...NOTHING_YET, milestones: [{ key: 'FIRST_SESSION', achievedAt: '2026-07-20T10:00:00.000Z' }] });
     renderJourney();
