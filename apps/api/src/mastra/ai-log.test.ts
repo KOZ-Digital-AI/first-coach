@@ -260,6 +260,23 @@ describe("logAiCall: clamping, so a long or odd value still gets logged", () => 
     }
   });
 
+  test("an id list of exactly 8192 characters is kept whole; one more id is what gets cut", () => {
+    // n ids: 2 + n * 2 (quotes) + (n - 1) (commas) + the id characters = 8192; n = 100 gives 7891 id characters.
+    const ids = Array.from({ length: 99 }, (_, i) => `${String(i).padStart(2, "0")}${"x".repeat(77)}`);
+    ids.push("y".repeat(70));
+    expect(JSON.stringify(ids)).toHaveLength(8192);
+    expect(logAiCall(db, entry({ candidateIds: ids, chosenIds: ids }))).toBe(true);
+    expect(rows()[0]!.candidate_ids).toBe(JSON.stringify(ids));
+    expect(rows()[0]!.chosen_ids).toBe(JSON.stringify(ids));
+    expect(logAiCall(db, entry({ candidateIds: [...ids, "z"], chosenIds: [...ids, "z"] }))).toBe(true);
+    expect(rows()[1]!.candidate_ids).toBe(JSON.stringify(ids));
+    // one character over the cap: the last id no longer fits, and the row is still written
+    const over = [...ids.slice(0, 99), "y".repeat(71)];
+    expect(JSON.stringify(over)).toHaveLength(8193);
+    expect(logAiCall(db, entry({ candidateIds: over, chosenIds: over }))).toBe(true);
+    expect(rows()[2]!.candidate_ids).toBe(JSON.stringify(ids.slice(0, 99)));
+  });
+
   test("latency is stored as a whole number of milliseconds, never negative", () => {
     logAiCall(db, entry({ latencyMs: 12.6 }));
     logAiCall(db, entry({ latencyMs: -5 }));
@@ -363,12 +380,14 @@ describe("logAiCall: a failed log write never fails the AI call", () => {
     expect(logAiCall(db, entry({ kind: "chat" as unknown as AiCallEntry["kind"] }), log)).toBe(false);
     expect(rows()).toHaveLength(0);
     expect(lines).toHaveLength(1);
+    expect((lines[0] as { refused?: string }).refused).toBe("kind");
   });
 
   test("a fallback code outside AI_FALLBACK_CODES is refused, not stored as 'served by the AI'", () => {
-    const { log } = collector();
+    const { lines, log } = collector();
     expect(logAiCall(db, entry({ fallbackCode: "gremlins" as unknown as AiCallEntry["fallbackCode"] }), log)).toBe(false);
     expect(rows()).toHaveLength(0);
+    expect((lines[0] as { refused?: string }).refused).toBe("fallback_code");
   });
 
   test("a successful write logs nothing", () => {
