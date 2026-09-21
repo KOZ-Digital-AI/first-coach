@@ -63,8 +63,9 @@ function pngSize(file: string): { width: number; height: number } {
 
 describe('vite config registers the PWA plugin', () => {
   test('vite-plugin-pwa is among the plugins', () => {
-    const flat = (config.plugins ?? []).flat(Infinity) as { name?: string }[];
-    expect(flat.some((p) => p?.name === 'vite-plugin-pwa')).toBe(true);
+    const flatten = (value: unknown): unknown[] => (Array.isArray(value) ? value.flatMap(flatten) : value ? [value] : []);
+    const names = flatten(config.plugins).map((p) => (p as { name?: string }).name);
+    expect(names).toContain('vite-plugin-pwa');
   });
 
   test("registerType is 'prompt' (the user, not the SW, decides when a new version activates)", () => {
