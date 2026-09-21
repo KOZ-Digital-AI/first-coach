@@ -63,8 +63,9 @@ const COMMAND_OPTIONS: Record<Command["command"], readonly string[]> = {
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+$/;
 
 /**
- * Pure argument parsing. Error messages never echo option values or stray arguments
- * (they might be a mistyped password); option names are echoed without any `=value`.
+ * Pure argument parsing. Error messages never echo any user-supplied token (option text,
+ * values, stray arguments): a mistyped password could be any of them, and the output
+ * scrubber cannot help because the password is not known yet at parse time.
  */
 export function parseAdminArgs(argv: string[]): ParsedArgs {
   const [command, ...rest] = argv;
@@ -78,10 +79,12 @@ export function parseAdminArgs(argv: string[]): ParsedArgs {
     if (!token.startsWith("-")) return { ok: false, message: "unexpected argument (options are --name value)" };
     const eq = token.indexOf("=");
     const flag = eq === -1 ? token : token.slice(0, eq);
-    if (/^-{1,2}p(ass(word)?)?$/i.test(flag)) return { ok: false, message: PASSWORD_OPTION_REASON };
+    // Anything that looks like a password option (-p, -pSECRET, --pass, --pwd=SECRET, --password...)
+    // gets the fixed explanation. The token itself is never printed: it may hold the password.
+    if (/^-{1,2}p/i.test(flag)) return { ok: false, message: PASSWORD_OPTION_REASON };
     const name = flag.replace(/^--/, "");
     if (!flag.startsWith("--") || !allowed.includes(name)) {
-      return { ok: false, message: `unknown option ${flag.slice(0, 40)} for ${command}` };
+      return { ok: false, message: `unknown option for ${command}` }; // no token text, by design
     }
     let value: string | undefined;
     if (eq !== -1) value = token.slice(eq + 1);
@@ -122,8 +125,12 @@ export async function runAdminCli(argv: string[], io: AdminCliIo): Promise<numbe
   const parsed = parseAdminArgs(argv);
   if (!parsed.ok) return reportUsage(parsed, io.stderr);
 
+  // Defence in depth: a lower layer's error text might quote the password. Only lines that
+  // contain it are touched. Known trade-off: an innocent line containing the password as a
+  // substring (password "longpass123", email "longpass123@x.com") is redacted too.
   let secret = "";
-  const scrub = (line: string): string => (secret === "" ? line : line.split(secret).join("[redacted]"));
+  const scrub = (line: string): string =>
+    secret !== "" && line.includes(secret) ? line.split(secret).join("[redacted]") : line;
   const out = (line: string): void => io.stdout(scrub(line));
   const err = (line: string): void => io.stderr(scrub(line));
 
@@ -185,6 +192,9 @@ export async function runAdminCli(argv: string[], io: AdminCliIo): Promise<numbe
         }
         throw error;
       }
+      // Known gap: a crash between sign-up above and this UPDATE leaves a plain contributor
+      // with this email, which `create` then refuses forever (it never promotes). Recovery is
+      // manual SQL (delete that user row, or set its role to admin).
       try {
         io.db.transaction(() => {
           io.db.query("UPDATE user SET role = ?, updatedAt = ? WHERE id = ?").run(ROLE_ADMIN, new Date().toISOString(), userId);
@@ -225,32 +235,66 @@ export async function runAdminCli(argv: string[], io: AdminCliIo): Promise<numbe
   }
 }
 
-/** One hidden line from a terminal: raw mode, nothing echoed, backspace works, Ctrl-C cancels. */
-function readHidden(label: string): Promise<string> {
-  const stdin = process.stdin as NodeJS.ReadStream & { setRawMode(mode: boolean): void };
+/** What `readHiddenLine` needs from a terminal; process.stdin (in raw-mode capable form) fits. */
+export type HiddenInput = {
+  setRawMode(mode: boolean): unknown;
+  resume(): unknown;
+  pause(): unknown;
+  on(event: "data", listener: (chunk: Buffer | string) => void): unknown;
+  off(event: "data", listener: (chunk: Buffer | string) => void): unknown;
+};
+
+/**
+ * One hidden line from a terminal: raw mode, nothing echoed (only `label` and a final newline
+ * are written), backspace works, Ctrl-C cancels. Escape sequences (arrow keys: ESC [ ... final
+ * byte; SS3: ESC O x; Alt-key: ESC x) are swallowed, also when split across chunks.
+ */
+export function readHiddenLine(
+  input: HiddenInput,
+  label: string,
+  write: (text: string) => void,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     let chars: string[] = [];
+    let state: "text" | "esc" | "csi" | "ss3" = "text";
     const finish = (settle: () => void): void => {
-      stdin.off("data", onData);
-      stdin.setRawMode(false);
-      stdin.pause();
-      process.stderr.write("\n");
+      input.off("data", onData);
+      input.setRawMode(false);
+      input.pause();
+      write("\n");
       settle();
     };
     function onData(chunk: Buffer | string): void {
       for (const ch of chunk.toString()) {
-        if (ch === "\r" || ch === "\n" || ch === "\u0004") return finish(() => resolve(chars.join("")));
-        if (ch === "\u0003") return finish(() => reject(new Error("cancelled")));
-        if (ch === "\u007f" || ch === "\b") chars = chars.slice(0, -1);
+        if (state === "esc") {
+          if (ch === "[") state = "csi";
+          else if (ch === "O") state = "ss3";
+          else state = "text";
+          if (ch >= " ") continue; // a control byte right after ESC is handled as typed
+        } else if (state === "csi") {
+          if (ch >= " " && ch <= "?") continue; // parameter / intermediate bytes
+          state = "text";
+          if (ch >= "@" && ch <= "~") continue; // the final byte ends the sequence
+        } else if (state === "ss3") {
+          state = "text";
+          if (ch >= " ") continue;
+        }
+        if (ch === "\u001b") state = "esc";
+        else if (ch === "\r" || ch === "\n" || ch === "\u0004") return finish(() => resolve(chars.join("")));
+        else if (ch === "\u0003") return finish(() => reject(new Error("cancelled")));
+        else if (ch === "\u007f" || ch === "\b") chars = chars.slice(0, -1);
         else if (ch >= " ") chars.push(ch);
       }
     }
-    process.stderr.write(label);
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.on("data", onData);
+    write(label);
+    input.setRawMode(true);
+    input.resume();
+    input.on("data", onData);
   });
 }
+
+const readHidden = (label: string): Promise<string> =>
+  readHiddenLine(process.stdin as unknown as HiddenInput, label, (text) => void process.stderr.write(text));
 
 /** From a pipe: the first line of stdin, without its line ending. */
 async function readLineFromStdin(): Promise<string> {
@@ -279,14 +323,13 @@ export async function promptPasswordFromTerminal(): Promise<string> {
 export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env): Promise<number> {
   const parsed = parseAdminArgs(argv);
   if (!parsed.ok) return reportUsage(parsed, console.error);
-  let dbPath: string;
+  let db: Database;
   try {
-    dbPath = parseEnv(env).APP_DB_PATH;
+    db = openDatabase(parseEnv(env).APP_DB_PATH);
   } catch (error) {
-    console.error(`Error: ${messageOf(error)}`);
+    console.error(`Error: ${messageOf(error)}`); // bad env or an unopenable path: one line, no stack
     return EXIT_FAILURE;
   }
-  const db = openDatabase(dbPath);
   try {
     return await runAdminCli(argv, {
       db,
