@@ -124,11 +124,21 @@ describe("public/favicon.svg", () => {
 
 describe("served through the API's real static server (createApp -> serveWeb)", () => {
   let base: string;
+  let nativeResponse: typeof Response;
+  let domResponse: typeof Response;
   let app: Awaited<ReturnType<typeof createApp>>;
   const db = new Database(":memory:");
   const href = iconHref(html) ?? "/favicon.svg";
 
   beforeAll(async () => {
+    // test/setup.ts registers happy-dom globally, which swaps Bun's native Response for
+    // happy-dom's; serveWeb answers with `new Response(Bun.file(..))`, whose body happy-dom
+    // reads back as "[object Blob]". Take the runtime's own Response class from a native
+    // fetch result and install it for this describe only (restored in afterAll), so the
+    // DOM globals (and the document Testing Library is bound to) stay untouched.
+    nativeResponse = (await Bun.fetch("data:,")).constructor as typeof Response;
+    domResponse = globalThis.Response;
+    globalThis.Response = nativeResponse;
     base = mkdtempSync(join(tmpdir(), "favicon-"));
     const dist = join(base, "dist");
     const routes = join(base, "routes");
@@ -148,6 +158,7 @@ describe("served through the API's real static server (createApp -> serveWeb)", 
   afterAll(() => {
     db.close();
     rmSync(base, { recursive: true, force: true });
+    globalThis.Response = domResponse;
   });
 
   const request = (path: string) => Promise.resolve(app.fetch(new Request(`http://localhost${path}`)));
