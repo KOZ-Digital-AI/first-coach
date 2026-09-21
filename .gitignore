@@ -4,3 +4,16 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Bun workspace / app artifacts
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+data/
+apps/web/src/routeTree.gen.ts
+.playwright-cli/
+e2e-artifacts/
