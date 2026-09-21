@@ -389,7 +389,7 @@ describe("rate limiting", () => {
     const wrong = { email: "no@one.io", password: "wrong-password-1" };
 
     const passwordStatuses: number[] = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 11; i++) {
       passwordStatuses.push((await call("/api/auth/sign-in/email", { ip: "9.9.9.9", body: wrong })).status);
     }
     const anonStatuses: number[] = [];
@@ -397,7 +397,7 @@ describe("rate limiting", () => {
       anonStatuses.push((await call("/api/auth/sign-in/anonymous", { ip: "8.8.8.8" })).status);
     }
 
-    expect(passwordStatuses).toEqual([401, 401, 401, 429, 429]);
+    expect(passwordStatuses).toEqual([...Array(10).fill(401), 429]); // 10 per 15 min per IP (fc-mol-x7d)
     expect(anonStatuses).toEqual([200, 200, 200, 200, 200, 200]);
     handle.close();
   });
@@ -415,13 +415,13 @@ describe("rate limiting", () => {
     handle.close();
   });
 
-  test("anonymous sign-in has its own roomier rule of 30 per 60 s", async () => {
+  test("anonymous sign-in has its own roomier rule of 30 per hour", async () => {
     const { auth, handle } = await standalone(true);
 
     const rules = (auth.options as { rateLimit?: { customRules?: Record<string, unknown> } }).rateLimit
       ?.customRules;
 
-    expect(rules?.["/sign-in/anonymous"]).toEqual({ window: 60, max: 30 });
+    expect(rules?.["/sign-in/anonymous"]).toEqual({ window: 3600, max: 30 });
     handle.close();
   });
 });
