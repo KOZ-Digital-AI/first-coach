@@ -392,6 +392,26 @@ describe('the comparison after saving', () => {
     expect(within(result).getByText('+35,7%')).toBeTruthy();
   });
 
+  test('the percentage is rounded to one decimal, and a change that rounds to nothing reads as a plain 0%', async () => {
+    const rows = (changePct: number): JourneyTest => ({ ...juggling([10, 14, 21]), changePct });
+    stubNetwork({ post: () => json(answer(rows(33.3333))) });
+    const first = await renderForm();
+    expect(within(await retest(first.user, '21')).getByText('+33.3%')).toBeTruthy();
+    cleanup();
+
+    stubNetwork({ post: () => json(answer(rows(-12.46))) });
+    const second = await renderForm();
+    expect(within(await retest(second.user, '21')).getByText('−12.5%')).toBeTruthy();
+    cleanup();
+
+    stubNetwork({ post: () => json(answer(rows(0.04))) });
+    const third = await renderForm();
+    const result = await retest(third.user, '21');
+    expect(within(result).getByText('0%')).toBeTruthy();
+    expect(within(result).getByText(/same as last time/i)).toBeTruthy();
+    expect(text(result)).not.toMatch(/[+−]0/);
+  });
+
   test('a time that fell is an improvement, shown as a positive percentage', async () => {
     stubNetwork({ post: () => json(answer(slalom([30, 26, 24]))) });
     const { user } = await renderForm(SLALOM);
@@ -510,6 +530,16 @@ describe('invalid input is blocked before anything is sent', () => {
     });
   }
 
+  test('focus goes back to the box so the number can be fixed at once, and the error clears as soon as it is edited', async () => {
+    const { user } = await renderForm();
+    await user.click(saveButton());
+    await screen.findByRole('alert');
+    expect(document.activeElement).toBe(input());
+    await user.type(input(), '2');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(input().getAttribute('aria-invalid')).toBeNull();
+  });
+
   test('a decimal is fine for a time, and the error goes away once the number is fixed', async () => {
     stubNetwork({ post: () => json(answer(slalom([30, 26, 24.5]))) });
     const { user } = await renderForm(SLALOM);
@@ -575,6 +605,16 @@ describe('a failed save', () => {
     expect(input().value).toBe('21');
     expect(saveButton().disabled).toBe(false);
     expect(screen.queryByRole('region', { name: /your result is saved/i })).toBeNull();
+  });
+
+  test('keyboard focus returns to Save after the failed request (a disabled control drops it)', async () => {
+    stubNetwork({ post: () => problem(500) });
+    const { user } = await renderForm();
+    await user.type(input(), '21');
+    // Submitted from the box (Enter), so focus starts on the input, not on the button.
+    fireEvent.submit(input().closest('form')!);
+    await screen.findByRole('alert');
+    await waitFor(() => expect(document.activeElement).toBe(saveButton()));
   });
 
   test('the retry of the SAME number reuses the clientUuid, so it cannot be stored twice', async () => {
