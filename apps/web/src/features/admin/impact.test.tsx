@@ -159,7 +159,8 @@ const en = (value: number) => new Intl.NumberFormat('en-US').format(value);
 /** Renders and waits for the headline, so every later assertion sees the loaded screen. */
 async function renderLoaded(locale: Locale = 'en') {
   const view = renderImpact(locale);
-  await screen.findByRole('region', { name: locale === 'en' ? HEADLINE : /.+/ });
+  // The headline's own label in that language (the groups are regions too, so a bare /.+/ would match several).
+  await screen.findByRole('region', { name: messages[locale].headline.label });
   return view;
 }
 
@@ -172,8 +173,8 @@ const card = (label: string): HTMLElement => {
 };
 const figure = (label: string): string => text(card(label).querySelector('dd') as Element);
 const refreshButton = () => screen.getByRole('button', { name: /^(Refresh|Refreshing…)$/ }) as HTMLButtonElement;
-const weekList = () => screen.getByRole('list', { name: 'Sessions completed per week' });
-const weekRows = () => within(weekList()).getAllByRole('listitem');
+const weekList = (locale: Locale = 'en') => screen.getByRole('list', { name: messages[locale].weeks.title });
+const weekRows = (locale: Locale = 'en') => within(weekList(locale)).getAllByRole('listitem');
 /** The element of a week row that the bar's length is written on (an inline width in percent). */
 const barOf = (row: HTMLElement): HTMLElement | undefined =>
   Array.from(row.querySelectorAll<HTMLElement>('*')).find((element) => element.style.width.endsWith('%'));
@@ -514,7 +515,7 @@ describe('kk, ru and en', () => {
       expect(all).toContain(`+${new Intl.NumberFormat(locale === 'en' ? 'en-US' : locale === 'ru' ? 'ru-RU' : 'kk-KZ').format(12.5)}%`);
       if (locale !== 'en') expect(all).toMatch(/[Ѐ-ӿ]{4,}/);
       titles.add(text(screen.getByRole('heading', { level: 1 })));
-      expect(weekRows()).toHaveLength(12);
+      expect(weekRows(locale)).toHaveLength(12);
       view.unmount();
     }
     // Three different titles: no locale falls back to another one's text.
