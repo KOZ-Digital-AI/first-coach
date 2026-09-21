@@ -157,12 +157,37 @@ function checkEnvName(name: string, where: string): string[] {
   return knownEnvNames.has(name) || PLATFORM_VARIABLES.has(name) ? [] : [`${where}: unknown environment variable ${name}`];
 }
 
+/**
+ * `bun -e "<script>"`: every relative import must resolve to a repo file that exports each imported
+ * name, so an inline snippet cannot call a function that does not exist.
+ */
+function inlineScriptProblems(script: string, shown: string): string[] {
+  const problems: string[] = [];
+  for (const m of script.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g)) {
+    const spec = m[2] as string;
+    if (!spec.startsWith(".")) continue; // bun:sqlite and friends
+    const file = `${spec.replace(/^\.\//, "")}.ts`;
+    if (!isFile(file)) {
+      problems.push(`${shown}: import ${spec} does not resolve to ${file}`);
+      continue;
+    }
+    const source = readRoot(file);
+    for (const name of (m[1] as string).split(",").map((n) => n.trim()).filter(Boolean)) {
+      if (!new RegExp(`export\\s+(?:async\\s+)?(?:function|const|class)\\s+${name}\\b`).test(source)) {
+        problems.push(`${shown}: ${file} does not export ${name}`);
+      }
+    }
+  }
+  return problems;
+}
+
 /** Problems with a `bun ...` command (tokens[0] is "bun"); an empty list means it is valid. */
 export function bunProblems(tokens: string[]): string[] {
   const [, sub, ...rest] = tokens;
   if (sub === undefined) return ["bun: no subcommand"];
   const shown = tokens.join(" ");
-  if (sub === "install" || sub === "-e") return [];
+  if (sub === "install") return [];
+  if (sub === "-e") return inlineScriptProblems(rest[0] ?? "", shown);
   if (sub === "run") {
     const scripts = workspaceScripts();
     let pkg = "";
@@ -452,6 +477,9 @@ describe("runbook commands", () => {
       expect(shellBlockProblems("docker run --privileged first-coach:local")).not.toEqual([]);
       expect(shellBlockProblems("docker run -e BETTER_AUTH_SECRETT=x first-coach:local")).not.toEqual([]);
       expect(shellBlockProblems("FOO_BAR=1 bun apps/api/src/index.ts")).not.toEqual([]);
+      expect(shellBlockProblems(`bun -e "import { nope } from './apps/api/src/ops/backup'; nope()"`)).not.toEqual([]);
+      expect(shellBlockProblems(`bun -e "import { backupDatabase } from './apps/api/src/ops/missing'"`)).not.toEqual([]);
+      expect(shellBlockProblems(`bun -e "import { backupDatabase } from './apps/api/src/ops/backup'; backupDatabase"`)).toEqual([]);
     });
   });
 });
