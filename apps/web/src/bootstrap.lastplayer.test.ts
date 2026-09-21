@@ -211,8 +211,9 @@ describe('wireAppPlayerSession: the last player id is remembered and restored at
     const h = harness({ stored: 'p1' });
     const failing: PlayerSessionWiringDeps = {
       ...h.deps,
-      persistAppQueryClient() {
-        throw new TypeError('query-persist: playerId must be a non-empty string');
+      persistAppQueryClient(options) {
+        if (options.playerId === 'p1') throw new TypeError('query-persist: playerId must be a non-empty string');
+        return h.deps.persistAppQueryClient(options);
       },
     };
     expect(() => wireAppPlayerSession(new QueryClient(), failing)).not.toThrow();
