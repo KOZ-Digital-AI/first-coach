@@ -418,7 +418,7 @@ describe('008_ai_calls: candidate_ids and chosen_ids (JSON arrays of ids, never 
       expect(hyphenated.length).toBe(300);
       expect(accepts({ [column]: `["${hyphenated}"]` }), 'hyphenated 300').toBe(false);
       expect(accepts({ [column]: `["${'a'.repeat(7000)}"]` }), 'one 7000-character id').toBe(false);
-      expect(accepts({ [column]: `["${'a.b_c-9'.repeat(17)}"]` }), 'mixed id characters, 136').toBe(false);
+      expect(accepts({ [column]: `["${'a.b_c-9'.repeat(20)}"]` }), 'mixed id characters, 140').toBe(false);
       expect(accepts({ [column]: `[${'7'.repeat(129)}]` }), 'a 129-digit number').toBe(false);
     });
 
