@@ -5,6 +5,11 @@
 // contributor needs a registered account). The guard runs BEFORE the body is read, so an
 // unauthorised request can neither reach the store nor write a byte to disk.
 //
+// Abuse guards (contributions/guards.ts, fc-mol-4ds.4), all before any file is stored:
+//   POST   per-user daily limiter (429 + Retry-After), BEFORE the body is read; then, once the payload
+//          is valid, an identical undecided contribution of the same user is a 409 pointing at it;
+//   POST and PUT   a filled honeypot is a generic 422 on /website, judged before the rest of the payload.
+//
 // POST and PUT are ONE multipart request: a `payload` part (JSON, validated with the contract's
 // ContributionPayloadRequest), an optional `video` part and up to 3 `files` parts. The order is
 //   auth -> read the body under a hard size limit -> parse the parts -> validate -> store the files
@@ -18,12 +23,13 @@
 //   401 no session; 403 anonymous player;
 //   404 a contribution that is not the caller's, or does not exist (never 403, never a different
 //       answer: the repository throws the same error for both);
-//   409 PUT/DELETE in a state that does not allow it;
+//   409 PUT/DELETE in a state that does not allow it; POST of content the caller already has undecided;
+//   429 POST over the per-user daily limit (auth/rate-limit `contribution`);
 //   413 the request, or one file, is over the limit (settings.uploadMaxMb, read on every request);
 //   415 a file whose bytes are not an allowed type, or a `video` part that is not a video;
 //   422 the payload or the part layout is invalid, with JSON Pointers ("/rightsAttested", "/files",
-//       "/targetDrillSlug"); a filled honeypot `website` is a 422 on "/website" (rejected, not a fake
-//       success), and NOTHING is stored;
+//       "/targetDrillSlug"); a filled honeypot `website` is a generic 422 on "/website" (rejected, not a
+//       fake success), and NOTHING is stored;
 //   anything else is rethrown to the app's onError (500 problem).
 //
 // CHOICES the contract leaves open (pinned by the tests)
@@ -71,6 +77,13 @@ import {
   storeUpload,
   uploadLimitBytes,
 } from "../../contributions/uploads";
+import {
+  DuplicateContributionError,
+  assertNotOwnDuplicate,
+  contributionLimiter,
+  duplicateProblem,
+  rejectHoneypot,
+} from "../../contributions/guards";
 import { ContributionParams, ContributionPayloadRequest, ENDPOINTS } from "../../shared/contributions";
 import type { ProblemError } from "../../shared/primitives";
 import { fromZodError, problem } from "../problem";
@@ -268,6 +281,10 @@ async function readSubmission(c: Ctx, deps: AppDeps): Promise<Outcome<Submission
     return fail(badRequest("The `payload` part must be a JSON object."));
   }
 
+  // The honeypot is judged on the raw payload, before anything else about it is (guards.ts).
+  const trapped = rejectHoneypot(raw as Record<string, unknown>);
+  if (trapped !== undefined) return fail(trapped);
+
   const parsed = ContributionPayloadRequest.safeParse(raw);
   if (!parsed.success) issues.unshift(...fromZodError(expandUnknownKeys(parsed.error)));
   if (issues.length > 0 || !parsed.success) {
@@ -333,6 +350,7 @@ function problemFor(error: unknown): Response | undefined {
       { pointer: "/targetDrillSlug", detail: error.message },
     ]);
   }
+  if (error instanceof DuplicateContributionError) return duplicateProblem(error.existingId);
   if (error instanceof ContributionNotFoundError) return problem(404, "Not Found", "No such contribution.");
   if (error instanceof InvalidStateError) {
     return problem(409, "Conflict", `The contribution is ${error.state} and cannot be ${error.operation === "withdraw" ? "withdrawn" : "resubmitted"}.`);
@@ -362,13 +380,19 @@ export async function register(app: Hono, deps: AppDeps): Promise<void> {
 
   const routes = new Hono<{ Variables: AuthVariables }>();
 
-  routes.post(createSpec.path, contributor, (c) =>
+  routes.post(createSpec.path, contributor, contributionLimiter(), (c) =>
     answer(async () => {
       const submission = await readSubmission(c, deps);
       if (!submission.ok) return submission.response;
-      const view = await withStoredUploads(deps, submission.value, (attachments) =>
-        createContribution(db, { userId: c.var.playerId, payload: submission.value.payload, attachments }),
-      );
+      const userId = c.var.playerId;
+      const { payload } = submission.value;
+      // Cheap early exit before a byte is stored; repeated with the insert, in one synchronous step, so two
+      // identical requests that are both in flight cannot both be written (the loser's files are purged).
+      assertNotOwnDuplicate(db, userId, payload);
+      const view = await withStoredUploads(deps, submission.value, (attachments) => {
+        assertNotOwnDuplicate(db, userId, payload);
+        return createContribution(db, { userId, payload, attachments });
+      });
       return c.json(view, 201);
     }),
   );
