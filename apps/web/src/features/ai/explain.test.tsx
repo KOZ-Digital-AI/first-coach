@@ -114,7 +114,10 @@ const session = (items: unknown[] = [SLALOM, OTHER]): TodaySession =>
       currentLevelLabel: 'Basic',
       sessionsPerWeek: 3,
       minutesPerSession: 20,
-      focus: [{ skill: 'dribbling', level: 2, targetLevel: 3, reason: 'goal' }],
+      focus: [
+        { skill: 'dribbling', level: 2, targetLevel: 3, reason: 'goal' },
+        { skill: 'weak-foot', level: 1, targetLevel: 2, reason: 'weakest' },
+      ],
     },
   });
 
@@ -507,16 +510,21 @@ describe('error', () => {
     expect(panel() === null).toBe(true);
   });
 
-  test('the retry button of the error is disabled while the retry is in flight', async () => {
+  test('while the retry is in flight the error is replaced by progress and a disabled, busy button that a second click cannot re-send', async () => {
     const gate = deferred<Response>();
     let step = 0;
     const { user, explains } = mount({ explain: () => (step++ === 0 ? problem(500) : gate.promise) });
     await user.click(control() as HTMLButtonElement);
     const alert = await screen.findByRole('alert');
-    const retry = within(alert).getByRole('button', { name: 'Try again' }) as HTMLButtonElement;
-    await user.click(retry);
-    await waitFor(() => expect(retry.disabled).toBe(true));
-    await user.click(retry);
+    await user.click(within(alert).getByRole('button', { name: 'Try again' }));
+
+    await waitFor(() => expect(screen.queryByRole('alert') === null).toBe(true));
+    const busy = control() as HTMLButtonElement;
+    expect(busy.disabled).toBe(true);
+    expect(busy.getAttribute('aria-busy')).toBe('true');
+    expect(screen.getByRole('status').textContent).toContain('AI is rewriting this drill in simpler words');
+    await user.click(busy);
+    fireEvent.click(busy);
     expect(explains()).toHaveLength(2);
     await act(async () => gate.resolve(explained()));
     await screen.findByRole('region', { name: LABEL });
