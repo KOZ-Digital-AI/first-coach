@@ -1,5 +1,6 @@
 // Thin entrypoint: `bun apps/api/src/index.ts`. The sequence lives in boot.ts.
 import { runBoot } from "./boot";
+import { stopBackupSchedule } from "./boot/40-backup.boot";
 
 const DEFAULT_PORT = 4111;
 // Bun's default is 10 s and closes a request that sends no bytes for that long;
@@ -19,6 +20,47 @@ export function parsePort(raw: string | undefined): number {
   return port;
 }
 
+export type ShutdownContext = {
+  server: { stop(): unknown };
+  db: { close(): void };
+  /** Log sink (tests). Defaults to console.log for info lines, console.error for error lines. */
+  log?: (line: object) => void;
+  /** Cancels the nightly backup schedule. Defaults to stopBackupSchedule. */
+  stopBackup?: () => void;
+  /** Process exit (tests). Defaults to process.exit. */
+  exit?: (code: number) => void;
+};
+
+const defaultLog = (line: object): void => {
+  const text = JSON.stringify(line);
+  if ((line as { level?: string }).level === "error") console.error(text);
+  else console.log(text);
+};
+
+/**
+ * Graceful shutdown: stop the backup schedule first (so no backup fires against
+ * a closed database), then the server, then the DB, then exit. Any failure logs
+ * "shutdown failed" and exits 1. Resolves to the exit code.
+ */
+export async function shutdownSequence(ctx: ShutdownContext, signal: string): Promise<number> {
+  const log = ctx.log ?? defaultLog;
+  const stopBackup = ctx.stopBackup ?? stopBackupSchedule;
+  const exit = ctx.exit ?? ((code: number) => process.exit(code));
+  let code = 0;
+  try {
+    log({ level: "info", msg: "shutting down", signal });
+    stopBackup();
+    await ctx.server.stop();
+    ctx.db.close();
+  } catch (error) {
+    code = 1;
+    log({ level: "error", msg: "shutdown failed", error: messageOf(error) });
+  } finally {
+    exit(code);
+  }
+  return code;
+}
+
 async function main(): Promise<void> {
   const port = parsePort(process.env.PORT);
   const { app, deps } = await runBoot();
@@ -31,17 +73,7 @@ async function main(): Promise<void> {
   const shutdown = async (signal: string): Promise<void> => {
     if (stopping) return;
     stopping = true;
-    let code = 0;
-    try {
-      console.log(JSON.stringify({ level: "info", msg: "shutting down", signal }));
-      await server.stop();
-      deps.db.close();
-    } catch (error) {
-      code = 1;
-      console.error(JSON.stringify({ level: "error", msg: "shutdown failed", error: messageOf(error) }));
-    } finally {
-      process.exit(code);
-    }
+    await shutdownSequence({ server, db: deps.db }, signal);
   };
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
   process.on("SIGINT", () => void shutdown("SIGINT"));
