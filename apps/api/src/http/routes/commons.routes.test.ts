@@ -248,11 +248,11 @@ describe('GET /api/commons/drills', () => {
 
     expect(page.total).toBeGreaterThan(0);
     expect(page.items.every((item) => item.level === 'beginner' && item.equipment === 'ball')).toBe(true);
-    expect(page.total).toBeLessThan((await list('?level=beginner')).total);
+    expect(page.total).toBeLessThan((await list('?level=beginner')).total as number);
   });
 
   test('a filtered list can be walked to its end through the cursor', async () => {
-    const expected = (await list('?equipment=ball')).total;
+    const expected = (await list('?equipment=ball')).total as number;
 
     const pages = await walk('?equipment=ball&limit=7');
 
