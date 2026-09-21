@@ -106,12 +106,18 @@ const BEFORE: Journey = journeyWith([juggling([10, 14]), slalom([30, 26])]);
 
 const ROADMAP = {
   currentLevelLabel: 'Basic',
-  tracks: [{ skill: 'ball-mastery', level: 2, source: 'test' }],
+  tracks: [
+    { skill: 'ball-mastery', level: 2, source: 'test' },
+    { skill: 'dribbling', level: 3, source: 'self' },
+  ],
   goal: 'control',
   weeks: 4,
   sessionsPerWeek: 3,
   minutesPerSession: 20,
-  focus: [{ skill: 'ball-mastery', level: 2, targetLevel: 3, reason: 'Your weakest skill.' }],
+  focus: [
+    { skill: 'ball-mastery', level: 2, targetLevel: 3, reason: 'Your weakest skill.' },
+    { skill: 'dribbling', level: 3, targetLevel: 4, reason: 'Supports the goal.' },
+  ],
 };
 
 /** The POST answer: the refreshed journey (with the retested test's new results) and the roadmap. */
@@ -206,11 +212,15 @@ const text = (element: Element): string => (element.textContent ?? '').replace(/
 const input = () => screen.getByRole('textbox') as HTMLInputElement;
 const saveButton = (name: RegExp | string = /save result/i) => screen.getByRole('button', { name }) as HTMLButtonElement;
 
-/** Types a result, saves it and waits for the saved-result section. */
-async function retest(user: ReturnType<typeof userEvent.setup>, value: string): Promise<HTMLElement> {
+/** Types a result, saves it and waits for the saved-result section (the button and heading names are per language). */
+async function retest(
+  user: ReturnType<typeof userEvent.setup>,
+  value: string,
+  words: { save: RegExp; saved: RegExp } = { save: /save result/i, saved: /your result is saved/i },
+): Promise<HTMLElement> {
   await user.type(input(), value);
-  await user.click(saveButton());
-  return screen.findByRole('region', { name: /your result is saved/i });
+  await user.click(saveButton(words.save));
+  return screen.findByRole('region', { name: words.saved });
 }
 
 // --- the request --------------------------------------------------------------------------------
@@ -378,7 +388,7 @@ describe('the comparison after saving', () => {
   test('the change is formatted for the language (a decimal comma in Russian)', async () => {
     stubNetwork({ post: () => json(answer(juggling([10, 14, 19]))) });
     const { user } = await renderForm(JUGGLING, 'ru');
-    const result = await retest(user, '19');
+    const result = await retest(user, '19', { save: /сохранить результат/i, saved: /результат сохранён/i });
     expect(within(result).getByText('+35,7%')).toBeTruthy();
   });
 
@@ -419,6 +429,15 @@ describe('the comparison after saving', () => {
     expect(text(result)).not.toMatch(/previous result/i);
     expect(within(result).getByText(/this is your first result/i)).toBeTruthy();
     expect(within(result).queryByText(/new personal best/i)).toBeNull();
+  });
+
+  test('a response with no row for this test still confirms the save, showing the typed number and no comparison', async () => {
+    stubNetwork({ post: () => json(answer(slalom([30, 26]))) });
+    const { user } = await renderForm();
+    const result = await retest(user, '21');
+    expect(text(result)).toContain('Today: 21 touches');
+    expect(text(result)).not.toMatch(/%|previous result|personal best/i);
+    expect(within(result).getByRole('link', { name: /back to my journey/i })).toBeTruthy();
   });
 
   test('a worse result is calm: a real minus sign, plain words, no alarm, and encouragement to continue the plan', async () => {
