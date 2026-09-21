@@ -3,6 +3,7 @@
 // `model` seam of createCoachAgent (ai/test's MockLanguageModelV4), and globalThis.fetch is
 // replaced by a counter in the "never fetches" test.
 import { afterEach, describe, expect, test } from "bun:test";
+import type { MastraModelConfig } from "@mastra/core/llm";
 import { MockLanguageModelV4 } from "ai/test";
 import type { PublishedVersion } from "../commons/repo";
 import { AiPlan } from "../shared/ai";
@@ -105,8 +106,10 @@ const scripted = (...results: ReturnType<typeof textResult | typeof toolCallResu
   return new MockLanguageModelV4({ doGenerate: async () => results[Math.min(n++, results.length - 1)]! });
 };
 
-const build = (model: MockLanguageModelV4, over: Partial<Parameters<typeof createCoachAgent>[0]> = {}) =>
-  createCoachAgent({ model, candidates: CANDIDATES, graph: GRAPH, levels: LEVELS, locale: "en", ...over });
+// ai/test's mock is structurally a LanguageModelV4 but not nominally Mastra's MastraModelConfig
+// (its doGenerate result type differs), hence the cast at the injection seam.
+const build = (model: MockLanguageModelV4, over: Partial<Omit<Parameters<typeof createCoachAgent>[0], "model">> = {}) =>
+  createCoachAgent({ model: model as unknown as MastraModelConfig, candidates: CANDIDATES, graph: GRAPH, levels: LEVELS, locale: "en", ...over });
 
 const REQUEST = { budgetMinutes: 12, locale: "en" as const };
 
@@ -232,6 +235,18 @@ describe("runCoachPlan output", () => {
       },
     });
     await expect(runCoachPlan(build(model), REQUEST)).rejects.toThrow();
+  });
+
+  test("a failing provider is called once: there is no retry loop", async () => {
+    let calls = 0;
+    const model = new MockLanguageModelV4({
+      doGenerate: async () => {
+        calls += 1;
+        throw new Error("provider is down");
+      },
+    });
+    await runCoachPlan(build(model), REQUEST).catch(() => undefined);
+    expect(calls).toBe(1);
   });
 
   test("the caller's abort signal reaches the model and no plan comes back", async () => {
