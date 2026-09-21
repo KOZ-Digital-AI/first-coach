@@ -1,0 +1,2293 @@
+{
+  "sport": "football",
+  "version": "0.1.0",
+  "nodes": [
+    {
+      "slug": "ball-mastery",
+      "parent": null,
+      "order": 1,
+      "names": {
+        "kk": "Допты меңгеру",
+        "ru": "Контроль мяча",
+        "en": "Ball mastery"
+      },
+      "levels": [
+        {
+          "kk": "Тұрған орныңда допқа жайлап жанасасың.",
+          "ru": "Стоя на месте, ты мягко касаешься мяча.",
+          "en": "You touch the ball gently while standing still."
+        },
+        {
+          "kk": "Бір минут бойы жеңіл жанасулар кезінде доп бір қадамнан ары кетпейді.",
+          "ru": "Целую минуту лёгких касаний мяч остаётся в пределах одного шага от тебя.",
+          "en": "The ball stays within one step of you during a whole minute of easy touches."
+        },
+        {
+          "kk": "Табанмен, аяқтың ішкі және сыртқы жағымен, екі аяқпен де жанасасың.",
+          "ru": "Ты касаешься мяча подошвой, внутренней и внешней стороной стопы, обеими ногами.",
+          "en": "You use the sole, the inside and the outside of your foot with either foot."
+        },
+        {
+          "kk": "Жанасуларды тегіс ырғаққа қосып, тоқтамай бағытты өзгертесің.",
+          "ru": "Ты соединяешь касания в ровный ритм и меняешь направление, не останавливаясь.",
+          "en": "You link touches into a smooth rhythm and change direction without stopping."
+        },
+        {
+          "kk": "Доп жаныңда қалып, басыңды кейде көтеріп, жылдамдықты қалағаныңша арттырып-азайтасың.",
+          "ru": "Ты по желанию ускоряешься и замедляешься, мяч остаётся рядом, а голову ты иногда поднимаешь.",
+          "en": "You speed up and slow down at will while the ball stays close and your head is up now and then."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Алдымен бірнеше минут жылын да, жолдан аулақ, тегіс жерде жаттыққан дұрыс.",
+          "ru": "Сначала пару минут разомнись и тренируйся на ровной площадке подальше от дороги.",
+          "en": "Warm up for a few minutes first, and train on flat ground away from the road."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Доппен еркін сезініп, оны екі аяқпен де жаныңда ұстайсың.",
+          "ru": "Ты уверенно чувствуешь мяч и держишь его рядом обеими ногами.",
+          "en": "You feel at home with the ball and keep it close with both feet."
+        },
+        {
+          "kk": "Допты алып жүруге, пас беруге және жонглирлеуге дайынсың.",
+          "ru": "Ты готов к дриблингу, пасам и жонглированию.",
+          "en": "You are ready for dribbling, passing and juggling."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты жаныңда ұстаудың орнына соңынан жүгіресің.",
+          "ru": "Вместо того чтобы держать мяч рядом, ты бегаешь за ним.",
+          "en": "You run after the ball instead of keeping it close to you."
+        }
+      ]
+    },
+    {
+      "slug": "basic-touches",
+      "parent": "ball-mastery",
+      "order": 1,
+      "names": {
+        "kk": "Негізгі жанасулар",
+        "ru": "Базовые касания",
+        "en": "Basic touches"
+      },
+      "levels": [
+        {
+          "kk": "Тұрған орныңда допқа табаныңмен жайлап жанасасың.",
+          "ru": "Стоя на месте, ты мягко касаешься мяча подошвой.",
+          "en": "You gently tap the ball with the sole of your foot while standing still."
+        },
+        {
+          "kk": "Қатарынан 20 жұмсақ жанасу жасайсың, доп бір қадамнан ары кетпейді.",
+          "ru": "Ты делаешь 20 мягких касаний подряд, и мяч не уходит дальше одного шага.",
+          "en": "You make 20 soft touches in a row and the ball stays within one step of you."
+        },
+        {
+          "kk": "Табанмен және аяқтың ішкі жағымен допты қуып кетпей, қатарынан 50 жанасу жасайсың.",
+          "ru": "Подошвой и внутренней стороной стопы ты делаешь 50 касаний подряд, не убегая за мячом.",
+          "en": "You make 50 touches in a row with the sole and the inside of your foot without chasing the ball."
+        },
+        {
+          "kk": "Алаңды баяу аралап жүріп те жанасуларды жұмсақ ұстайсың.",
+          "ru": "Ты медленно идёшь по площадке и всё равно касаешься мяча мягко.",
+          "en": "You keep the touches soft while you slowly walk around the space."
+        },
+        {
+          "kk": "100 жұмсақ жанасу жасайсың, кейде басыңды көтересің, доп жаныңда қалады.",
+          "ru": "Ты делаешь 100 мягких касаний, время от времени поднимаешь голову, а мяч остаётся рядом.",
+          "en": "You make 100 soft touches, lift your head from time to time, and the ball stays close."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Тірек аяғың тайып кетпесін десең, тегіс әрі құрғақ жерде жаттыққан дұрыс.",
+          "ru": "Тренируйся на ровной сухой земле, чтобы опорная нога не скользила.",
+          "en": "Train on flat, dry ground so that your standing foot does not slip."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты табаныңмен жайлап басып, домалата аласың.",
+          "ru": "Ты умеешь мягко касаться мяча подошвой и катать его.",
+          "en": "You can tap and roll the ball gently with the sole of your foot."
+        },
+        {
+          "kk": "Бір аяғың допқа жанасқанда, екінші аяғыңда тепе-теңдікті сақтайсың.",
+          "ru": "Пока одна нога касается мяча, ты сохраняешь равновесие на другой.",
+          "en": "You stay balanced on one leg while the other touches the ball."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Тек допқа қарайсың, басыңды көтермейсің.",
+          "ru": "Смотришь только на мяч и не поднимаешь голову.",
+          "en": "You look only at the ball and never lift your head."
+        },
+        {
+          "kk": "Жанасуларың тым қатты, доп алысқа домалап кетеді.",
+          "ru": "Касания слишком сильные, и мяч укатывается далеко.",
+          "en": "Your touches are so hard that the ball rolls far away."
+        }
+      ]
+    },
+    {
+      "slug": "inside-touches",
+      "parent": "ball-mastery",
+      "order": 2,
+      "names": {
+        "kk": "Аяқтың ішкі жағымен жанасу",
+        "ru": "Касания внутренней стороной стопы",
+        "en": "Inside touches"
+      },
+      "levels": [
+        {
+          "kk": "Допты аяқтың ішкі жағымен бүйірге баяу домалатасың.",
+          "ru": "Ты медленно катишь мяч в сторону внутренней стороной стопы.",
+          "en": "You roll the ball sideways with the inside of one foot, slowly."
+        },
+        {
+          "kk": "Допты бір аяғыңнан екінші аяғыңа қатарынан он рет ауыстырасың.",
+          "ru": "Ты перекатываешь мяч с одной ноги на другую десять раз подряд.",
+          "en": "You pass the ball from one foot to the other ten times in a row."
+        },
+        {
+          "kk": "30 секунд бойы ырғақты сақтайсың, доп екі аяғыңның арасында қалады.",
+          "ru": "30 секунд держишь ритм, мяч остаётся между ногами.",
+          "en": "You keep the rhythm for 30 seconds and the ball stays between your feet."
+        },
+        {
+          "kk": "Мұны бүйірге кішкене қадам басып жүріп жасайсың.",
+          "ru": "Ты делаешь это, мелкими шагами двигаясь в сторону.",
+          "en": "You do it while taking small steps sideways."
+        },
+        {
+          "kk": "Мұны бір минут бойы жылдам әрі тегіс жасайсың, кейде басыңды көтересің.",
+          "ru": "Ты делаешь это быстро и плавно целую минуту, иногда поднимая голову.",
+          "en": "You do it fast and smoothly for one minute, with your head up now and then."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "basic-touches",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Тізеңді аздап бүгіп тұр: тізе түзу қатып тұрса, буын шаршайды.",
+          "ru": "Держи колени слегка согнутыми: прямые, зажатые колени перегружают суставы.",
+          "en": "Keep your knees slightly bent; locked, straight knees strain the joints."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты екі аяқтың да ішкі жағымен басқарасың.",
+          "ru": "Ты управляешь мячом внутренней стороной обеих ног.",
+          "en": "You control the ball with the inside of either foot."
+        },
+        {
+          "kk": "Доп аяғыңның астында емес, алдыңда жүреді.",
+          "ru": "Мяч движется перед тобой, а не под ногами.",
+          "en": "The ball stays in front of you, not under your feet."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Тобығың босаңсып тұрады, сондықтан доп сырғып кетеді немесе секіріп шығады.",
+          "ru": "Стопа расслаблена, поэтому мяч ускользает или подпрыгивает.",
+          "en": "Your ankle is loose, so the ball slips away or pops up."
+        },
+        {
+          "kk": "Допты аяқтың ішкі жағымен емес, ұшымен итересің.",
+          "ru": "Ты толкаешь мяч носком, а не внутренней стороной стопы.",
+          "en": "You push the ball with your toe instead of the inside of your foot."
+        }
+      ]
+    },
+    {
+      "slug": "outside-touches",
+      "parent": "ball-mastery",
+      "order": 3,
+      "names": {
+        "kk": "Аяқтың сыртқы жағымен жанасу",
+        "ru": "Касания внешней стороной стопы",
+        "en": "Outside touches"
+      },
+      "levels": [
+        {
+          "kk": "Допты аяқтың сыртқы жағымен алға баяу түртесің.",
+          "ru": "Ты медленно подталкиваешь мяч вперёд внешней стороной стопы.",
+          "en": "You nudge the ball forward with the outside of one foot, slowly."
+        },
+        {
+          "kk": "Допты аяқтың сыртқы жағымен қатарынан он рет жоғалтпай итересің.",
+          "ru": "Ты десять раз подряд толкаешь мяч внешней стороной стопы и не теряешь его.",
+          "en": "You push the ball ten times in a row with the outside of your foot without losing it."
+        },
+        {
+          "kk": "Аяқтың сыртқы жағымен екі аяқпен де жанасасың.",
+          "ru": "Ты касаешься мяча внешней стороной обеих ног.",
+          "en": "You touch the ball with the outside of both feet."
+        },
+        {
+          "kk": "Тек сыртқы жанасулармен түзу сызықпен алға жүресің.",
+          "ru": "Ты идёшь вперёд по прямой одними касаниями внешней стороной стопы.",
+          "en": "You move forward in a straight line using only outside touches."
+        },
+        {
+          "kk": "Бір минут бойы жылдам сыртқы жанасулар жасайсың, доп бір қадамның ішінде қалады.",
+          "ru": "Целую минуту ты быстро касаешься мяча внешней стороной, и он остаётся в пределах шага.",
+          "en": "You make quick outside touches for one minute while the ball stays within one step."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "basic-touches",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Аяғыңды жайлап бұр. Тобықты қатты бұраса, ауырады, сондықтан баяу баста.",
+          "ru": "Поворачивай стопу мягко. Резкий поворот может повредить голеностоп, поэтому начинай медленно.",
+          "en": "Turn your foot in gently. Twisting the ankle hard can hurt it, so start slowly."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты екі аяқтың да сыртқы жағымен алға және бүйірге жүргізесің.",
+          "ru": "Ты ведёшь мяч вперёд и в стороны внешней стороной обеих ног.",
+          "en": "You move the ball forward and sideways with the outside of either foot."
+        },
+        {
+          "kk": "Аяғың жайлап ішке бұрылады, тобығың босаң қалады.",
+          "ru": "Стопа мягко поворачивается внутрь, голеностоп остаётся расслабленным.",
+          "en": "Your foot turns in gently and your ankle stays relaxed."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты аяқтың сыртқы жағымен емес, ұшымен тебесің.",
+          "ru": "Ты бьёшь по мячу носком, а не внешней стороной стопы.",
+          "en": "You kick the ball with your toe instead of the outside of your foot."
+        },
+        {
+          "kk": "Аяғыңды тым қатты ішке бұрасың да, тепе-теңдігіңнен айырыласың.",
+          "ru": "Ты слишком сильно заворачиваешь стопу внутрь и теряешь равновесие.",
+          "en": "You turn your foot in so far that you lose your balance."
+        }
+      ]
+    },
+    {
+      "slug": "alternating-touches",
+      "parent": "ball-mastery",
+      "order": 4,
+      "names": {
+        "kk": "Кезектесіп жанасу",
+        "ru": "Чередование касаний",
+        "en": "Alternating touches"
+      },
+      "levels": [
+        {
+          "kk": "Допқа бір аяғыңның ішкі жағымен, содан кейін сол аяқтың сыртқы жағымен баяу жанасасың.",
+          "ru": "Ты медленно касаешься мяча внутренней стороной стопы, затем внешней стороной той же ноги.",
+          "en": "You touch the ball with the inside of one foot, then the outside of the same foot, slowly."
+        },
+        {
+          "kk": "Бір аяқпен ішкі және сыртқы жанасуларды қатарынан он рет кезектестіресің.",
+          "ru": "Ты десять раз подряд чередуешь касания внутренней и внешней стороной одной ноги.",
+          "en": "You alternate inside and outside touches with one foot ten times in a row."
+        },
+        {
+          "kk": "Дәл солай екінші аяғыңмен де сол ырғақпен жасайсың.",
+          "ru": "Ты делаешь то же самое другой ногой в том же ритме.",
+          "en": "You do the same with your other foot at the same rhythm."
+        },
+        {
+          "kk": "30 секунд бойы тоқтамай екі аяқпен кезектесіп жанасасың.",
+          "ru": "30 секунд без остановки ты чередуешь касания обеими ногами.",
+          "en": "You alternate between both feet without stopping for 30 seconds."
+        },
+        {
+          "kk": "Бір минут бойы жылдам, бірқалыпты ырғақты сақтап, алға жылжисың.",
+          "ru": "Ты держишь быстрый ровный ритм целую минуту и при этом двигаешься вперёд.",
+          "en": "You keep a fast, even rhythm for one minute and move forward while you do it."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "inside-touches",
+          "minLevel": 3
+        },
+        {
+          "skill": "outside-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 7,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Раундтар арасында су іш, аяғың ауырлағанда демал.",
+          "ru": "Между подходами пей воду и отдыхай, когда ноги тяжелеют.",
+          "en": "Drink some water between rounds and rest when your legs feel heavy."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Ішкі және сыртқы жанасуларды бір тегіс ырғаққа біріктіресің.",
+          "ru": "Ты соединяешь касания внутренней и внешней стороной в один ровный ритм.",
+          "en": "You link inside and outside touches into one smooth rhythm."
+        },
+        {
+          "kk": "Әлсіз аяғың күшті аяғыңнан қалыспайды.",
+          "ru": "Слабая нога не отстаёт от сильной.",
+          "en": "Your weaker foot keeps up with your stronger foot."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Жанасулардың арасында бірқалыпты ырғақты сақтаудың орнына бір сәт тоқтап қаласың.",
+          "ru": "Между касаниями ты на миг останавливаешься, вместо того чтобы держать ровный ритм.",
+          "en": "You stop for a moment between touches instead of keeping a steady rhythm."
+        },
+        {
+          "kk": "Тек күшті аяғыңды қолданасың, екіншісін өткізіп жібересің.",
+          "ru": "Ты работаешь только сильной ногой, а другую пропускаешь.",
+          "en": "You use only your stronger foot and skip the other one."
+        }
+      ]
+    },
+    {
+      "slug": "direction-change",
+      "parent": "ball-mastery",
+      "order": 5,
+      "names": {
+        "kk": "Бағытты өзгерту",
+        "ru": "Смена направления",
+        "en": "Direction change"
+      },
+      "levels": [
+        {
+          "kk": "Допты табаныңмен тоқтатып, оны қарама-қарсы жаққа баяу итересің.",
+          "ru": "Ты останавливаешь мяч подошвой и медленно толкаешь его в другую сторону.",
+          "en": "You stop the ball with the sole of your foot and push it the other way, slowly."
+        },
+        {
+          "kk": "Доппен аяқтың ішкі жағын пайдаланып 90 градусқа бұрыласың.",
+          "ru": "Ты разворачиваешься с мячом на 90 градусов внутренней стороной стопы.",
+          "en": "You turn 90 degrees with the ball using the inside of your foot."
+        },
+        {
+          "kk": "Аяқтың ішкі және сыртқы жағымен, солға да, оңға да бұрыласың.",
+          "ru": "Ты поворачиваешь внутренней и внешней стороной стопы, и налево, и направо.",
+          "en": "You turn with the inside and the outside of your foot, both left and right."
+        },
+        {
+          "kk": "Допты тоқтатпай, бірнеше жанасудан кейін бағытты өзгертіп отырасың.",
+          "ru": "Ты меняешь направление каждые несколько касаний, не останавливая мяч.",
+          "en": "You change direction every few touches without stopping the ball."
+        },
+        {
+          "kk": "Досың бағытты айтқанда, бағытты тез өзгертесің, ал доп жаныңда қалады.",
+          "ru": "Ты быстро меняешь направление по команде друга, и мяч остаётся рядом.",
+          "en": "You change direction quickly when a friend calls it out, and the ball stays close."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "alternating-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Бұрылмас бұрын жаныңда ешкім жоқ екеніне және орын бос екеніне көз жеткіз.",
+          "ru": "Перед поворотом убедись, что рядом никого нет и место свободно.",
+          "en": "Before you turn, check that nobody is close by and that the space is free."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты жоғалтпай, тоқтамай бұрыласың.",
+          "ru": "Ты поворачиваешь с мячом, не останавливаясь и не теряя его.",
+          "en": "You turn with the ball without stopping and without losing it."
+        },
+        {
+          "kk": "Әр бұрылысқа табанды, ішкі немесе сыртқы жағын таңдайсың.",
+          "ru": "Для каждого поворота ты выбираешь подошву, внутреннюю или внешнюю сторону стопы.",
+          "en": "You choose the sole, the inside or the outside of the foot for each turn."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Доп бақылауыңда болмай тұрып, денеңді бұрып жібересің.",
+          "ru": "Ты разворачиваешь тело раньше, чем мяч оказался под контролем.",
+          "en": "You turn your body before the ball is under control."
+        },
+        {
+          "kk": "Тірек аяғыңды доптан алшақ қойып, тайып кетесің.",
+          "ru": "Ты ставишь опорную ногу далеко от мяча и скользишь.",
+          "en": "You plant your standing foot far from the ball and slip."
+        }
+      ]
+    },
+    {
+      "slug": "speed-control",
+      "parent": "ball-mastery",
+      "order": 6,
+      "names": {
+        "kk": "Жылдамдықты басқару",
+        "ru": "Управление скоростью",
+        "en": "Speed control"
+      },
+      "levels": [
+        {
+          "kk": "Допты жүргізіп бара жатып, қалағанда табаныңмен тоқтатасың.",
+          "ru": "Ты идёшь с мячом и останавливаешь его подошвой, когда решишь.",
+          "en": "You walk with the ball and stop it with the sole of your foot when you decide."
+        },
+        {
+          "kk": "Допты жүргізіп жүгіріп барып, оны бір-екі жанасумен тоқтатасың.",
+          "ru": "Ты бежишь трусцой с мячом и останавливаешь его за одно-два касания.",
+          "en": "You jog with the ball and stop it in one or two touches."
+        },
+        {
+          "kk": "Белгі бойынша жылдамдықты азайтып, арттырасың, доп екі қадамның ішінде қалады.",
+          "ru": "Ты замедляешься и ускоряешься по сигналу, и мяч остаётся в пределах двух шагов.",
+          "en": "You slow down and speed up on a signal, and the ball stays within two steps."
+        },
+        {
+          "kk": "Бір жүгіріс ішінде допты жоғалтпай жылдамдықты бірнеше рет өзгертесің.",
+          "ru": "За одну пробежку ты несколько раз меняешь скорость, не теряя мяч.",
+          "en": "You change speed several times in one run without losing the ball."
+        },
+        {
+          "kk": "Жүрістен жүгіріске, содан кейін тоқтауға дейін допты бақылауда ұстайсың.",
+          "ru": "Ты переходишь от шага к рывку и снова к остановке, не выпуская мяч из-под контроля.",
+          "en": "You go from a walk to a sprint and back to a stop with the ball in control."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "direction-change",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 9,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Жылдамдап, баяулап жүргенде айналаңда бірнеше метр бос орын қалдыр.",
+          "ru": "Пока ты ускоряешься и замедляешься, оставляй вокруг себя несколько метров свободного места.",
+          "en": "Keep several metres of free space around you while you speed up and slow down."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Доп аяғыңның жанында тұрып, қалағаныңша жылдамдайсың және баяулайсың.",
+          "ru": "Ты по желанию ускоряешься и замедляешься, пока мяч рядом с ногами.",
+          "en": "You speed up and slow down at will with the ball close to your feet."
+        },
+        {
+          "kk": "Допты кез келген сәтте табаныңмен тоқтата аласың.",
+          "ru": "Ты можешь в любой момент остановить мяч подошвой.",
+          "en": "You can stop the ball with the sole of your foot at any moment."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Тым жылдамдап кетесің, доп сенен алыстап кетеді.",
+          "ru": "Ты разгоняешься так сильно, что мяч убегает от тебя.",
+          "en": "You speed up so much that the ball runs away from you."
+        },
+        {
+          "kk": "Допты аяқтың ұшымен тоқтатуға тырысасың, сондықтан ол секіріп кетеді.",
+          "ru": "Ты пытаешься остановить мяч носком, и он отскакивает.",
+          "en": "You try to stop the ball with your toe, so it bounces off."
+        }
+      ]
+    },
+    {
+      "slug": "dribbling",
+      "parent": null,
+      "order": 2,
+      "names": {
+        "kk": "Допты алып жүру",
+        "ru": "Дриблинг",
+        "en": "Dribbling"
+      },
+      "levels": [
+        {
+          "kk": "Допты жүргізіп жүріп, оны ұсақ жанасулармен жаныңда ұстайсың.",
+          "ru": "Ты идёшь с мячом и держишь его рядом мелкими касаниями.",
+          "en": "You walk with the ball and keep it close with small touches."
+        },
+        {
+          "kk": "Кедергілерді айналып өтіп, допты жаныңда ұстайсың.",
+          "ru": "Ты обводишь препятствия, и мяч остаётся рядом.",
+          "en": "You dribble around obstacles and keep the ball close to you."
+        },
+        {
+          "kk": "Допты алып жүріп, бұрыласың және бағытты өзгертесің.",
+          "ru": "Ты ведёшь мяч, поворачиваешь и меняешь направление.",
+          "en": "You turn and change direction while you dribble."
+        },
+        {
+          "kk": "Басыңды көтеріп жүресің және айналаңда не болып жатқанын көресің.",
+          "ru": "Ты ведёшь мяч с поднятой головой и видишь, что происходит вокруг.",
+          "en": "You dribble with your head up and see what is happening around you."
+        },
+        {
+          "kk": "Допты жылдам алып жүресің, әрі оны толық бақылайсың.",
+          "ru": "Ты ведёшь мяч быстро и полностью его контролируешь.",
+          "en": "You dribble fast and stay in control of the ball."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Басқа адамдар көрініп тұратын ашық жерде допты алып жүр, біреу сенің алаңыңа кіріп кетсе, тоқта.",
+          "ru": "Веди мяч там, где хорошо видно других людей, и остановись, если кто-то забежал в твою зону.",
+          "en": "Dribble in an open space where you can see other people, and stop if someone runs into your area."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты қалаған жеріңе, өзің таңдаған қарқынмен алып барасың.",
+          "ru": "Ты ведёшь мяч туда, куда хочешь, в темпе, который выбираешь сам.",
+          "en": "You carry the ball where you want, at the pace you choose."
+        },
+        {
+          "kk": "Доп аяғыңда болғанда өзіңді сабырлы сезінесің.",
+          "ru": "Ты спокойно чувствуешь себя, когда мяч у твоих ног.",
+          "en": "You feel calm when the ball is at your feet."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты тым алысқа итеріп жібересің де, оның соңынан жүгіресің.",
+          "ru": "Ты слишком далеко посылаешь мяч вперёд и потом бежишь за ним.",
+          "en": "You push the ball too far ahead and have to sprint to catch it."
+        }
+      ]
+    },
+    {
+      "slug": "close-dribbling",
+      "parent": "dribbling",
+      "order": 1,
+      "names": {
+        "kk": "Допты жақын ұстап алып жүру",
+        "ru": "Ведение мяча рядом с собой",
+        "en": "Close dribbling"
+      },
+      "levels": [
+        {
+          "kk": "Допты жүргізіп жүріп, әр екінші қадам сайын жанасасың.",
+          "ru": "Ты идёшь с мячом и касаешься его на каждый второй шаг.",
+          "en": "You walk with the ball and touch it on every second step."
+        },
+        {
+          "kk": "Ұсақ жанасулармен түзу сызықпен, шамамен он метр, баяу алып жүресің.",
+          "ru": "Ты медленно ведёшь мяч по прямой около десяти метров мелкими касаниями.",
+          "en": "You dribble slowly in a straight line, about ten metres, with small touches."
+        },
+        {
+          "kk": "Екі аяғыңды да қолданып он метр алып жүресің, доп екі қадамның ішінде қалады.",
+          "ru": "Ты ведёшь мяч десять метров обеими ногами, и он остаётся в пределах двух шагов.",
+          "en": "You dribble ten metres using both feet, and the ball stays within two steps."
+        },
+        {
+          "kk": "Шеңбермен және зигзагпен алып жүресің, допты жоғалтпайсың.",
+          "ru": "Ты ведёшь мяч по кругу и зигзагом, не теряя его.",
+          "en": "You dribble in a circle and in a zigzag without losing the ball."
+        },
+        {
+          "kk": "Жеңіл жүгіріспен алып жүресің, доп бүкіл уақыт жаныңда қалады.",
+          "ru": "Ты ведёшь мяч лёгким бегом, и он всё время остаётся рядом.",
+          "en": "You dribble at a jogging pace and the ball stays close the whole time."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "basic-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Баяу жүрістен баста, доп жаныңда тұрғанда ғана жылдамда, сонда допқа сүріне алмайсың.",
+          "ru": "Начинай с шага и ускоряйся, только когда мяч рядом, чтобы не споткнуться о него.",
+          "en": "Start at a walk, and speed up only when the ball stays close, so you do not trip over it."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Қозғалып бара жатып, допты көптеген ұсақ жанасумен жаныңда ұстайсың.",
+          "ru": "Двигаясь, ты держишь мяч рядом множеством мелких касаний.",
+          "en": "You keep the ball close with many small touches while you move."
+        },
+        {
+          "kk": "Допты алып жүру үшін екі аяғыңды да қолданасың.",
+          "ru": "Для ведения мяча ты используешь обе ноги.",
+          "en": "You use both feet to carry the ball."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Жанасуларың тым үлкен, доп аяғың жетпейтін жерге домалап кетеді.",
+          "ru": "Ты делаешь слишком большие касания, и мяч откатывается туда, куда не достать ногой.",
+          "en": "You take big touches and the ball rolls out of reach."
+        },
+        {
+          "kk": "Допты тек күшті аяғыңмен итересің.",
+          "ru": "Ты толкаешь мяч только сильной ногой.",
+          "en": "You use only your stronger foot to push the ball."
+        }
+      ]
+    },
+    {
+      "slug": "slalom-dribbling",
+      "parent": "dribbling",
+      "order": 2,
+      "names": {
+        "kk": "Слаломмен алып жүру",
+        "ru": "Ведение слаломом",
+        "en": "Slalom dribbling"
+      },
+      "levels": [
+        {
+          "kk": "Бір-бірінен екі метр қашықтықта тұрған үш конусты допты жүргізіп айналып өтесің.",
+          "ru": "Ты идёшь с мячом вокруг трёх конусов, стоящих в двух метрах друг от друга.",
+          "en": "You walk with the ball around three cones set two metres apart."
+        },
+        {
+          "kk": "Бес конустың арасынан баяу алып өтесің, допқа екі аяқпен де жанасасың.",
+          "ru": "Ты медленно проводишь мяч между пятью конусами, касаясь его обеими ногами.",
+          "en": "You dribble through five cones slowly and touch the ball with either foot."
+        },
+        {
+          "kk": "Бес конустың арасынан ешқайсысына тимей, тоқтамай алып өтесің.",
+          "ru": "Ты проходишь между пятью конусами, ни одного не задев и не останавливаясь.",
+          "en": "You dribble through five cones without touching one and without stopping."
+        },
+        {
+          "kk": "Конустарды жақындатасың да, бәрібір таза өтесің.",
+          "ru": "Ты сдвигаешь конусы ближе друг к другу и всё равно проходишь чисто.",
+          "en": "You bring the cones closer together and still go through cleanly."
+        },
+        {
+          "kk": "Слаломды жылдам аяқтайсың, доп жаныңда, өтуің таза.",
+          "ru": "Ты быстро проходишь слалом, мяч рядом, проход чистый.",
+          "en": "You finish the slalom quickly, with the ball close and a clean run."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "close-dribbling",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 7,
+      "ageMax": 99,
+      "equipment": "cones",
+      "safety": [
+        {
+          "kk": "Конустарды тегіс жерге қой, олардың орнына тас немесе басқа қатты зат қойма.",
+          "ru": "Ставь конусы на ровную землю и не заменяй их камнями или другими твёрдыми предметами.",
+          "en": "Set the cones on flat ground and never put a stone or another hard object in their place."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты конустардың арасымен екі аяқпен де өткізесің.",
+          "ru": "Ты проводишь мяч между конусами обеими ногами.",
+          "en": "You weave the ball between cones using both feet."
+        },
+        {
+          "kk": "Доп әлі қозғалып тұрғанда келесі жанасуыңды жоспарлайсың.",
+          "ru": "Пока мяч ещё движется, ты уже планируешь следующее касание.",
+          "en": "You plan your next touch while the ball is still moving."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Жанасуларың тым аз, сондықтан доп конустан асып кетеді.",
+          "ru": "Касаний слишком мало, поэтому мяч пролетает мимо конуса.",
+          "en": "You take too few touches, so the ball runs past the cone."
+        },
+        {
+          "kk": "Допты денеңнен алшақ ұстайсың.",
+          "ru": "Ты держишь мяч далеко от тела.",
+          "en": "You keep the ball far from your body."
+        }
+      ]
+    },
+    {
+      "slug": "dribbling-turns",
+      "parent": "dribbling",
+      "order": 3,
+      "names": {
+        "kk": "Бұрылыстармен алып жүру",
+        "ru": "Ведение с поворотами",
+        "en": "Dribbling turns"
+      },
+      "levels": [
+        {
+          "kk": "Конусқа дейін жүріп барып, аяқтың ішкі жағымен оны айналып бұрыласың.",
+          "ru": "Ты идёшь к конусу и разворачиваешься вокруг него внутренней стороной стопы.",
+          "en": "You walk to a cone and turn round it with the inside of your foot."
+        },
+        {
+          "kk": "Конусқа дейін алып барып, аяқтың ішкі не сыртқы жағымен бұрылып, кері қайтасың.",
+          "ru": "Ты ведёшь мяч к конусу, разворачиваешься внутренней или внешней стороной стопы и возвращаешься.",
+          "en": "You dribble to a cone, turn with the inside or the outside of your foot, and come back."
+        },
+        {
+          "kk": "Бұрылар алдында допты табаныңмен өзіңе қарай тартасың.",
+          "ru": "Перед поворотом ты подтягиваешь мяч к себе подошвой.",
+          "en": "You pull the ball back with the sole of your foot before you turn."
+        },
+        {
+          "kk": "Төрт конустың әрқайсысында әртүрлі бұрылыс жасайсың.",
+          "ru": "У каждого из четырёх конусов ты делаешь новый поворот.",
+          "en": "You use a different turn at each of four cones."
+        },
+        {
+          "kk": "Жылдам бұрылып, конустан допты бақылап шығасың, келесі жанасуың дайын.",
+          "ru": "Ты быстро разворачиваешься и выходишь от конуса с мячом под контролем, следующее касание уже наготове.",
+          "en": "You turn fast and leave the cone with the ball under control and your next touch ready."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "slalom-dribbling",
+          "minLevel": 2
+        },
+        {
+          "skill": "direction-change",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "cones",
+      "safety": [
+        {
+          "kk": "Алдымен баяу бұрыл. Дымқыл шөпте кенеттен тез бұрылсаң, аяғың тайып кетуі мүмкін.",
+          "ru": "Сначала поворачивай медленно. Резкий быстрый поворот на мокрой траве может закончиться скольжением.",
+          "en": "Turn slowly at first. A sudden fast turn on wet grass can make your foot slip."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Сәтке сай бұрылысты таңдап, оны допты бақылап аяқтайсың.",
+          "ru": "Ты выбираешь поворот, подходящий к моменту, и заканчиваешь его с мячом под контролем.",
+          "en": "You choose a turn that fits the moment and finish it with the ball under control."
+        },
+        {
+          "kk": "Екі бағытқа да тегіс бұрыласың.",
+          "ru": "Ты плавно поворачиваешь в обе стороны.",
+          "en": "You turn smoothly in both directions."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты бақылауға алмай тұрып бұрыласың да, оны конус жанында жоғалтасың.",
+          "ru": "Ты поворачиваешь, не успев взять мяч под контроль, и теряешь его у конуса.",
+          "en": "You turn before you have controlled the ball and lose it at the cone."
+        },
+        {
+          "kk": "Бұрыла бастамай тұрып, конустан өтіп кетесің.",
+          "ru": "Ты пробегаешь мимо конуса, ещё не начав поворот.",
+          "en": "You run past the cone before you start to turn."
+        }
+      ]
+    },
+    {
+      "slug": "head-up-dribbling",
+      "parent": "dribbling",
+      "order": 4,
+      "names": {
+        "kk": "Басты көтеріп алып жүру",
+        "ru": "Ведение с поднятой головой",
+        "en": "Head-up dribbling"
+      },
+      "levels": [
+        {
+          "kk": "Допты баяу алып жүресің де, әр он жанасудан кейін бір рет жоғары қарайсың.",
+          "ru": "Ты медленно ведёшь мяч и раз в десять касаний бросаешь взгляд вверх.",
+          "en": "You dribble slowly and glance up once every ten touches."
+        },
+        {
+          "kk": "Әр үш-төрт жанасудан кейін жоғары қарап, көргеніңді атайсың.",
+          "ru": "Каждые три-четыре касания ты смотришь вверх и называешь то, что видишь.",
+          "en": "You look up every three or four touches and name what you see."
+        },
+        {
+          "kk": "Жоғары қарап, досың көрсеткен саусақтардың санын айтасың.",
+          "ru": "Ты смотришь вверх и называешь, сколько пальцев показывает друг.",
+          "en": "You look up and say how many fingers a friend shows you."
+        },
+        {
+          "kk": "Әр бағытты өзгерткен сайын алдымен жоғары қарайсың.",
+          "ru": "Перед каждой сменой направления ты сначала смотришь вверх.",
+          "en": "You look up before every change of direction."
+        },
+        {
+          "kk": "Жүріп жүрген ойыншыларды айналып өтесің, айналаңа қарап жүріп допты жоғалтпайсың.",
+          "ru": "Ты обводишь идущих игроков и не теряешь мяч, пока осматриваешься.",
+          "en": "You dribble around other players who are walking and keep the ball while you look around."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "close-dribbling",
+          "minLevel": 3
+        },
+        {
+          "skill": "slalom-dribbling",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 9,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Достарыңмен ойын алаңын нақты келісіп ал да, ешкім соқтығыспауы үшін сол алаңның ішінде жүр.",
+          "ru": "Договоритесь с друзьями о чёткой площадке и оставайтесь внутри неё, чтобы никто не столкнулся.",
+          "en": "Agree on a clear playing area with friends, and stay inside it so nobody collides."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Доп аяғыңда тұрып, айналаңдағы бос орынды көресің.",
+          "ru": "Пока мяч у ног, ты видишь свободное место вокруг.",
+          "en": "You see the space around you while the ball stays at your feet."
+        },
+        {
+          "kk": "Допқа жанасқанға дейін қайда баратыныңды таңдайсың.",
+          "ru": "Ты выбираешь, куда идти, ещё до касания мяча.",
+          "en": "You choose where to go before you touch the ball."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Жоғары қарағанда әр жолы допты жоғалтасың.",
+          "ru": "Каждый раз, когда поднимаешь голову, ты теряешь мяч.",
+          "en": "You lose the ball every time you look up."
+        },
+        {
+          "kk": "Жоғары тым кеш қарайсың, біреумен соқтығысуға шақ қалғанда.",
+          "ru": "Ты поднимаешь голову слишком поздно, когда почти сталкиваешься с кем-то.",
+          "en": "You look up too late, just before you bump into someone."
+        }
+      ]
+    },
+    {
+      "slug": "speed-dribbling",
+      "parent": "dribbling",
+      "order": 5,
+      "names": {
+        "kk": "Жылдам алып жүру",
+        "ru": "Быстрое ведение мяча",
+        "en": "Speed dribbling"
+      },
+      "levels": [
+        {
+          "kk": "Он метрді шапшаң жүріспен алып өтесің, доп жаныңда қалады.",
+          "ru": "Ты проводишь мяч десять метров быстрым шагом, и мяч остаётся рядом.",
+          "en": "You dribble at a fast walk over ten metres and keep the ball close."
+        },
+        {
+          "kk": "Жеңіл жүгіріспен, әр екінші-үшінші қадам сайын допты алға итересің.",
+          "ru": "Ты ведёшь мяч лёгким бегом, толкая его вперёд каждые два-три шага.",
+          "en": "You dribble at a jog and push the ball ahead every second or third step."
+        },
+        {
+          "kk": "Допты аяқтың сыртқы жағымен алға итеріп, соңынан жетесің.",
+          "ru": "Ты толкаешь мяч вперёд внешней стороной стопы и догоняешь его.",
+          "en": "You push the ball ahead with the outside of your foot and run onto it."
+        },
+        {
+          "kk": "Жиырма метрді толық жылдамдықпен алып өтіп, соңында допты тоқтатасың.",
+          "ru": "Ты ведёшь мяч на полной скорости двадцать метров и в конце останавливаешь его.",
+          "en": "You dribble at full speed for twenty metres and stop the ball at the end."
+        },
+        {
+          "kk": "Бір жүгіріс ішінде жылдам жүгіресің, баяулайсың, қайта жылдамдайсың, доп бақылауда қалады.",
+          "ru": "За один рывок ты ускоряешься, замедляешься и снова ускоряешься, не теряя контроль над мячом.",
+          "en": "You go fast, slow down and speed up again, all in one run with the ball in control."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "head-up-dribbling",
+          "minLevel": 2
+        },
+        {
+          "skill": "dribbling-turns",
+          "minLevel": 2
+        },
+        {
+          "skill": "speed-control",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 10,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Алдымен жеңіл жүгіріспен жылын: суық бұлшық еттермен жүгіру оларды жарақаттауы мүмкін.",
+          "ru": "Сначала разомнись лёгким бегом: рывки на холодные мышцы могут привести к растяжению.",
+          "en": "Warm up with easy jogging first: sprinting on cold muscles can strain them."
+        },
+        {
+          "kk": "Баяулауға орын бар бос жолақта ғана жүгір, жолға немесе қоршауға қарай ешқашан жүгірме.",
+          "ru": "Разгоняйся только на свободной полосе, где есть место затормозить, и никогда не в сторону дороги или забора.",
+          "en": "Sprint only on a clear lane with room to slow down, and never towards a road or a fence."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Ашық жерде допты жылдам алып барып, оны бақылауда ұстайсың.",
+          "ru": "Ты быстро ведёшь мяч по открытому месту и не теряешь контроль.",
+          "en": "You carry the ball quickly over open ground and stay in control."
+        },
+        {
+          "kk": "Допты қашан алысқа итеру керегін, қашан жақын ұстау керегін білесің.",
+          "ru": "Ты знаешь, когда толкнуть мяч подальше, а когда держать его рядом.",
+          "en": "You know when to push the ball far and when to keep it close."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Жүгіргенде артқа шалқаясың, сондықтан доп сенен секіріп кетеді.",
+          "ru": "Во время бега ты откидываешься назад, и мяч отскакивает от тебя.",
+          "en": "You lean back when you run, so the ball jumps away from you."
+        },
+        {
+          "kk": "Допты әр қадам сайын алға итересің де, оған жете алмайсың.",
+          "ru": "Ты толкаешь мяч вперёд на каждом шаге и не можешь его догнать.",
+          "en": "You push the ball ahead every step and cannot catch it up."
+        }
+      ]
+    },
+    {
+      "slug": "passing-first-touch",
+      "parent": null,
+      "order": 3,
+      "names": {
+        "kk": "Пас және алғашқы жанасу",
+        "ru": "Пас и первый приём",
+        "en": "Passing and first touch"
+      },
+      "levels": [
+        {
+          "kk": "Допты бірнеше қадам жердегі досыңа немесе нысанаға пас бересің.",
+          "ru": "Ты отдаёшь пас мячом другу или в цель на расстоянии нескольких шагов.",
+          "en": "You pass the ball to a friend or a target a few steps away."
+        },
+        {
+          "kk": "Аяқтың ішкі жағымен пас беріп, допты тоқтатасың.",
+          "ru": "Ты отдаёшь пас и останавливаешь мяч внутренней стороной стопы.",
+          "en": "You pass and stop the ball with the inside of your foot."
+        },
+        {
+          "kk": "Нысанаға пас беріп, допты алғашқы жанасумен тоқтатасың.",
+          "ru": "Ты отдаёшь пас в цель и останавливаешь мяч первым касанием.",
+          "en": "You pass to a target and stop the ball with your first touch."
+        },
+        {
+          "kk": "Алғашқы жанасумен допты келесіде барғың келетін жерге жібересің.",
+          "ru": "Первым касанием ты отправляешь мяч туда, куда собираешься идти дальше.",
+          "en": "You use your first touch to move the ball where you want to go next."
+        },
+        {
+          "kk": "Пас беріп, жаңа орынға қозғаласың, пастарың таза әрі нысанаға дәл.",
+          "ru": "Ты отдаёшь пас и перемещаешься на новое место, а пасы получаются чистыми и точными.",
+          "en": "You pass and move to a new place, and your passes are clean and on target."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Допты жермен, аяқтың ішкі жағымен жібер; біреу жақын тұрғанда биік немесе қатты теппе.",
+          "ru": "Отдавай пас по земле внутренней стороной стопы и не бей высоко или сильно, когда рядом кто-то стоит.",
+          "en": "Pass along the ground with the inside of your foot; do not kick high or hard when someone stands close."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Пас беріп, пас қабылдауға сенімдісің.",
+          "ru": "Ты уверенно отдаёшь и принимаешь пас.",
+          "en": "You give and receive a pass with confidence."
+        },
+        {
+          "kk": "Алғашқы жанасуың келесі әрекетке жол ашады.",
+          "ru": "Твоё первое касание готовит следующее действие.",
+          "en": "Your first touch sets you up for the next action."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты қайда жіберу керегіне қарамай пас бересің.",
+          "ru": "Ты отдаёшь пас, не глядя, куда должен пойти мяч.",
+          "en": "You pass without looking at where the ball should go."
+        }
+      ]
+    },
+    {
+      "slug": "inside-foot-pass",
+      "parent": "passing-first-touch",
+      "order": 1,
+      "names": {
+        "kk": "Аяқтың ішкі жағымен пас",
+        "ru": "Пас внутренней стороной стопы",
+        "en": "Inside-foot pass"
+      },
+      "levels": [
+        {
+          "kk": "Қабырғадан екі қадам жерден допты аяқтың ішкі жағымен қабырғаға домалатасың.",
+          "ru": "С расстояния в два шага ты катишь мяч в стену внутренней стороной стопы.",
+          "en": "You roll the ball to the wall from two steps away with the inside of your foot."
+        },
+        {
+          "kk": "Қабырғаға бес рет пас беріп, әр жолы допты тоқтатасың.",
+          "ru": "Ты пять раз отдаёшь пас в стену и каждый раз останавливаешь мяч.",
+          "en": "You pass to the wall five times and stop the ball each time."
+        },
+        {
+          "kk": "Үш қадам жерден күшті аяғыңмен қатарынан он рет пас бересің.",
+          "ru": "С трёх шагов ты отдаёшь десять пасов подряд сильной ногой.",
+          "en": "You pass ten times in a row from three steps away with your stronger foot."
+        },
+        {
+          "kk": "Допты берік, түзу итеріп пас бересің де, ол өзіңе қайтады.",
+          "ru": "Ты отдаёшь пас твёрдым прямым толчком, и мяч возвращается к тебе.",
+          "en": "You pass with a firm, straight push and the ball returns to you."
+        },
+        {
+          "kk": "Қатарынан жиырма рет пас беріп, таза қайтқандарын санайсың.",
+          "ru": "Ты отдаёшь двадцать пасов подряд и считаешь чистые возвраты.",
+          "en": "You pass twenty times in a row and count the clean returns."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "inside-touches",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Қайтқан доп аяғыңа тимесін деп, қабырғадан бірнеше қадам жерде тұр және допты тек жермен жібер.",
+          "ru": "Стой в нескольких шагах от стены, чтобы отскочивший мяч не бил по ногам, и отдавай пас только по земле.",
+          "en": "Stand several steps from the wall so a rebound does not hit your legs, and pass along the ground only."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты жермен, аяқтың ішкі жағымен жібересің, ол көздеген жеріңе барады.",
+          "ru": "Ты отдаёшь пас по земле внутренней стороной стопы, и мяч идёт туда, куда ты целишься.",
+          "en": "You pass along the ground with the inside of your foot and the ball goes where you aim."
+        },
+        {
+          "kk": "Пас беру сәтінде аяғыңды қатты ұстауды білесің.",
+          "ru": "Ты умеешь держать стопу твёрдой в момент паса.",
+          "en": "You know how to hold your foot firm at the moment of the pass."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Екі аяғыңмен бірдей тұрасың, денең қате жаққа қараған.",
+          "ru": "Ты стоишь на двух ногах ровно, а тело повёрнуто не в ту сторону.",
+          "en": "You stand flat on both feet, with your body facing the wrong way."
+        },
+        {
+          "kk": "Аяғың босаң, сондықтан доп қате бағытқа кетеді.",
+          "ru": "Стопа расслаблена, поэтому мяч уходит не туда.",
+          "en": "Your foot is loose, so the ball leaves in the wrong direction."
+        }
+      ]
+    },
+    {
+      "slug": "passing-accuracy",
+      "parent": "passing-first-touch",
+      "order": 2,
+      "names": {
+        "kk": "Пастың дәлдігі",
+        "ru": "Точность паса",
+        "en": "Passing accuracy"
+      },
+      "levels": [
+        {
+          "kk": "Үш қадам жерден қабырғадағы үлкен нысанаға тигізесің.",
+          "ru": "С трёх шагов ты попадаешь в большую мишень на стене.",
+          "en": "You hit a large target on the wall from three steps away."
+        },
+        {
+          "kk": "Футбол добының көлеміндей нысанаға он реттің бесеуінде тигізесің.",
+          "ru": "Ты попадаешь в мишень размером с мяч пять раз из десяти.",
+          "en": "You hit a target the size of a football, five times out of ten."
+        },
+        {
+          "kk": "Төрт қадам жерден кіші нысанаға он реттің жетеуінде тигізесің.",
+          "ru": "С четырёх шагов ты попадаешь в маленькую мишень семь раз из десяти.",
+          "en": "You hit the small target seven times out of ten from four steps away."
+        },
+        {
+          "kk": "Нысанаға екі аяқпен де, әрқайсысымен он реттің кемінде бесеуінде тигізесің.",
+          "ru": "Ты попадаешь в мишень обеими ногами, каждой не менее пяти раз из десяти.",
+          "en": "You hit the target with both feet, at least five times out of ten with each."
+        },
+        {
+          "kk": "Алты қадам жерден нысанаға он реттің сегізінде тигізесің.",
+          "ru": "С шести шагов ты попадаешь в мишень восемь раз из десяти.",
+          "en": "You hit the target eight times out of ten from six steps away."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "inside-foot-pass",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Пасты қатты емес, аласа әрі берік бер: өте қатты доп қайтқанда бетіңе тиюі мүмкін.",
+          "ru": "Отдавай пас низко и уверенно, а не сильно: очень сильный мяч может отскочить в лицо.",
+          "en": "Keep the pass low and firm rather than hard; a very hard pass can rebound into your face."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Нысанаға көздеп бересің, доп өзің қараған жерге барады.",
+          "ru": "Ты целишься в мишень, и мяч идёт туда, куда ты смотришь.",
+          "en": "You aim your pass and it goes where you looked."
+        },
+        {
+          "kk": "Өз тигізгендеріңді санап, өзіңнің жақсарғаныңды көресің.",
+          "ru": "Ты считаешь свои попадания и видишь, как становишься лучше.",
+          "en": "You count your own hits and see yourself improve."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты тепкен сәтте нысанаға емес, допқа қарайсың.",
+          "ru": "В момент удара ты смотришь на мяч, а не на цель.",
+          "en": "You look at the ball instead of the target while you strike."
+        },
+        {
+          "kk": "Артқа шалқаясың, сондықтан доп тым биік ұшады.",
+          "ru": "Ты откидываешься назад, и мяч летит слишком высоко.",
+          "en": "You lean back and the ball flies too high."
+        }
+      ]
+    },
+    {
+      "slug": "first-touch-control",
+      "parent": "passing-first-touch",
+      "order": 3,
+      "names": {
+        "kk": "Алғашқы жанасуды басқару",
+        "ru": "Контроль первого касания",
+        "en": "First touch control"
+      },
+      "levels": [
+        {
+          "kk": "Допты өзіңе домалатып, табаныңның астында тоқтатасың.",
+          "ru": "Ты даёшь мячу подкатиться и останавливаешь его под подошвой.",
+          "en": "You let the ball roll to you and stop it under your sole."
+        },
+        {
+          "kk": "Қабырғадан қайтқан допты аяқтың ішкі жағымен тоқтатасың.",
+          "ru": "Ты принимаешь мяч от стены и останавливаешь его внутренней стороной стопы.",
+          "en": "You receive the ball from the wall and stop it with the inside of your foot."
+        },
+        {
+          "kk": "Допты бір қадамның ішінде қалатындай тоқтатасың, қатарынан бес рет.",
+          "ru": "Ты останавливаешь мяч так, чтобы он остался в пределах шага, пять раз подряд.",
+          "en": "You stop the ball so that it stays within one step of you, five times in a row."
+        },
+        {
+          "kk": "Доп келген кезде аяғыңды сәл кейін тартып, допты жұмсартасың.",
+          "ru": "Когда мяч приходит, ты слегка отводишь ногу назад и гасишь его скорость.",
+          "en": "You cushion the ball by pulling your foot back a little as it arrives."
+        },
+        {
+          "kk": "Допты екі аяқпен де қабылдап, келесі жанасуды кідірмей жасайсың.",
+          "ru": "Ты принимаешь мяч любой ногой и делаешь следующее касание без паузы.",
+          "en": "You receive the ball with either foot and take your next touch without a pause."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "inside-foot-pass",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 7,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Допты тек аяғыңмен қабылда; басыңды қолданба.",
+          "ru": "Принимай мяч только ногами; голову не подставляй.",
+          "en": "Receive the ball with your feet only; do not use your head."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Доп секіріп кетпей, жаныңда тоқтайды.",
+          "ru": "Мяч останавливается рядом, а не отскакивает.",
+          "en": "The ball stops near you instead of bouncing away."
+        },
+        {
+          "kk": "Доп келмей тұрып, денеңді доптың жолына қоясың.",
+          "ru": "Ты выравниваешь тело с мячом ещё до его прихода.",
+          "en": "You get your body in line with the ball before it arrives."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Аяғың қатып қалған, сондықтан доп одан секіріп кетеді.",
+          "ru": "Стопа напряжена, и мяч отскакивает от неё.",
+          "en": "Your foot is stiff, so the ball bounces off it."
+        },
+        {
+          "kk": "Допты алдыңда емес, денеңнің астында қабылдайсың.",
+          "ru": "Ты принимаешь мяч под собой, а не перед собой.",
+          "en": "You receive the ball under your body instead of in front of you."
+        }
+      ]
+    },
+    {
+      "slug": "directional-first-touch",
+      "parent": "passing-first-touch",
+      "order": 4,
+      "names": {
+        "kk": "Бағытталған алғашқы жанасу",
+        "ru": "Первое касание с направлением",
+        "en": "Directional first touch"
+      },
+      "levels": [
+        {
+          "kk": "Допты қабылдап, аяқтың ішкі жағымен оны солға немесе оңға сәл жібересің.",
+          "ru": "Ты принимаешь мяч и внутренней стороной стопы слегка уводишь его влево или вправо.",
+          "en": "You receive the ball and push it a little to the left or right with the inside of your foot."
+        },
+        {
+          "kk": "Доп келмей тұрып таңдаған жағыңа алғашқы жанасуыңды жасайсың.",
+          "ru": "Первое касание ты делаешь в сторону, которую выбираешь ещё до прихода мяча.",
+          "en": "You take your first touch to the side you choose before the ball arrives."
+        },
+        {
+          "kk": "Алғашқы жанасуыңмен допты алға, қабырғадан алыс, бос орынға жібересің.",
+          "ru": "Первым касанием ты отправляешь мяч вперёд, в свободное место, подальше от стены.",
+          "en": "You take your first touch forward into space, away from the wall."
+        },
+        {
+          "kk": "Алғашқы жанасуды екі жаққа да жасап, қайта пас беруге дайын боласың.",
+          "ru": "Ты делаешь первое касание в обе стороны и сразу готов снова отдать пас.",
+          "en": "You take your first touch to either side and are ready to pass again."
+        },
+        {
+          "kk": "Доп келе жатқанда досың «солға» немесе «оңға» дейді, сен допты сол бағытқа жібересің.",
+          "ru": "Когда мяч подходит, друг кричит «влево» или «вправо», и ты касаешься мяча в ту сторону.",
+          "en": "A friend calls left or right as the ball arrives, and you touch it that way."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "first-touch-control",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 9,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Допты бүйірге жібергенде денеңді алдымен баяу бұр, сонда тізең мен тобығың берік тұрады.",
+          "ru": "Когда отправляешь мяч в сторону, сначала поворачивай корпус медленно, чтобы колени и голеностопы оставались устойчивыми.",
+          "en": "Turn your body slowly at first when you move the ball to the side, so your knees and ankles stay steady."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Алғашқы жанасуың допты керекті жеріне жібереді.",
+          "ru": "Уже первое касание переводит мяч туда, куда тебе нужно.",
+          "en": "Your first touch already moves the ball to where you want it."
+        },
+        {
+          "kk": "Айналаңдағы бос орынды көру үшін денеңді ашық ұстайсың.",
+          "ru": "Ты держишь корпус открытым, чтобы видеть свободное место вокруг.",
+          "en": "You keep your body open so you can see the space around you."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты қатып тоқтатып тастайсың, содан кейін ғана келесі қимылды ойлайсың.",
+          "ru": "Ты останавливаешь мяч намертво и только потом думаешь о следующем движении.",
+          "en": "You stop the ball dead and only then start to think about the next move."
+        },
+        {
+          "kk": "Денең алаңға жабық тұрады, сондықтан бос орынды көрмейсің.",
+          "ru": "Корпус закрыт от поля, поэтому ты не видишь свободного места.",
+          "en": "Your body is closed to the field, so you cannot see the space."
+        }
+      ]
+    },
+    {
+      "slug": "moving-pass",
+      "parent": "passing-first-touch",
+      "order": 5,
+      "names": {
+        "kk": "Қозғалыстағы пас",
+        "ru": "Пас в движении",
+        "en": "Moving pass"
+      },
+      "levels": [
+        {
+          "kk": "Жүріп келе жатып қабырғаға пас беріп, допты қарсы алуға жүре бересің.",
+          "ru": "Ты идёшь, отдаёшь пас в стену и идёшь дальше навстречу мячу.",
+          "en": "You walk, pass to the wall, and walk on to meet the ball."
+        },
+        {
+          "kk": "Жеңіл жүгіріп келе жатып қабырғаға пас беріп, допты тоқтамай алып кетесің.",
+          "ru": "Ты бежишь трусцой, отдаёшь пас в стену и забираешь мяч без остановки.",
+          "en": "You jog, pass to the wall and collect the ball without stopping."
+        },
+        {
+          "kk": "Пас беріп, жаңа орынға жүгіресің де, допты сол жерде қабылдайсың.",
+          "ru": "Ты отдаёшь пас, бежишь на новое место и принимаешь мяч там.",
+          "en": "You pass, run to a new spot, and receive the ball there."
+        },
+        {
+          "kk": "Қозғалып бара жатып екі аяқпен де пас бересің.",
+          "ru": "Ты отдаёшь пас обеими ногами на ходу.",
+          "en": "You pass with both feet while you are moving."
+        },
+        {
+          "kk": "Бір минут бойы пас беру ырғағын сақтайсың, пастардың көбі көздеген жеріңе барады.",
+          "ru": "Ты держишь ритм передач целую минуту, и большинство пасов идёт туда, куда ты целишься.",
+          "en": "You keep a passing rhythm for one minute, and most passes go where you aim."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "passing-accuracy",
+          "minLevel": 3
+        },
+        {
+          "skill": "directional-first-touch",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 10,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Жаңа орынға жүгірер алдында айналаңды тексер, қабырғаға жақындағанда баяула.",
+          "ru": "Прежде чем бежать на новое место, посмотри вокруг, а у стены снижай скорость.",
+          "en": "Look for other people before you run to a new spot, and slow down as you get close to the wall."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Тұрып қалмай, пас беріп әрі қозғаласың: бәрі бір ағында.",
+          "ru": "Ты отдаёшь пас и двигаешься в одном потоке, а не стоишь на месте.",
+          "en": "You pass and move in one flow instead of standing still."
+        },
+        {
+          "kk": "Келесі допты қабылдау үшін жақсы орынды таңдайсың.",
+          "ru": "Ты выбираешь хорошее место, чтобы принять следующий мяч.",
+          "en": "You pick a good place to receive the next ball."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Қозғалудың орнына өз пасыңа қарап тұрасың.",
+          "ru": "Вместо движения ты стоишь и смотришь на свой пас.",
+          "en": "You stand and watch your pass instead of moving."
+        },
+        {
+          "kk": "Қайтқан допқа түзу жүгіресің де, оны бақылай алмайсың.",
+          "ru": "Ты бежишь прямо в отскок и не можешь взять мяч под контроль.",
+          "en": "You run in a straight line into the rebound and cannot control it."
+        }
+      ]
+    },
+    {
+      "slug": "weak-foot",
+      "parent": null,
+      "order": 4,
+      "names": {
+        "kk": "Әлсіз аяқ",
+        "ru": "Слабая нога",
+        "en": "Weak foot"
+      },
+      "levels": [
+        {
+          "kk": "Тұрған орныңда допқа әлсіз аяғыңмен жайлап жанасасың.",
+          "ru": "Стоя на месте, ты мягко касаешься мяча слабой ногой.",
+          "en": "You touch the ball gently with your weaker foot while standing still."
+        },
+        {
+          "kk": "Жүріп келе жатып, допты әлсіз аяғыңмен жаныңда ұстайсың.",
+          "ru": "Идя, ты держишь мяч рядом слабой ногой.",
+          "en": "You keep the ball close with your weaker foot as you walk."
+        },
+        {
+          "kk": "Әлсіз аяғыңмен пас бересің, доп көздеген жеріңе барады.",
+          "ru": "Ты отдаёшь пас слабой ногой, и мяч идёт туда, куда ты целишься.",
+          "en": "You pass with your weaker foot and the ball goes where you aim."
+        },
+        {
+          "kk": "Допты әлсіз аяғыңмен қабылдап, тоқтатасың.",
+          "ru": "Ты принимаешь и останавливаешь мяч слабой ногой.",
+          "en": "You receive and stop the ball with your weaker foot."
+        },
+        {
+          "kk": "Әлсіз аяғың дұрысырақ болса, соны таңдайсың.",
+          "ru": "Ты выбираешь слабую ногу, когда она лучше подходит.",
+          "en": "You choose your weaker foot when it is the better choice."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Әлсіз аяқпен жанасулар алғашында ерекше сезіледі. Баяу баста, аяғың шаршаса не ауырса, демал.",
+          "ru": "Касания слабой ногой сначала кажутся непривычными. Начинай медленно и отдохни, если нога устала или болит.",
+          "en": "Weaker-foot touches feel odd at first. Start slowly and rest if your leg feels tired or sore."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Әлсіз аяғың күшті аяғыңның нағыз серігіне айналады.",
+          "ru": "Слабая нога становится настоящим партнёром сильной.",
+          "en": "Your weaker foot becomes a real partner to your stronger foot."
+        },
+        {
+          "kk": "Өзіңді өзіңнің өткен әрекетіңмен салыстырасың, басқалармен емес.",
+          "ru": "Ты сравниваешь себя со своей прошлой попыткой, а не с другими.",
+          "en": "You compare yourself with your own last try, not with others."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Қиын болған кезде тез күшті аяғыңа ауысып кетесің.",
+          "ru": "Когда становится трудно, ты быстро переключаешься на сильную ногу.",
+          "en": "You quickly switch to your stronger foot when it feels hard."
+        }
+      ]
+    },
+    {
+      "slug": "weak-foot-touches",
+      "parent": "weak-foot",
+      "order": 1,
+      "names": {
+        "kk": "Әлсіз аяқпен жанасу",
+        "ru": "Касания слабой ногой",
+        "en": "Weak-foot touches"
+      },
+      "levels": [
+        {
+          "kk": "Тұрған орныңда допты әлсіз аяғыңмен он рет домалатасың.",
+          "ru": "Стоя на месте, ты десять раз прокатываешь мяч слабой ногой.",
+          "en": "You roll the ball with your weaker foot ten times while standing still."
+        },
+        {
+          "kk": "Тек әлсіз аяғыңмен аяқтың ішкі жағымен 25 жанасу жасайсың.",
+          "ru": "Ты делаешь 25 касаний внутренней стороной стопы одной слабой ногой.",
+          "en": "You make 25 inside touches with only your weaker foot."
+        },
+        {
+          "kk": "Әлсіз аяғыңның ішкі және сыртқы жағымен 50 жанасу жасайсың.",
+          "ru": "Ты делаешь 50 касаний слабой ногой внутренней и внешней стороной стопы.",
+          "en": "You make 50 touches with your weaker foot, using the inside and the outside of the foot."
+        },
+        {
+          "kk": "Допты тек әлсіз аяғыңмен жүргізіп, жүріп бара жатасың.",
+          "ru": "Ты идёшь с мячом, ведя его только слабой ногой.",
+          "en": "You walk with the ball using only your weaker foot."
+        },
+        {
+          "kk": "Әлсіз аяғыңмен 100 жанасу жасайсың, доп жаныңда қалады.",
+          "ru": "Ты делаешь 100 касаний слабой ногой, и мяч остаётся рядом.",
+          "en": "You make 100 touches with your weaker foot and the ball stays close."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "basic-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Бұл жанасуларды баяу жаса: әлсіз аяқпен жылдам, қатты жанасу тобықты бұрап алуы мүмкін.",
+          "ru": "Делай эти касания медленно: быстрые сильные касания слабой ногой могут привести к подвороту стопы.",
+          "en": "Do these touches slowly; fast, hard touches with the weaker foot can twist your ankle."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты күшті аяғыңмен қатар әлсіз аяғыңмен де сезінесің.",
+          "ru": "Ты чувствуешь мяч слабой ногой так же, как и сильной.",
+          "en": "You feel the ball with your weaker foot as well as with your stronger foot."
+        },
+        {
+          "kk": "Әлсіз аяғыңды қолданудан қорықпайсың.",
+          "ru": "Ты не боишься пользоваться слабой ногой.",
+          "en": "You are not afraid to use your weaker foot."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Асығып, допқа жанасудың орнына оны ұрасың.",
+          "ru": "Ты торопишься и бьёшь по мячу, вместо того чтобы касаться его.",
+          "en": "You hurry and hit the ball instead of touching it."
+        },
+        {
+          "kk": "Әлсіз аяғың қатты, тобығың қатып қалған.",
+          "ru": "Слабая нога напряжена, а голеностоп зажат.",
+          "en": "Your weaker leg is stiff and your ankle is locked."
+        }
+      ]
+    },
+    {
+      "slug": "weak-foot-passing",
+      "parent": "weak-foot",
+      "order": 2,
+      "names": {
+        "kk": "Әлсіз аяқпен пас",
+        "ru": "Пас слабой ногой",
+        "en": "Weak-foot passing"
+      },
+      "levels": [
+        {
+          "kk": "Қабырғадан екі қадам жерден допты әлсіз аяғыңмен қабырғаға домалатасың.",
+          "ru": "С двух шагов ты катишь мяч в стену слабой ногой.",
+          "en": "You roll the ball to the wall from two steps away with your weaker foot."
+        },
+        {
+          "kk": "Екі метр жерден әлсіз аяғыңмен он рет пас бересің.",
+          "ru": "С двух метров ты отдаёшь десять пасов слабой ногой.",
+          "en": "You pass ten times from two metres with your weaker foot."
+        },
+        {
+          "kk": "Екі метрден он рет, үш метрден он рет, төрт метрден он рет пас бересің.",
+          "ru": "Ты отдаёшь по десять пасов с двух, трёх и четырёх метров.",
+          "en": "You pass ten times from two metres, then ten from three, then ten from four."
+        },
+        {
+          "kk": "Жүріп келе жатып әлсіз аяғыңмен пас бересің.",
+          "ru": "Ты отдаёшь пас слабой ногой на ходу.",
+          "en": "You pass with your weaker foot while walking."
+        },
+        {
+          "kk": "Төрт метр жерден әлсіз аяқпен берген пастарыңның көбі көздеген жеріңе барады.",
+          "ru": "С четырёх метров большинство твоих пасов слабой ногой идёт туда, куда ты целишься.",
+          "en": "Most of your weaker-foot passes go where you aim, from four metres."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "weak-foot-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Әлсіз аяғың әлі үйреніп жатқанда пасты жайлап бер: қатты, нашар тебілген доп саусақтарыңды ауыртуы мүмкін.",
+          "ru": "Пока слабая нога учится, отдавай пас мягко: сильный неточный удар может ушибить пальцы.",
+          "en": "Pass gently while your weaker foot is still learning; a hard, badly struck ball can hurt your toes."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Әлсіз аяғың жермен қысқа әрі дәл пас береді.",
+          "ru": "Слабая нога отдаёт короткие точные пасы по земле.",
+          "en": "Your weaker foot gives short, accurate passes along the ground."
+        },
+        {
+          "kk": "Аяғыңның қалпын күшті аяғыңдағыдай ұстайсың.",
+          "ru": "Ты держишь стопу так же, как и сильной ногой.",
+          "en": "You hold your foot in the same shape as with your stronger foot."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Артқа шалқайып, допқа аяқтың ұшымен тиесің.",
+          "ru": "Ты откидываешься назад и бьёшь по мячу носком.",
+          "en": "You lean back and hit the ball with your toe."
+        },
+        {
+          "kk": "Қабырғаға көздейсің, бірақ аяғыңа қарайсың.",
+          "ru": "Ты целишься в стену, но смотришь на ноги.",
+          "en": "You aim at the wall but look at your feet."
+        }
+      ]
+    },
+    {
+      "slug": "weak-foot-first-touch",
+      "parent": "weak-foot",
+      "order": 3,
+      "names": {
+        "kk": "Әлсіз аяқпен алғашқы жанасу",
+        "ru": "Первое касание слабой ногой",
+        "en": "Weak-foot first touch"
+      },
+      "levels": [
+        {
+          "kk": "Допты домалатып, әлсіз аяғыңның табанымен тоқтатасың.",
+          "ru": "Ты даёшь мячу подкатиться и останавливаешь его подошвой слабой ноги.",
+          "en": "You let the ball roll and stop it under the sole of your weaker foot."
+        },
+        {
+          "kk": "Қабырғадан қайтқан допты әлсіз аяғыңмен тоқтатасың.",
+          "ru": "Ты принимаешь мяч от стены и останавливаешь его слабой ногой.",
+          "en": "You receive a pass from the wall and stop it with your weaker foot."
+        },
+        {
+          "kk": "Допты әлсіз аяғыңмен бір қадамның ішінде, қатарынан бес рет тоқтатасың.",
+          "ru": "Слабой ногой ты пять раз подряд останавливаешь мяч в пределах одного шага.",
+          "en": "You stop the ball within one step of you, five times in a row, with your weaker foot."
+        },
+        {
+          "kk": "Допты әлсіз аяғыңмен бос орынға қабылдап, екі рет жанасып, кері пас бересің.",
+          "ru": "Ты принимаешь мяч слабой ногой в свободное место, делаешь два касания и отдаёшь пас обратно.",
+          "en": "You receive with your weaker foot into space, take two touches and pass back."
+        },
+        {
+          "kk": "Алғашқы жанасуыңды әлсіз аяғыңмен доп келмей тұрып шешкен бағытқа жасайсың.",
+          "ru": "Первое касание слабой ногой ты делаешь в направлении, которое выбираешь заранее.",
+          "en": "You take your first touch with your weaker foot in the direction you decide before the ball arrives."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "weak-foot-passing",
+          "minLevel": 2
+        },
+        {
+          "skill": "first-touch-control",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 9,
+      "ageMax": 99,
+      "equipment": "ball_wall",
+      "safety": [
+        {
+          "kk": "Допқа асықпа; тірек аяғың берік жерге тұруы үшін баяу басып кел.",
+          "ru": "Не спеши к мячу: подходи медленно, чтобы опорная нога стояла на твёрдой земле.",
+          "en": "Do not rush onto the ball; step in slowly so your standing foot has firm ground."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты әлсіз аяғыңмен қабылдағаннан кейін ол жаныңда қалады.",
+          "ru": "После приёма слабой ногой мяч остаётся рядом.",
+          "en": "The ball stays close after you receive it with your weaker foot."
+        },
+        {
+          "kk": "Доп әлсіз жағыңа келгенде сабырлы боласың.",
+          "ru": "Ты сохраняешь спокойствие, когда мяч приходит на слабую сторону.",
+          "en": "You keep calm when the ball comes to your weaker side."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты денеңнің астында қабылдайсың, бүйірге емес.",
+          "ru": "Ты принимаешь мяч под собой, а не в сторону.",
+          "en": "You receive the ball under your body instead of out to the side."
+        },
+        {
+          "kk": "Соңғы сәтте күшті аяғыңа секіріп ауысасың.",
+          "ru": "В последний момент ты перескакиваешь на сильную ногу.",
+          "en": "You hop onto your stronger foot at the last moment."
+        }
+      ]
+    },
+    {
+      "slug": "weak-foot-dribbling",
+      "parent": "weak-foot",
+      "order": 4,
+      "names": {
+        "kk": "Әлсіз аяқпен алып жүру",
+        "ru": "Ведение слабой ногой",
+        "en": "Weak-foot dribbling"
+      },
+      "levels": [
+        {
+          "kk": "Допты әлсіз аяғыңмен итеріп, он қадам жүресің.",
+          "ru": "Ты проходишь десять шагов, толкая мяч слабой ногой.",
+          "en": "You walk ten steps pushing the ball with your weaker foot."
+        },
+        {
+          "kk": "Он метрді тек әлсіз аяғыңмен түзу сызықпен алып өтесің.",
+          "ru": "Ты проводишь мяч десять метров по прямой одной слабой ногой.",
+          "en": "You dribble ten metres in a straight line with your weaker foot only."
+        },
+        {
+          "kk": "Тек әлсіз аяғыңмен шеңбер бойымен алып жүресің.",
+          "ru": "Ты ведёшь мяч по кругу одной слабой ногой.",
+          "en": "You dribble in a circle using your weaker foot only."
+        },
+        {
+          "kk": "Допты алып жүріп, бағытты әлсіз аяғыңмен өзгертесің.",
+          "ru": "Ведя мяч, ты меняешь направление слабой ногой.",
+          "en": "You change direction with your weaker foot while you dribble."
+        },
+        {
+          "kk": "Жеңіл жүгіріспен алып жүріп, әдейі әлсіз аяғыңа ауысасың.",
+          "ru": "Ты ведёшь мяч лёгким бегом и сознательно переходишь на слабую ногу.",
+          "en": "You dribble at a jog and switch to your weaker foot on purpose."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "weak-foot-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 9,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Ашық жерде алып жүр және әлсіз аяғың шаршай бастағанда баяула.",
+          "ru": "Веди мяч на открытом месте и замедляйся, когда слабая нога начинает уставать.",
+          "en": "Dribble in an open space and slow down when your weaker leg starts to tire."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты әлсіз аяғыңмен де күшті аяғыңдай сабырмен алып жүресің.",
+          "ru": "Ты ведёшь мяч слабой ногой так же спокойно, как и сильной.",
+          "en": "You carry the ball with your weaker foot as calmly as with your stronger foot."
+        },
+        {
+          "kk": "Ойында әлсіз аяғыңды әдейі қолданасың.",
+          "ru": "В игре ты сознательно используешь слабую ногу.",
+          "en": "You use your weaker foot on purpose in a game."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Әлсіз аяғыңмен үлкен жанасу жасап, допты жоғалтасың.",
+          "ru": "Ты делаешь слишком большое касание слабой ногой и теряешь мяч.",
+          "en": "You take a big touch with your weaker foot and lose the ball."
+        },
+        {
+          "kk": "Әлсіз аяқты тек бірінші жанасуға қолданып, содан кейін ауысып кетесің.",
+          "ru": "Ты используешь слабую ногу только для первого касания, а потом переключаешься.",
+          "en": "You use your weaker foot only for the first touch, then switch."
+        }
+      ]
+    },
+    {
+      "slug": "juggling-coordination",
+      "parent": null,
+      "order": 5,
+      "names": {
+        "kk": "Жонглирлеу және үйлесімділік",
+        "ru": "Жонглирование и координация",
+        "en": "Juggling and coordination"
+      },
+      "levels": [
+        {
+          "kk": "Бір аяғыңда тұрып, денеңді тұрақты ұстайсың.",
+          "ru": "Ты стоишь на одной ноге и держишь тело устойчиво.",
+          "en": "You balance on one foot and keep your body steady."
+        },
+        {
+          "kk": "Допты аяғыңмен көтеріп, қолыңмен ұстап аласың.",
+          "ru": "Ты подбрасываешь мяч ногой и ловишь его руками.",
+          "en": "You lift the ball with your foot and catch it."
+        },
+        {
+          "kk": "Допты үштен бес жанасуға дейін ауада ұстайсың.",
+          "ru": "Ты удерживаешь мяч в воздухе от трёх до пяти касаний.",
+          "en": "You keep the ball in the air for three to five touches."
+        },
+        {
+          "kk": "Допты екі аяғыңмен кезектесіп жонглирлейсің.",
+          "ru": "Ты жонглируешь мячом, чередуя ноги.",
+          "en": "You juggle with both feet in turn."
+        },
+        {
+          "kk": "Допты аяғыңмен және санмен жонглирлейсің, әрі босаң боласың.",
+          "ru": "Ты жонглируешь мячом ногами и бедром и остаёшься расслабленным.",
+          "en": "You juggle with your feet and your thigh and stay relaxed."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Терезеден, көліктерден және басқа балалардан аулақ жонглирле, допты басыңмен ойнама.",
+          "ru": "Жонглируй подальше от окон, машин и других детей и не играй мячом головой.",
+          "en": "Juggle away from windows, cars and other children, and do not play the ball with your head."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Денең, көзің және аяғың бірлесіп тегіс жұмыс істейді.",
+          "ru": "Тело, глаза и ноги работают вместе слаженно.",
+          "en": "Your body, eyes and feet work together smoothly."
+        },
+        {
+          "kk": "Допты өткен аптадағыдан ұзағырақ ауада ұстайсың.",
+          "ru": "Ты держишь мяч в воздухе дольше, чем на прошлой неделе.",
+          "en": "You keep the ball in the air longer than last week."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Бүкіл денеңді керіп, тынысыңды ұстап қаласың.",
+          "ru": "Ты напрягаешь всё тело и задерживаешь дыхание.",
+          "en": "You tense your whole body and hold your breath."
+        }
+      ]
+    },
+    {
+      "slug": "balance-footwork",
+      "parent": "juggling-coordination",
+      "order": 1,
+      "names": {
+        "kk": "Тепе-теңдік және аяқ қимылы",
+        "ru": "Равновесие и работа ног",
+        "en": "Balance and footwork"
+      },
+      "levels": [
+        {
+          "kk": "Бір аяғыңда бес секунд тұрасың, содан кейін екіншісінде.",
+          "ru": "Ты стоишь на одной ноге пять секунд, потом на другой.",
+          "en": "You stand on one foot for five seconds, then on the other."
+        },
+        {
+          "kk": "Қолыңды жайып, бір аяғыңда он бес секунд тұрасың.",
+          "ru": "Ты стоишь на одной ноге пятнадцать секунд, раскинув руки.",
+          "en": "You stand on one foot for fifteen seconds with your arms out."
+        },
+        {
+          "kk": "Жиырма секунд бойы орныңда тұрып, аяқтарыңмен жерді кезек-кезек жылдам түртесің.",
+          "ru": "Ты быстро переступаешь с ноги на ногу на месте двадцать секунд.",
+          "en": "You tap your feet quickly in place, left and right, for twenty seconds."
+        },
+        {
+          "kk": "Бір аяқпен он рет секіресің, содан кейін екіншісімен.",
+          "ru": "Ты десять раз подпрыгиваешь на одной ноге, потом на другой.",
+          "en": "You hop on one foot ten times, then on the other."
+        },
+        {
+          "kk": "Алға, бүйірге және артқа жылдам қадам жасап, тепе-теңдігіңді жоғалтпайсың.",
+          "ru": "Ты быстро делаешь шаги вперёд, вбок и назад, не теряя равновесия.",
+          "en": "You take quick steps forward, sideways and backwards without losing your balance."
+        }
+      ],
+      "prerequisites": [],
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "nothing",
+      "safety": [
+        {
+          "kk": "Жаттығуларды тегіс, бос еденде немесе шөпте жаса; құласаң жұмсақ болатын жерде ғана секір.",
+          "ru": "Выполняй упражнения на ровном свободном полу или траве; прыгай только там, где падение будет мягким.",
+          "en": "Do these exercises on a flat, clear floor or grass; hop only where a fall would be soft."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Бір аяғыңда тұрақты тұрасың, бұл допқа әр жанасуға көмектеседі.",
+          "ru": "Ты уверенно стоишь на одной ноге, и это помогает каждому касанию мяча.",
+          "en": "You feel steady on one foot, which helps every touch of the ball."
+        },
+        {
+          "kk": "Аяқтарың жылдам әрі жеңіл қозғалады.",
+          "ru": "Ноги двигаются быстро и легко.",
+          "en": "Your feet move quickly and lightly."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Алдыңа емес, аяғыңа қарайсың.",
+          "ru": "Ты смотришь на ноги, а не прямо перед собой.",
+          "en": "You look at your feet instead of straight ahead."
+        },
+        {
+          "kk": "Секіргенде табанымен қатты түсесің.",
+          "ru": "При прыжке ты приземляешься на плоскую стопу.",
+          "en": "You land hard on flat feet when you hop."
+        }
+      ]
+    },
+    {
+      "slug": "bounce-juggling",
+      "parent": "juggling-coordination",
+      "order": 2,
+      "names": {
+        "kk": "Секіртіп жонглирлеу",
+        "ru": "Жонглирование с отскоком",
+        "en": "Bounce juggling"
+      },
+      "levels": [
+        {
+          "kk": "Допты түсіріп, ол бір рет секіргеннен кейін ұстап аласың.",
+          "ru": "Ты роняешь мяч и ловишь его после одного отскока.",
+          "en": "You drop the ball and catch it after it bounces once."
+        },
+        {
+          "kk": "Допты түсіріп, бір секіргеннен кейін аяғыңмен жанасып, қолыңмен ұстап аласың.",
+          "ru": "Ты роняешь мяч, после одного отскока касаешься его ногой и ловишь руками.",
+          "en": "You drop the ball, touch it with your foot after one bounce and catch it."
+        },
+        {
+          "kk": "Бір жанасу, бір секіру: осыны қатарынан үш рет қайталайсың.",
+          "ru": "Одно касание, один отскок: и так три раза подряд.",
+          "en": "You do one touch and one bounce, again and again, three times in a row."
+        },
+        {
+          "kk": "Бір жанасу, бір секіру: әр аяқпен кезектесіп, қатарынан бес рет.",
+          "ru": "Одно касание, один отскок: по очереди каждой ногой, пять раз подряд.",
+          "en": "You do one touch and one bounce with each foot in turn, five times in a row."
+        },
+        {
+          "kk": "Жанасу мен секіру ырғағын он жанасуға дейін сақтайсың, доп аласа қалады.",
+          "ru": "Ты держишь ритм «касание, отскок» десять касаний, мяч остаётся низко.",
+          "en": "You keep the touch-and-bounce rhythm for ten touches, and the ball stays low."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "balance-footwork",
+          "minLevel": 2
+        },
+        {
+          "skill": "basic-touches",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Алғашқыда допты аласа ұста, сонда ол бетіңе не терезеге тимейді.",
+          "ru": "Пока учишься, держи мяч низко, чтобы он не попал в лицо или в окно.",
+          "en": "Keep the ball low when you first learn, so it does not hit your face or a window."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Доп бір секіргеннен кейін қайда баратынын сезінесің.",
+          "ru": "Ты чувствуешь, куда пойдёт мяч после одного отскока.",
+          "en": "You feel where the ball goes after one bounce."
+        },
+        {
+          "kk": "Допқа аяқтың үстімен жұмсақ жанасасың.",
+          "ru": "Ты мягко касаешься мяча подъёмом стопы.",
+          "en": "You touch the ball gently with the top of your foot."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Допты тым биікке теуіп, жоғалтып аласың.",
+          "ru": "Ты бьёшь по мячу слишком высоко и теряешь его.",
+          "en": "You kick the ball too high and lose it."
+        },
+        {
+          "kk": "Тізеңді көтерудің орнына аяғыңды түзу созасың.",
+          "ru": "Ты тянешь прямую ногу, вместо того чтобы поднять колено.",
+          "en": "You reach with a straight leg instead of lifting your knee."
+        }
+      ]
+    },
+    {
+      "slug": "juggling-sequence",
+      "parent": "juggling-coordination",
+      "order": 3,
+      "names": {
+        "kk": "Қысқа жонглирлеу сериялары",
+        "ru": "Короткие серии жонглирования",
+        "en": "Short juggling runs"
+      },
+      "levels": [
+        {
+          "kk": "Қатарынан екі рет жонглирлеп, допты ұстап аласың.",
+          "ru": "Ты делаешь два касания подряд и ловишь мяч.",
+          "en": "You juggle two touches in a row and catch the ball."
+        },
+        {
+          "kk": "Үш рет жонглирлеп, допты ұстап аласың да, қайта бастайсың.",
+          "ru": "Ты делаешь три касания, ловишь мяч и начинаешь заново.",
+          "en": "You juggle three touches, catch the ball and start again."
+        },
+        {
+          "kk": "Секірместен қатарынан бес рет жонглирлейсің.",
+          "ru": "Ты делаешь пять касаний подряд без отскока.",
+          "en": "You juggle five touches in a row without a bounce."
+        },
+        {
+          "kk": "Баспалдақпен көтерілесің: үш, бес, содан кейін жеті жанасу, арасында допты ұстап аласың.",
+          "ru": "Ты поднимаешься по лесенке: три касания, пять, затем семь, и между ними ловишь мяч.",
+          "en": "You climb a ladder: three touches, five, then seven, catching the ball in between."
+        },
+        {
+          "kk": "Қатарынан он рет жонглирлейсің.",
+          "ru": "Ты делаешь десять касаний подряд.",
+          "en": "You juggle ten touches in a row."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "bounce-juggling",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Айналаңда жеткілікті бос орын қалдыр және домалап кеткен доптарды жинап ал, ешкім оларды баспасын.",
+          "ru": "Оставляй вокруг себя достаточно места и убирай укатившиеся мячи, чтобы никто на них не наступил.",
+          "en": "Leave enough room around you and pick up any stray balls so nobody steps on them."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты бірнеше жанасу бойы ауада ұстайсың.",
+          "ru": "Ты удерживаешь мяч в воздухе несколько касаний.",
+          "en": "You keep the ball in the air for several touches."
+        },
+        {
+          "kk": "Қателескеннен кейін сабырмен қайта бастап, тағы байқап көресің.",
+          "ru": "После ошибки ты спокойно начинаешь заново и пробуешь ещё раз.",
+          "en": "You reset calmly after a mistake and try again."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Нашар жанасудан кейін тоқтап қайта бастамай, допты қуып кетесің.",
+          "ru": "После неудачного касания ты бежишь за мячом, вместо того чтобы остановиться и начать заново.",
+          "en": "You chase the ball after a bad touch instead of stopping to reset."
+        },
+        {
+          "kk": "Иығың мен тізеңді қатырасың, сондықтан доп ұшып кетеді.",
+          "ru": "Ты зажимаешь плечи и колено, и мяч улетает.",
+          "en": "You lock your shoulders and your knee, so the ball flies off."
+        }
+      ]
+    },
+    {
+      "slug": "alternating-juggling",
+      "parent": "juggling-coordination",
+      "order": 4,
+      "names": {
+        "kk": "Аяқтарды алмастырып жонглирлеу",
+        "ru": "Жонглирование с чередованием ног",
+        "en": "Alternating juggling"
+      },
+      "levels": [
+        {
+          "kk": "Күшті аяғыңмен екі рет, әлсіз аяғыңмен бір рет жонглирлейсің.",
+          "ru": "Ты делаешь два касания сильной ногой и одно слабой.",
+          "en": "You juggle two touches with your stronger foot and one with your weaker foot."
+        },
+        {
+          "kk": "Оң, сол, оң, сол: төрт жанасуға дейін жонглирлейсің.",
+          "ru": "Правая, левая, правая, левая: ты делаешь четыре касания.",
+          "en": "You juggle right, left, right, left for four touches."
+        },
+        {
+          "kk": "Аяқты әр рет ауыстырып, қатарынан алты рет жонглирлейсің.",
+          "ru": "Ты делаешь шесть касаний подряд, каждый раз меняя ногу.",
+          "en": "You juggle six touches in a row, switching feet every time."
+        },
+        {
+          "kk": "Аяқты әр рет ауыстырып, қатарынан он рет жонглирлейсің.",
+          "ru": "Ты делаешь десять касаний подряд, каждый раз меняя ногу.",
+          "en": "You juggle ten touches in a row, switching feet every time."
+        },
+        {
+          "kk": "Екі аяқпен допты жиырма жанасуға дейін ауада ұстайсың.",
+          "ru": "Ты держишь мяч в воздухе двадцать касаний обеими ногами.",
+          "en": "You keep the ball up for twenty touches with both feet."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "juggling-sequence",
+          "minLevel": 3
+        }
+      ],
+      "ageMin": 9,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Тірек аяғың дірілдей бастағанда тоқтап демал: шаршаған аяқ тез тайып кетеді.",
+          "ru": "Остановись и отдохни, когда опорная нога начинает дрожать: усталая нога скользит легче.",
+          "en": "Stop and rest when your standing leg starts to shake; tired legs slip more easily."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Жонглирлеу жұмысын екі аяқ бөліседі.",
+          "ru": "Работу при жонглировании делят обе ноги.",
+          "en": "Both feet share the work of juggling."
+        },
+        {
+          "kk": "Ең жақсы сериянды жазып қойып, кейін одан асып түсе аласың.",
+          "ru": "Ты записываешь свою лучшую серию и потом можешь её побить.",
+          "en": "You write down your best run and can beat it later."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Күшті аяғың бәрін өзі істеп, әлсіз аяғың қарап тұрады.",
+          "ru": "Сильная нога делает всё сама, а слабая только наблюдает.",
+          "en": "Your stronger foot takes over and your weaker foot only watches."
+        },
+        {
+          "kk": "Аяқты ауыстырғанда допты тым биік теуіп жібересің.",
+          "ru": "Меняя ногу, ты бьёшь по мячу слишком высоко.",
+          "en": "You kick the ball too high when you switch feet."
+        }
+      ]
+    },
+    {
+      "slug": "thigh-and-foot-juggling",
+      "parent": "juggling-coordination",
+      "order": 5,
+      "names": {
+        "kk": "Сан мен аяқпен жонглирлеу",
+        "ru": "Жонглирование бедром и стопой",
+        "en": "Thigh and foot juggling"
+      },
+      "levels": [
+        {
+          "kk": "Допты өз санына түсіріп, ұстап аласың.",
+          "ru": "Ты роняешь мяч на бедро и ловишь его.",
+          "en": "You drop the ball onto your thigh and catch it."
+        },
+        {
+          "kk": "Допқа санмен жанасып, оны ұстап аласың.",
+          "ru": "Ты касаешься мяча бедром и ловишь его.",
+          "en": "You touch the ball with your thigh and catch it."
+        },
+        {
+          "kk": "Аяқ, сан, аяқ: үш жанасуға дейін.",
+          "ru": "Стопа, бедро, стопа: три касания.",
+          "en": "You go foot, thigh, foot for three touches."
+        },
+        {
+          "kk": "Әр төртінші-бесінші аяқ жанасуынан кейін санмен де жанасасың.",
+          "ru": "После каждого четвёртого-пятого касания стопой ты добавляешь касание бедром.",
+          "en": "You add a thigh touch after every fourth or fifth foot touch."
+        },
+        {
+          "kk": "Аяқтарыңмен және екі санмен допты он бес жанасуға дейін ауада ұстайсың.",
+          "ru": "Стопами и обоими бёдрами ты держишь мяч в воздухе пятнадцать касаний.",
+          "en": "You keep the ball up for fifteen touches using your feet and both thighs."
+        }
+      ],
+      "prerequisites": [
+        {
+          "skill": "alternating-juggling",
+          "minLevel": 2
+        }
+      ],
+      "ageMin": 10,
+      "ageMax": 99,
+      "equipment": "ball",
+      "safety": [
+        {
+          "kk": "Тек аяқ пен санды қолдан. Допты басыңмен ұрма, әсіресе кішкентай бала болсаң.",
+          "ru": "Используй только стопы и бёдра. Не играй мячом головой, особенно если ты ещё маленький.",
+          "en": "Use your feet and thighs only. Do not head the ball, especially if you are a young child."
+        }
+      ],
+      "outcomes": [
+        {
+          "kk": "Допты тыныштандыру және келесі жанасуға дайындау үшін санды қолданасың.",
+          "ru": "Ты используешь бедро, чтобы успокоить мяч и подготовить следующее касание.",
+          "en": "You use your thigh to calm the ball and set up the next touch."
+        },
+        {
+          "kk": "Қолыңды қолданбай, тегіс ырғақты сақтайсың.",
+          "ru": "Ты держишь ровный ритм, не помогая себе руками.",
+          "en": "You keep a smooth rhythm without using your hands."
+        }
+      ],
+      "mistakes": [
+        {
+          "kk": "Тізеңді тым биік көтересің, сондықтан доп бетіңнің жанынан жоғары ұшады.",
+          "ru": "Ты поднимаешь колено слишком высоко, и мяч взлетает мимо лица.",
+          "en": "You lift your knee too high, so the ball flies up past your face."
+        },
+        {
+          "kk": "Допқа санмен емес, тізеңмен тиесің.",
+          "ru": "Ты бьёшь по мячу коленом, а не бедром.",
+          "en": "You hit the ball with your knee instead of your thigh."
+        }
+      ]
+    }
+  ]
+}
