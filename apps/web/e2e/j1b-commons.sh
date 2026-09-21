@@ -154,9 +154,11 @@ done
 MSG=$(bun -e '
   const dir = process.argv[1] + "/apps/web/src/features/commons/";
   const load = async (f) => (await import(dir + f)).default;
-  console.log(JSON.stringify({ library: await load("library.messages.ts"), detail: await load("detail.messages.ts"), trust: await load("trust-badge.messages.ts") }));
+  // the "Help improve this drill" card that the contribute feature adds to the detail page through the drill-detail slot
+  const suggest = (await import(process.argv[1] + "/apps/web/src/features/contribute/suggest.messages.ts")).default;
+  console.log(JSON.stringify({ library: await load("library.messages.ts"), detail: await load("detail.messages.ts"), trust: await load("trust-badge.messages.ts"), suggest }));
 ' "$E2E_REPO_ROOT" 2>"$scratch/msg.err") || MSG=""
-if jq -e '.library.kk.title and .library.ru.title and .library.en.title and .detail.kk.goal and .trust.ru.communityDraft' >/dev/null 2>&1 <<<"${MSG:-null}"; then
+if jq -e '.library.kk.title and .library.ru.title and .library.en.title and .detail.kk.goal and .trust.ru.communityDraft and .suggest.kk.trigger.title and .suggest.ru.trigger.title and .suggest.en.trigger.title' >/dev/null 2>&1 <<<"${MSG:-null}"; then
   pass "the kk/ru/en messages bundles of library, detail and trust-badge load ($(jq -c '[.library.en.title, .trust.en.communityDraft]' <<<"$MSG"))"
 else fail "the kk/ru/en messages bundles of library, detail and trust-badge load" "$(head -c 400 "$scratch/msg.err")"; MSG=null; fi
 msg() { jq -r "$1 // \"<missing $1>\"" <<<"$MSG"; } # msg <jq path>: one string of the bundles
@@ -213,8 +215,13 @@ if [ "$BROWSER" = 1 ]; then
   # --- 4. the drill detail (en): every text equals the API's -----------------------------------------------------------
   DET=$(pw_eval "$MAIN_TEXT_JS") || DET=""
   j() { jq -r "$1" <<<"${DETAIL_EN:-null}"; }
-  eval_jq "$H2_JS" '. == ["Goal", "At a glance", "Safety", "How to do it", "Common mistakes", "Make it harder", "Make it easier", "Who checked this drill", "Where this drill comes from", "Version history"]' \
-    "detail: the sections are Goal, At a glance, Safety, How to do it, Common mistakes, Make it harder, Make it easier, review, attribution, Version history"
+  # The drill's own ten sections come first, in order. The contribute feature adds ONE more, final section through the
+  # drill-detail slot (features/contribute/drill-detail-extra.tsx: the h2 'Help improve this drill'), so the list is those
+  # ten alone or the ten plus that single known heading, and nothing else.
+  IMPROVE_EN=$(msg ".suggest.en.trigger.title")
+  eval_jq "$H2_JS" '.[:10] == ["Goal", "At a glance", "Safety", "How to do it", "Common mistakes", "Make it harder", "Make it easier", "Who checked this drill", "Where this drill comes from", "Version history"] and (.[10:] == [] or .[10:] == [$improve])' \
+    "detail: the sections are Goal, At a glance, Safety, How to do it, Common mistakes, Make it harder, Make it easier, review, attribution, Version history (then at most the '$IMPROVE_EN' card)" \
+    --arg improve "$IMPROVE_EN"
   has "$DET" "$(j '.content.goal.en')" "detail: the goal"
   n=0
   while IFS= read -r step; do
@@ -367,9 +374,10 @@ if [ "$BROWSER" = 1 ]; then
     has "$txt" "$AUTHOR" "language $lc: the author '$AUTHOR'"
     has "$txt" "CC BY-SA 4.0" "language $lc: the licence CC BY-SA 4.0"
     has "$txt" "1.0.0" "language $lc: the version 1.0.0 in the attribution and the history"
+    # ten drill sections in order, then at most the contribute slot's own heading in $lc (see the en check above)
     eval_jq "$H2_JS" \
-      ". == [\"$(msg ".detail.$lc.goal")\", \"$(msg ".detail.$lc.glance")\", \"$(msg ".detail.$lc.safety")\", \"$(msg ".detail.$lc.how")\", \"$(msg ".detail.$lc.mistakes")\", \"$(msg ".detail.$lc.harder")\", \"$(msg ".detail.$lc.easier")\", \"$(msg ".detail.$lc.trust.title")\", \"$(msg ".detail.$lc.source.title")\", \"$(msg ".detail.$lc.history.title")\"]" \
-      "language $lc: the detail sections are Goal, glance, Safety, How, Mistakes, Harder, Easier, review, attribution, history (in $lc)"
+      ".[:10] == [\"$(msg ".detail.$lc.goal")\", \"$(msg ".detail.$lc.glance")\", \"$(msg ".detail.$lc.safety")\", \"$(msg ".detail.$lc.how")\", \"$(msg ".detail.$lc.mistakes")\", \"$(msg ".detail.$lc.harder")\", \"$(msg ".detail.$lc.easier")\", \"$(msg ".detail.$lc.trust.title")\", \"$(msg ".detail.$lc.source.title")\", \"$(msg ".detail.$lc.history.title")\"] and (.[10:] == [] or .[10:] == [\"$(msg ".suggest.$lc.trigger.title")\"])" \
+      "language $lc: the detail sections are Goal, glance, Safety, How, Mistakes, Harder, Easier, review, attribution, history (in $lc; then at most the improvement card)"
     eval_jq "JSON.stringify([...document.querySelectorAll('main [data-status]:not(a)')].map((e) => e.innerText.trim())[0] ?? '')" ". == \"$draft\"" "language $lc: the detail badge reads '$draft'"
     has "$txt" "$(msg ".detail.$lc.history.current")" "language $lc: the version history marks the current version ('$(msg ".detail.$lc.history.current")')"
     eval_jq "JSON.stringify([document.documentElement.scrollWidth <= window.innerWidth])" '. == [true]' "language $lc: no horizontal scroll on the detail screen at 1280px"
