@@ -322,5 +322,12 @@ const defaultClient = createEventsClient({
 /** The default client's outbox: `startEventsSync()` replays it on app start / `online` / visibility change, filling the caches on delivery. */
 export const startEventsSync: Outbox['start'] = (targets) => defaultClient.outbox?.start(targets) ?? (() => {});
 
+/**
+ * Flushes the default client's outbox: the SAME instance `startEventsSync()` replays, so a flush started elsewhere (the
+ * connectivity banner on `online`) shares its single-flight (one POST per transition) and its delivered-response cache writes
+ * (['today'], ['session-summary']). Rejects, like the outbox, while no player is configured.
+ */
+export const flushEventsOutbox: Outbox['flush'] = () => (defaultClient.outbox ? defaultClient.outbox.flush() : Promise.reject(new Error('events client: no outbox')));
+
 export const makeEvent: EventsClient['makeEvent'] = (type, fields) => defaultClient.makeEvent(type, fields);
 export const submitEvents: EventsClient['submitEvents'] = (events) => defaultClient.submitEvents(events);
