@@ -413,7 +413,17 @@ describe('sampleKeyframes face blur', () => {
       expect(bx + bw).toBeGreaterThanOrEqual(box.x1);
       expect(by + bh).toBeGreaterThanOrEqual(box.y1);
 
-      // 3. only the face is blurred, not the whole keyframe (the body pose must stay readable for the vision model)
+      // 3. the region is the HEAD, not just the landmark box: it reaches past the eyes-to-mouth landmarks on every side...
+      const faceSize = Math.max(box.x1 - box.x0, box.y1 - box.y0);
+      expect(box.x0 - bx).toBeGreaterThanOrEqual(0.25 * faceSize);
+      expect(box.y0 - by).toBeGreaterThanOrEqual(0.25 * faceSize);
+      expect(bx + bw - box.x1).toBeGreaterThanOrEqual(0.25 * faceSize);
+      expect(by + bh - box.y1).toBeGreaterThanOrEqual(0.25 * faceSize);
+
+      // 4. ...but stays around the face: not a strip across the frame, and not the whole keyframe (the body pose must
+      // stay readable for the vision model)
+      expect(bw).toBeLessThanOrEqual(3 * faceSize);
+      expect(bh).toBeLessThanOrEqual(3 * faceSize);
       expect(bw * bh).toBeLessThan(main.width * main.height * 0.3);
     });
   }
