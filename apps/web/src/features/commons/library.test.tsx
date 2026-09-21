@@ -337,6 +337,26 @@ describe('the loaded screen', () => {
     expect(within(card).getByText('Level: Intermediate')).toBeTruthy();
   });
 
+  test('source and licence are each left out on their own when the list item lacks only one of them', async () => {
+    stubNetwork((url) => {
+      const answer = serve(url);
+      const items = answer.items.map((item) => {
+        if (item.slug === 'ghost-ball') return { ...item, source: undefined };
+        if (item.slug === 'wall-passing') return { ...item, license: undefined };
+        return item;
+      });
+      return json({ ...answer, items });
+    });
+    await renderLoaded();
+    const noSource = cardOf('Ghost Ball');
+    expect(within(noSource).queryByText(/^Source:/)).toBeNull();
+    expect(within(noSource).getByText('Licence: CC BY-SA 4.0')).toBeTruthy();
+    const noLicence = cardOf('Wall Passing');
+    expect(within(noLicence).getByText('Source: Test Source Book')).toBeTruthy();
+    expect(within(noLicence).queryByText(/^Licence:/)).toBeNull();
+    expect(document.body.textContent).not.toContain('undefined');
+  });
+
   test('the licence is written as a name, not as the API id', async () => {
     await renderLoaded();
     expect(within(cardOf('Ghost Ball')).getByText('Licence: CC BY-SA 4.0')).toBeTruthy();
@@ -461,12 +481,13 @@ describe('changing a filter', () => {
   });
 
   test('a search is sent when submitted (button or Enter), trimmed, and an empty search removes q', async () => {
-    const { user } = await renderLoaded();
+    const { user, router } = await renderLoaded();
     const box = screen.getByLabelText('Search drills');
     await user.type(box, '  wall ');
     expect(listCalls()).toHaveLength(1); // typing alone does not send a request per keystroke
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await waitFor(() => expect(listCalls().at(-1)?.params.get('q')).toBe('wall'));
+    expect(searchOf(router).q).toBe('wall'); // the URL holds the trimmed text, so a shared link is clean
     await waitFor(() => expect(titlesOnScreen()).toEqual(['Wall Passing']));
 
     await user.clear(box);
@@ -511,6 +532,14 @@ describe('changing a filter', () => {
     expect(params?.has('colour')).toBe(false);
     expect(screen.queryByRole('alert')).toBeNull();
     expect(titlesOnScreen().length).toBeGreaterThan(0);
+  });
+
+  test('the search the router hands out has no invalid value either (the URL is cleaned by validateSearch)', async () => {
+    const { router } = await renderLoaded({ search: '?status=BOGUS&equipment=jetpack&level=basic' });
+    const match = router.state.matches.at(-1)?.search as Record<string, unknown>;
+    expect(match.status).toBeUndefined();
+    expect(match.equipment).toBeUndefined();
+    expect(match.level).toBe('basic');
   });
 
   test('the Route validates its search: known filters are kept, anything else is dropped', () => {
@@ -652,6 +681,15 @@ describe('an empty result', () => {
     // The empty response lists no facets at all; the chosen values are still there to read and to change.
     expect(select('Status').value).toBe('REVIEWED');
     expect(select('Level').value).toBe('beginner');
+    expect(optionsOf(select('Level'))).toContain('Beginner');
+  });
+
+  test('a chosen value that no answer ever listed (a shared link to an empty view) is still shown as selected', async () => {
+    await renderLibrary({ search: '?status=REVIEWED&level=beginner' });
+    await screen.findByText('No drills match these filters');
+    expect(select('Status').value).toBe('REVIEWED');
+    expect(select('Level').value).toBe('beginner');
+    expect(optionsOf(select('Status'))).toContain('Reviewed');
     expect(optionsOf(select('Level'))).toContain('Beginner');
   });
 
