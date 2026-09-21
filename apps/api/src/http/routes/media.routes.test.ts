@@ -478,8 +478,10 @@ describe("response headers", () => {
 describe("range requests", () => {
   const SIZE = MP4.length;
 
+  let n = 0; // a test may call ranged() several times: one new owner (one email) each
   async function ranged(range: string, over: Record<string, string> = {}) {
-    const owner = await signUp("owner@example.com");
+    n += 1;
+    const owner = await signUp(`owner${n}@example.com`);
     const s = await seed(owner.id);
     return { s, res: await get(s.attachmentId, { cookie: owner.cookie, headers: { range, ...over } }) };
   }
