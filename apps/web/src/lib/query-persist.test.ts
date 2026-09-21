@@ -275,3 +275,29 @@ describe('persisted query cache: player namespacing', () => {
     expect(() => queryCacheKey('')).toThrow(TypeError);
   });
 });
+
+describe('persisted query cache: unreadable or failing storage', () => {
+  test('a corrupt blob is discarded instead of breaking start-up, and caching works afterwards', async () => {
+    const store = fakeIdb();
+    store.data.set(queryCacheKey('p1'), { garbage: true });
+    const first = await attach(store, 'p1');
+    expect(first.getQueryCache().getAll()).toEqual([]);
+    expect(store.data.has(queryCacheKey('p1'))).toBe(false);
+
+    first.setQueryData(['today'], { id: 's1' });
+    await until(() => storedKeys(store, 'p1').length === 1);
+  });
+
+  test('a storage that rejects every call (private mode, quota) never rejects the restore or leaks an unhandled rejection', async () => {
+    const broken: PersistStore = {
+      get: () => Promise.reject(new Error('idb unavailable')),
+      set: () => Promise.reject(new Error('quota')),
+      del: () => Promise.reject(new Error('idb unavailable')),
+    };
+    const queryClient = await attach(broken, 'p1');
+    queryClient.setQueryData(['today'], { id: 's1' });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(queryClient.getQueryData(['today'])).toEqual({ id: 's1' });
+  });
+});
