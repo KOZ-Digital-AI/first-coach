@@ -50,6 +50,7 @@ function harness(options: { initial?: 'none' | string } = {}): Harness {
   const persisted: Harness['persisted'] = [];
   const listeners = new Set<(playerId: string | undefined) => void>();
   let syncs = 0;
+  let remembered: string | undefined;
   const deps: PlayerSessionWiringDeps = {
     watchSession(listener) {
       listeners.add(listener);
@@ -71,6 +72,9 @@ function harness(options: { initial?: 'none' | string } = {}): Harness {
       return [() => void calls.push(`unpersist:${persist.playerId}`), Promise.resolve()];
     },
     resolveBuildVersion: () => 'build-test-1',
+    // fc-mol-eay.12: the wiring remembers the last player id on the device. An in-memory stand-in keeps these tests off the
+    // real localStorage, where an id remembered by one test would be restored (wired) at the start of the next.
+    lastPlayer: { read: () => remembered, write: (playerId) => void (remembered = playerId), clear: () => void (remembered = undefined) },
   };
   return {
     calls,
