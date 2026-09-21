@@ -640,6 +640,16 @@ describe("owner isolation", () => {
     await expectProblem(await put(bob, "no-such-id", form(validPayload())), 404);
   });
 
+  test("a stranger's PUT with an invalid payload is a 404, not a 422: ownership is decided before the body is judged, and no byte is stored", async () => {
+    const alice = await signUpContributor("alice@example.com");
+    const bob = await signUpContributor("bob@example.com");
+    const alices = await createOk(alice);
+    const filesBefore = mediaFiles();
+    await expectProblem(await put(bob, alices.id, form(validPayload({ rightsAttested: false }), { video: mp4File() })), 404, "Not Found");
+    await expectProblem(await put(bob, "no-such-id", form("{not json", { video: mp4File() })), 404, "Not Found");
+    expect(mediaFiles()).toEqual(filesBefore);
+  });
+
   test("a stranger cannot reach a contribution in a state that would answer 409 to its owner (404 first)", async () => {
     const alice = await signUpContributor("alice@example.com");
     const bob = await signUpContributor("bob@example.com");
