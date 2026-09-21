@@ -129,6 +129,17 @@ Other environment variables you export (for example `OPENAI_API_KEY`) are inheri
 `APP_DB_PATH`, `MEDIA_DIR`, `MASTRA_DB_PATH`, `BACKUP_DIR` and `WEB_DIST` are always overridden, so a gate can
 never touch `./data/app.db` or the repo's `apps/web/dist`.
 
+### Auth (`NODE_ENV`, `BETTER_AUTH_URL`)
+
+The API's Better Auth config fails closed: only `NODE_ENV=development` (or `test`) boots without
+`BETTER_AUTH_SECRET`, and any request carrying a cookie must send an `Origin` equal to `BETTER_AUTH_URL` (or a
+trusted origin), otherwise it gets 403. So `start_stack` always starts the API with `NODE_ENV=development` and
+`BETTER_AUTH_URL=http://127.0.0.1:<the API port>`, which is `API_URL`, the origin the browser and curl use
+(also with `E2E_WEB=off`). The harness owns both for the API child: **a gate cannot override them** (your own
+values are ignored), and a gate that needs production-mode cookies (`__Secure-`, rate limiting) is out of
+scope. It never sets, requires or prints `BETTER_AUTH_SECRET`. A cookie-carrying POST from a gate must send
+`Origin: $API_URL` (a browser on `STACK_URL` does).
+
 ## Failure behaviour, traps, limits
 
 - With `set -e` the first failed assertion aborts the script; the EXIT handler still stops the stack, prints
