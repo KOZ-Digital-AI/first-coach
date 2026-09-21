@@ -225,7 +225,8 @@ const noStorage = { getItem: () => null, setItem: () => {} };
 /** The real route component inside a real (memory) router that also knows the screens it links to. */
 function renderEdit(id = 'c-changes', locale: Locale = 'en') {
   const instance = createI18n({ modules, languages: [locale], storage: noStorage, root: { lang: '' }, dev: false });
-  const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
+  // gcTime Infinity: the success test reads the list back from the cache after the screen has left (nothing observes it any more).
+  const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
   clients.push(queryClient);
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const editRoute = createRoute({ getParentRoute: () => rootRoute, path: '/contribute/$id/edit', component: Route.options.component });
