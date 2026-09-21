@@ -5,6 +5,7 @@ import * as bootstrap from './bootstrap';
 import { watchAuthSession, wireAppPlayerSession } from './bootstrap';
 import type { PlayerSessionWiringDeps } from './bootstrap';
 import { createPlayerAuthClient } from './lib/auth';
+import { persistAppQueryClient, type PersistStore } from './lib/query-persist';
 import { TodaySession } from '@api-types/session';
 import { type KeyValueStore, writeOfflineSession } from './offline/types';
 
@@ -618,5 +619,158 @@ describe('seedTodayFromDevice: the downloaded session of the last player, when t
   test('a device without storage: nothing is seeded, nothing throws', () => {
     const queryClient = new QueryClient();
     expect(bootstrap.seedTodayFromDevice(queryClient, null)).toBeUndefined();
+  });
+});
+
+describe('a restore that is still pending when the player changes never hydrates the previous player (fc-mol-eay.12, cold review)', () => {
+  // persistQueryClient's unsubscribe only stops the LATER save subscription: the restore that is already running still hydrates
+  // afterwards. With the last player remembered, start-up wires A and starts A's (asynchronous, IndexedDB) restore; when the
+  // session atom answers first with B (or with no session), A's late restore must not put A's ['today'] into B's cache, and B's
+  // persist subscription must never save it into B's own record. The REAL persister runs over a store whose read of A's record
+  // is held until the test releases it. Like the app, the wiring hands its store to `persistAppQueryClient` (`options.store`);
+  // the seam below uses it when there is one and the gated device store otherwise.
+  const A_KEY = 'fc:A:query-cache';
+  const B_KEY = 'fc:B:query-cache';
+
+  /** What the persister saved for `id`: the ['today'] session id, `at` ms after `base`. */
+  function record(id: string, at: number) {
+    const timestamp = Date.now() + at;
+    return {
+      timestamp,
+      buster: 'build-test-1',
+      clientState: {
+        mutations: [],
+        queries: [
+          {
+            queryKey: ['today'],
+            queryHash: '["today"]',
+            state: {
+              data: { id },
+              dataUpdateCount: 1,
+              dataUpdatedAt: timestamp,
+              error: null,
+              errorUpdateCount: 0,
+              errorUpdatedAt: 0,
+              fetchFailureCount: 0,
+              fetchFailureReason: null,
+              fetchMeta: null,
+              isInvalidated: false,
+              status: 'success',
+              fetchStatus: 'idle',
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  /** An IndexedDB stand-in: reads of `gated` keys wait for `release`; every write and delete is recorded. */
+  function gatedStore(blobs: Record<string, unknown>, gated: string[]) {
+    const gates = new Map<string, () => void>();
+    const sets: { key: string; value: unknown }[] = [];
+    const dels: string[] = [];
+    const store: PersistStore = {
+      get: <T,>(key: string) => {
+        const value = blobs[key] as T | undefined;
+        if (!gated.includes(key)) return Promise.resolve(value);
+        return new Promise<T | undefined>((resolve) => void gates.set(key, () => resolve(value)));
+      },
+      set: async (key, value) => void sets.push({ key, value }),
+      del: async (key) => void dels.push(key),
+    };
+    return {
+      store,
+      sets,
+      dels,
+      release: async (key: string) => {
+        gates.get(key)?.();
+        await flush();
+      },
+    };
+  }
+
+  function racing(stored: string | undefined, blobs: Record<string, unknown>, gated: string[]) {
+    const h = harness({ stored });
+    const g = gatedStore(blobs, gated);
+    const queryClient = new QueryClient();
+    const teardown = wireAppPlayerSession(queryClient, {
+      ...h.deps,
+      persistStore: g.store,
+      persistAppQueryClient: (options) => persistAppQueryClient({ ...options, store: options.store ?? g.store }),
+    });
+    const today = () => queryClient.getQueryData<{ id: string }>(['today'])?.id;
+    const saved = (key: string) => g.sets.filter((entry) => entry.key === key);
+    return { h, g, queryClient, teardown, today, saved };
+  }
+
+  test('the normal path: the restore of the remembered player resolves first and hydrates it', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 0) }, []);
+    await flush();
+    expect(r.today()).toBe('session-A');
+    r.h.emit('A');
+    await flush();
+    expect(r.today()).toBe('session-A');
+  });
+
+  test('the atom reports ANOTHER player before the remembered one\'s restore resolves: the late restore hydrates nothing', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 0) }, [A_KEY]);
+    r.h.emit('B');
+    await flush();
+    await r.g.release(A_KEY);
+    expect(r.today()).toBeUndefined();
+  });
+
+  test('... and B\'s own persisted record never receives the previous player\'s queries', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 0) }, [A_KEY]);
+    r.h.emit('B');
+    await flush();
+    await r.g.release(A_KEY);
+    expect(r.saved(B_KEY).filter((entry) => JSON.stringify(entry.value).includes('session-A'))).toEqual([]);
+    expect(r.saved(A_KEY)).toEqual([]);
+  });
+
+  test('the atom reports NO session (signed out) before the restore resolves: the late restore hydrates nothing and nothing is saved', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 0) }, [A_KEY]);
+    r.h.emit(undefined);
+    await flush();
+    await r.g.release(A_KEY);
+    expect(r.today()).toBeUndefined();
+    expect(r.g.sets).toEqual([]);
+  });
+
+  test('the same race for a player that the ATOM reported (nothing was remembered): A then B, A\'s late restore hydrates nothing', async () => {
+    const r = racing(undefined, { [A_KEY]: record('session-A', 0) }, [A_KEY]);
+    r.h.emit('A');
+    r.h.emit('B');
+    await flush();
+    await r.g.release(A_KEY);
+    expect(r.today()).toBeUndefined();
+    expect(r.saved(B_KEY).filter((entry) => JSON.stringify(entry.value).includes('session-A'))).toEqual([]);
+  });
+
+  test('the new player\'s own restore still hydrates: B\'s session stays when A\'s (newer) late restore resolves afterwards', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 5_000), [B_KEY]: record('session-B', 0) }, [A_KEY]);
+    r.h.emit('B');
+    await flush();
+    expect(r.today()).toBe('session-B');
+    await r.g.release(A_KEY);
+    expect(r.today()).toBe('session-B');
+  });
+
+  test('the teardown before the restore resolves: the late restore hydrates nothing', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 0) }, [A_KEY]);
+    r.teardown();
+    await r.g.release(A_KEY);
+    expect(r.today()).toBeUndefined();
+    expect(r.g.sets).toEqual([]);
+  });
+
+  test('a restore that has resolved before the player changes is not disturbed: a later switch empties the cache as before', async () => {
+    const r = racing('A', { [A_KEY]: record('session-A', 0) }, []);
+    await flush();
+    expect(r.today()).toBe('session-A');
+    r.h.emit('B');
+    await flush();
+    expect(r.today()).toBeUndefined();
   });
 });
