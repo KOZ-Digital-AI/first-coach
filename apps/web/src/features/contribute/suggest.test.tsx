@@ -276,10 +276,11 @@ const dialog = () => screen.findByRole('dialog', { name: DIALOG });
 
 /** Opens the dialog for a contributor and waits for the form. */
 async function openForm(user: User, options: Parameters<typeof renderSlot>[0] = {}) {
+  const locale = options.locale ?? 'en';
   const view = renderSlot(options);
-  await user.click(await triggerButton());
-  const box = await dialog();
-  await within(box).findByRole('button', { name: 'Send suggestion' });
+  await user.click(await triggerButton(say(locale, 'trigger.button')));
+  const box = await screen.findByRole('dialog', { name: say(locale, 'dialog.title') });
+  await within(box).findByRole('button', { name: say(locale, 'actions.send') });
   return { ...view, box };
 }
 
@@ -343,7 +344,6 @@ describe('signed-out visitors and anonymous players', () => {
     ['a visitor with no session', null],
     ['an anonymous player', ANONYMOUS],
     ['a session whose isAnonymous is missing', { user: { id: 'u-x', name: 'Sam' } }],
-    ['a session that cannot be read', { user: 'nope' }],
   ] as const) {
     test(`${label} is sent to sign-in with a return path to the same drill, and sees no form`, async () => {
       const { router } = renderSlot({ session: sessionOf(data) });
@@ -383,6 +383,15 @@ describe('while the session is being read', () => {
     renderSlot({ session: sessionOf(CONTRIBUTOR, { isRefetching: true }) });
     const button = await triggerButton();
     expect(button.disabled).toBe(true);
+  });
+
+  test('a session whose data cannot be read (no user object) is treated like a failed read: it fails closed, offers Try again and never opens the form', async () => {
+    const refetch = mock(() => {});
+    renderSlot({ session: sessionOf({ user: 'nope' }, { refetch }) });
+    await screen.findByText('We could not check your account.');
+    expect(screen.queryByRole('button', { name: 'Suggest improvement' }) === null).toBe(true);
+    expect(screen.queryByRole('dialog') === null).toBe(true);
+    expect(calls).toHaveLength(0);
   });
 
   test('a failed session read says so and offers Try again, which reads it again; it never opens the form', async () => {
