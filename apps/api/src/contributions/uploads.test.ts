@@ -450,6 +450,16 @@ describe("deleteUpload", () => {
     expect(readFileSync(victim, "utf8")).toBe("keep");
   });
 
+  test("refuses '..' and absolute paths even when they would land inside mediaDir", async () => {
+    const stored = await store(streamOf(PNG), "image/png");
+    mkdirSync(join(mediaDir, "sub"));
+
+    for (const bad of [`sub/../${stored.storedPath}`, `./../media/${stored.storedPath}`, join(mediaDir, stored.storedPath)]) {
+      expect(() => deleteUpload(mediaDir, bad)).toThrow(UnsafePathError);
+    }
+    expect(listing()).toEqual(["sub", stored.storedPath].sort());
+  });
+
   test("refuses to go through a symlinked directory that points outside mediaDir", () => {
     const outsideDir = join(root, "outside");
     mkdirSync(outsideDir);
