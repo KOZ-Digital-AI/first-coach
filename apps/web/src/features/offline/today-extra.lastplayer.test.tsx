@@ -155,7 +155,7 @@ describe('offline, no session answer: the last player of this device is the play
     onLine = false;
     rememberLastPlayer(LAST);
     mount();
-    await waitFor(() => expect(screen.getByText(/There is no connection right now/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/You are offline. Next time, open FIRST COACH with internet/)).toBeTruthy());
     expect(badge()).toBeNull();
     expect(screen.queryByText(UNKNOWN)).toBeNull();
     expect((screen.getByRole('button', { name: DOWNLOAD }) as HTMLButtonElement).disabled).toBe(true);
