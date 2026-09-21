@@ -670,8 +670,12 @@ describe('007_privacy: consents', () => {
     for (const column of ['granted', 'guardian_confirmed']) {
       addConsent(db, { [column]: 0 });
       addConsent(db, { [column]: 1 });
-      for (const bad of [2, -1, 10, 0.5, 1.5]) {
+      for (const bad of [2, -1, 10]) {
         expect(thrown(() => addConsent(db, { [column]: bad })).message, `${column} ${bad}`).toMatch(/CHECK constraint failed/);
+      }
+      for (const bad of [0.5, 1.5]) {
+        // STRICT refuses a fraction in an INTEGER column before the CHECK is reached.
+        expect(thrown(() => addConsent(db, { [column]: bad })).message, `${column} ${bad}`).toMatch(/cannot store REAL value in INTEGER column|CHECK constraint failed/);
       }
       for (const bad of ['true', 'yes', '']) {
         expect(thrown(() => addConsent(db, { [column]: bad })).message, `${column} ${JSON.stringify(bad)}`).toMatch(/cannot store TEXT|CHECK constraint failed/);
