@@ -357,7 +357,8 @@ describe('finding the contribution', () => {
     expect(listedStates()).toEqual(['pending', 'changes_requested', 'approved', 'rejected']);
     expect(backLink().getAttribute('href')).toBe('/admin');
     expect(absent(screen.queryByRole('button', { name: 'Approve' }))).toBe(true);
-    expect(screen.queryAllByRole('heading', { level: 1 })).toHaveLength(0);
+    // the page still has its one title: the statement itself, not a contribution's name
+    expect(screen.getAllByRole('heading', { level: 1 }).map(text)).toEqual(['This contribution is not waiting for review']);
   });
 
   test('a failed load shows an alert with the plain message and Try again, which asks once more and shows the contribution', async () => {
