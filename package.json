@@ -1,0 +1,15 @@
+{
+  "name": "first-coach",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "bun --filter '*' dev",
+    "build": "bun --filter '*' build",
+    "typecheck": "bun --filter '*' typecheck",
+    "test": "bun --filter '*' test"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/bun": "^1.4"
+  }
+}

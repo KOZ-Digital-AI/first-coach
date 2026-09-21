@@ -1,0 +1,1 @@
+{"compilerOptions":{"strict":true,"target":"ES2022","module":"ESNext","moduleResolution":"bundler","types":["bun"],"skipLibCheck":true,"esModuleInterop":true,"forceConsistentCasingInFileNames":true,"resolveJsonModule":true,"isolatedModules":true,"verbatimModuleSyntax":true,"noEmit":true}}
