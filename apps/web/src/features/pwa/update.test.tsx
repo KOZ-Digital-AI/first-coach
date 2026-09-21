@@ -171,6 +171,20 @@ describe('update prompt', () => {
     await act(async () => finish());
   });
 
+  test('while updating, Later is disabled: the prompt cannot be dismissed out from under an update in flight', async () => {
+    let finish: () => void = () => {};
+    const r = rig(() => new Promise<void>((resolve) => (finish = resolve)));
+    renderPrompt({ register: r.register });
+    await act(() => sleep(0));
+    await r.needRefresh();
+    expect((laterButton() as HTMLButtonElement).disabled).toBe(false);
+    await act(async () => {
+      fireEvent.click(updateButton());
+    });
+    expect((laterButton() as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => finish());
+  });
+
   test('a failed update says so, in words, and can be tried again', async () => {
     let attempt = 0;
     const r = rig(() => (++attempt === 1 ? Promise.reject(new Error('skipWaiting failed')) : Promise.resolve()));
