@@ -33,7 +33,7 @@ export type AuthConfig = {
   db: Database;
   secret: string;
   baseURL: string;
-  /** Secure (`__Secure-`) cookies and rate limiting on. */
+  /** Secure (`__Secure-`) cookies and rate limiting on; true for anything but dev/test. */
   production: boolean;
   trustedOrigins?: string[];
 };
@@ -46,25 +46,34 @@ const roles = {
 
 /**
  * Reads BETTER_AUTH_SECRET, BETTER_AUTH_URL, BETTER_AUTH_TRUSTED_ORIGINS and NODE_ENV.
- * Production (NODE_ENV=production, or an https BETTER_AUTH_URL) throws when the secret
- * is missing or shorter than 32 characters, or BETTER_AUTH_URL is missing. Messages name
- * the variable, never its value.
+ *
+ * FAILS CLOSED: the dev fallbacks (public secret, http://localhost:4111, non-Secure
+ * cookies, no rate limiter) apply ONLY when NODE_ENV is exactly "development" or "test"
+ * (Bun sets "test" under `bun test`). Any other value, including undefined, "Production"
+ * or "staging", is production: the secret (at least 32 characters) and BETTER_AUTH_URL
+ * are required, and wildcards in BETTER_AUTH_TRUSTED_ORIGINS are refused. Consequence:
+ * running the api locally needs NODE_ENV=development (the `dev` script in
+ * apps/api/package.json does not set it yet; a follow-up bead adds it).
+ * Error messages name the variable, never the secret's value.
  */
 export function resolveAuthConfig(db: Database, env: NodeJS.ProcessEnv = process.env): AuthConfig {
   const url = env.BETTER_AUTH_URL?.trim() ?? "";
   const secret = env.BETTER_AUTH_SECRET?.trim() ?? "";
-  const production = env.NODE_ENV === "production" || url.startsWith("https://");
+  const production = env.NODE_ENV !== "development" && env.NODE_ENV !== "test";
+  const extraOrigins = (env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   if (production) {
     if (secret === "") throw new Error("BETTER_AUTH_SECRET is required in production");
     if (secret.length < MIN_SECRET_LENGTH) {
       throw new Error(`BETTER_AUTH_SECRET must be at least ${MIN_SECRET_LENGTH} characters in production`);
     }
     if (url === "") throw new Error("BETTER_AUTH_URL is required in production");
+    if (extraOrigins.some((origin) => origin.includes("*"))) {
+      throw new Error("BETTER_AUTH_TRUSTED_ORIGINS must not contain wildcards in production");
+    }
   }
-  const extraOrigins = (env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
   return {
     db,
     secret: secret || DEV_SECRET,
@@ -95,6 +104,9 @@ export function createAuth(config: AuthConfig) {
     },
     // In-memory limiter keyed by client IP. Anonymous sign-in gets a roomier rule so a
     // classroom behind one NAT can start together; it is still capped per minute.
+    // Advisory: the limiter trusts X-Forwarded-For from the platform proxy, so a caller
+    // that rotates that header evades it and a header-less caller shares one bucket.
+    // Verify Railway's forwarding behaviour at deploy time.
     rateLimit: {
       enabled: config.production,
       storage: "memory",
