@@ -361,7 +361,15 @@ describe('saving', () => {
   });
 
   test('after a save the form shows the saved answers and Save is disabled until the next edit', async () => {
-    stubNetwork({ patch: () => json(saved({ minutesPerSession: 30 })) });
+    // A real server answers the re-read of the plan with what was just saved: the stub does the same.
+    let current: unknown = ME;
+    stubNetwork({
+      me: () => json(current),
+      patch: () => {
+        current = StartResponse.parse({ profile: { ...PROFILE, minutesPerSession: 30 }, roadmap: REBUILT });
+        return json(saved({ minutesPerSession: 30 }));
+      },
+    });
     const { user } = await renderForm();
     await user.click(radio(MINUTES, '30 min'));
     await user.click(saveButton());
@@ -631,7 +639,8 @@ describe('Redo baseline', () => {
     expect(resets()[0]!.headers.get('x-timezone')).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
     expect(queryClient.getQueryState(['today'])!.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(['journey', 'en'])!.isInvalidated).toBe(true);
-    expect(queryClient.getQueryState(['me'])!.isInvalidated).toBe(true);
+    // ['me'] had an observer (this screen), so invalidating it means it is fetched again (a real server now answers 404)
+    await waitFor(() => expect(meGets().length).toBeGreaterThanOrEqual(2));
   });
 
   test('while the reset is in flight both dialog buttons are disabled, Escape does not close it, and nothing is sent twice', async () => {
