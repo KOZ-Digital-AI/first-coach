@@ -348,6 +348,56 @@ export function attachmentPathsOf(db: Database, id: string): string[] {
   return rows.map((row) => row.stored_path);
 }
 
+/** What the media route (fc-mol-70i.6) needs to decide whether to serve one stored file, and which. */
+export interface AttachmentForServing {
+  id: string;
+  contributionId: string;
+  kind: MediaKind;
+  /** The file's name in the upload store: the only thing a file path is ever built from. */
+  storedPath: string;
+  mime: string;
+  bytes: number;
+  originalName: string;
+  /** The contribution's submitter: the owner of the file. */
+  submitterUserId: string;
+  state: ContributionState;
+  /** PUBLIC: the contribution is 'approved' AND its resulting drill is still published (unpublished_at IS NULL). */
+  isPublic: boolean;
+}
+
+/**
+ * One attachment by its id, alone (any owner, any state), with the facts the caller needs to authorise
+ * a read: the submitter, the state and isPublic. null when the id does not exist (a withdrawn
+ * contribution has no attachment rows). Unlike getForOwner this does NOT check ownership: the caller
+ * must, and must answer a missing id and a refused caller identically.
+ */
+export function getAttachmentForServing(db: Database, attachmentId: string): AttachmentForServing | null {
+  const row = db
+    .query(
+      `SELECT a.id, a.contribution_id, a.kind, a.stored_path, a.mime, a.bytes, a.original_name,
+              c.submitter_user_id, c.state,
+              CASE WHEN c.state = 'approved' AND d.id IS NOT NULL AND d.unpublished_at IS NULL THEN 1 ELSE 0 END AS is_public
+         FROM contribution_attachments a
+         JOIN contributions c ON c.id = a.contribution_id
+         LEFT JOIN drills d ON d.id = c.resulting_drill_id
+        WHERE a.id = ?`,
+    )
+    .get(attachmentId) as (AttachmentRow & { submitter_user_id: string; state: ContributionState; is_public: number }) | null;
+  if (row === null) return null;
+  return {
+    id: row.id,
+    contributionId: row.contribution_id,
+    kind: row.kind,
+    storedPath: row.stored_path,
+    mime: row.mime,
+    bytes: row.bytes,
+    originalName: row.original_name,
+    submitterUserId: row.submitter_user_id,
+    state: row.state,
+    isPublic: row.is_public === 1,
+  };
+}
+
 /** Ids of the OTHER contributions (any submitter, any state) with this content hash, oldest first: a moderation flag. */
 export function findDuplicates(db: Database, hash: string, excludeId?: string): string[] {
   const rows = db
