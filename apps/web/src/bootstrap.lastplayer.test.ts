@@ -373,7 +373,10 @@ describe('watchAuthSession: a session read that FAILED is not "no session"', () 
   });
 
   test('no data and a 401 answer IS "no session"', () => {
-    expect(collect({ data: null, error: { status: 401, statusText: 'Unauthorized' }, isPending: false }).seen).toEqual([undefined]);
+    // (toEqual([undefined]) would also accept [], so the length is asserted)
+    const { seen } = collect({ data: null, error: { status: 401, statusText: 'Unauthorized' }, isPending: false });
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toBeUndefined();
   });
 
   test('the same session with a failed re-read still reports its id (the previous data is kept)', () => {
@@ -382,7 +385,9 @@ describe('watchAuthSession: a session read that FAILED is not "no session"', () 
   });
 
   test('a settled "no session" with no error still reports undefined', () => {
-    expect(collect({ data: null, error: null, isPending: false }).seen).toEqual([undefined]);
+    const { seen } = collect({ data: null, error: null, isPending: false });
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toBeUndefined();
   });
 
   test('a failed read after a good one reports nothing new (the sign-out is not faked by a lost connection)', () => {
@@ -576,6 +581,13 @@ describe('seedTodayFromDevice: the downloaded session of the last player, when t
 
   test('no remembered player: nothing is seeded', () => {
     const { storage } = device(undefined, 'p1');
+    const queryClient = new QueryClient();
+    expect(bootstrap.seedTodayFromDevice(queryClient, storage)).toBeUndefined();
+    expect(queryClient.getQueryData(['today'])).toBeUndefined();
+  });
+
+  test('no remembered player: a session downloaded by some player is never guessed to be theirs', () => {
+    const { storage } = device(undefined, 'p2');
     const queryClient = new QueryClient();
     expect(bootstrap.seedTodayFromDevice(queryClient, storage)).toBeUndefined();
     expect(queryClient.getQueryData(['today'])).toBeUndefined();
