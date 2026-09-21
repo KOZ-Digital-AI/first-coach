@@ -53,13 +53,16 @@ export const pwaOptions: Partial<VitePWAOptions> = {
   },
   workbox: {
     globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,woff2}'],
-    globIgnores: ['**/*.{mp4,webm,task}'],
+    // mediapipe/ (the pose model and the vision_wasm_* runtime, ~970 KB of loaders alone) is fetched over the network by
+    // the /video route, never precached (fc-zfg.4).
+    globIgnores: ['**/*.{mp4,webm,task}', '**/mediapipe/**'],
     navigateFallback: 'index.html',
     navigateFallbackDenylist: [
       /^\/api(\/|$)/,
       /^\/health(\/|$)/,
       /^\/media(\/|$)/,
       /^\/uploads(\/|$)/,
+      /^\/mediapipe(\/|$)/,
       /\.(?:mp4|webm|task)$/,
     ],
     cleanupOutdatedCaches: true,
