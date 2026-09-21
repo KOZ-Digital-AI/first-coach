@@ -396,6 +396,19 @@ describe('a player who is not onboarded', () => {
     expect(page.navigate).toHaveBeenCalledTimes(1);
   });
 
+  test('a later refetch that is still a 404 does not send them a second time', async () => {
+    const again = deferred<Response>();
+    const page = mountRoadmap({ me: (n) => (n === 1 ? notOnboarded() : again.promise) });
+    await waitFor(() => expect(page.navigate).toHaveBeenCalledTimes(1));
+    // The second answer is slow, so the page really is "fetching" (with the 404 still remembered) for a while.
+    void page.queryClient.invalidateQueries({ queryKey: ['me'] });
+    await waitFor(() => expect(page.meCalls()).toHaveLength(2));
+    await new Promise((done) => setTimeout(done, 30));
+    again.resolve(notOnboarded());
+    await new Promise((done) => setTimeout(done, 30));
+    expect(page.navigate).toHaveBeenCalledTimes(1);
+  });
+
   test('meanwhile no roadmap, no error and no primary action is shown, only a calm status with a link to the setup', async () => {
     mountRoadmap({ me: notOnboarded });
     const link = await screen.findByRole<HTMLAnchorElement>('link', { name: text('en', 'notOnboarded.action') });
