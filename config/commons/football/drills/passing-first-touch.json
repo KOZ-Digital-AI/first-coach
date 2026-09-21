@@ -218,6 +218,11 @@
           "kk": "Артында терезе, есік немесе адам жоқ қабырғаны таңда, жұмсақ доп қолдан және алдымен бір минут жеңіл жүгіріп, денеңді қыздыр.",
           "ru": "Выбери стену без окон, дверей и людей за ней, играй мягким мячом и сначала разомнись минутой лёгкого бега.",
           "en": "Choose a wall with no windows, doors or people behind it, use a soft ball, and warm up first with a minute of easy jogging."
+        },
+        {
+          "kk": "Жұмсақ доппен ойна, пасты жайлап бер және жолдардан, көліктерден, көшелерден алыс жүр.",
+          "ru": "Играй мягким мячом, отдавай пас мягко и держись подальше от дорог, машин и улиц.",
+          "en": "Play with a soft ball and pass gently. Keep far away from roads, cars and streets."
         }
       ],
       "progressionSlugs": [
@@ -393,6 +398,11 @@
           "kk": "Терезесі жоқ қабырғада жұмсақ доппен ойна, сүрінбеу үшін аяқкиімдерді тұрған жеріңнен алыс қой және алдымен денеңді қыздыр.",
           "ru": "Играй мягким мячом у стены без окон, ставь ботинки подальше от места, где стоишь, чтобы не споткнуться, и сначала разомнись.",
           "en": "Use a soft ball on a wall without windows, put the shoes well away from your standing spot so you do not trip, and warm up first."
+        },
+        {
+          "kk": "Жұмсақ доп таңда, пастарды жайлап бер және жолдардан, көліктерден, көшелерден өте алыс бол.",
+          "ru": "Выбери мягкий мяч, отдавай пасы аккуратно и держись далеко от дорог, машин и улиц.",
+          "en": "Choose a soft ball, keep the passes gentle, and stay well away from roads, cars and streets."
         }
       ],
       "progressionSlugs": [
@@ -451,6 +461,11 @@
           "kk": "Жұмсақ доп пен терезесі жоқ қабырғаны қолдан, әлсіз аяғыңды аз ғана сермеп, бастамас бұрын тобығыңды қыздыр.",
           "ru": "Играй мягким мячом у стены без окон, слабой ногой замахивайся совсем немного и перед началом разомни голеностопы.",
           "en": "Use a soft ball and a wall with no windows, swing your weaker leg only a little, and warm up your ankles before you start."
+        },
+        {
+          "kk": "Жұмсақ доппен ойна, пастарды жайлап бер. Жолдардың, көліктердің немесе көшелердің жанында ешқашан ойнама.",
+          "ru": "Играй мягким мячом и отдавай пасы аккуратно. Никогда не играй рядом с дорогами, машинами и улицами.",
+          "en": "Use a soft ball and gentle passes. Never play near roads, cars or streets."
         }
       ],
       "progressionSlugs": [
@@ -564,6 +579,11 @@
           "kk": "Пастарды аласа әрі берік жаса, қатты емес; терезесі жоқ қабырғада жұмсақ доппен ойна және алдымен аяқтарыңды қыздыр.",
           "ru": "Отдавай пасы низко и уверенно, но не сильно, играй мягким мячом у стены без окон и сначала разомни ноги.",
           "en": "Keep the passes low and firm, not hard, use a soft ball on a wall without windows, and warm up your legs first."
+        },
+        {
+          "kk": "Қарқын жылдам болса да, жұмсақ доппен ойна, пастарды жайлап бер және жолдардан, көліктерден, көшелерден алыс бол.",
+          "ru": "Даже в быстром темпе играй мягким мячом, отдавай пасы аккуратно и держись далеко от дорог, машин и улиц.",
+          "en": "Even at a quicker tempo, use a soft ball and gentle passes, and stay far from roads, cars and streets."
         }
       ],
       "regressionSlugs": [
@@ -619,6 +639,11 @@
           "kk": "Төмен көздеп, пасты жайлап ит: қатты доп қайтқанда бетіңе тиюі мүмкін. Жұмсақ доп пен терезесі жоқ қабырғаны қолдан, алдымен денеңді қыздыр.",
           "ru": "Целься низко и отдавай пас мягким толчком: сильный мяч может отскочить в лицо. Играй мягким мячом у стены без окон и сначала разомнись.",
           "en": "Aim low and pass with a gentle push, because a hard pass can rebound into your face. Use a soft ball, a wall with no windows, and warm up first."
+        },
+        {
+          "kk": "Жұмсақ доппен жайлап көздеп ойна және қабырғаны жолдардан, көліктерден, көшелерден алыс жерден таңда.",
+          "ru": "Целься спокойно, играй мягким мячом и выбирай стену подальше от дорог, машин и улиц.",
+          "en": "Aim gently with a soft ball, and pick a wall far from roads, cars and streets."
         }
       ],
       "regressionSlugs": [
@@ -674,6 +699,11 @@
           "kk": "Допты тек жермен, жайлап жібер; доп біреуге тисе, «тоқта» деп айтуды келісіп ал және жолдар мен қоршаулардан аулақ бол.",
           "ru": "Отдавайте пас только по земле и мягко; договоритесь сказать «стоп», если мяч кого-то ударил, и держитесь подальше от дорог и заборов.",
           "en": "Pass along the ground only, with a gentle push; agree to say stop if a ball hits anyone, and keep away from roads and fences."
+        },
+        {
+          "kk": "Алдымен жылын: жеңіл жүгіріп, аяқтарыңды сілкілеп ал, содан кейін ғана пас бер.",
+          "ru": "Сначала разомнитесь: легко пробегитесь и встряхните ноги, а потом начинайте отдавать пасы.",
+          "en": "Warm up first: jog lightly and shake out your legs before you start passing."
         }
       ],
       "regressionSlugs": [
