@@ -985,6 +985,7 @@ describe("loadSeed: each mutable column of a skill and of a test is updated in p
     direction: (x) => void (x.direction = "lower"),
     protocol: (x) => void (x.protocol.ru = "Другой протокол"),
     equipment: (x) => void (x.equipment = "ball"),
+    thresholds: (x) => void (x.thresholds = { upTo9: [3, 8, 15, 30], from10to13: [5, 12, 25, 50], from14: [8, 20, 40, 80] }),
   };
 
   test("the edit tables cover every column the tables have (a new column needs an edit and a WHERE guard)", () => {
@@ -1044,6 +1045,169 @@ describe("loadSeed: each mutable column of a skill and of a test is updated in p
       expect(changes(db)).toBe(settled);
     });
   }
+});
+
+// --- test thresholds --------------------------------------------------------------------------
+
+describe("loadSeed: the thresholds of a test", () => {
+  const HIGHER: NonNullable<SeedTest["thresholds"]> = { upTo9: [3, 8, 15, 30], from10to13: [5, 12, 25, 50], from14: [8, 20, 40, 80] };
+  const LOWER: NonNullable<SeedTest["thresholds"]> = { upTo9: [9, 7, 5, 4], from10to13: [8, 6, 4, 3], from14: [7, 5, 3, 2] };
+
+  /** Two tests with thresholds (one higher-, one lower-is-better) and one without. */
+  const withThresholds = (): SportSeed => {
+    const seed = football();
+    seed.tests!.tests = [
+      { ...seed.tests!.tests[0]!, thresholds: structuredClone(HIGHER) },
+      {
+        slug: "sprint-20m",
+        skill: "juggling",
+        metric: "time",
+        unit: "seconds",
+        direction: "lower",
+        protocol: t("sprint twenty metres"),
+        equipment: "cones",
+        thresholds: structuredClone(LOWER),
+      },
+      {
+        slug: "plain-test",
+        skill: "first-touch",
+        metric: "touches",
+        unit: "count",
+        direction: "higher",
+        protocol: t("no thresholds yet"),
+        equipment: "ball",
+      },
+    ];
+    return seed;
+  };
+
+  const stored = (slug: string): string | null =>
+    db.query<{ thresholds: string | null }, [string]>("SELECT thresholds FROM skill_tests WHERE slug = ?").get(slug)!.thresholds;
+  const rowOf = (slug: string): Record<string, unknown> =>
+    db.query<Record<string, unknown>, [string]>("SELECT * FROM skill_tests WHERE slug = ?").get(slug)!;
+  const differing = (a: Record<string, unknown>, b: Record<string, unknown>): string[] =>
+    Object.keys(a).filter((key) => JSON.stringify(a[key]) !== JSON.stringify(b[key]));
+  const otherTables = (): Record<string, string> => {
+    const all = fingerprint(db);
+    delete all.skill_tests;
+    return all;
+  };
+
+  test("each seed test's thresholds are stored as JSON that reads back to exactly the seed's", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+
+    expect(JSON.parse(stored("wall-pass-30s")!)).toEqual(HIGHER);
+    expect(JSON.parse(stored("sprint-20m")!)).toEqual(LOWER);
+  });
+
+  test("a test without thresholds stores NULL, not the text 'null' or an empty object", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+
+    expect(stored("plain-test")).toBeNull();
+  });
+
+  test("a seed that never had thresholds loads with NULL in every row", () => {
+    writeSeed({ football: football() });
+    loadSeed(db, dir, { now: T0 });
+
+    expect(db.query<{ thresholds: string | null }, []>("SELECT thresholds FROM skill_tests").all()).toEqual([{ thresholds: null }]);
+  });
+
+  test("the stored text does not depend on the key order of the seed file", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+    const first = stored("wall-pass-30s");
+
+    const seed = withThresholds();
+    const [test0] = seed.tests!.tests;
+    test0!.thresholds = { from14: HIGHER.from14, upTo9: HIGHER.upTo9, from10to13: HIGHER.from10to13 };
+    writeSeed({ football: seed });
+    const settled = changes(db);
+
+    expect(loadSeed(db, dir, { now: T1 }).tests).toBe(0);
+    expect(changes(db)).toBe(settled);
+    expect(stored("wall-pass-30s")).toBe(first);
+  });
+
+  test("reloading an unchanged seed with thresholds is a byte-identical no-op", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+    const before = fingerprint(db);
+    const settled = changes(db);
+
+    const summary = loadSeed(db, dir, { now: T1 });
+
+    expect(summary.tests).toBe(0);
+    expect(changes(db)).toBe(settled);
+    expect(fingerprint(db)).toEqual(before);
+  });
+
+  test("editing only one threshold updates exactly that row's thresholds and nothing else", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+    const before = { edited: rowOf("wall-pass-30s"), lower: rowOf("sprint-20m"), plain: rowOf("plain-test") };
+    const rest = otherTables();
+    const drills = drillRows(db);
+    const changesBefore = changes(db);
+
+    const seed = withThresholds();
+    seed.tests!.tests[0]!.thresholds!.from10to13 = [5, 12, 25, 55];
+    writeSeed({ football: seed });
+    const summary = loadSeed(db, dir, { now: T1 });
+
+    expect(summary).toMatchObject({ sports: 0, skills: 0, tests: 1 });
+    expect(changes(db) - changesBefore).toBe(1);
+    expect(differing(before.edited, rowOf("wall-pass-30s"))).toEqual(["thresholds"]);
+    expect(JSON.parse(stored("wall-pass-30s")!)).toEqual({ ...HIGHER, from10to13: [5, 12, 25, 55] });
+    expect(rowOf("sprint-20m")).toEqual(before.lower);
+    expect(rowOf("plain-test")).toEqual(before.plain);
+    expect(otherTables()).toEqual(rest);
+    expect(drillRows(db)).toBe(drills);
+
+    const settled = changes(db);
+    expect(loadSeed(db, dir, { now: T2 }).tests).toBe(0);
+    expect(changes(db)).toBe(settled);
+  });
+
+  test("adding thresholds to a test that had none is a one-row update", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+    const before = rowOf("plain-test");
+    const changesBefore = changes(db);
+
+    const seed = withThresholds();
+    seed.tests!.tests[2]!.thresholds = structuredClone(HIGHER);
+    writeSeed({ football: seed });
+    const summary = loadSeed(db, dir, { now: T1 });
+
+    expect(summary.tests).toBe(1);
+    expect(changes(db) - changesBefore).toBe(1);
+    expect(differing(before, rowOf("plain-test"))).toEqual(["thresholds"]);
+    expect(JSON.parse(stored("plain-test")!)).toEqual(HIGHER);
+  });
+
+  test("removing the thresholds from the seed sets NULL, in that row only", () => {
+    writeSeed({ football: withThresholds() });
+    loadSeed(db, dir, { now: T0 });
+    const lower = rowOf("sprint-20m");
+    const changesBefore = changes(db);
+
+    const seed = withThresholds();
+    delete seed.tests!.tests[0]!.thresholds;
+    writeSeed({ football: seed });
+    const summary = loadSeed(db, dir, { now: T1 });
+
+    expect(summary.tests).toBe(1);
+    expect(changes(db) - changesBefore).toBe(1);
+    expect(stored("wall-pass-30s")).toBeNull();
+    expect(rowOf("sprint-20m")).toEqual(lower);
+
+    const settled = changes(db);
+    expect(loadSeed(db, dir, { now: T2 }).tests).toBe(0);
+    expect(changes(db)).toBe(settled);
+  });
 });
 
 // --- prerequisite edges follow the seed --------------------------------------------------------
@@ -1871,5 +2035,24 @@ describe("loadSeed: the real seed under config/commons", () => {
     expect(second).toEqual({ ...ZERO, drills: { inserted: 0, updated: 0, unchanged: slugs.length } });
     expect(fingerprint(db)).toEqual(before);
     expect(changes(db)).toBe(changesBefore);
+  });
+
+  test("every football test of the real seed is stored with the thresholds its file gives", () => {
+    const file = JSON.parse(readFileSync(join(REAL_SEED, "football", "tests.json"), "utf8")) as {
+      tests: { slug: string; thresholds?: unknown }[];
+    };
+    expect(file.tests.length).toBeGreaterThan(0);
+
+    loadSeed(db, REAL_SEED, { now: T0 });
+
+    expect(count(db, "skill_tests")).toBe(file.tests.length);
+    for (const seedTest of file.tests) {
+      expect(seedTest.thresholds).toBeDefined();
+      const row = db.query<{ thresholds: string | null }, [string]>("SELECT thresholds FROM skill_tests WHERE slug = ?").get(seedTest.slug);
+      expect({ slug: seedTest.slug, thresholds: row === null || row.thresholds === null ? null : JSON.parse(row.thresholds) }).toEqual({
+        slug: seedTest.slug,
+        thresholds: seedTest.thresholds,
+      });
+    }
   });
 });
