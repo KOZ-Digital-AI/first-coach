@@ -9,14 +9,17 @@
 //   names; they may reference them, e.g. `REFERENCES "user"(id)`.
 // - Anonymous plugin = players; email + password = contributors (no verification, no
 //   mail transport); admin plugin with roles `contributor` and `admin`.
+// - Guest to account: when an anonymous player signs up or signs in to an email account, the
+//   anonymous plugin's onLinkAccount (link-account.ts) re-keys the guest's player rows to the
+//   account before Better Auth deletes the anonymous user.
 // - Known caveat: Kysely shares the app's single synchronous bun:sqlite connection, so
-//   keep app writes out of async transaction gaps. Anonymous-user cleanup and the
-//   onLinkAccount recovery flow are later work.
+//   keep app writes out of async transaction gaps (the re-key is one synchronous transaction).
 import type { Database } from "bun:sqlite";
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins/admin";
 import { adminAc, defaultAc } from "better-auth/plugins/admin/access";
 import { anonymous } from "better-auth/plugins/anonymous";
+import { createLinkAccountHandler } from "./link-account";
 import { RATE_LIMITS } from "./rate-limit";
 
 export const ROLE_CONTRIBUTOR = "contributor";
@@ -123,7 +126,7 @@ export function createAuth(config: AuthConfig) {
       },
     },
     plugins: [
-      anonymous(),
+      anonymous({ onLinkAccount: createLinkAccountHandler(config.db) }),
       admin({ roles, defaultRole: ROLE_CONTRIBUTOR, adminRoles: [ROLE_ADMIN] }),
     ],
   });
