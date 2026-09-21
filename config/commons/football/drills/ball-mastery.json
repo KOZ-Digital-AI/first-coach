@@ -1,0 +1,760 @@
+{
+  "sport": "football",
+  "track": "ball-mastery",
+  "drills": [
+    {
+      "slug": "ball-mastery-ghost-ball",
+      "title": {
+        "kk": "Елес доп",
+        "ru": "Воображаемый мяч",
+        "en": "Ghost Ball"
+      },
+      "goal": {
+        "kk": "Нағыз допқа көшпес бұрын аяқпен жұмсақ әрі ақырын жанасуға, бір аяқта тепе-теңдік сақтауға үйрен.",
+        "ru": "Привыкни к мягким, тихим касаниям ногой и к равновесию на одной ноге ещё до того, как возьмёшь настоящий мяч.",
+        "en": "Get used to soft, quiet foot touches and to balancing on one leg before you use a real ball."
+      },
+      "instructions": {
+        "kk": "1. Тізеңді сәл бүгіп түзу тұр да, алдыңда доп жатыр деп елестет.\n2. Елес допты алдымен оң аяғыңның табанымен он рет, содан кейін сол аяғыңмен он рет жеңіл түрт.\n3. Елес допты оң аяғыңның ішкі жағымен бүйірге жылжыт, содан соң сол аяғыңның ішкі жағымен кері қайтар. Мұны он рет қайтала.\n4. Соңында бір аяқта үшке дейін баяу санап тұр, содан кейін екінші аяқта тұр.",
+        "ru": "1. Встань прямо, слегка согни колени и представь, что перед тобой лежит мяч.\n2. Мягко постучи подошвой правой ноги по воображаемому мячу десять раз, потом левой ногой десять раз.\n3. Сдвинь воображаемый мяч в сторону внутренней стороной правой ноги, затем верни его внутренней стороной левой. Повтори десять раз.\n4. В конце постой на одной ноге, медленно считая до трёх, потом на другой.",
+        "en": "1. Stand tall with your knees a little bent, and imagine a ball lying in front of you.\n2. Tap the pretend ball softly with the sole of your right foot ten times, then with your left foot ten times.\n3. Slide the pretend ball sideways with the inside of your right foot, then slide it back with the inside of your left foot, ten times.\n4. Finish by standing on one leg for a slow count of three, then on the other leg."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Аяғыңды жеңіл түртудің орнына жерге қатты басасың.",
+          "ru": "Ты топаешь ногой вместо мягкого касания.",
+          "en": "You stamp your foot down instead of tapping softly."
+        },
+        {
+          "kk": "Қолың қатып, иығың көтеріліп тұр, сондықтан бүкіл денең кергіп қалады.",
+          "ru": "Руки напряжены, а плечи подняты, и всё тело выглядит зажатым.",
+          "en": "Your arms are stiff and your shoulders are lifted, so your whole body looks tense."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Бастамас бұрын он секунд екі тобығыңды сілкіп, орныңда біраз аяқ көтеріп жүр.",
+          "ru": "Перед началом десять секунд потряси обеими стопами и немного пошагай на месте.",
+          "en": "Shake out both ankles for ten seconds and march on the spot for a moment before you start."
+        },
+        {
+          "kk": "Бір аяқта тұрғанда шайқалып кетсең, ұстап қалатындай, берік орындық немесе үстелдің қасында тұр.",
+          "ru": "Встань рядом с прочным стулом или столом, чтобы можно было ухватиться, если покачнёшься на одной ноге.",
+          "en": "Stand next to a sturdy chair or table you can hold if you wobble during the one-leg balance."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-sole-taps"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "nothing",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-sole-taps",
+      "title": {
+        "kk": "Табанмен түрту",
+        "ru": "Касания подошвой",
+        "en": "Sole Taps"
+      },
+      "goal": {
+        "kk": "Табаныңмен доптың үстін сезін де, аяқтарың кезектесіп жанасқанда тепе-теңдігіңді сақта.",
+        "ru": "Почувствуй верх мяча подошвой и сохраняй равновесие, пока ноги касаются мяча по очереди.",
+        "en": "Feel the top of the ball with the sole of your foot and keep your balance while your feet take turns."
+      },
+      "instructions": {
+        "kk": "1. Допты алдыңа еденге қой да, тізеңді сәл бүгіп тұр.\n2. Доптың үстін алдымен оң аяғыңның, сосын сол аяғыңның табанымен баяу барабан соққандай жеңіл түрт.\n3. Бір аяқ түртіп тұрғанда, екінші аяғың қозғалмай, еденде тегіс тұрсын.\n4. Жиырма рет түртіп санап шық, бірнеше рет тыныс алып демал, сосын тағы жиырма рет сәл жылдамырақ түрт.",
+        "ru": "1. Положи мяч на пол перед собой и встань, слегка согнув колени.\n2. Легко постучи подошвой правой, потом левой ноги по верху мяча, как по медленному барабану.\n3. Пока одна нога касается мяча, другая стоит неподвижно и всей стопой на полу.\n4. Сосчитай двадцать касаний, отдохни несколько вдохов и сделай ещё двадцать, чуть быстрее.",
+        "en": "1. Put the ball on the floor in front of you and stand with your knees a little bent.\n2. Tap the top of the ball lightly with the sole of your right foot, then with your left foot, like a slow drumbeat.\n3. While one foot taps, keep the other foot still and flat on the floor.\n4. Count twenty taps, rest for a few breaths, then do twenty more a little faster."
+      },
+      "dose": {
+        "reps": 20,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допты қатты басып қалғандықтан, ол домалап кетеді.",
+          "ru": "Ты давишь на мяч так сильно, что он укатывается.",
+          "en": "You press down on the ball so hard that it rolls away."
+        },
+        {
+          "kk": "Екінші аяғың жерде тұрудың орнына, сен аяқтан аяққа секіріп кетесің.",
+          "ru": "Ты подпрыгиваешь с ноги на ногу, вместо того чтобы держать вторую ногу на месте.",
+          "en": "You hop from foot to foot instead of keeping the other foot planted."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тек доптың үстіне ғана түрт, оған ешқашан салмағыңды салма: домалап бара жатқан доп тобығыңды бұрып жіберуі мүмкін.",
+          "ru": "Касайся только верха мяча и никогда не переноси на него вес: катящийся мяч может подвернуть стопу.",
+          "en": "Tap only the top of the ball and never put your weight on it, because a rolling ball can twist your ankle."
+        },
+        {
+          "kk": "Бастамас бұрын он рет баяу өкшеңді көтеріп жылын.",
+          "ru": "Перед началом разомнись: десять раз медленно поднимись на носки.",
+          "en": "Warm up with ten slow heel raises before you start."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-sole-rolls"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-ghost-ball"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-sole-rolls",
+      "title": {
+        "kk": "Табанмен домалату",
+        "ru": "Перекаты подошвой",
+        "en": "Sole Rolls"
+      },
+      "goal": {
+        "kk": "Допты табаныңның астында баяу әрі жайлап домалатып, өзіңе жақын ұста.",
+        "ru": "Медленно и мягко катай мяч под подошвой и держи его рядом с собой.",
+        "en": "Move the ball slowly and gently under your sole and keep it close to you."
+      },
+      "instructions": {
+        "kk": "1. Оң аяғыңның табанын доптың үстіне қой, тірек аяғыңның тізесін сәл бүгіп тұр.\n2. Допты табаныңның астында алға-артқа баяу он рет домалат.\n3. Енді оны оңға-солға баяу он рет домалат.\n4. Сол аяққа ауыс та, екі домалатуды да қайтала.",
+        "ru": "1. Поставь подошву правой ноги на верх мяча и слегка согни колено опорной ноги.\n2. Медленно прокати мяч под подошвой вперёд и назад десять раз.\n3. Теперь так же медленно прокати его из стороны в сторону десять раз.\n4. Смени ногу на левую и повтори оба движения.",
+        "en": "1. Rest the sole of your right foot on top of the ball and keep your standing knee a little bent.\n2. Roll the ball slowly forward and back under your sole, ten times.\n3. Now roll it slowly from side to side ten times.\n4. Swap to your left foot and repeat both rolls."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допты тым жылдам домалатасың, сондықтан ол табаныңның астынан сырғып кетеді.",
+          "ru": "Ты катишь мяч так быстро, что он выскальзывает из-под ноги.",
+          "en": "You roll the ball so fast that it slips out from under your foot."
+        },
+        {
+          "kk": "Тірек аяғың түзу әрі қатып тұр, сондықтан шайқалып кетесің.",
+          "ru": "Опорная нога прямая и жёсткая, поэтому тебя качает.",
+          "en": "Your standing leg is straight and stiff, so you wobble."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Домалатуды жеңіл әрі баяу жаса, доптың үстіне ешқашан шықпа.",
+          "ru": "Катай мяч легко и медленно, никогда не вставай на мяч.",
+          "en": "Keep the rolls light and slow, and never step onto the ball."
+        },
+        {
+          "kk": "Бастамас бұрын екі тобығыңды сілкіп, аяқ саусақтарыңды қозғалтып ал.",
+          "ru": "Перед началом потряси стопами и пошевели пальцами ног.",
+          "en": "Shake out your ankles and wiggle your toes before you begin."
+        },
+        {
+          "kk": "Таза, құрғақ, тайғанамайтын еденде аяқкиіммен немесе жалаң аяқ жаттық: тегіс еденде шұлықпен тайып кетуің мүмкін.",
+          "ru": "Тренируйся в обуви или босиком на чистом сухом нескользком полу: в носках на гладком полу можно поскользнуться.",
+          "en": "Train in shoes or barefoot on a clean, dry, non-slippery floor, because socks on a smooth floor can slide."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-foundation-touches"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-sole-taps"
+      ],
+      "minutes": 4,
+      "level": 1,
+      "ageMin": 5,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-foundation-touches",
+      "title": {
+        "kk": "100 негізгі жанасу",
+        "ru": "100 базовых касаний",
+        "en": "100 Foundation Touches"
+      },
+      "goal": {
+        "kk": "Аяқтың ішкі жағымен және табанмен екі аяқта да жанасып, допты бір қадам аясында ұста.",
+        "ru": "Держи мяч в пределах одного шага, касаясь его внутренней стороной стопы и подошвой обеими ногами.",
+        "en": "Keep the ball within one step of you while you use the inside and the sole of both feet."
+      },
+      "instructions": {
+        "kk": "1. Тізеңді сәл бүгіп тұр, доп алдыңда жатсын.\n2. Допты бір аяғыңның ішкі жағынан екінші аяғыңның ішкі жағына қырық рет жібер.\n3. Допты әр аяғыңның табанымен алға-артқа жиырма реттен домалат.\n4. Соңында жиырма жеңіл түртумен аяқта: оң, сол, оң, сол. Жүзге жету үшін дауыстап сана.",
+        "ru": "1. Встань, слегка согнув колени, мяч лежит перед тобой.\n2. Передавай мяч с внутренней стороны одной стопы на внутреннюю сторону другой, сорок раз.\n3. Прокатывай мяч подошвой вперёд и назад, по двадцать раз каждой ногой.\n4. Закончи двадцатью лёгкими касаниями подошвой: правая, левая, правая, левая. Считай вслух, чтобы добраться до ста.",
+        "en": "1. Stand with your knees a little bent and the ball in front of you.\n2. Pass the ball from the inside of one foot to the inside of the other, forty times.\n3. Roll the ball forward and back under the sole of each foot, twenty times per foot.\n4. Finish with twenty light sole taps, right, left, right, left, and count out loud to reach one hundred."
+      },
+      "dose": {
+        "reps": 100
+      },
+      "mistakes": [
+        {
+          "kk": "Жанасуларың тым қатты болғандықтан, доп бір қадамнан ары домалап кетеді.",
+          "ru": "Мяч откатывается дальше чем на шаг: касания слишком сильные.",
+          "en": "The ball rolls more than a step away because your touches are too hard."
+        },
+        {
+          "kk": "Бүкіл уақыт бойы арқаңды бүгіп, допқа ғана қарап тұрасың.",
+          "ru": "Ты всё время смотришь только на мяч, сгорбив спину.",
+          "en": "You stare at the ball the whole time with a hunched back."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Бастамас бұрын еденнен ойыншықтарды, аяқкиімді, сөмкелерді жина: допты қуғанда сүрінбейсің.",
+          "ru": "Перед началом убери с пола игрушки, обувь и сумки, чтобы не споткнуться, когда побежишь за мячом.",
+          "en": "Clear toys, shoes and bags from the floor before you start so you cannot trip over them while chasing the ball."
+        },
+        {
+          "kk": "Алдымен орныңда он рет жеңіл секіріп, тобықтарыңды бірнеше рет айналдырып жылын.",
+          "ru": "Сначала разомнись: десять лёгких прыжков на месте и несколько кругов стопами.",
+          "en": "Warm up first with ten light jumps on the spot and a few easy ankle circles."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-clock-taps",
+        "ball-mastery-inside-ping-pong"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-sole-rolls"
+      ],
+      "minutes": 5,
+      "level": 1,
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-clock-taps",
+      "title": {
+        "kk": "Сағат бойымен түрту",
+        "ru": "Касания по часам",
+        "en": "Clock Taps"
+      },
+      "goal": {
+        "kk": "Допты айналып шағын қадаммен жүріп, әр аяғыңмен кезектесіп жеңіл түрт.",
+        "ru": "Мелкими шагами обходи мяч по кругу и по очереди легко касайся его подошвами.",
+        "en": "Tap the ball lightly with each foot in turn while you take small steps around it."
+      },
+      "instructions": {
+        "kk": "1. Допты еденге қой да, оның қасында тұр: доп сағаттың ортасы дейік.\n2. Допты айналып шағын қадаммен жүріп, доптың үстін алдымен оң, сосын сол аяғыңның табанымен жеңіл түрт.\n3. Допты толық айналып, бастаған жеріңе қайта оралғанша жалғастыр.\n4. Үш рет оңға қарай, содан кейін үш рет солға қарай айнал.",
+        "ru": "1. Положи мяч и встань рядом с ним, как будто мяч это центр циферблата.\n2. Мелкими шагами двигайся вокруг мяча и по очереди касайся его верха подошвой правой и левой ноги.\n3. Продолжай, пока не обойдёшь мяч полностью и не вернёшься туда, откуда начал.\n4. Сделай три круга вправо, потом три круга влево.",
+        "en": "1. Put the ball down and stand beside it, as if the ball were the middle of a clock.\n2. Tap the top of the ball with the sole of your right foot, then with your left foot, while taking small steps around the ball.\n3. Keep going until you have walked all the way around the ball and are back where you started.\n4. Do three circles to the right, then three circles to the left."
+      },
+      "dose": {
+        "reps": 3,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Үлкен қадам жасайсың да, допқа жетпей алыстап қаласың.",
+          "ru": "Ты делаешь большие шаги и оказываешься слишком далеко от мяча, чтобы коснуться его.",
+          "en": "You take big steps and end up too far from the ball to tap it."
+        },
+        {
+          "kk": "Тым қатты түртесің, сондықтан доп аяғыңның астынан домалап шығып кетеді.",
+          "ru": "Ты стучишь так сильно, что мяч выкатывается из-под ноги.",
+          "en": "You tap so hard that the ball rolls out from under your foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Алғашында баяу айнал: тегіс еденде тез жүрсең, тірек аяғың тайып кетуі мүмкін.",
+          "ru": "Сначала ходи по кругу медленно: на гладком полу опорная нога может поскользнуться.",
+          "en": "Circle slowly at first, because going fast on a smooth floor can make your standing foot slip."
+        },
+        {
+          "kk": "Бірінші айналымға дейін орныңда он рет баяу тізеңді көтеріп, аяғыңды жылыт.",
+          "ru": "Перед первым кругом разомни ноги: десять раз медленно подними колени на месте.",
+          "en": "Warm up your legs with ten slow knee lifts on the spot before your first circle."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-sole-pull-push"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-foundation-touches"
+      ],
+      "minutes": 4,
+      "level": 2,
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-inside-ping-pong",
+      "title": {
+        "kk": "Ішкі жағымен пинг-понг",
+        "ru": "Пинг-понг внутренней стороной",
+        "en": "Inside Ping-Pong"
+      },
+      "goal": {
+        "kk": "Допты аяқтың ішкі жағымен бір аяқтан екінші аяққа жіберіп, екі аяғыңның арасында ұста.",
+        "ru": "Передавай мяч с ноги на ногу внутренней стороной стопы и держи его между ступнями.",
+        "en": "Pass the ball from foot to foot with the inside of your foot and keep it between your feet."
+      },
+      "instructions": {
+        "kk": "1. Аяқтарыңды жамбасыңнан сәл кеңірек ашып тұр, доп олардың арасында тұрсын.\n2. Допты оң аяғыңның ішкі жағымен бүйірге түрт, ол сол аяғыңа қарай аз ғана домалап барсын.\n3. Оны сол аяғыңның ішкі жағымен жұмсақ тоқтатып, қайта оң аяғыңа түрт.\n4. Допты пинг-понг добындай оңға-солға жүргізе бер: жиырма рет түрт, аз демал, тағы жиырма рет түрт.",
+        "ru": "1. Встань, поставив ноги чуть шире таза, мяч лежит между ними.\n2. Толкни мяч внутренней стороной правой стопы в сторону, чтобы он недалеко прокатился к левой ноге.\n3. Мягко останови его внутренней стороной левой стопы и толкни обратно к правой.\n4. Пусти мяч туда-сюда, как шарик для пинг-понга: двадцать касаний, короткий отдых и ещё двадцать.",
+        "en": "1. Stand with your feet a little wider than your hips and the ball between them.\n2. Tap the ball sideways with the inside of your right foot so that it rolls a short way to your left foot.\n3. Stop it softly with the inside of your left foot and tap it back to your right.\n4. Keep the ball rolling to and fro like a ping-pong ball: twenty taps, a short rest, then twenty more."
+      },
+      "dose": {
+        "reps": 20,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допқа аяқтың ішкі жағымен емес, ұшымен тигізесің, сондықтан ол секіріп кетеді.",
+          "ru": "Ты бьёшь по мячу носком, а не внутренней стороной стопы, и он подпрыгивает.",
+          "en": "You hit the ball with your toes instead of the inside of your foot, so it jumps."
+        },
+        {
+          "kk": "Допты тым алысқа итересің, сондықтан ол екінші аяғыңның жанынан өтіп кетеді.",
+          "ru": "Ты толкаешь мяч слишком далеко, и он прокатывается мимо второй ноги.",
+          "en": "You push the ball too far, so it rolls past your other foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тізеңді сәл бүгіп, аяғыңды алшақ ұста: сонда өз аяғыңа сүрінбейсің.",
+          "ru": "Держи колени слегка согнутыми, а ступни на расстоянии, чтобы не запутаться в собственных ногах.",
+          "en": "Keep your knees a little bent and your feet apart so that you cannot trip over your own feet."
+        },
+        {
+          "kk": "Бастамас бұрын әр аяғыңның тобығын он рет баяу айналдырып, босаңсыт.",
+          "ru": "Перед началом расслабь голеностоп: по десять медленных кругов каждой стопой.",
+          "en": "Loosen your ankles with ten slow circles on each foot before you start."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-sole-pull-push"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-foundation-touches"
+      ],
+      "minutes": 4,
+      "level": 2,
+      "ageMin": 6,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-sole-pull-push",
+      "title": {
+        "kk": "Табанмен тарту және итеру",
+        "ru": "Подошва: подтяни и толкни",
+        "en": "Sole Pull-Push"
+      },
+      "goal": {
+        "kk": "Допты табаныңмен өзіңе тартып, аяқтың ішкі жағымен екінші аяғыңа итер: қозғалыс тегіс зигзаг болсын.",
+        "ru": "Подтяни мяч подошвой и толкни его внутренней стороной стопы ко второй ноге плавным зигзагом.",
+        "en": "Pull the ball back with your sole and push it to your other foot with the inside, in a smooth zigzag."
+      },
+      "instructions": {
+        "kk": "1. Тізеңді сәл бүгіп тұр, доп алдыңда жатсын.\n2. Оң аяғыңның табанын допқа қойып, оны өзіңе қарай тарт.\n3. Оны оң аяғыңның ішкі жағымен сол жаққа қиғаш итеріп, сол аяғыңның табанымен тоқтат.\n4. Оны сол табаныңмен тартып, оңға қиғаш итер. Әр аяқпен он реттен тарта беріп, жалғастыр.",
+        "ru": "1. Встань, слегка согнув колени, мяч лежит перед тобой.\n2. Поставь подошву правой ноги на мяч и подтяни его к себе.\n3. Толкни мяч по диагонали влево внутренней стороной правой стопы и останови его подошвой левой ноги.\n4. Подтяни его левой подошвой и толкни по диагонали вправо. Продолжай: по десять подтягиваний каждой ногой.",
+        "en": "1. Stand with your knees a little bent and the ball in front of you.\n2. Put the sole of your right foot on the ball and pull it back towards you.\n3. Push it diagonally to the left with the inside of your right foot, then stop it under the sole of your left foot.\n4. Pull it back with your left sole and push it diagonally to the right. Keep going, ten pulls for each foot."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Тым тік әрі қатып тұрасың, сондықтан доп сенен алыстап кетеді.",
+          "ru": "Ты стоишь слишком прямо и жёстко, и мяч от тебя убегает.",
+          "en": "You stand too upright and stiff, so the ball gets away from you."
+        },
+        {
+          "kk": "Допты қатты итересің, сондықтан ол жаттығу орнынан шығып кетеді.",
+          "ru": "Ты толкаешь мяч так сильно, что он выкатывается за пределы твоего места.",
+          "en": "You push the ball so hard that it leaves your space."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допты баяу тарт: тез жұлқысаң, тепе-теңдігіңді жоғалтып, артқа құлап қалуың мүмкін.",
+          "ru": "Подтягивай мяч медленно: резкий рывок может выбить тебя из равновесия, и ты упадёшь назад.",
+          "en": "Pull the ball back slowly, because a quick jerk can throw you off balance and make you fall backwards."
+        },
+        {
+          "kk": "Бірінші тартуға дейін бес рет баяу отырып-тұрып, аяқтарыңды сілкіп ал.",
+          "ru": "Перед первым подтягиванием сделай пять медленных приседаний и потряси ногами.",
+          "en": "Do five slow squats and shake out your legs before the first pull."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-inside-outside-rhythm"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-clock-taps",
+        "ball-mastery-inside-ping-pong"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 7,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-inside-outside-rhythm",
+      "title": {
+        "kk": "Ішкі және сыртқы жағымен ырғақ",
+        "ru": "Ритм: внутренняя и внешняя сторона",
+        "en": "Inside / Outside Rhythm"
+      },
+      "goal": {
+        "kk": "Бір аяқпен ішкі және сыртқы жанасуларды тегіс ырғаққа қосып, допты шағын орында ұста.",
+        "ru": "Соедини касания внутренней и внешней стороной одной ноги в ровный ритм и держи мяч на маленьком пятачке.",
+        "en": "Link inside and outside touches with one foot in an even rhythm and keep the ball in a small space."
+      },
+      "instructions": {
+        "kk": "1. Тізеңді сәл бүгіп тұр, доп оң аяғыңның алдында жатсын.\n2. Допты оң аяғыңның ішкі жағымен солға қарай аз ғана түрт.\n3. Оны сол аяқтың сыртқы жағымен оңға қарай қайта түрт. Осы ырғақты жиырма жанасуға дейін дауыстап санап жалғастыр.\n4. Сол аяққа ауысып, ішкі жағынан бастап қайтала.",
+        "ru": "1. Встань, слегка согнув колени, мяч лежит перед правой ногой.\n2. Толкни мяч внутренней стороной правой стопы немного влево.\n3. Верни его вправо внешней стороной той же стопы. Держи этот ритм двадцать касаний, считая вслух.\n4. Смени ногу на левую и повтори, начиная с внутренней стороны.",
+        "en": "1. Stand with your knees a little bent and the ball in front of your right foot.\n2. Tap the ball a short way to the left with the inside of your right foot.\n3. Tap it back to the right with the outside of the same foot. Keep this in-and-out rhythm going for twenty touches, counting out loud.\n4. Switch to your left foot and repeat, starting with the inside."
+      },
+      "dose": {
+        "reps": 20,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Жанасулардың күші әр түрлі, сондықтан доп ортадан ауытқып кетеді.",
+          "ru": "Касания получаются разной силы, поэтому мяч уходит от центра.",
+          "en": "Your touches are different sizes, so the ball drifts away from the middle."
+        },
+        {
+          "kk": "Аяқтарың қатып қалады да, бірінші жанасуың тым қатты болады.",
+          "ru": "Ноги жёсткие, а первое касание слишком сильное.",
+          "en": "Your legs are stiff and your first touch is too heavy."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Сыртқы жанасуды алғашында шағын әрі баяу жаса: аяқты бүйірге кең сермеу тобығыңды бұрып жіберуі мүмкін.",
+          "ru": "Сначала делай касание внешней стороной маленьким и медленным: широкий мах в сторону может подвернуть стопу.",
+          "en": "Keep the outside touch small and slow at first, because a big sideways swing can twist your ankle."
+        },
+        {
+          "kk": "Әр аяғыңның тобығын он рет жеңіл айналдырып жылын, ыстық болса аздап су іш.",
+          "ru": "Разомнись: по десять лёгких кругов каждой стопой, а если жарко, выпей немного воды.",
+          "en": "Warm up with ten easy ankle circles for each foot, and drink a little water if it is hot."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-figure-eight"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-sole-pull-push"
+      ],
+      "minutes": 6,
+      "level": 2,
+      "ageMin": 7,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-figure-eight",
+      "title": {
+        "kk": "Доппен сегіз сызу",
+        "ru": "Рисуем восьмёрку мячом",
+        "en": "Draw a Figure Eight"
+      },
+      "goal": {
+        "kk": "Допты екі аяғыңның айналасында сегіз тәрізді, әр аяқтың ішкі жағымен жүргізіп, жаныңда ұста.",
+        "ru": "Веди мяч вокруг обеих ног по восьмёрке внутренней стороной каждой стопы и держи его рядом.",
+        "en": "Guide the ball around both legs in an eight with the inside of each foot while keeping it close."
+      },
+      "instructions": {
+        "kk": "1. Аяқтарыңды жамбасыңнан сәл кеңірек ашып, тізеңді бүгіп тұр, доп аяқтарыңның арасында тұрсын.\n2. Допты оң аяғыңның ішкі жағымен сол аяғыңды айналдыра жүргіз.\n3. Енді оны сол аяғыңның ішкі жағымен оң аяғыңды айналдыра жүргіз: доп сегіз сызып шығады.\n4. Сегізді жалғастыр: бір бағытта он айналым, кейін кері бағытта он айналым.",
+        "ru": "1. Встань, поставив ноги чуть шире таза, колени согнуты, мяч лежит между ступнями.\n2. Веди мяч вокруг левой ноги внутренней стороной правой стопы.\n3. Теперь веди его вокруг правой ноги внутренней стороной левой стопы, чтобы мяч нарисовал восьмёрку.\n4. Продолжай: десять кругов в одну сторону, потом десять в другую.",
+        "en": "1. Stand with your feet a little wider than your hips, knees bent, and the ball between your feet.\n2. Push the ball around your left leg with the inside of your right foot.\n3. Now push it around your right leg with the inside of your left foot, so that the ball draws an eight.\n4. Keep the eight going, ten loops in one direction, then ten loops the other way."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Жанасуларың тым үлкен, сондықтан доп сегізден шығып кетеді.",
+          "ru": "Касания слишком большие, и мяч выходит за пределы восьмёрки.",
+          "en": "Your touches are too big, so the ball leaves the eight."
+        },
+        {
+          "kk": "Аяғыңды қозғаудың орнына, допты қуалап бүкіл денеңмен бұрыласың.",
+          "ru": "Ты крутишься всем телом за мячом, вместо того чтобы двигать ногами.",
+          "en": "You spin your whole body to chase the ball instead of moving your feet."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Баяу баста: тез түрткен доп тобығыңа тиіп, сені сүріндіруі мүмкін.",
+          "ru": "Начни медленно: быстро толкнутый мяч может ударить по щиколотке и заставить споткнуться.",
+          "en": "Start slowly, because a fast tap can send the ball into your ankle and trip you."
+        },
+        {
+          "kk": "Бастамас бұрын жамбасыңды босаңсыту үшін аяғыңды он рет баяу сермеп, бірнеше жеңіл созылу жаттығуын жаса.",
+          "ru": "Перед началом разомни бёдра: десять медленных махов ногой и несколько лёгких упражнений на растяжку.",
+          "en": "Loosen your hips with ten slow leg swings and a few gentle stretches before you start."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-turn-and-go"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-inside-outside-rhythm"
+      ],
+      "minutes": 5,
+      "level": 3,
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-turn-and-go",
+      "title": {
+        "kk": "Бұрыл да жүр",
+        "ru": "Разворот и вперёд",
+        "en": "Turn and Go"
+      },
+      "goal": {
+        "kk": "Допты жоғалтпай, табаныңды пайдаланып бұрыл да, қайта жолға шық.",
+        "ru": "Развернись с мячом, не потеряв его, помогая себе подошвой, и снова тронься с места.",
+        "en": "Turn around with the ball without losing it, using your sole, and set off again."
+      },
+      "instructions": {
+        "kk": "1. Ұзындығы бес үлкен қадамдай тегіс, бос жолақ тап та, оның бір ұшында допты алдыңа қойып тұр.\n2. Допты шағын жанасулармен екінші ұшына дейін жүргіз, ол бір қадамнан ары кетпесін.\n3. Табаныңды допқа қойып, оны жайлап өзіңе тарт та, онымен бірге бұрыл.\n4. Допты аяқтың ішкі жағымен итеріп жіберіп, бастаған жеріңе қарай жүргіз. Барлығы алты ұзындық жаса.",
+        "ru": "1. Найди ровную свободную полосу длиной примерно в пять больших шагов и встань на одном её конце, мяч перед тобой.\n2. Проведи мяч мелкими касаниями до другого конца, не дальше одного шага от себя.\n3. Поставь подошву на мяч, мягко подтяни его и развернись вместе с ним.\n4. Толкни мяч внутренней стороной стопы и проведи его обратно к месту старта. Всего шесть проходов.",
+        "en": "1. Find a flat, clear lane about five big steps long and stand at one end with the ball in front of you.\n2. Walk the ball to the other end with small touches, keeping it within one step of you.\n3. Put your sole on the ball, pull it back gently and turn around with it.\n4. Push the ball off with the inside of your foot and walk it back to where you began. Do six lengths."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Табаның допқа тимей тұрып денеңді бұрып жібересің, сондықтан доп артыңда домалап кетеді.",
+          "ru": "Ты разворачиваешь корпус, пока подошва ещё не на мяче, и мяч укатывается за спину.",
+          "en": "You swing your body around before your sole is on the ball, so the ball rolls off behind you."
+        },
+        {
+          "kk": "Тірек аяғыңды доптан алшақ қоясың да, бұрылғанда сүрініп кетесің.",
+          "ru": "Опорная нога ставится далеко от мяча, и ты спотыкаешься на развороте.",
+          "en": "Your standing foot lands far from the ball, so you stumble as you turn."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тас, шалшық немесе мұзы жоқ құрғақ, тегіс жерді таңда, әр бұрылыс алдында айналаңда ешкім жоқ екеніне көз жеткіз.",
+          "ru": "Выбери сухую ровную площадку без камней, луж и льда и перед каждым разворотом проверяй, что рядом никого нет.",
+          "en": "Pick a dry, flat surface with no stones, puddles or ice, and look around before each turn to check that nobody is close."
+        },
+        {
+          "kk": "Екі минут баяу жүріп жылын және алғашында баяу бұрыл.",
+          "ru": "Разомнись двухминутной медленной ходьбой и сначала разворачивайся медленно.",
+          "en": "Warm up with a slow walk of two minutes and turn slowly at first."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-slow-fast-stop"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-figure-eight"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "yard",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-slow-fast-stop",
+      "title": {
+        "kk": "Баяу, жылдам, тоқта",
+        "ru": "Медленно, быстро, стоп",
+        "en": "Slow, Fast, Stop"
+      },
+      "goal": {
+        "kk": "Доп жаныңда тұрғанда қалағаныңша жылдамдап, баяулап, оны табаныңмен тоқтат.",
+        "ru": "Ускоряйся и замедляйся по желанию, пока мяч остаётся рядом, и останавливай его подошвой.",
+        "en": "Speed up and slow down at will while the ball stays close, and stop it with your sole."
+      },
+      "instructions": {
+        "kk": "1. Ұзындығы сегіз үлкен қадамдай тегіс, бос жолақты таңда да, оның бір ұшында допты алдыңа қойып тұр.\n2. Бастапқы бөлігінде допты өте кішкентай, баяу жанасулармен алға жүргіз.\n3. Ортасында сәл үлкенірек жанасулармен жылдамда, бірақ доп бір қадамнан ары кетпесін.\n4. Жолақтың соңына жақындағанда баяула да, допты табаныңмен тоқтат. Бір сәт тұрып, оны кері жүргіз. Барлығы алты ұзындық жаса.",
+        "ru": "1. Выбери ровную пустую полосу длиной примерно в восемь больших шагов и встань на одном конце с мячом.\n2. Первую часть пути веди мяч крошечными медленными касаниями.\n3. В середине ускорься чуть большими касаниями, но мяч не должен уходить дальше шага.\n4. Ближе к концу полосы замедлись и останови мяч подошвой. Постой секунду и проведи его обратно. Всего шесть проходов.",
+        "en": "1. Choose a flat, empty lane about eight big steps long and stand at one end with the ball.\n2. Guide the ball forward for the first part with tiny, slow touches.\n3. Speed up with slightly bigger touches in the middle, but keep the ball within a step of you.\n4. Near the end of the lane, slow down and stop the ball with your sole. Stand still for a moment, then walk it back. Do six lengths."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Жылдамдай бастағаныңда доп сенен бірнеше қадам алға кетіп қалады.",
+          "ru": "Как только ты ускоряешься, мяч убегает на несколько шагов вперёд.",
+          "en": "The ball rolls several steps ahead of you as soon as you speed up."
+        },
+        {
+          "kk": "Допты аяғыңның ұшымен тоқтатуға тырысасың, сондықтан ол секіріп кетеді.",
+          "ru": "Ты останавливаешь мяч носком, и он отскакивает.",
+          "en": "You stop the ball with the tip of your toes, so it bounces away."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допты жолақ соңына жеткізбей ерте тоқтат, жол, қоршау және баспалдақтан бірнеше үлкен қадам алшақ жүр: сонда допты қуып қауіпті жерге барып қалмайсың.",
+          "ru": "Останавливай мяч заранее и держись на несколько больших шагов от дороги, забора и лестницы, чтобы не побежать за мячом в опасное место.",
+          "en": "Stop the ball well before the end of the lane and keep a few big steps clear of roads, fences and stairs, so you never chase the ball into danger."
+        },
+        {
+          "kk": "Екі минут жеңіл жүгіріп жылын, аяғың ауырлаған сайын баяулап отыр.",
+          "ru": "Разомнись двухминутной лёгкой пробежкой и замедляйся, когда ноги тяжелеют.",
+          "en": "Warm up with a gentle two-minute jog and slow down whenever your legs feel heavy."
+        }
+      ],
+      "progressionSlugs": [
+        "ball-mastery-look-up-touches"
+      ],
+      "regressionSlugs": [
+        "ball-mastery-turn-and-go"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "yard",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "ball-mastery-look-up-touches",
+      "title": {
+        "kk": "Басты көтеріп жанасу",
+        "ru": "Касания с поднятой головой",
+        "en": "Look-Up Touches"
+      },
+      "goal": {
+        "kk": "Көзіңді көтеріп басқа затқа қарағанда, жеңіл жанасулармен допты бақылауда ұста.",
+        "ru": "Держи мяч под контролем лёгкими касаниями, пока поднимаешь глаза и смотришь на что-то другое.",
+        "en": "Keep the ball under control with easy touches while you lift your eyes to look at something else."
+      },
+      "instructions": {
+        "kk": "1. Серіктесіңнен үш үлкен қадамдай қашықта тұр: ол қозғалмай саған қарап тұрады, доп алдыңда жатсын.\n2. Допты аяқтың ішкі жағымен бір аяғыңнан екінші аяғыңа орнында жайлап жібере бер.\n3. Әр үш-төрт жанасудан кейін көзіңді көтер: серіктесің бірден беске дейін саусақ көрсетеді, сен санды дауыстап айт.\n4. Қайта төмен қарап, жанасуларды жалғастыр. Он рет санағаннан кейін серіктесіңмен орын алмасыңдар.",
+        "ru": "1. Встань примерно в трёх больших шагах от партнёра: он стоит на месте лицом к тебе, мяч лежит перед тобой.\n2. Не сходя с места, аккуратно передавай мяч с ноги на ногу внутренней стороной стопы.\n3. Каждые три-четыре касания поднимай глаза: партнёр показывает от одного до пяти пальцев, а ты называешь число вслух.\n4. Снова посмотри вниз и продолжай. После десяти ответов поменяйтесь местами.",
+        "en": "1. Stand about three big steps from your partner, who stands still and faces you, with the ball in front of you.\n2. Tap the ball gently from one foot to the other in place with the inside of your feet.\n3. Every three or four touches, lift your eyes: your partner shows one to five fingers and you call the number out loud.\n4. Look down again and keep going. After ten calls, swap places."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Көзіңді көтерген кезде жанасуды тоқтатып тастайсың, оны жалғастырмайсың.",
+          "ru": "Когда поднимаешь глаза, ты прекращаешь касания вместо того, чтобы продолжать.",
+          "en": "You stop your touches to look up instead of keeping them going."
+        },
+        {
+          "kk": "Ұзақ жоғары қарап тұрғандықтан, доп домалап кетеді.",
+          "ru": "Ты смотришь вверх так долго, что мяч укатывается.",
+          "en": "You look up for so long that the ball rolls away."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Серіктесің қозғалмай, кем дегенде үш үлкен қадам қашықта тұрады, ешкім допты екінші адамға қарай теппейді.",
+          "ru": "Партнёр стоит неподвижно, не ближе трёх больших шагов, и никто никогда не бьёт мяч в сторону другого человека.",
+          "en": "Your partner stays still at least three big steps away and nobody ever kicks the ball at the other person."
+        },
+        {
+          "kk": "Бірге он рет жеңіл секіріп жылыныңдар, шаршап қалмай тұрып рөлдерді ауыстырыңдар.",
+          "ru": "Разомнитесь вместе: десять лёгких прыжков, и меняйтесь ролями, пока не устали.",
+          "en": "Warm up together with ten easy jumps, and swap roles before you get tired."
+        }
+      ],
+      "regressionSlugs": [
+        "ball-mastery-slow-fast-stop"
+      ],
+      "minutes": 7,
+      "level": 3,
+      "ageMin": 8,
+      "ageMax": 99,
+      "equipment": "ball",
+      "space": "yard",
+      "partner": true,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    }
+  ]
+}
