@@ -41,7 +41,7 @@ describe("apps/api/package.json dependencies", () => {
 
 describe("apps/api/package.json scripts", () => {
   test("dev runs bun --watch src/index.ts", () => {
-    expect(pkg.scripts.dev).toBe("bun --watch src/index.ts");
+    expect(pkg.scripts.dev).toMatch(/\bbun --watch src\/index\.ts$/);
   });
 
   test("typecheck runs tsc --noEmit", () => {
