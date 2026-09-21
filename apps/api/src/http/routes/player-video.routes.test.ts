@@ -241,7 +241,7 @@ async function readyPlayer(over: Partial<PlayerProfile> = {}): Promise<Player> {
 let frameSeq = 0;
 
 /** A minimal JPEG: SOI, APP0, a SOF0 that declares width x height, ASCII filler carrying a unique tag, EOI. */
-function jpegBytes(width: number, height: number, size = 4096, tag = `FRAMETAG${(frameSeq += 1)}`): Uint8Array {
+function jpegBytes(width: number, height: number, size = 4096, tag = `FRAMETAG${(frameSeq += 1)}`): Uint8Array<ArrayBuffer> {
   const head = [
     0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
     0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 0xff, width >> 8, width & 0xff, 0x03, 0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01,
@@ -256,7 +256,7 @@ function jpegBytes(width: number, height: number, size = 4096, tag = `FRAMETAG${
 }
 
 interface Frame {
-  bytes: Uint8Array;
+  bytes: Uint8Array<ArrayBuffer>;
   width: number;
   height: number;
   base64: string;
@@ -377,7 +377,7 @@ function expectNoImageBytes(sent: Frame[]): void {
 }
 
 /** Everything the process printed while `run` ran. */
-async function captureOutput<T>(run: () => Promise<T>): Promise<{ result: T; output: string }> {
+async function captureOutput<T>(run: () => T | Promise<T>): Promise<{ result: T; output: string }> {
   const lines: string[] = [];
   const spies = (["log", "info", "warn", "error", "debug"] as const).map((method) =>
     spyOn(console, method).mockImplementation((...args: unknown[]) => {
