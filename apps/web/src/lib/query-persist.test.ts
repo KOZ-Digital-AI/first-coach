@@ -63,6 +63,9 @@ async function until(cond: () => boolean) {
   if (!cond()) throw new Error('condition not met');
 }
 
+/** The cached value of a key, typed as unknown (getQueryData would infer `undefined` for an untyped key). */
+const read = (qc: QueryClient, key: readonly unknown[]): unknown => qc.getQueryData(key);
+
 const stored = (store: FakeIdb, playerId: string) => store.data.get(queryCacheKey(playerId)) as Stored | undefined;
 const storedKeys = (store: FakeIdb, playerId: string) => (stored(store, playerId)?.clientState.queries ?? []).map((q) => q.queryKey);
 
@@ -83,7 +86,7 @@ describe('persisted query cache: allow-list', () => {
     await until(() => storedKeys(store, 'p1').length === ALLOWED.length);
 
     const second = await attach(store, 'p1');
-    for (const [key, data] of ALLOWED) expect(second.getQueryData(key)).toEqual(data);
+    for (const [key, data] of ALLOWED) expect(read(second, key)).toEqual(data);
   });
 
   test('the allow-list is exposed as prefixes covering exactly those six areas', () => {
@@ -111,9 +114,9 @@ describe('persisted query cache: allow-list', () => {
 
     expect(storedKeys(store, 'p1')).toEqual([['today']]);
     const second = await attach(store, 'p1');
-    expect(second.getQueryData(['admin', 'users'])).toBeUndefined();
-    expect(second.getQueryData(['onboarding', 'draft'])).toBeUndefined();
-    expect(second.getQueryData(['today'])).toEqual({ id: 's1' });
+    expect(read(second, ['admin', 'users'])).toBeUndefined();
+    expect(read(second, ['onboarding', 'draft'])).toBeUndefined();
+    expect(read(second, ['today'])).toEqual({ id: 's1' });
   });
 
   test('queries that are still loading or failed are not saved, only successful ones', async () => {
@@ -142,8 +145,8 @@ describe('persisted query cache: allow-list', () => {
     store.data.set(queryCacheKey('p1'), blob);
 
     const reader = await attach(store, 'p1');
-    expect(reader.getQueryData(['today'])).toEqual({ id: 's1' });
-    expect(reader.getQueryData(['admin', 'users'])).toBeUndefined();
+    expect(read(reader, ['today'])).toEqual({ id: 's1' });
+    expect(read(reader, ['admin', 'users'])).toBeUndefined();
   });
 });
 
@@ -153,7 +156,7 @@ describe('persisted query cache: mutations', () => {
     const first = await attach(store, 'p1');
     onlineManager.setOnline(false);
     cleanups.push(() => onlineManager.setOnline(true));
-    void new MutationObserver(first, { mutationKey: ['session-events'], mutationFn: async () => 'sent' }).mutate({ n: 1 });
+    void new MutationObserver(first, { mutationKey: ['session-events'], mutationFn: async () => 'sent' }).mutate();
     expect(first.getMutationCache().getAll().some((m) => m.state.isPaused)).toBe(true);
     first.setQueryData(['today'], { id: 's1' });
     await until(() => storedKeys(store, 'p1').length > 0);
@@ -167,7 +170,7 @@ describe('persisted query cache: mutations', () => {
     const first = await attach(store, 'p1');
     onlineManager.setOnline(false);
     cleanups.push(() => onlineManager.setOnline(true));
-    void new MutationObserver(first, { mutationKey: ['session-events'], mutationFn: async () => 'sent' }).mutate({ n: 1 });
+    void new MutationObserver(first, { mutationKey: ['session-events'], mutationFn: async () => 'sent' }).mutate();
     first.setQueryData(['today'], { id: 's1' });
     await until(() => storedKeys(store, 'p1').length > 0);
 
@@ -185,7 +188,7 @@ describe('persisted query cache: buster and age', () => {
     expect(stored(store, 'p1')?.buster).toBe('build-1');
 
     const second = await attach(store, 'p1', 'build-2');
-    expect(second.getQueryData(['today'])).toBeUndefined();
+    expect(read(second, ['today'])).toBeUndefined();
     expect(store.data.has(queryCacheKey('p1'))).toBe(false);
   });
 
@@ -196,7 +199,7 @@ describe('persisted query cache: buster and age', () => {
     await until(() => storedKeys(store, 'p1').length === 1);
 
     const second = await attach(store, 'p1', 'build-7');
-    expect(second.getQueryData(['today'])).toEqual({ id: 's1' });
+    expect(read(second, ['today'])).toEqual({ id: 's1' });
   });
 
   test('without an explicit build version the buster is the resolved BUILD_VERSION', async () => {
@@ -232,11 +235,11 @@ describe('persisted query cache: buster and age', () => {
 
     now.mockReturnValue(T0 + PERSIST_MAX_AGE_MS - 1);
     const fresh = await attach(store, 'p1');
-    expect(fresh.getQueryData(['today'])).toEqual({ id: 's1' });
+    expect(read(fresh, ['today'])).toEqual({ id: 's1' });
 
     now.mockReturnValue(T0 + PERSIST_MAX_AGE_MS + 1);
     const stale = await attach(store, 'p1');
-    expect(stale.getQueryData(['today'])).toBeUndefined();
+    expect(read(stale, ['today'])).toBeUndefined();
     expect(store.data.has(queryCacheKey('p1'))).toBe(false);
   });
 });
@@ -249,11 +252,11 @@ describe('persisted query cache: player namespacing', () => {
     await until(() => storedKeys(store, 'player-a').length === 1);
 
     const b = await attach(store, 'player-b');
-    expect(b.getQueryData(['me'])).toBeUndefined();
+    expect(read(b, ['me'])).toBeUndefined();
     expect(b.getQueryCache().getAll()).toEqual([]);
 
     const aAgain = await attach(store, 'player-a');
-    expect(aAgain.getQueryData(['me'])).toEqual({ name: 'Aidar' });
+    expect(read(aAgain, ['me'])).toEqual({ name: 'Aidar' });
   });
 
   test('each player is saved under a key of their own', async () => {
@@ -267,7 +270,7 @@ describe('persisted query cache: player namespacing', () => {
     expect(queryCacheKey('player-a')).not.toBe(queryCacheKey('player-b'));
     expect(queryCacheKey('player-a')).toContain('player-a');
     const readerB = await attach(store, 'player-b');
-    expect(readerB.getQueryData(['me'])).toEqual({ name: 'Dana' });
+    expect(read(readerB, ['me'])).toEqual({ name: 'Dana' });
   });
 
   test('an empty player id is rejected instead of sharing one anonymous cache', () => {
@@ -298,6 +301,6 @@ describe('persisted query cache: unreadable or failing storage', () => {
     queryClient.setQueryData(['today'], { id: 's1' });
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(queryClient.getQueryData(['today'])).toEqual({ id: 's1' });
+    expect(read(queryClient, ['today'])).toEqual({ id: 's1' });
   });
 });
