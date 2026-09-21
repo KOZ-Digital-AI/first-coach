@@ -759,6 +759,20 @@ describe('recording with the camera', () => {
     expect(world.pose.detectOnVideo).not.toHaveBeenCalled();
   });
 
+  test('two taps on Record in the same tick open the camera once', async () => {
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toCapture(view);
+    const record = button('Record with the camera');
+    act(() => {
+      record.click();
+      record.click();
+    });
+    await screen.findByRole('status', { name: 'Get ready' });
+    expect(world.camera.open).toHaveBeenCalledTimes(1);
+    expect(view).toBeTruthy();
+  });
+
   test('a blocked camera says so in words, offers the file choice instead and lets the player try again', async () => {
     const world = makeWorld();
     let blocked = true;
@@ -1062,6 +1076,22 @@ describe('what is sent', () => {
     await view.user.click(send);
     expect(world.analyse).toHaveBeenCalledTimes(1);
     expect(hasRole('button', 'Cancel sending')).toBe(true);
+    gate.resolve(ANALYSIS);
+    await heading('Your feedback');
+  });
+
+  test('two taps in the same tick (before the screen can disable the button) still send once', async () => {
+    const gate = deferred<CreateVideoAnalysisResponse>();
+    const world = makeWorld({ analyse: mock(async () => gate.promise) });
+    const view = renderVideo(world);
+    await toReview(view);
+    const send = button('Send for analysis');
+    act(() => {
+      send.click();
+      send.click();
+    });
+    await screen.findByRole('status', { name: 'Sending and waiting for feedback' });
+    expect(world.analyse).toHaveBeenCalledTimes(1);
     gate.resolve(ANALYSIS);
     await heading('Your feedback');
   });
