@@ -1,0 +1,689 @@
+{
+  "sport": "football",
+  "track": "passing-first-touch",
+  "drills": [
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-ready-shape",
+      "title": {
+        "kk": "Допсыз дайын тұру қалпы",
+        "ru": "Готовая стойка без мяча",
+        "en": "Ready shape without a ball"
+      },
+      "goal": {
+        "kk": "Допты қабылдауды жеңілдететін дене қалпын үйрен: бүйірімен тұр, тізең жұмсақ, көзің алда.",
+        "ru": "Освой положение тела, с которым легко принять пас: боком, колени мягкие, взгляд поднят.",
+        "en": "Learn the body position that makes receiving a pass easy: side-on, soft knees, eyes up."
+      },
+      "instructions": {
+        "kk": "1. Бос 3 × 3 метрлік алаңда тұр. Аяқтарыңды иық еніндей ашып, тізеңді сәл бүк.\n2. Бүйірімен сәл бұрыл, сонда алдыңдағы бүкіл алаңды көресің; көзіңді жоғары ұста.\n3. Допты сол жағыңнан домалап келе жатыр деп елестет. Сол аяғыңды сәл көтеріп, ішкі жағын допқа қарат да, аяғыңды берік ұста.\n4. Допты жұмсақ тоқтатқандай аяғыңды сәл кейін тарт, содан кейін аяғыңды жерге қой.\n5. Дәл осылай оң жақтан, кейін алдыңнан келген допты елестет. Әр допты күтерде кішкентай тез қадам жаса.",
+        "ru": "1. Встань в свободном месте 3 на 3 метра. Поставь ноги на ширину плеч и слегка согни колени.\n2. Чуть повернись боком, чтобы видеть всё место перед собой, и держи взгляд поднятым.\n3. Представь, что мяч катится к тебе слева. Слегка подними левую ногу, направь внутреннюю сторону стопы на мяч и держи стопу твёрдой.\n4. Немного отведи ногу назад, как будто мягко останавливаешь мяч, и поставь её на землю.\n5. Так же представь мяч справа, потом спереди. Перед каждым мячом сделай маленький быстрый шаг.",
+        "en": "1. Stand in a free 3 by 3 metre space. Put your feet shoulder-width apart and bend your knees a little.\n2. Turn a little to the side so you can see the whole space in front of you, and keep your eyes up.\n3. Imagine a ball rolling to you from the left. Lift your left foot slightly, point the inside of it at the ball and hold it firm.\n4. Pull the foot back a little, as if to stop the ball softly, then put it down.\n5. Do the same for a ball from the right, then from the front. Take a small quick step before each one."
+      },
+      "dose": {
+        "reps": 6,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Аяқтарың түзу, денең қатып тұр.",
+          "ru": "Ты стоишь прямо, с прямыми ногами.",
+          "en": "You stand tall and stiff with straight legs."
+        },
+        {
+          "kk": "Бос орынға емес, аяғыңа қарайсың.",
+          "ru": "Ты смотришь на свои ноги, а не на свободное место.",
+          "en": "You look at your feet instead of at the space."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Алаңдағы ойыншықтар мен орындықтарды алып таста, өткір бұрыштардан аулақ бол, қадамыңды кішкентай әрі баяу жаса.",
+          "ru": "Убери из места игрушки и стулья, держись подальше от острых углов и делай маленькие медленные шаги.",
+          "en": "Clear the space of toys, chairs and sharp corners, and keep your steps small and slow."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-foot-to-foot"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "nothing",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-foot-to-foot",
+      "title": {
+        "kk": "Аяқтан аяққа домалату",
+        "ru": "Мяч от ноги к ноге",
+        "en": "Foot-to-foot roll"
+      },
+      "goal": {
+        "kk": "Допты аяқтың ішкі жағымен берік итеріп, бір аяғыңнан екіншісіне домалат да, басқарып тоқтат.",
+        "ru": "Катай мяч от одной ноги к другой твёрдым толчком внутренней стороной стопы и останавливай его под контролем.",
+        "en": "Roll the ball from one foot to the other with a firm inside-foot push and stop it under control."
+      },
+      "instructions": {
+        "kk": "1. Аяқтарыңды сәл ашып тұр, доп оң аяғыңның қасында тұрсын.\n2. Допты оң аяғыңның ішкі жағымен сол аяғыңа қарай, жермен, шамамен бір қадамдай жерге итер.\n3. Допты сол аяғыңның ішкі жағымен тоқтат, доп жаныңда қалсын.\n4. Енді допты дәл солай оң аяғыңа қайта итеріп, тоқтат.\n5. Допты баяу, бір жақтан екінші жаққа домалата бер және әр таза тоқтатуды сана.",
+        "ru": "1. Встань, слегка расставив ноги, мяч лежит у правой ноги.\n2. Толкни мяч внутренней стороной правой стопы к левой ноге, по земле, примерно на один шаг.\n3. Останови мяч внутренней стороной левой стопы, чтобы он остался рядом с тобой.\n4. Теперь так же толкни его обратно к правой ноге и останови.\n5. Продолжай катать мяч из стороны в сторону, не спеша, и считай каждую чистую остановку.",
+        "en": "1. Stand with your feet a little apart and the ball beside your right foot.\n2. Push the ball to your left foot with the inside of your right foot, along the ground for about one step.\n3. Stop the ball with the inside of your left foot, so that it stays beside you.\n4. Now push it back to your right foot the same way and stop it.\n5. Keep rolling it from side to side, slowly, and count every clean stop."
+      },
+      "dose": {
+        "durationSec": 45,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Допты тым қатты итересің, сондықтан ол аяғың жетпейтін жерге кетеді.",
+          "ru": "Ты толкаешь мяч слишком сильно, и он уходит далеко.",
+          "en": "You push the ball too hard, so it rolls out of reach."
+        },
+        {
+          "kk": "Допты аяқтың ішкі жағымен емес, аяқтың ұшымен тоқтатасың.",
+          "ru": "Ты останавливаешь мяч носком, а не плоской внутренней стороной стопы.",
+          "en": "You stop the ball with your toe instead of the flat inside of your foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тегіс, бос еденде, тайғанамайтын аяқкиіммен ойна және доп жиһазға жеткенше тоқтат.",
+          "ru": "Играй на ровном свободном полу в обуви, которая не скользит, и останавливай мяч раньше, чем он дойдёт до мебели.",
+          "en": "Play on a flat, clear floor in shoes that grip, and stop the ball before it reaches furniture."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-roll-and-stop"
+      ],
+      "regressionSlugs": [
+        "passing-ready-shape"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-roll-and-stop",
+      "title": {
+        "kk": "Домалат та тоқтат",
+        "ru": "Прокати и останови",
+        "en": "Roll and stop"
+      },
+      "goal": {
+        "kk": "Домалап келе жатқан допты қабылдауды жаттықтыр: доптың жолына тұрып, оны аяқтың ішкі жағымен тоқтат.",
+        "ru": "Потренируй приём катящегося мяча: встань на его пути и останови его внутренней стороной стопы.",
+        "en": "Practise receiving a rolling ball: get in its path and stop it with the inside of your foot."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның шетінде тұр, доп қолыңда.\n2. Еңкейіп, допты еденмен екі қадамдай алға жайлап домалат, ол өзі баяулап қалсын.\n3. Допқа қарай жүріп, денеңді доптың жолына қой да, аяғыңның ішкі жағын допқа қарай көтер.\n4. Допты аяқтың ішкі жағымен тоқтатып, бір сәт қозғалтпай ұста.\n5. Допты қолыңа ал, бұрылып, қарсы шетке қарай қайтала.",
+        "ru": "1. Встань у края места 3 на 3 метра, мяч держи в руках.\n2. Наклонись и мягко прокати мяч по полу шага на два вперёд, пусть он сам замедлится.\n3. Подойди к мячу и встань так, чтобы тело было на его пути, и подними внутреннюю сторону стопы навстречу мячу.\n4. Останови мяч внутренней стороной стопы и на секунду удержи его на месте.\n5. Возьми мяч в руки, развернись и повтори в другую сторону.",
+        "en": "1. Stand at one edge of your 3 by 3 metre space with the ball in your hands.\n2. Bend down and roll the ball gently along the floor about two steps ahead, so that it slows down by itself.\n3. Walk to the ball and get your body in its path, then lift the inside of your foot towards it.\n4. Stop the ball with the inside of your foot and hold it still for a moment.\n5. Pick the ball up, turn around and repeat towards the other edge."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допты тым қатты домалатасың, сондықтан оны қуып жете алмайсың.",
+          "ru": "Ты прокатываешь мяч слишком сильно и не можешь его догнать.",
+          "en": "You roll the ball too hard and cannot catch up with it."
+        },
+        {
+          "kk": "Аяғыңды алыс созып күтесің де, доп жанынан сырғып өтіп кетеді.",
+          "ru": "Ты ждёшь мяч с ногой, вытянутой далеко вперёд, и он проскакивает мимо.",
+          "en": "You wait with your foot far out in front and the ball slips past."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допты жайлап домалат, жолында ешкім жоқ екенін тексер және допты баспалдаққа қарай жіберме.",
+          "ru": "Катай мяч мягко, проверь, что на его пути никого нет, и не пускай его в сторону лестницы.",
+          "en": "Roll the ball gently, check that no one is in its way, and never send it towards stairs."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-wall-inside-foot",
+        "passing-pass-walk-stop"
+      ],
+      "regressionSlugs": [
+        "passing-foot-to-foot"
+      ],
+      "minutes": 4,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-wall-inside-foot",
+      "title": {
+        "kk": "Қабырғаға пас, 60 секунд",
+        "ru": "60 секунд пасов в стену",
+        "en": "Wall pass, 60 seconds"
+      },
+      "goal": {
+        "kk": "Допты қабырғаға аяқтың ішкі жағымен жібер, қайтқан допты тоқтат та, 60 секундта таза қайтқандарын сана.",
+        "ru": "Отдавай мяч в стену внутренней стороной стопы, останавливай отскок и считай чистые возвраты за 60 секунд.",
+        "en": "Pass the ball to a wall with the inside of your foot, stop the rebound, and count your clean returns in 60 seconds."
+      },
+      "instructions": {
+        "kk": "1. Терезесі жоқ тегіс, берік қабырға тауып, одан үш қадам жерде тұр. Жұмсақ доп ал.\n2. Допты аяқтың ішкі жағымен берік, бірақ жайлап итеріп, қабырғаға жермен жібер.\n3. Доп қайтып келсін де, оны аяқтың ішкі жағымен тоқтат: ол бір қадамның ішінде қалсын.\n4. Бірден қайта пас бер. 60 секунд бойы жалғастырып, доп таза тоқтаған әр қайтуды сана.\n5. Демал да, өз нәтижеңнен асып түсуге тырыс. Үш айналым жаса.",
+        "ru": "1. Найди ровную прочную стену без окон и встань в трёх шагах от неё. Возьми мягкий мяч.\n2. Отдай мяч в стену по земле внутренней стороной стопы, твёрдым, но мягким толчком.\n3. Дай мячу вернуться и останови его внутренней стороной стопы так, чтобы он остался в пределах шага.\n4. Сразу отдай следующий пас. Продолжай 60 секунд и считай каждый чистый возврат, когда мяч остановлен чисто.\n5. Отдохни и попробуй побить свой результат. Сделай три раунда.",
+        "en": "1. Find a flat, solid wall with no windows and stand three steps away from it. Use a soft ball.\n2. Pass the ball along the ground to the wall with the inside of your foot, using a firm but gentle push.\n3. Let the ball come back, then stop it with the inside of your foot so it stays within one step of you.\n4. Pass again straight away. Keep going for 60 seconds and count every clean return, where you stopped the ball cleanly.\n5. Rest, then try to beat your own number. Do three rounds."
+      },
+      "dose": {
+        "durationSec": 60,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Қабырғаға тіке қарап, екі аяғыңмен тегіс тұрасың, сондықтан аяғыңды бұра алмайсың.",
+          "ru": "Ты стоишь лицом к стене на двух ровных ногах и не можешь повернуть стопу.",
+          "en": "You stand square to the wall with both feet flat, so you cannot turn your foot."
+        },
+        {
+          "kk": "Допты тым қатты жібересің, сондықтан ол тоқтата алмайтындай тез қайтады.",
+          "ru": "Ты бьёшь слишком сильно, и мяч возвращается так быстро, что его не остановить.",
+          "en": "You pass so hard that the ball comes back too fast to stop."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Артында терезе, есік немесе адам жоқ қабырғаны таңда, жұмсақ доп қолдан және алдымен бір минут жеңіл жүгіріп, денеңді қыздыр.",
+          "ru": "Выбери стену без окон, дверей и людей за ней, играй мягким мячом и сначала разомнись минутой лёгкого бега.",
+          "en": "Choose a wall with no windows, doors or people behind it, use a soft ball, and warm up first with a minute of easy jogging."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-wall-alternate-feet",
+        "passing-wall-first-touch-gate"
+      ],
+      "regressionSlugs": [
+        "passing-roll-and-stop"
+      ],
+      "minutes": 5,
+      "level": 1,
+      "ageMin": 7,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-pass-walk-stop",
+      "title": {
+        "kk": "Пас бер, жүр, тоқтат",
+        "ru": "Пас, шаг, остановка",
+        "en": "Pass, walk and stop"
+      },
+      "goal": {
+        "kk": "Допты алдыңа сәл жерге жібер, оған жүріп барып тоқтат, содан кейін екінші аяқпен қайта пас бер.",
+        "ru": "Отдай мяч чуть вперёд, подойди к нему, останови его и отдай следующий пас другой ногой.",
+        "en": "Pass the ball a little way ahead, walk to meet it and stop it, then pass with the other foot."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның ішінде үш қадамдай ұзын сызықтың басында тұр, доп оң аяғыңның жанында.\n2. Оң аяғыңның ішкі жағымен допты алдыңа бір қадамдай жермен жібер. Жайлап жібер.\n3. Доптың соңынан жүр. Ол жаныңа жеткенде, сол аяғыңның ішкі жағымен тоқтат.\n4. Енді сол аяғыңның ішкі жағымен допты алдыңа бір қадам жіберіп, оң аяғыңмен тоқтат.\n5. Сызықтың соңына жеткенше аяқтарыңды кезектестіре бер, содан кейін бұрылып, кері қайт.",
+        "ru": "1. Встань в начале линии длиной примерно в три шага в своём месте 3 на 3 метра, мяч у правой ноги.\n2. Внутренней стороной правой стопы отдай мяч по земле на шаг вперёд. Делай это мягко.\n3. Иди за мячом. Когда он подойдёт к тебе, останови его внутренней стороной левой стопы.\n4. Теперь внутренней стороной левой стопы отдай мяч на шаг вперёд и останови его правой ногой.\n5. Меняй ноги, пока не дойдёшь до конца линии, потом развернись и вернись обратно.",
+        "en": "1. Stand at the start of a line about three steps long in your 3 by 3 metre space, with the ball at your right foot.\n2. Pass the ball along the ground about one step ahead with the inside of your right foot. Keep it gentle.\n3. Walk after it. When it reaches you, stop it with the inside of your left foot.\n4. Now pass it one step ahead with the inside of your left foot, and stop it with your right foot.\n5. Keep changing feet until you reach the end of the line, then turn around and come back."
+      },
+      "dose": {
+        "reps": 8,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Допты тым алысқа жіберіп, оның соңынан жүгіресің.",
+          "ru": "Ты отдаёшь мяч слишком далеко и бежишь за ним.",
+          "en": "You pass the ball too far ahead and have to run after it."
+        },
+        {
+          "kk": "Аяқтарыңды кезектестірмей, әрдайым бір аяқпен ойнайсың.",
+          "ru": "Ты всё время играешь одной ногой, а не меняешь ноги.",
+          "en": "You always use the same foot instead of changing feet."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жүрісіңді баяу ұста, әр пастың алдында жоғары қара және допты тоқтатқан кезде ғана бұрыл.",
+          "ru": "Иди не спеша, перед каждым пасом поднимай взгляд и разворачивайся только тогда, когда мяч стоит.",
+          "en": "Keep the walk slow, look up before each pass, and turn around only when the ball is still."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-roll-receive-redirect"
+      ],
+      "regressionSlugs": [
+        "passing-roll-and-stop"
+      ],
+      "minutes": 4,
+      "level": 2,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-roll-receive-redirect",
+      "title": {
+        "kk": "Домалат, қабылда, бағытта",
+        "ru": "Прокати, прими, направь",
+        "en": "Roll, receive, redirect"
+      },
+      "goal": {
+        "kk": "Домалап келе жатқан допты қабылдап, алғашқы жанасуыңмен оны бүйірге, бос орынға жібер.",
+        "ru": "Прими катящийся мяч и первым касанием отправь его в сторону, в свободное место.",
+        "en": "Receive a rolling ball and use your first touch to send it to the side into free space."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның ортасында тұрып, допты қолыңмен өзіңнен екі қадамдай алға жайлап домалат.\n2. Допқа қарай жүріп, айналаңдағы бос орынды көру үшін бүйірімен тұр.\n3. Доп жетпей тұрып шеш: солға ма, оңға ма? Таңдаған жағыңды дауыстап айт.\n4. Допқа аяқтың ішкі жағымен тиіп, оны таңдаған жағыңа кішкентай қадамдай итер.\n5. Допқа барып, қолыңа ал да, қайтала. Әр жолы жақты ауыстыр.",
+        "ru": "1. Встань в центре места 3 на 3 метра и мягко прокати мяч рукой шага на два от себя.\n2. Иди к мячу и встань боком, чтобы видеть свободное место вокруг.\n3. Пока мяч не пришёл, реши: влево или вправо. Скажи сторону вслух.\n4. Коснись мяча внутренней стороной стопы и подтолкни его на небольшой шаг в выбранную сторону.\n5. Подойди к мячу, возьми его в руки и повтори. Каждый раз меняй сторону.",
+        "en": "1. Stand in the middle of your 3 by 3 metre space and roll the ball gently away from you with your hand, about two steps ahead.\n2. Walk to it and stand side-on so you can see the space around you.\n3. Before the ball arrives, decide: left or right. Say the side out loud.\n4. Touch the ball with the inside of your foot and push it a small step to the side you chose.\n5. Walk to the ball, pick it up and repeat. Change the side each time."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допқа тік төмен тиесің, сондықтан ол аяғыңның астында қалады.",
+          "ru": "Ты касаешься мяча прямо вниз, и он остаётся под тобой.",
+          "en": "You touch the ball straight down and it stays under you."
+        },
+        {
+          "kk": "Жағын тым кеш, доп аяғыңа тиіп кеткеннен кейін таңдайсың.",
+          "ru": "Ты выбираешь сторону слишком поздно, когда мяч уже коснулся ноги.",
+          "en": "You decide the side too late, after the ball has already touched your foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Итеруді кішкентай жаса, доп алаңнан шықпасын, тізең мен тобығыңды сақтау үшін денеңді баяу бұр.",
+          "ru": "Толкай мяч несильно, чтобы он не уходил из места, и поворачивай корпус медленно, чтобы беречь колени и голеностопы.",
+          "en": "Keep the push small so the ball stays inside your space, and turn your body slowly to protect your knees and ankles."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-two-touch-self"
+      ],
+      "regressionSlugs": [
+        "passing-pass-walk-stop"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-wall-first-touch-gate",
+      "title": {
+        "kk": "Алғашқы жанасумен қақпа",
+        "ru": "Первый приём в ворота",
+        "en": "First touch gate"
+      },
+      "goal": {
+        "kk": "Қабырғаға пас беріп, қайтқан допты алғашқы жанасуыңмен бүйірдегі кішкентай қақпаға өткіз.",
+        "ru": "Отдай пас в стену и первым касанием проведи отскочивший мяч через маленькие ворота сбоку.",
+        "en": "Pass to the wall, then use your first touch to guide the rebound through a small gate on the side."
+      },
+      "instructions": {
+        "kk": "1. Терезесі жоқ қабырға тап. Одан үш қадам жерде тұр, сол жағыңа екі аяқкиімді бір үлкен қадамдай қашықтықта қойып, қақпа жаса.\n2. Допты оң аяғыңның ішкі жағымен қабырғаға жайлап жібер.\n3. Доп қайтып келе жатқанда, денеңді сәл бұр: ол қақпаға ашық болсын.\n4. Алғашқы жанасуыңды аяқтың ішкі жағымен жасап, допты қақпаның ішінен өткіз.\n5. Допты жинап алып, қайта пас бер. Сегіз рет жібер, содан кейін қақпаны оң жаққа қойып, тағы сегіз рет жібер.",
+        "ru": "1. Найди стену без окон. Встань в трёх шагах от неё и поставь слева от себя два ботинка на расстоянии одного большого шага: это ворота.\n2. Мягко отдай мяч в стену внутренней стороной правой стопы.\n3. Когда мяч возвращается, чуть поверни корпус, чтобы он был открыт к воротам.\n4. Первым касанием внутренней стороной стопы проведи мяч через ворота.\n5. Забери мяч и отдай следующий пас. Сделай восемь пасов, потом переставь ворота вправо и сделай ещё восемь.",
+        "en": "1. Find a wall with no windows. Stand three steps from it and put two shoes on the ground to your left, one big step apart, to make a gate.\n2. Pass the ball gently to the wall with the inside of your right foot.\n3. As the ball comes back, turn a little so that your body is open to the gate.\n4. Take your first touch with the inside of your foot and guide the ball through the gate.\n5. Collect the ball and pass again. Do eight passes, then move the gate to your right side and do eight more."
+      },
+      "dose": {
+        "reps": 8,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Допты бағыттаудың орнына алдыңда қатып тоқтатасың.",
+          "ru": "Ты останавливаешь мяч перед собой, вместо того чтобы направить его.",
+          "en": "You stop the ball dead in front of you instead of guiding it."
+        },
+        {
+          "kk": "Денең қабырғаға қарап тұр, сондықтан доп бүйірге кете алмайды.",
+          "ru": "Корпус повёрнут к стене, поэтому мяч не может уйти в сторону.",
+          "en": "Your body faces the wall, so the ball cannot go to the side."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Терезесі жоқ қабырғада жұмсақ доппен ойна, сүрінбеу үшін аяқкиімдерді тұрған жеріңнен алыс қой және алдымен денеңді қыздыр.",
+          "ru": "Играй мягким мячом у стены без окон, ставь ботинки подальше от места, где стоишь, чтобы не споткнуться, и сначала разомнись.",
+          "en": "Use a soft ball on a wall without windows, put the shoes well away from your standing spot so you do not trip, and warm up first."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-wall-two-touch-tempo"
+      ],
+      "regressionSlugs": [
+        "passing-wall-inside-foot"
+      ],
+      "minutes": 7,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-wall-alternate-feet",
+      "title": {
+        "kk": "Екі аяқпен қабырғаға пас",
+        "ru": "Пасы в стену обеими ногами",
+        "en": "Wall pass with both feet"
+      },
+      "goal": {
+        "kk": "Қабырғаға оң аяқпен пас беріп, допты қабылда да, сол аяқпен пас бер: екі аяқ та жұмыс істесін.",
+        "ru": "Отдавай пас в стену правой ногой, принимай мяч и отдавай левой, чтобы работали обе ноги.",
+        "en": "Pass to the wall with the right foot, receive, and pass with the left foot, so both feet do the work."
+      },
+      "instructions": {
+        "kk": "1. Терезесі жоқ қабырғадан үш қадам жерде тұр, жұмсақ доп оң аяғыңның қасында.\n2. Оң аяғыңның ішкі жағымен қабырғаға пас бер.\n3. Қайтқан допты сол аяғыңның ішкі жағымен тоқтат.\n4. Сол аяғыңның ішкі жағымен қабырғаға пас беріп, допты оң аяғыңмен тоқтат.\n5. 60 секунд бойы әр пас сайын аяқтарыңды ауыстырып, таза пастарыңды сана. Демал да, үш айналым жаса.",
+        "ru": "1. Встань в трёх шагах от стены без окон, мягкий мяч лежит у правой ноги.\n2. Отдай пас в стену внутренней стороной правой стопы.\n3. Останови вернувшийся мяч внутренней стороной левой стопы.\n4. Отдай пас в стену внутренней стороной левой стопы, а мяч останови правой ногой.\n5. Меняй ноги при каждом пасе в течение 60 секунд и считай чистые пасы. Отдохни и сделай три раунда.",
+        "en": "1. Stand three steps from a wall with no windows, with a soft ball at your right foot.\n2. Pass to the wall with the inside of your right foot.\n3. Stop the returning ball with the inside of your left foot.\n4. Pass to the wall with the inside of your left foot, then stop the ball with your right foot.\n5. Keep changing feet on every pass for 60 seconds and count your clean passes. Rest, then do three rounds."
+      },
+      "dose": {
+        "durationSec": 60,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Әлсіз аяғыңмен ойнағанда допқа аяғыңның ұшымен тиесің.",
+          "ru": "Слабой ногой ты бьёшь по мячу носком.",
+          "en": "You hit the ball with your toe when you use your weaker foot."
+        },
+        {
+          "kk": "Бір аяқпен қатарынан екі рет ойнап, ырғақты жоғалтасың.",
+          "ru": "Ты дважды подряд играешь одной ногой и теряешь ритм.",
+          "en": "You use the same foot twice in a row and lose the rhythm."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жұмсақ доп пен терезесі жоқ қабырғаны қолдан, әлсіз аяғыңды аз ғана сермеп, бастамас бұрын тобығыңды қыздыр.",
+          "ru": "Играй мягким мячом у стены без окон, слабой ногой замахивайся совсем немного и перед началом разомни голеностопы.",
+          "en": "Use a soft ball and a wall with no windows, swing your weaker leg only a little, and warm up your ankles before you start."
+        }
+      ],
+      "progressionSlugs": [
+        "passing-wall-target"
+      ],
+      "regressionSlugs": [
+        "passing-wall-inside-foot"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-two-touch-self",
+      "title": {
+        "kk": "Екі жанасумен өзіңе пас",
+        "ru": "Два касания: пас самому себе",
+        "en": "Two-touch self-pass"
+      },
+      "goal": {
+        "kk": "Домалап келе жатқан допты бірінші жанасумен басқарып, екіншісімен әрі қарай жібер, ырғақты сақта.",
+        "ru": "Контролируй катящийся мяч первым касанием и отправляй вторым, сохраняя ровный ритм.",
+        "en": "Control a rolling ball with one touch and send it on with a second touch, keeping a steady rhythm."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның шетінде тұр. Допты қолыңмен жеңіл жаттығулардағыдан сәл жылдамырақ, еденмен екі қадамдай алға домалат.\n2. Допқа барып, алғашқы жанасуыңмен оны аяқтың ішкі жағымен жаныңда тоқтат.\n3. Екінші жанасуыңды екінші аяғыңмен жасап, допты жермен екі қадамдай бастаған жағыңа қарай жібер.\n4. Допқа тағы барып, бірінші жанасумен тоқтатып, екіншісімен жібер. Жанасуларды дауыстап сана: бір, екі.\n5. Қолыңды қайта қолданбай, 45 секунд жалғастыр. Демалып, үш айналым жаса.",
+        "ru": "1. Встань у края места 3 на 3 метра. Прокати мяч рукой по полу шага на два вперёд, чуть быстрее, чем в лёгких упражнениях.\n2. Подойди к мячу и первым касанием внутренней стороной стопы останови его рядом с собой.\n3. Вторым касанием другой ногой отдай мяч по земле шага на два обратно в ту сторону, откуда начал.\n4. Снова подойди к мячу, останови его первым касанием и отправь вторым. Считай касания вслух: раз, два.\n5. Продолжай 45 секунд, больше не берясь за мяч руками. Отдохни и сделай три раунда.",
+        "en": "1. Stand at one edge of your 3 by 3 metre space. Roll the ball with your hand along the floor about two steps ahead, a little faster than in the easier drills.\n2. Go to the ball and use your first touch to stop it beside you with the inside of your foot.\n3. Use your second touch, with your other foot, to pass it along the ground about two steps back towards where you started.\n4. Go to the ball again, stop it with the first touch and pass it away with the second. Count the touches out loud: one, two.\n5. Keep going for 45 seconds without using your hands again. Rest and do three rounds."
+      },
+      "dose": {
+        "durationSec": 45,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Үшінші жанасуды жасайсың, сондықтан ырғақ бұзылады.",
+          "ru": "Ты делаешь третье касание, и ритм ломается.",
+          "en": "You take a third touch, so the rhythm breaks."
+        },
+        {
+          "kk": "Алғашқы жанасуың қатты болып, доп алысқа секіріп кетеді.",
+          "ru": "Первое касание получается жёстким, и мяч отскакивает далеко.",
+          "en": "Your first touch is stiff and the ball jumps away from you."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Екінші жанасуды аласа әрі жайлап жаса, доп алаңнан шықпай тұрып тоқтат, оның соңынан жүгірме.",
+          "ru": "Делай второе касание низко и мягко, а мяч останавливай до того, как он выйдет из места, и не беги за ним.",
+          "en": "Keep the second touch low and gentle, and stop the ball before it leaves your space instead of running after it."
+        }
+      ],
+      "regressionSlugs": [
+        "passing-roll-receive-redirect"
+      ],
+      "minutes": 5,
+      "level": 3,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-wall-two-touch-tempo",
+      "title": {
+        "kk": "Екі жанасумен қарқын",
+        "ru": "Темп в два касания",
+        "en": "Two-touch tempo"
+      },
+      "goal": {
+        "kk": "Қайтқан допты бірінші жанасумен басқарып, екіншісімен пас бер, 45 секунд бойы ырғақты сақта.",
+        "ru": "Контролируй отскок первым касанием, отдавай пас вторым и держи ровный ритм 45 секунд.",
+        "en": "Control the rebound with one touch and pass with the second, and keep a steady rhythm for 45 seconds."
+      },
+      "instructions": {
+        "kk": "1. Терезесі жоқ қабырғадан төрт қадам жерде тұр, жұмсақ доп аяғыңның қасында.\n2. Аяқтың ішкі жағымен қабырғаға пас бер.\n3. Бірінші жанасу: қайтқан допты басқарып, оны пас беруге дайын етіп бүйірге жібер.\n4. Екінші жанасу: дереу қабырғаға қайта пас бер, сол аяқпен немесе екінші аяқпен.\n5. Жанасу, пас, жанасу, пас ырғағын 45 секунд сақта. Жақсы басқарған қайтулардың санын сана. Демал да, үш айналым жаса.",
+        "ru": "1. Встань в четырёх шагах от стены без окон, мягкий мяч у ног.\n2. Отдай пас в стену внутренней стороной стопы.\n3. Первое касание: контролируй отскок и сдвинь мяч в сторону, готовя пас.\n4. Второе касание: сразу отдай пас в стену снова, той же ногой или другой.\n5. Держи ритм касание, пас, касание, пас 45 секунд. Считай, сколько отскоков ты хорошо проконтролировал. Отдохни и сделай три раунда.",
+        "en": "1. Stand four steps from a wall with no windows, with a soft ball at your feet.\n2. Pass to the wall with the inside of your foot.\n3. First touch: control the rebound and move the ball to the side, ready to pass.\n4. Second touch: pass to the wall again straight away, with the same foot or the other one.\n5. Keep the rhythm of touch, pass, touch, pass for 45 seconds. Count how many rebounds you controlled well. Rest and do three rounds."
+      },
+      "dose": {
+        "durationSec": 45,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Қосымша жанасулар жасайсың, сондықтан ырғақ баяулайды.",
+          "ru": "Ты делаешь лишние касания, и ритм замедляется.",
+          "en": "You add extra touches, so the rhythm slows down."
+        },
+        {
+          "kk": "Допқа қарсы қадам жасаудың орнына оның өзіңе жетуін күтесің.",
+          "ru": "Ты ждёшь, пока мяч дойдёт до тебя, а не делаешь шаг навстречу.",
+          "en": "You wait for the ball to reach you instead of taking a step to meet it."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Пастарды аласа әрі берік жаса, қатты емес; терезесі жоқ қабырғада жұмсақ доппен ойна және алдымен аяқтарыңды қыздыр.",
+          "ru": "Отдавай пасы низко и уверенно, но не сильно, играй мягким мячом у стены без окон и сначала разомни ноги.",
+          "en": "Keep the passes low and firm, not hard, use a soft ball on a wall without windows, and warm up your legs first."
+        }
+      ],
+      "regressionSlugs": [
+        "passing-wall-first-touch-gate"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "passing-wall-target",
+      "title": {
+        "kk": "Қабырғадағы нысана",
+        "ru": "Мишень на стене",
+        "en": "Wall target"
+      },
+      "goal": {
+        "kk": "Пасыңды қабырғадағы нысанаға көздеп, оннан нешеуі тигенін сана.",
+        "ru": "Целься пасом в мишень на стене и считай, сколько из десяти попало.",
+        "en": "Aim your pass at a target on the wall and count how many of ten hit it."
+      },
+      "instructions": {
+        "kk": "1. Терезесі жоқ қабырға таңда да, оның төменгі жағынан доп көлеміндей нысана тап: бояудың дағы немесе плакат болады.\n2. Жұмсақ доппен төрт қадам жерде тұр. Алдымен нысанаға, кейін допқа, тағы нысанаға қара.\n3. Допты аяқтың ішкі жағымен жермен жіберіп, оның қайда тигенін бақыла.\n4. Қайтқан допты тоқтатып, қайта пас бер. Он пас жасап, тигендерін сана.\n5. Нәтижеңді жазып қой, демал да, одан асып түсуге тырыс. Үш айналым жаса, соңғысында әлсіз аяғыңмен көр.",
+        "ru": "1. Выбери стену без окон и найди на ней низко мишень размером с мяч: пятно краски или плакат.\n2. Встань в четырёх шагах с мягким мячом. Посмотри на мишень, потом на мяч, потом снова на мишень.\n3. Отдай пас по земле внутренней стороной стопы и посмотри, куда попал мяч.\n4. Останови вернувшийся мяч и отдай пас снова. Сделай десять пасов и посчитай попадания.\n5. Запиши результат, отдохни и попробуй его побить. Сделай три раунда, а в последнем попробуй слабую ногу.",
+        "en": "1. Choose a wall with no windows and find a target on it, low down and about the size of a ball, such as a painted patch or a poster.\n2. Stand four steps away with a soft ball. Look at the target, then at the ball, then at the target again.\n3. Pass along the ground with the inside of your foot and watch where the ball hits.\n4. Stop the returning ball and pass again. Make ten passes and count the hits.\n5. Write down your score, rest, and try to beat it. Do three rounds, and try your weaker foot in the last one."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Тек допқа қарап, нысанаға мүлде қарамайсың.",
+          "ru": "Ты смотришь только на мяч и ни разу не смотришь на мишень.",
+          "en": "You look only at the ball and never at the target."
+        },
+        {
+          "kk": "Аяғыңды қатты сермейсің, сондықтан доп биік ұшып, қателеседі.",
+          "ru": "Ты сильно замахиваешься, и мяч летит высоко и мимо.",
+          "en": "You swing your leg hard, so the ball flies high and misses."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Төмен көздеп, пасты жайлап ит: қатты доп қайтқанда бетіңе тиюі мүмкін. Жұмсақ доп пен терезесі жоқ қабырғаны қолдан, алдымен денеңді қыздыр.",
+          "ru": "Целься низко и отдавай пас мягким толчком: сильный мяч может отскочить в лицо. Играй мягким мячом у стены без окон и сначала разомнись.",
+          "en": "Aim low and pass with a gentle push, because a hard pass can rebound into your face. Use a soft ball, a wall with no windows, and warm up first."
+        }
+      ],
+      "regressionSlugs": [
+        "passing-wall-alternate-feet"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": true,
+      "slug": "passing-partner-pass-and-stop",
+      "title": {
+        "kk": "Досыңмен пас беріп тоқтату",
+        "ru": "Пас и остановка с другом",
+        "en": "Pass and stop with a friend"
+      },
+      "goal": {
+        "kk": "Досыңа жермен пас беріп, оның пасын аяқтың ішкі жағымен тоқтат; қатарынан он таза тоқтату жаса.",
+        "ru": "Отдавай другу пас по земле и останавливай его пас внутренней стороной стопы, десять чистых остановок подряд.",
+        "en": "Pass along the ground to a friend and stop their pass with the inside of your foot, ten clean stops in a row."
+      },
+      "instructions": {
+        "kk": "1. Тегіс жерде досыңнан төрт қадам жерде тұрып, бастау белгісін келісіп ал. Жұмсақ доп қолдан.\n2. Досың допты саған жермен жібереді.\n3. Допты аяқтың ішкі жағымен бір қадамның ішінде қалатындай тоқтат та, жоғары қара.\n4. Допты аяқтың ішкі жағымен досыңа қайта жібер. Досың да оны дәл солай тоқтатады.\n5. Екеуіңнің де әр таза тоқтатуыңды сана. Қатарынан он рет жетуге тырыс, содан кейін бір қадам артқа шегініп, қайта көр.",
+        "ru": "1. Встань в четырёх шагах от друга на ровной земле и договорись о сигнале начала. Возьми мягкий мяч.\n2. Друг отдаёт тебе пас по земле.\n3. Останови мяч внутренней стороной стопы так, чтобы он остался в пределах шага, и подними взгляд.\n4. Верни пас другу внутренней стороной стопы. Друг останавливает его так же.\n5. Считайте каждую чистую остановку у вас обоих. Постарайтесь набрать десять подряд, потом отойдите на шаг назад и попробуйте снова.",
+        "en": "1. Stand four steps from a friend on flat ground and agree on a start signal. Use a soft ball.\n2. Your friend passes the ball to you along the ground.\n3. Stop it with the inside of your foot so that it stays within one step of you, then look up.\n4. Pass it back to your friend with the inside of your foot. Your friend stops it the same way.\n5. Count every clean stop by both of you. Try to reach ten in a row, then take one step back and try again."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Досың дайын болмай, саған қарамай тұрғанда пас бересің.",
+          "ru": "Ты отдаёшь пас, когда друг ещё не готов и не смотрит на тебя.",
+          "en": "You pass before your friend is ready and looking at you."
+        },
+        {
+          "kk": "Допты қатты аяқпен тоқтатасың, сондықтан ол досыңа қарай секіріп кетеді.",
+          "ru": "Ты останавливаешь мяч жёсткой стопой, и он отскакивает к другу.",
+          "en": "You stop the ball with a stiff foot, so it bounces back towards your friend."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допты тек жермен, жайлап жібер; доп біреуге тисе, «тоқта» деп айтуды келісіп ал және жолдар мен қоршаулардан аулақ бол.",
+          "ru": "Отдавайте пас только по земле и мягко; договоритесь сказать «стоп», если мяч кого-то ударил, и держитесь подальше от дорог и заборов.",
+          "en": "Pass along the ground only, with a gentle push; agree to say stop if a ball hits anyone, and keep away from roads and fences."
+        }
+      ],
+      "regressionSlugs": [
+        "passing-wall-inside-foot"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 8,
+      "equipment": "ball",
+      "space": "yard"
+    }
+  ]
+}
