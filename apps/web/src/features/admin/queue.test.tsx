@@ -925,7 +925,7 @@ describe.each(['kk', 'ru'] as const)('%s', (locale) => {
   test('the review, the diff and the decision form are in that language too', async () => {
     const user = userEvent.setup();
     await renderLoaded(locale);
-    await user.click(screen.getAllByRole('button', { name: /“Wall passes”/ })[0]!);
+    await user.click(screen.getAllByRole('button', { name: /Wall passes/ })[0]!);
     await screen.findByRole('heading', { level: 1, name: 'Wall passes' });
     const page = text(screen.getByRole('main'));
     expect(CYRILLIC.test(page)).toBe(true);
