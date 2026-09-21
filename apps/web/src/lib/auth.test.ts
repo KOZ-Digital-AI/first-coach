@@ -413,9 +413,11 @@ describe('the real Better Auth client behind ensurePlayerSession', () => {
     expect(seen).toEqual([{ url: 'http://app.test/api/auth/get-session', method: 'GET' }]);
   });
 
-  test('has the admin plugin: the client-side role check knows the server roles', () => {
-    const client = createPlayerAuthClient({ baseURL: 'http://app.test', fetch: wire(() => null).fetch });
+  test('has the admin plugin: its client-side role check answers without a network call', () => {
+    const { fetch: stub, seen } = wire(() => null);
+    const client = createPlayerAuthClient({ baseURL: 'http://app.test', fetch: stub });
     expect(client.admin.checkRolePermission({ role: 'admin', permissions: { user: ['list'] } })).toBe(true);
+    expect(seen).toEqual([]);
   });
 });
 
