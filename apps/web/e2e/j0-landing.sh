@@ -15,7 +15,8 @@
 #   4. language      Қазақша -> Русский -> English: <html lang>, aria-pressed, navigation labels and hero copy change, the
 #                    stat numbers do not, and the choice (localStorage fc:lang) survives a reload
 #   5. START / CONTRIBUTE   START TRAINING loads /train (a real document request) and the app lands on the onboarding
-#                    wizard (/train/onboarding, a new visitor is not onboarded); CONTRIBUTE loads /contribute
+#                    wizard (/train/onboarding, a new visitor is not onboarded); CONTRIBUTE loads /contribute (a real document
+#                    request) and the anonymous visitor lands on /account/sign-in (the J5 contributor gate)
 #   6. unknown URL   the localized 404 page inside the shell, with links home and to training
 #   7. 360px         no horizontal scroll on / in kk, ru and en
 #
@@ -28,8 +29,11 @@
 #     request list with statuses.
 #   - "START TRAINING navigates to /train": the link is a hard navigation, so the document request for /train is what is
 #     asserted; the page then replaces itself with /train/onboarding (the API answers 404 "not onboarded" for a new visitor).
-#   - "CONTRIBUTE navigates to /contribute": only the URL and the document request are asserted. The /contribute route is
-#     built by a later slice; until then the SPA shows its 404 page there (printed as a NOTE, not asserted).
+#   - "CONTRIBUTE navigates to /contribute": the link is a hard navigation, so the document request for /contribute is what
+#     is asserted. Contributing needs a signed-in, non-anonymous account (journey J5, routes/contribute/index.tsx), so the
+#     SPA then replaces the URL with /account/sign-in?redirect=/contribute for the anonymous visitor this journey is. The
+#     landing pathname is asserted as /account/sign-in (location.pathname, so the query string is tolerated) and the
+#     redirect parameter as /contribute (the way back after sign-in).
 #   - Kazakh and Russian copy is judged structurally (script letters, differs from English, differs from each other), not by
 #     exact sentence: the Kazakh text is awaiting a native-speaker review and will change.
 #   - The browser is Playwright's chromium, whose default locale is en-US: a fresh visitor sees English first.
@@ -211,10 +215,11 @@ if [ "$BROWSER" = 1 ]; then
   pw goto "$STACK_URL/" >/dev/null || fail "return to /"
   wait_eval "$PATH_JS" / "back on the landing page"
   pw click 'main a[href="/contribute"]' >/dev/null || fail "CONTRIBUTE: click"
-  wait_eval "$PATH_JS" /contribute "CONTRIBUTE: the browser lands on /contribute"
+  wait_eval "$PATH_JS" /account/sign-in "CONTRIBUTE: an anonymous visitor lands on /account/sign-in (the J5 contributor gate)"
+  wait_eval 'new URLSearchParams(location.search).get("redirect")' /contribute "CONTRIBUTE: the sign-in page keeps ?redirect=/contribute (the way back after sign-in)"
   if doc_requests | grep -qxF 'GET /contribute'; then pass "CONTRIBUTE: the browser navigated to /contribute (GET /contribute)"
   else fail "CONTRIBUTE: the browser navigated to /contribute (GET /contribute)" "$(doc_requests | sed 's/^/    /')"; fi
-  echo "NOTE     /contribute currently renders: '$(pw_eval 'document.querySelector("h1")?.innerText ?? ""' 2>/dev/null)' (its route belongs to a later slice)"
+  echo "NOTE     the sign-in page for CONTRIBUTE renders: '$(pw_eval 'document.querySelector("h1")?.innerText ?? ""' 2>/dev/null)'"
 
   # --- 6. an unknown URL -------------------------------------------------------------------------
   pw goto "$STACK_URL/no-such-page-$RANDOM" >/dev/null || fail "open an unknown URL"
