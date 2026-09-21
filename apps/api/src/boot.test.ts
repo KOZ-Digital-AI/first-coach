@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import type { AppDeps } from "./app";
 import { DEFAULT_BOOT_DIR, runBoot, runBootHooks } from "./boot";
 import { openDatabase } from "./db/database";
+import { migrate } from "./db/migrate";
 import { PROBLEM_CONTENT_TYPE } from "./shared/primitives";
 
 // Temp hook modules cannot resolve bare specifiers from os.tmpdir(), so they
@@ -330,7 +331,11 @@ describe("runBootHooks", () => {
       // no src/boot yet
     }
 
-    const ran = await runBootHooks(deps());
+    // Migrations run before the hooks, exactly as runBoot orders them: a real hook (the seed
+    // loader) needs the tables.
+    const bootDeps = deps();
+    migrate(bootDeps.db);
+    const ran = await runBootHooks(bootDeps);
 
     for (const file of onDisk) expect(ran).toContain(file);
   });
