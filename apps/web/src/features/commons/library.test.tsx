@@ -248,6 +248,8 @@ async function renderLoaded(options: RenderOptions = {}) {
 const cardOf = (title: string): HTMLElement => screen.getByRole('heading', { level: 2, name: title }).closest('li') as HTMLElement;
 const titlesOnScreen = (): string[] => screen.queryAllByRole('heading', { level: 2 }).map((each) => each.textContent ?? '');
 const select = (label: string): HTMLSelectElement => screen.getByLabelText(label) as HTMLSelectElement;
+/** The router of this file's tests has no typed search (the route is mounted by hand), so read it as plain data. */
+const searchOf = (router: { state: { location: { search: unknown } } }): Record<string, unknown> => router.state.location.search as Record<string, unknown>;
 const optionsOf = (control: HTMLElement): string[] => within(control).getAllByRole('option').map((option) => option.textContent ?? '');
 
 // --- success: the header, the cards ----------------------------------------------------------------------------------
@@ -481,11 +483,11 @@ describe('changing a filter', () => {
   test('the filters and the search are kept in the URL, so a filtered view can be shared', async () => {
     const { user, router } = await renderLoaded();
     await user.selectOptions(select('Level'), 'Beginner');
-    await waitFor(() => expect(router.state.location.search).toEqual({ level: 'beginner' }));
+    await waitFor(() => expect(searchOf(router)).toEqual({ level: 'beginner' }));
     await user.selectOptions(select('Track'), 'Ball mastery');
-    await waitFor(() => expect(router.state.location.search).toEqual({ level: 'beginner', skill: 'ball-mastery' }));
+    await waitFor(() => expect(searchOf(router)).toEqual({ level: 'beginner', skill: 'ball-mastery' }));
     await user.type(screen.getByLabelText('Search drills'), 'ghost{Enter}');
-    await waitFor(() => expect(router.state.location.search).toEqual({ level: 'beginner', skill: 'ball-mastery', q: 'ghost' }));
+    await waitFor(() => expect(searchOf(router)).toEqual({ level: 'beginner', skill: 'ball-mastery', q: 'ghost' }));
     expect(router.state.location.pathname).toBe('/commons');
     expect(router.state.location.searchStr).toContain('level=beginner');
   });
@@ -545,6 +547,16 @@ describe('paging', () => {
     await user.click(screen.getByRole('button', { name: 'Show more drills' }));
     await waitFor(() => expect(titlesOnScreen()).toHaveLength(5));
     expect(screen.queryByRole('button', { name: 'Show more drills' })).toBeNull();
+  });
+
+  test('an answer without a total says how many are shown, not "of undefined"', async () => {
+    stubNetwork((url) => {
+      const { total: _total, ...rest } = serve(url);
+      return json(rest);
+    });
+    await renderLoaded();
+    expect(screen.getByText('Showing 5')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('undefined');
   });
 
   test('with no next page there is no "Show more" button', async () => {
@@ -650,7 +662,7 @@ describe('an empty result', () => {
     await screen.findByRole('heading', { level: 2, name: 'Ghost Ball' });
     const last = listCalls().at(-1)?.params;
     for (const key of ['skill', 'status', 'equipment', 'level', 'q']) expect(last?.has(key)).toBe(false);
-    expect(router.state.location.search).toEqual({});
+    expect(searchOf(router)).toEqual({});
     expect(select('Status').value).toBe('');
     expect((screen.getByLabelText('Search drills') as HTMLInputElement).value).toBe('');
   });
