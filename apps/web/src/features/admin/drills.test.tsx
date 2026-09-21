@@ -727,6 +727,13 @@ describe('unpublish: confirming', () => {
     expect(text(block)).toContain('Rights complaint from the photographer.');
   });
 
+  test('focus lands on that notice once the row is gone, so a keyboard user is not dropped at the top of the page', async () => {
+    const { user } = await renderLoaded();
+    await confirmUnpublish(user);
+    const notice = (await screen.findByText(/was unpublished/)).closest('[role="status"]') as HTMLElement;
+    await waitFor(() => expect(document.activeElement === notice).toBe(true));
+  });
+
   test('the list is asked for again (the server no longer lists the drill) and every cached commons page is marked stale', async () => {
     const { user, queryClient } = await renderLoaded();
     queryClient.setQueryData(['commons', 'detail', 'ghost-ball', 'en'], { placeholder: true });
