@@ -37,10 +37,11 @@ const FEATURES: PoseFeatures = {
   framesAnalysed: 347,
 };
 
-// Distinct, recognisable "JPEGs": bare base64 starting with the JPEG marker.
-const KEYFRAMES: Keyframe[] = ["AAAAfirstframe", "BBBBsecondframe", "CCCCthirdframe"].map((tail) => ({
+// Distinct "JPEGs": VALID bare base64 (a multiple of 4 characters) starting with the JPEG marker.
+// Mastra turns an image into a data: URL and reads it back, so malformed base64 would make it fail.
+const KEYFRAMES: Keyframe[] = ["AAAAAAAA", "BBBBBBBB", "CCCCCCCC"].map((tail) => ({
   mimeType: "image/jpeg" as const,
-  data: `/9j/${tail}AAAA`,
+  data: `/9j/${tail}`,
   width: 320,
   height: 240,
 }));
@@ -225,7 +226,8 @@ describe("buildVideoMessage / what the model receives", () => {
     const text = userParts(model)[0]?.text ?? "";
     expect(text).toContain("0.9");
     expect(text).toContain("120");
-    expect(text).not.toMatch(/cadence|balance|knee|trunk/i);
+    // only the measurements section: the fixture rubric itself mentions "knees"
+    expect(text.split("Rubric criteria")[0]).not.toMatch(/cadence|balance|knee|trunk/i);
   });
 
   test("the language of the notes is asked for as a plain fact", () => {
@@ -451,14 +453,19 @@ describe("privacy: keyframes are never persisted or logged", () => {
 });
 
 describe("isolation", () => {
-  test("a whole run never fetches", async () => {
-    let fetches = 0;
-    globalThis.fetch = (async () => {
-      fetches += 1;
+  test("a whole run never reaches the network", async () => {
+    // Mastra reads an image it was given back through fetch() as a data: URL, which is a local
+    // decode and not a request: those calls are let through, anything else is counted and refused.
+    const outside: string[] = [];
+    globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith("data:")) return realFetch(input, init);
+      outside.push(url);
       throw new Error("no network in tests");
     }) as unknown as typeof fetch;
-    await runVideoAnalysis(build(answeringJson(VALID_OUTPUT)), REQUEST);
-    expect(fetches).toBe(0);
+    const result = await runVideoAnalysis(build(answeringJson(VALID_OUTPUT)), REQUEST);
+    expect(result.ok).toBe(true);
+    expect(outside).toEqual([]);
   });
 
   test("the model prompt holds no environment or key", async () => {
