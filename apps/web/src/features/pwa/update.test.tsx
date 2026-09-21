@@ -98,11 +98,19 @@ describe('update prompt', () => {
     renderPrompt({ register: r.register });
     await act(() => sleep(0));
     await r.needRefresh();
-    await act(async () => {
-      fireEvent.click(updateButton());
-    });
-    expect(r.update).toHaveBeenCalledTimes(1);
-    expect(r.update).toHaveBeenCalledWith(true);
+    const reload = mock(() => {});
+    const original = window.location.reload;
+    Object.defineProperty(window.location, 'reload', { configurable: true, value: reload });
+    try {
+      await act(async () => {
+        fireEvent.click(updateButton());
+      });
+      expect(r.update).toHaveBeenCalledTimes(1);
+      expect(r.update).toHaveBeenCalledWith(true);
+      expect(reload).not.toHaveBeenCalled(); // updateServiceWorker(true) reloads once the new worker is in control, not the prompt
+    } finally {
+      Object.defineProperty(window.location, 'reload', { configurable: true, value: original });
+    }
   });
 
   test('a registration that resolves asynchronously (a lazily imported module) works the same', async () => {
@@ -257,6 +265,7 @@ describe('update prompt accessibility', () => {
     drillControl.focus();
     await act(() => sleep(0));
     await r.needRefresh();
+    await act(() => sleep(20)); // a late focus() (timer, effect) would have landed by now
     expect(document.activeElement).toBe(drillControl);
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(container.querySelector('.fixed, .absolute, .sticky, [aria-modal]')).toBeNull();
