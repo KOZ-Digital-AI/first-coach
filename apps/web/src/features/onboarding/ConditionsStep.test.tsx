@@ -14,7 +14,7 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { cleanup, render, screen, within } = await import('@testing-library/react');
+const { cleanup, fireEvent, render, screen, within } = await import('@testing-library/react');
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
@@ -330,6 +330,18 @@ describe('Continue is disabled until every answer is chosen from the payload', (
     const { onContinue } = setup({ value: {} });
     await userEvent.click(continueButton());
     expect(onContinue).not.toHaveBeenCalled();
+  });
+
+  test('a form submit that bypasses the disabled button (requestSubmit, autofill) still cannot continue while incomplete', () => {
+    const { onContinue } = setup({ value: { ...COMPLETE, space: undefined } });
+    fireEvent.submit(screen.getByRole('form', { name: tree('en', 'title') }));
+    expect(onContinue).not.toHaveBeenCalled();
+  });
+
+  test('a form submit with a complete draft calls onContinue once', () => {
+    const { onContinue } = setup({ value: COMPLETE });
+    fireEvent.submit(screen.getByRole('form', { name: tree('en', 'title') }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
   });
 
   test('clicking an enabled Continue calls onContinue once', async () => {
