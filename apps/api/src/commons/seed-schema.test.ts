@@ -441,14 +441,14 @@ describe("optional level thresholds on a test", () => {
     const sample = higherTest();
     const result = SeedTest.safeParse(sample);
     if (!result.success) throw new Error(JSON.stringify(result.error.issues));
-    expect(result.data).toEqual(sample);
+    expect<unknown>(result.data).toEqual(sample);
   });
 
   test("a lower-is-better test with falling boundaries passes and nothing is stripped", () => {
     const sample = lowerTest();
     const result = SeedTest.safeParse(sample);
     if (!result.success) throw new Error(JSON.stringify(result.error.issues));
-    expect(result.data).toEqual(sample);
+    expect<unknown>(result.data).toEqual(sample);
   });
 
   test("a test without thresholds stays valid", () => {
@@ -460,7 +460,7 @@ describe("optional level thresholds on a test", () => {
     const file = testsFile([higherTest(), lowerTest(), skillTest({ slug: "wall-passes-30s" })]);
     const result = SeedTestsFile.safeParse(file);
     if (!result.success) throw new Error(JSON.stringify(result.error.issues));
-    expect(result.data).toEqual(file);
+    expect<unknown>(result.data).toEqual(file);
   });
 
   test("the file-level path carries the tests index in front of thresholds.<band>", () => {
