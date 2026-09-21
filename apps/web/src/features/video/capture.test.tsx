@@ -12,7 +12,7 @@ import {
 import { dehydrate, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { createI18n, LOCALES } from '../../lib/i18n';
+import { createI18n, i18n as appI18n, LOCALES, toLocale } from '../../lib/i18n';
 import problemMessages from '../../lib/problem.messages';
 import { ApiProblem } from '../../lib/problem';
 import { PERSISTED_QUERY_PREFIXES, persistAppQueryClient, type PersistStore } from '../../lib/query-persist';
@@ -1044,7 +1044,9 @@ describe('what is sent', () => {
     const posts = callsTo('/api/player/video-analyses', 'POST');
     expect(posts).toHaveLength(1);
     expect(posts[0]?.headers.get('content-type')).toBe('application/json');
-    expect(posts[0]?.headers.get('accept-language')).toBe('en');
+    // The shared client sends the language of the APP's i18n instance (which is 'kk' when the file runs from the repo root,
+    // where happy-dom is registered after the app's i18n singleton was created), not of this test's own instance.
+    expect(posts[0]?.headers.get('accept-language')).toBe(toLocale(appI18n.language) ?? 'kk');
     expect(CreateVideoAnalysisRequest.safeParse(posts[0]?.body).success).toBe(true);
     // every request body of the whole flow is a JSON string (or none): never a Blob, File or FormData
     for (const call of calls) expect(call.body === undefined || typeof call.body === 'object').toBe(true);
