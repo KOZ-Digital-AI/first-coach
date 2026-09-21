@@ -22,16 +22,12 @@ export const POSE_MODEL_URL =
 export const POSE_MODEL_FILE = "pose_landmarker_lite.task";
 
 /**
- * Pinned SHA-256 (lowercase hex) of the model at POSE_MODEL_URL.
- *
- * UNCONFIRMED PLACEHOLDER (all zeros): no authoritative SHA-256 is published for this file (Google Cloud Storage lists only
- * CRC32C and MD5 for it), and it was not downloaded when this script was written. It MUST be confirmed at the first real
- * download: run
- *   curl -sSL <POSE_MODEL_URL> | sha256sum
- * (or read the "actual" digest that the mismatch error of this script prints), check the file is the intended model, and
- * replace this constant. Until then the build fails closed with a checksum mismatch, by design.
+ * Pinned SHA-256 (lowercase hex) of the model at POSE_MODEL_URL. Computed from one real download of that URL:
+ * content-length 5777746 bytes, x-goog-generation 1682624738331272 (Google Cloud Storage lists only CRC32C and MD5 for the
+ * file, so there is no published SHA-256). If the model is ever replaced, the mismatch error of this script prints the
+ * actual digest; check it is the intended model and update this constant (and the size and generation above).
  */
-export const POSE_MODEL_SHA256 = "0000000000000000000000000000000000000000000000000000000000000000";
+export const POSE_MODEL_SHA256 = "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a";
 
 /** tasks-vision WASM runtime, from the exact version locked in bun.lock (keep in step with @mediapipe/tasks-vision). */
 export const WASM_BASE_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm/";
