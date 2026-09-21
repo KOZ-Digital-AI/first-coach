@@ -8,7 +8,6 @@ import { createMemoryHistory, createRootRoute, createRoute, createRouter, Router
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, LOCALES } from '../../lib/i18n';
 import problemMessages from '../../lib/problem.messages';
-import { Route } from '../../routes/settings/plan';
 import messages from './plan.messages';
 
 // The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. Register happy-dom here BEFORE
@@ -19,6 +18,9 @@ if (typeof document === 'undefined') {
 }
 const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
 const { default: userEvent } = await import('@testing-library/user-event');
+// The route pulls in Radix Dialog, which decides at import time whether a DOM exists (its layout effects are no-ops without
+// one). Import it only now, after happy-dom is registered, so the file also passes when bun runs from the repository root.
+const { Route } = await import('../../routes/settings/plan');
 
 /*
  * The plan settings screen (/settings/plan), written from the bead's acceptance criteria (fc-mol-0bt.10):
