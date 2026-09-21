@@ -7,8 +7,15 @@
 //   <dir>/<sport>/rubrics.json       optional     SeedRubricsFile (validated only: 001_commons has no
 //                                                 rubric table, and migrations are frozen)
 //   <dir>/<sport>/<track>.json       any other    SeedDrillTrackFile (`track` = the drills' primary skill)
-// A missing or empty <dir> is a clean no-op (config/commons does not exist until the seed
-// content lands). Non-JSON files and dot-entries are ignored.
+//   <dir>/<sport>/drills/*.json      any          SeedDrillTrackFile, ALWAYS: whatever its name (a
+//                                                 `drills/skill-graph.json` is parsed as a track file and
+//                                                 fails). This is where the drill-content files live.
+// Drill slugs are unique across ALL track files, root and drills/ alike. Any subdirectory of a sport
+// other than `drills/` (and any subdirectory inside drills/) is a SeedError: a mistyped folder must not
+// silently drop drills. A missing or empty <dir> is a clean no-op (config/commons does not exist until
+// the seed content lands). Non-JSON files and dot-entries are ignored. Files are processed in order of
+// their path from the seed root, so ids and versions do not depend on the platform's readdir order;
+// every issue names the file by that path (`football/drills/dribbling.json`).
 //
 // Phases
 //   1. VALIDATE EVERYTHING, WRITE NOTHING. Every file is parsed with the seed schemas, each sport's
@@ -166,6 +173,7 @@ interface SportSeed {
 const GRAPH_FILE = "skill-graph.json";
 const TESTS_FILE = "tests.json";
 const RUBRICS_FILE = "rubrics.json";
+const DRILLS_FOLDER = "drills";
 
 const isDirectory = (path: string): boolean => {
   try {
@@ -198,13 +206,37 @@ function parseFile<S extends z.ZodType>(root: string, file: string, schema: S, i
   return undefined;
 }
 
+/**
+ * The seed files of one sport folder as paths relative to it (`tracks.json`, `drills/dribbling.json`),
+ * sorted. Any directory other than the sport's own `drills/` is reported, never descended into.
+ */
+function listSportFiles(root: string, sport: string, issues: SeedIssue[]): string[] {
+  const found: string[] = [];
+  const visit = (relative: string): void => {
+    for (const name of readdirSync(join(root, sport, relative))) {
+      if (name.startsWith(".")) continue;
+      const entry = relative === "" ? name : `${relative}/${name}`;
+      const full = join(root, sport, entry);
+      if (isDirectory(full)) {
+        if (entry === DRILLS_FOLDER) visit(entry);
+        else {
+          issues.push({
+            file: `${sport}/${entry}`,
+            path: "$",
+            message: `unexpected directory: seed files live in ${sport}/ or ${sport}/${DRILLS_FOLDER}/`,
+          });
+        }
+      } else if (name.endsWith(".json") && isFile(full)) found.push(entry);
+    }
+  };
+  visit("");
+  return found.sort(compare);
+}
+
 /** Reads and schema-checks one sport folder; undefined when any of its files is unusable. */
 function readSport(root: string, sport: string, issues: SeedIssue[]): SportSeed | undefined {
   const before = issues.length;
-  const folder = join(root, sport);
-  const names = readdirSync(folder)
-    .filter((name) => !name.startsWith(".") && name.endsWith(".json") && isFile(join(folder, name)))
-    .sort(compare);
+  const names = listSportFiles(root, sport, issues);
 
   const graphFile = `${sport}/${GRAPH_FILE}`;
   const testsFile = `${sport}/${TESTS_FILE}`;
