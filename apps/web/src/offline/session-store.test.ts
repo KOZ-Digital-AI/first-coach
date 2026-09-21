@@ -60,7 +60,10 @@ const makeToday = (patch: Record<string, unknown> = {}): Record<string, unknown>
     currentLevelLabel: 'Foundation',
     sessionsPerWeek: 3,
     minutesPerSession: 20,
-    focus: [{ skill: 'weakfoot', level: 1, targetLevel: 2, reason: 'Your stated goal.' }],
+    focus: [
+      { skill: 'weakfoot', level: 1, targetLevel: 2, reason: 'Your stated goal.' },
+      { skill: 'passing', level: 1, targetLevel: 2, reason: 'One of the weakest areas.' },
+    ],
   },
   ...patch,
 });
@@ -126,11 +129,6 @@ function setup(today: () => Record<string, unknown> = () => makeToday(), initial
 }
 
 const sessionKey = (playerId: string) => offlineKey(playerId, SESSION_KEY_NAME);
-const stored = (data: Map<string, string>, playerId: string) => {
-  const raw = data.get(sessionKey(playerId));
-  return raw === undefined ? undefined : JSON.parse(raw);
-};
-
 const doneFlags = (session: { items: { itemId: string; done: boolean }[] }) =>
   Object.fromEntries(session.items.map((item) => [item.itemId, item.done]));
 
@@ -282,7 +280,7 @@ describe('a downloaded session is frozen against newer commons versions', () => 
     expect(onDevice).toEqual(first);
     expect(onDevice?.session.graphVersion).toBe('0.1.0');
     expect(onDevice?.session.items[0]?.drillVersionId).toBe('weak-foot-50-v1');
-    expect(onDevice?.session.items[0]?.content.title.en).toBe('Weak Foot 50');
+    expect(onDevice?.session.items[0]?.content.title?.en).toBe('Weak Foot 50');
     expect(onDevice?.downloadedAt).toBe(NOW_ISO);
   });
 
