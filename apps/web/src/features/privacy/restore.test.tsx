@@ -115,9 +115,37 @@ beforeEach(() => {
     return new Response('not found', { status: 404 });
   }) as unknown as typeof fetch;
 });
+/*
+ * Cross-file hygiene (the same fix as contribute/form.test.tsx, fc-mol-70i.8). bun runs every test file of the web package in
+ * ONE process with ONE happy-dom window. happy-dom records every element query it has answered (each `querySelectorAll` behind a
+ * Testing Library query) in bookkeeping lists on the document and on <html> (`affectsCache`, `affectsComputedStyleCache`) and in
+ * the window's selector cache, and never trims them. This file asks thousands of questions, and the whole-package run then made
+ * another file's failing `expect(element)` (bun pretty-prints the element together with that bookkeeping) slow enough to hit its
+ * 5 s timeout (offline-reload.test.tsx, "a session that arrives later ..."). After every test the DOM is empty, so the lists are
+ * emptied the way happy-dom itself empties them when a node changes: every recorded result is invalidated first, then the list
+ * is cleared. Written against happy-dom 20.x symbols by description; if they are not there it does nothing.
+ * Nothing else is left global: fetch is restored below, the stores and the session are injected, the i18n instances and routers
+ * are per test, the console spy is restored in its own finally, and no timer, location or `fc:*` browser key is touched.
+ */
+function resetHappyDomCaches(): void {
+  const targets: object[] = [document, document.documentElement, document.body, window];
+  for (const target of targets) {
+    for (const symbol of Object.getOwnPropertySymbols(target)) {
+      const value: unknown = (target as Record<symbol, unknown>)[symbol];
+      if ((symbol.description === 'affectsCache' || symbol.description === 'affectsComputedStyleCache') && Array.isArray(value)) {
+        for (const item of value) if (typeof item === 'object' && item !== null) (item as { result: unknown }).result = null;
+        value.length = 0;
+      } else if (symbol.description === 'querySelectorCache' && value instanceof Map) {
+        value.clear();
+      }
+    }
+  }
+}
+
 afterEach(() => {
   cleanup();
   globalThis.fetch = realFetch;
+  resetHappyDomCaches();
 });
 
 const posts = () => calls.filter((call) => call.method === 'POST' && call.path === '/api/player/recover');
