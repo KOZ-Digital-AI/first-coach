@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { Locale } from '@api-types/primitives';
 import { TodaySession } from '@api-types/session';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -271,9 +271,26 @@ async function mountDrill(itemId: string, offline: Offline = {}) {
   return env;
 }
 
+/*
+ * No real network: everything this file exercises talks through the injected `fetch` of `createApi`. The GLOBAL fetch (happy-dom's,
+ * which resolves a relative URL against http://localhost/ and so dials ::1:80 / 127.0.0.1:80) is replaced for every test by one
+ * that records the request and rejects, and afterEach fails the test if it was ever called (a swallowed rejection cannot hide it).
+ */
+const realFetch = globalThis.fetch;
+const strayFetches: string[] = [];
+beforeEach(() => {
+  strayFetches.length = 0;
+  globalThis.fetch = ((input: unknown) => {
+    strayFetches.push(String(input));
+    return Promise.reject(new TypeError(`offline-reload.test: unexpected real fetch of ${String(input)}`));
+  }) as typeof fetch;
+});
+
 afterEach(() => {
   cleanup();
   wipeDevice();
+  globalThis.fetch = realFetch;
+  expect(strayFetches).toEqual([]);
 });
 
 const STALE = 'Could not refresh. Showing the last saved session.';
@@ -385,7 +402,11 @@ describe('/train, cold reload offline', () => {
     await drillList();
     expect(screen.getByText(STALE)).toBeTruthy();
     env.queryClient.setQueryData(['today'], session('fresh-session'));
-    await waitFor(() => expect(screen.queryByText(STALE)).toBeNull());
+    // Not `expect(<element>).toBeNull()`: while the notice is still up that matcher fails, and Bun then pretty-prints the received
+    // happy-dom element (a huge object graph) to build its message: ~2 s of blocked event loop when idle, 7+ s under the merge gate's
+    // parallel load, which starves the very re-render being waited for and runs the waitFor out of time (fc-mol-eay.15). The
+    // notice's text (undefined once it is gone) says the same thing and fails cheaply. The assertion is unchanged: no STALE notice.
+    await waitFor(() => expect(screen.queryByText(STALE)?.textContent).toBeUndefined());
   });
 });
 
