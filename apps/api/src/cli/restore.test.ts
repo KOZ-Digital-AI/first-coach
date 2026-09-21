@@ -278,8 +278,9 @@ describe('restoreDatabase: atomic replacement', () => {
       restoreDatabase({ backupFile: backup, dbPath, isServerUp: () => false, now: NOW }),
     ).rejects.toThrow();
 
-    snap.expectUnchanged({ owners: 3, items: 7, empty_table: 0 });
+    // List before expectUnchanged: its row-count check opens the DB, which creates -wal/-shm.
     expect(listing(dataDir)).toEqual(['app.db', `app.db.pre-restore-${STAMP}`]);
+    snap.expectUnchanged({ owners: 3, items: 7, empty_table: 0 });
   });
 });
 
