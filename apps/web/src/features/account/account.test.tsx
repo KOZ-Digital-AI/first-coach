@@ -58,10 +58,12 @@ interface RigOptions {
   path?: string;
   deps?: Partial<AccountDeps>;
   queryClient?: QueryClient;
+  /** Holds the navigation to `/` until it resolves (a slow route). */
+  homeLoader?: () => Promise<void>;
 }
 
 /** A real router (memory history), a real QueryClient and real i18n; only the network sign-out is a stand-in. */
-async function renderAccount({ session = coach, locale = 'en', path = '/train', deps = {}, queryClient }: RigOptions = {}): Promise<Rig> {
+async function renderAccount({ session = coach, locale = 'en', path = '/train', deps = {}, queryClient, homeLoader }: RigOptions = {}): Promise<Rig> {
   const log: string[] = [];
   const client = queryClient ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const allDeps: AccountDeps = {
@@ -98,7 +100,12 @@ async function renderAccount({ session = coach, locale = 'en', path = '/train', 
   }
   const rootRoute = createRootRoute({ component: Harness });
   const children = ROUTES.map((routePath) =>
-    createRoute({ getParentRoute: () => rootRoute, path: routePath, component: () => <p>page {routePath}</p> }),
+    createRoute({
+      getParentRoute: () => rootRoute,
+      path: routePath,
+      component: () => <p>page {routePath}</p>,
+      ...(routePath === '/' && homeLoader ? { loader: homeLoader } : {}),
+    }),
   );
   const router = createRouter({
     routeTree: rootRoute.addChildren(children),
@@ -362,6 +369,21 @@ describe('sign out', () => {
     await act(async () => held.resolve({ data: { success: true }, error: null }));
     await waitFor(() => expect(log).toEqual(['beginSignOut', 'signOut', ...AFTER_CONFIRMED]));
     await waitFor(() => expect(rig.pathname()).toBe('/'));
+  });
+
+  test('waits for a slow navigation home: the expiry handler is not re-armed while the coach is still on the old page', async () => {
+    const slow = gate<void>();
+    const rig = await renderAccount({ session: coach, path: '/admin', homeLoader: () => slow.promise });
+    await openMenu();
+    fireEvent.click(signOutButton());
+    await waitFor(() => expect(rig.log).toContain('clearDrafts'));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(rig.log).not.toContain('resetSessionExpired'); // the loader of `/` is still running
+    await act(async () => slow.resolve());
+    await waitFor(() => expect(rig.log).toContain('resetSessionExpired'));
+    expect(rig.pathname()).toBe('/');
   });
 
   test('re-arms the expiry handler only once the navigation home has landed and the cache is empty', async () => {
