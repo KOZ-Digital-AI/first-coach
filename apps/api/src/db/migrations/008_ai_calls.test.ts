@@ -215,6 +215,15 @@ function withProfile(): Database {
   return db;
 }
 
+/** A JSON array of ids of exactly `n` characters, no id longer than 128 (so only the total size is under test). */
+function idsOfLength(n: number): string {
+  const parts: string[] = [];
+  const total = (): number => 2 + parts.reduce((t, p) => t + p.length + 2, 0) + Math.max(0, parts.length - 1);
+  while (n - total() - (parts.length > 0 ? 1 : 0) - 2 > 128) parts.push('a'.repeat(100));
+  parts.push('a'.repeat(n - total() - (parts.length > 0 ? 1 : 0) - 2));
+  return JSON.stringify(parts);
+}
+
 /** True when a row with `over` is accepted on a fresh database with profile p1. */
 const accepts = (over: Record<string, Cell>): boolean => accepted(() => addCall(withProfile(), over));
 
@@ -391,9 +400,32 @@ describe('008_ai_calls: candidate_ids and chosen_ids (JSON arrays of ids, never 
     });
 
     test(`${column} refuses a huge array (the size cap is 8192 characters)`, () => {
-      const at = (n: number): string => `["${'a'.repeat(n - 4)}"]`;
-      expect(accepts({ [column]: at(8192) }), 'at the cap').toBe(true);
-      expect(accepts({ [column]: at(8193) }), 'over the cap').toBe(false);
+      expect(idsOfLength(8192).length).toBe(8192);
+      expect(accepts({ [column]: idsOfLength(8192) }), 'at the cap').toBe(true);
+      expect(accepts({ [column]: idsOfLength(8193) }), 'over the cap').toBe(false);
+    });
+
+    test(`${column} accepts an id of 128 characters (EntityId's longest) and refuses one of 129`, () => {
+      expect(accepts({ [column]: `["${'a'.repeat(128)}"]` }), '128').toBe(true);
+      expect(accepts({ [column]: `["${'a'.repeat(129)}"]` }), '129').toBe(false);
+      expect(accepts({ [column]: `["${'a'.repeat(127)}","${'b'.repeat(128)}"]` }), '127 and 128').toBe(true);
+      expect(accepts({ [column]: `["${'a'.repeat(128)}","${'b'.repeat(129)}"]` }), '128 and 129').toBe(false);
+      expect(accepts({ [column]: `["${'a'.repeat(129)}","b"]` }), '129 first').toBe(false);
+    });
+
+    test(`${column} refuses one long unspaced run of id characters: no text over 200 characters (the hyphenated repro)`, () => {
+      const hyphenated = 'my-ankle-hurts-'.repeat(20); // 300 characters, every one an id character
+      expect(hyphenated.length).toBe(300);
+      expect(accepts({ [column]: `["${hyphenated}"]` }), 'hyphenated 300').toBe(false);
+      expect(accepts({ [column]: `["${'a'.repeat(7000)}"]` }), 'one 7000-character id').toBe(false);
+      expect(accepts({ [column]: `["${'a.b_c-9'.repeat(17)}"]` }), 'mixed id characters, 136').toBe(false);
+      expect(accepts({ [column]: `[${'7'.repeat(129)}]` }), 'a 129-digit number').toBe(false);
+    });
+
+    test(`${column} still accepts many ordinary ids: the cap is per element, not on the total`, () => {
+      const ids = Array.from({ length: 60 }, (_, i) => `${'d'.repeat(100)}-${i}`); // 60 ids of ~103 characters
+      expect(accepts({ [column]: JSON.stringify(ids) })).toBe(true);
+      expect(accepts({ [column]: '["dv-1","dv-2","drill-version-3.a_b"]' })).toBe(true);
     });
   }
 });
