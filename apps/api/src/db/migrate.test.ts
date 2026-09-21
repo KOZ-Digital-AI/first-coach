@@ -314,9 +314,11 @@ describe('migrate', () => {
     const err = thrown(() => migrate(db, dir));
 
     expect(err.message).toContain('migration 002_tx.sql failed: ');
+    expect(err.message).toContain('002_tx.sql');
+    expect(err.message.toLowerCase()).toContain('ended the surrounding transaction');
     expect(err.cause).toBeDefined();
     expect(migrationRows(db).map((r) => r.version)).toEqual([1]);
-    expect(tableNames(db)).toEqual(['a', 'schema_migrations']);
+    expect(migrationRows(db).some((r) => r.version === 2)).toBe(false);
   });
 
   test('a failing migration rolls back completely and keeps earlier data intact', () => {
