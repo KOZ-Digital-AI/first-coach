@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 import { routeTree } from './routeTree.gen';
+import './styles/app.css';
 
 const queryClient = new QueryClient();
 const router = createRouter({ routeTree });
