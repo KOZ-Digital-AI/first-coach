@@ -365,6 +365,25 @@ describe('applyLocalEvent', () => {
     expect(doneFlags(readOfflineSession(store, 'player-a')!.session)).toEqual({ 'item-1': true, 'item-2': false, 'item-3': false });
   });
 
+  test.each([
+    ['result', { type: 'result', value: 12 }],
+    ['session_finished', { type: 'session_finished' }],
+  ])('%s aimed at a not-yet-done item leaves it not done', async (_name, patch) => {
+    const { sessions, store } = setup();
+    await sessions.downloadToday('player-a', 'kk');
+    expect(sessions.applyLocalEvent(makeEvent({ itemId: 'item-2', ...patch }))).toBeUndefined();
+    expect(doneFlags(readOfflineSession(store, 'player-a')!.session)).toEqual({ 'item-1': false, 'item-2': false, 'item-3': false });
+  });
+
+  test('an event that fails the SessionEvent schema is ignored even when its type and item look right', async () => {
+    const { sessions, store } = setup();
+    await sessions.downloadToday('player-a', 'kk');
+    const before = store.getItem(sessionKey('player-a'));
+    expect(sessions.applyLocalEvent(makeEvent({ clientUuid: 'not-a-uuid' }))).toBeUndefined();
+    expect(sessions.applyLocalEvent(makeEvent({ at: 'yesterday' }))).toBeUndefined();
+    expect(store.getItem(sessionKey('player-a'))).toBe(before!);
+  });
+
   test('an unknown item changes nothing, writes nothing and returns undefined', async () => {
     const { sessions, written } = setup();
     await sessions.downloadToday('player-a', 'kk');
@@ -471,6 +490,13 @@ describe('status', () => {
     await sessions.downloadToday('player-a', 'kk');
     sessions.getOffline('player-b', '2026-09-21');
     expect(sessions.status()).toEqual({ available: false, downloadedAt: null });
+  });
+
+  test('downloadedAt is the stored download time, not the current clock', async () => {
+    const { sessions, store } = setup();
+    await sessions.downloadToday('player-a', 'kk');
+    const later = createSessionStore({ store, api: makeApi(() => json(500, {})).api, now: () => new Date('2026-09-25T00:00:00.000Z') });
+    expect(later.status('player-a')).toEqual({ available: true, downloadedAt: NOW_ISO });
   });
 
   test('applying an event does not change downloadedAt', async () => {
