@@ -82,8 +82,8 @@ describe('web app manifest (config)', () => {
     expect(manifest.start_url).toBe('/train');
   });
 
-  test('is language-neutral: no lang key', () => {
-    expect('lang' in manifest).toBe(false);
+  test('is language-neutral: no lang value (vite-plugin-pwa would default it to "en", so the config sets it to undefined)', () => {
+    expect(manifest.lang).toBeUndefined();
   });
 
   test('lists 192 and 512 icons for purpose any and a 512 maskable icon', () => {
