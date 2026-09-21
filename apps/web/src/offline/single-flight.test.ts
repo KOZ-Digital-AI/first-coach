@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, tes
 import { createElement } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import type { SessionEvent } from '@api-types/session';
+import type { SessionSummary } from '../features/train/events-client';
 
 /*
  * fc-mol-eay.13: coming back online replays the queued events with exactly ONE POST /api/player/session-events, even though two
@@ -37,6 +38,9 @@ const { default: ConnectivityBannerSlot } = await import('../features/offline/ro
 
 afterAll(() => {
   mock.module('idb-keyval', () => realIdb);
+  // The default events client is module state shared by the other test files of this run: put it back to "not configured"
+  // (events-client.test.ts pins that a submit before configureEventsClient fails).
+  configureEventsClient({ queryClient: undefined as never });
 });
 
 const PLAYER = 'player-1';
@@ -169,7 +173,7 @@ describe('one POST per online transition', () => {
     expect(posts).toEqual([[uuid(1)]]);
     expect(await pendingCount()).toBe(0);
     // The events client's delivered-response writes still happen for the replayed batch.
-    expect(queryClient.getQueryData(SESSION_SUMMARY_QUERY_KEY)).toEqual({ progress: SERVER_PROGRESS, nextSessionDate: '2026-09-24', sessionId: SESSION_ID });
+    expect(queryClient.getQueryData<SessionSummary>(SESSION_SUMMARY_QUERY_KEY)).toEqual({ progress: SERVER_PROGRESS, nextSessionDate: '2026-09-24', sessionId: SESSION_ID });
     expect((queryClient.getQueryData(TODAY_QUERY_KEY) as { items: { done: boolean }[] }).items.every((item) => item.done)).toBe(true);
   });
 
@@ -232,6 +236,6 @@ describe('one POST per online transition', () => {
 
     expect(posts).toEqual([[uuid(1)]]);
     expect(await pendingCount()).toBe(0);
-    expect(queryClient.getQueryData(SESSION_SUMMARY_QUERY_KEY)).toEqual({ progress: SERVER_PROGRESS, nextSessionDate: '2026-09-24', sessionId: SESSION_ID });
+    expect(queryClient.getQueryData<SessionSummary>(SESSION_SUMMARY_QUERY_KEY)).toEqual({ progress: SERVER_PROGRESS, nextSessionDate: '2026-09-24', sessionId: SESSION_ID });
   });
 });
