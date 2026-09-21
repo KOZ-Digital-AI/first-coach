@@ -406,6 +406,76 @@ describe('in flight', () => {
     expect(explains()).toHaveLength(1);
   });
 
+  test('two clicks in the same tick (before the button has re-rendered as disabled) still send ONE request', async () => {
+    const gate = deferred<Response>();
+    const { explains } = mount({ explain: () => gate.promise });
+    const button = control() as HTMLButtonElement;
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    await waitFor(() => expect(explains()).toHaveLength(1));
+    await act(async () => gate.resolve(explained()));
+    await screen.findByRole('region', { name: LABEL });
+    expect(explains()).toHaveLength(1);
+  });
+
+  test('a request that outlasts the server\'s own 20 s limit (plus a grace) is aborted and shown as a calm connection error with a retry', async () => {
+    const realSetTimeout = globalThis.setTimeout;
+    const limits: (() => void)[] = [];
+    // Only the guard timer (25 s) is captured, and still scheduled for real (the component clears it); everything else is untouched.
+    globalThis.setTimeout = ((handler: () => void, ms?: number, ...rest: unknown[]) => {
+      if (ms === 25_000) limits.push(handler);
+      return realSetTimeout(handler, ms, ...rest);
+    }) as typeof setTimeout;
+    try {
+      const gate = deferred<Response>();
+      const { user, explains } = mount({
+        explain: (call) => {
+          call.signal?.addEventListener('abort', () => gate.reject(new DOMException('aborted', 'AbortError')));
+          return gate.promise;
+        },
+      });
+      await user.click(control() as HTMLButtonElement);
+      await waitFor(() => expect(explains()).toHaveLength(1));
+      expect(limits).toHaveLength(1);
+      await act(async () => limits[0]?.());
+      expect(explains()[0]?.signal?.aborted).toBe(true);
+      const alert = await screen.findByRole('alert');
+      expect(alert.textContent).toContain('No connection');
+      expect(within(alert).getByRole('button', { name: 'Try again' }) === null).toBe(false);
+      expect(panel() === null).toBe(true);
+    } finally {
+      globalThis.setTimeout = realSetTimeout;
+    }
+  });
+
+  test('the 25 s guard timer is cleared when the request ends (nothing is left to fire at a finished request)', async () => {
+    const realSetTimeout = globalThis.setTimeout;
+    const realClearTimeout = globalThis.clearTimeout;
+    const guards = new Set<unknown>();
+    const cleared = new Set<unknown>();
+    globalThis.setTimeout = ((handler: () => void, ms?: number, ...rest: unknown[]) => {
+      const handle = realSetTimeout(handler, ms, ...rest);
+      if (ms === 25_000) guards.add(handle);
+      return handle;
+    }) as typeof setTimeout;
+    globalThis.clearTimeout = ((handle?: Parameters<typeof clearTimeout>[0]) => {
+      cleared.add(handle);
+      return realClearTimeout(handle);
+    }) as typeof clearTimeout;
+    try {
+      const { user } = mount();
+      await user.click(control() as HTMLButtonElement);
+      await screen.findByRole('region', { name: LABEL });
+      expect(guards.size).toBe(1);
+      for (const handle of guards) expect(cleared.has(handle)).toBe(true);
+    } finally {
+      globalThis.setTimeout = realSetTimeout;
+      globalThis.clearTimeout = realClearTimeout;
+    }
+  });
+
   test('leaving the drill (unmounting) aborts the request', async () => {
     const gate = deferred<Response>();
     const { user, view, explains } = mount({ explain: () => gate.promise });
@@ -448,6 +518,16 @@ describe('unavailable', () => {
     await user.click(control() as HTMLButtonElement);
     const alert = await screen.findByRole('alert');
     expect(within(alert).getByRole('button', { name: 'Try again' }) === null).toBe(false);
+    expect(screen.queryByText('AI explanations are not available right now.') === null).toBe(true);
+  });
+
+  test('a calm note from an earlier try does not stay next to a later, different failure', async () => {
+    let step = 0;
+    const { user } = mount({ explain: () => (step++ === 0 ? unavailable() : problem(500)) });
+    await user.click(control() as HTMLButtonElement);
+    await screen.findByText('AI explanations are not available right now.');
+    await user.click(control('Try again') as HTMLButtonElement);
+    await screen.findByRole('alert');
     expect(screen.queryByText('AI explanations are not available right now.') === null).toBe(true);
   });
 
@@ -646,6 +726,9 @@ describe('kk, ru and en', () => {
       await user.click(control(action) as HTMLButtonElement);
       await screen.findByRole('region', { name: label });
       expect(explains()[0]?.body).toEqual({ locale, audience: 'child' });
+      // The text is announced in the language it was asked in.
+      const region = panel(label) as HTMLElement;
+      expect(region.querySelector(`[lang="${locale}"]`)?.textContent).toBe(EXPLAIN_TEXT);
       expect(document.body.textContent).not.toMatch(/undefined|NaN|\{\{|explain:/);
     });
   }
