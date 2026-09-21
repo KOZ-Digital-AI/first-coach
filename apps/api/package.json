@@ -1,0 +1,27 @@
+{
+  "name": "@first-coach/api",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "zod": "^4",
+    "better-auth": "^1.7",
+    "@mastra/core": "^1.67",
+    "@mastra/memory": "^1.30",
+    "@mastra/libsql": "^1.23",
+    "@mastra/loggers": "^1.3",
+    "ai": "^7",
+    "@ai-sdk/openai": "^4",
+    "croner": "^10",
+    "nanoid": "^5"
+  },
+  "devDependencies": {
+    "ajv": "^8",
+    "ajv-formats": "^3",
+    "@types/bun": "^1.4"
+  }
+}
