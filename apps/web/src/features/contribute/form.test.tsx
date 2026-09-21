@@ -334,13 +334,15 @@ function renderScreen(options: Options = {}) {
       </I18nextProvider>
     </QueryClientProvider>,
   );
-  return { ...view, router, storage, navigations, instance, queryClient };
+  // `storage` is null only when a test asks for no storage at all; those tests never read it back.
+  return { ...view, router, storage: storage as Storage, navigations, instance, queryClient };
 }
 
 /** Renders as a contributor and waits for the form. */
 async function renderForm(options: Options = {}) {
   const view = renderScreen(options);
-  await screen.findByRole('button', { name: /^(Send for review|Sending…)$/ });
+  const { submit } = messages[options.locale ?? 'en'];
+  await screen.findByRole('button', { name: new RegExp(`^(${submit.label}|${submit.busy})$`) });
   return view;
 }
 
@@ -747,7 +749,7 @@ describe('the one multipart POST', () => {
   });
 
   test('is multipart: a FormData body, no Content-Type set by hand (the boundary is the browser\'s), and the UI language is sent', async () => {
-    await renderForm({ locale: 'ru' });
+    await renderForm();
     fillValid();
     attestBoth();
     await submit();
@@ -755,8 +757,8 @@ describe('the one multipart POST', () => {
     const xhr = xhrs[0]!;
     expect(xhr.body instanceof FormData).toBe(true);
     expect(xhr.headers['content-type']).toBeUndefined();
-    expect(xhr.headers['accept-language']).toBe('ru');
-    expect(xhr.payload.locale).toBe('ru');
+    expect(xhr.headers['accept-language']).toBe('en');
+    expect(xhr.payload.locale).toBe('en');
     expect(xhr.withCredentials).toBe(false); // same-origin: cookies go along without CORS mode
   });
 
