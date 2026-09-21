@@ -184,10 +184,10 @@ async function renderPlan(locale: Locale = 'en') {
   const router = createRouter({
     routeTree: rootRoute.addChildren([
       planRoute as never,
-      stand('/train/onboarding', 'ONBOARDING STAND-IN'),
-      stand('/train/roadmap', 'ROADMAP STAND-IN'),
-      stand('/train', 'TRAIN STAND-IN'),
-    ] as never),
+      stand('/train/onboarding', 'ONBOARDING STAND-IN') as never,
+      stand('/train/roadmap', 'ROADMAP STAND-IN') as never,
+      stand('/train', 'TRAIN STAND-IN') as never,
+    ]),
     history: createMemoryHistory({ initialEntries: ['/settings/plan'] }),
   });
   await router.load();
