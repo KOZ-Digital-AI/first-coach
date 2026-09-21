@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, LOCALES } from '../../lib/i18n';
 import problemMessages from '../../lib/problem.messages';
-import { Route } from '../../routes/progress/index';
+import { retestPath, Route } from '../../routes/progress/index';
 import messages from './journey.messages';
 import skillTreeMessages from './skill-tree.messages';
 
@@ -344,7 +344,21 @@ describe('success: retest prompts', () => {
     expect(within(testCard('Juggling')).getByRole('link', { name: /retest now/i })).toBe(links[0]!);
     // The accessible name says which test, so a screen-reader list of links is not four identical entries.
     expect(links[0]!.textContent).toMatch(/juggling/i);
-    expect(links[0]!.getAttribute('href')).toMatch(/^\/[a-z]/);
+    // The retest screen lives at /progress/retest/:testSlug, so the link carries this test's own slug.
+    expect(links[0]!.getAttribute('href')).toBe('/progress/retest/juggling-max-touches');
+  });
+
+  test('each due test links to its own slug, not to one shared path', async () => {
+    answering(with_({ retestsDue: ['juggling-max-touches', 'wall-pass-60'] }));
+    await renderLoaded();
+    expect(within(testCard('Juggling')).getByRole('link', { name: /retest now/i }).getAttribute('href')).toBe('/progress/retest/juggling-max-touches');
+    expect(within(testCard('Passing')).getByRole('link', { name: /retest now/i }).getAttribute('href')).toBe('/progress/retest/wall-pass-60');
+  });
+
+  test('retestPath builds /progress/retest/<slug> and URL-encodes the slug', () => {
+    expect(retestPath('juggling-max-touches')).toBe('/progress/retest/juggling-max-touches');
+    // The API only sends [A-Za-z0-9._-] slugs, so a UI test cannot reach an odd one; the encoding is checked on the builder.
+    expect(retestPath('juggling max/touches?x=1#y')).toBe('/progress/retest/juggling%20max%2Ftouches%3Fx%3D1%23y');
   });
 
   test('a test that is not due gets no prompt, only the date of its next retest', async () => {
