@@ -20,15 +20,20 @@ export function fromZodError(error: ZodError): ProblemError[] {
   }));
 }
 
-/** Builds an `application/problem+json` Response matching `ProblemDetails`. */
+/**
+ * Builds an `application/problem+json` Response matching `ProblemDetails`.
+ * `options.type` (a URI or short code such as `ai_unavailable`) replaces the
+ * default `about:blank` problem type.
+ */
 export function problem(
   status: number,
   title: string,
   detail?: string,
   errors?: ProblemError[],
+  options?: { type?: string },
 ): Response {
   const body = {
-    type: "about:blank",
+    type: options?.type ?? "about:blank",
     title,
     status,
     ...(detail !== undefined && { detail }),
