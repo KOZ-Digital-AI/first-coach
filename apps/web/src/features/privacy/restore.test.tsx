@@ -647,7 +647,7 @@ describe('the code stays in memory', () => {
 // --- kk, ru, en -----------------------------------------------------------------------------------------------------
 
 describe('languages', () => {
-  test.each(LOCALES)('%s: title, label, hint, button and the empty state come from the bundle', async (locale) => {
+  test.each([...LOCALES])('%s: title, label, hint, button and the empty state come from the bundle', async (locale) => {
     await renderRecover({ locale });
     const m = messages[locale];
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(m.title);
@@ -657,7 +657,7 @@ describe('languages', () => {
     expect(screen.getByText(m.noCode)).toBeTruthy();
   });
 
-  test.each(LOCALES)('%s: the wrong-code, rate-limit and replace texts come from the bundle', async (locale) => {
+  test.each([...LOCALES])('%s: the wrong-code, rate-limit and replace texts come from the bundle', async (locale) => {
     const m = messages[locale];
     respond = () => problem(422);
     const view = await renderRecover({ locale });
