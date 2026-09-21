@@ -16,7 +16,7 @@ import {
 } from '../../shared/domain';
 import { BaselineResult } from '../../shared/onboarding';
 import { TestResult } from '../../shared/journey';
-import { EQUIPMENT, EXPERIENCE_LEVELS, GOALS, LOCALES, SPACES } from '../../shared/primitives';
+import { ClientUuid, EQUIPMENT, EXPERIENCE_LEVELS, GOALS, LOCALES, SPACES } from '../../shared/primitives';
 import { openDatabase } from '../database';
 import { MIGRATIONS_DIR, migrate } from '../migrate';
 
@@ -99,7 +99,8 @@ function copy002(dir: string): void {
 /**
  * A migrated temp file database opened like production (WAL, foreign_keys ON).
  * 'all' applies the real MIGRATIONS_DIR; '001' a copy of 001 alone; 'pair' copies of 001 and 002 alone;
- * 'later' adds a hypothetical 003 that only adds a column and a table.
+ * 'later' adds a hypothetical 003 that does what the 002 header allows: ALTER TABLE ... ADD COLUMN on all three
+ * tables plus a new table with an FK cascading from player_profiles.
  */
 function migrated(which: Which = 'all'): Database {
   const db = openDatabase(join(tmp, `${which}-${opened.length}.db`));
@@ -115,7 +116,13 @@ function migrated(which: Which = 'all'): Database {
     copy002(withLater);
     writeFileSync(
       join(withLater, '003_later.sql'),
-      'ALTER TABLE test_results ADD COLUMN note TEXT;\nCREATE TABLE later_things (id TEXT NOT NULL PRIMARY KEY) STRICT;\n',
+      [
+        'ALTER TABLE player_profiles ADD COLUMN consent_video INTEGER;',
+        'ALTER TABLE test_results ADD COLUMN note TEXT;',
+        'ALTER TABLE roadmaps ADD COLUMN note TEXT;',
+        'CREATE TABLE consents (player_id TEXT PRIMARY KEY REFERENCES player_profiles (player_id) ON DELETE CASCADE) STRICT;',
+        '',
+      ].join('\n'),
     );
     migrate(db, withLater);
   }
@@ -288,7 +295,9 @@ function seedPlayer(db: Database, id: string, n = 0): void {
 
 /**
  * The schema assertions that must hold on ANY database built from the real migrations, whatever is
- * applied after 002: they inspect named tables and columns only (never "the whole schema").
+ * applied after 002: they inspect named tables and columns only and are POSITIVE (this column is
+ * NOT NULL, that CHECK exists), never "the table has exactly these columns": a later
+ * ALTER TABLE ... ADD COLUMN is legitimate and must not break them.
  */
 function expectPlayerContract(db: Database): void {
   // The CHECK lists mirror the contract (parsed out of sqlite_master, not restated here).
@@ -298,18 +307,47 @@ function expectPlayerContract(db: Database): void {
   expect(checkBetween(db, 'player_profiles', 'age')).toEqual([AGE_MIN, AGE_MAX]);
   expect(checkNumbers(db, 'player_profiles', 'partner')).toEqual([0, 1]);
   expect(checkNumbers(db, 'test_results', 'skipped')).toEqual([0, 1]);
-  // STRICT and NOT NULL.
+  // STRICT, NOT NULL for the required columns, nullable for the optional ones.
   for (const table of PLAYER_TABLES) {
     expect(one<{ strict: number }>(db, 'SELECT strict FROM pragma_table_list WHERE name = ?', table).strict, `${table} STRICT`).toBe(1);
   }
   for (const column of PROFILE_REQUIRED) expect(notNullColumns(db, 'player_profiles'), `player_profiles.${column}`).toContain(column);
   for (const column of RESULT_REQUIRED) expect(notNullColumns(db, 'test_results'), `test_results.${column}`).toContain(column);
   for (const column of ROADMAP_REQUIRED) expect(notNullColumns(db, 'roadmaps'), `roadmaps.${column}`).toContain(column);
-  // Cascade.
-  seedPlayer(db, 'contract-player');
+  for (const column of RESULT_OPTIONAL) expect(nullableColumns(db, 'test_results'), `test_results.${column}`).toContain(column);
+
+  // Behaviour on all three tables: NOT NULL, enums and bounds, JSON, uuid, foreign keys.
+  addProfile(db, { player_id: 'contract-player' });
+  const tables: [string, string[], (over: Record<string, Cell>) => void][] = [
+    ['player_profiles', PROFILE_REQUIRED, (over) => addProfile(db, { player_id: 'x', ...over })],
+    ['test_results', RESULT_REQUIRED, (over) => addResult(db, { player_id: 'contract-player', ...over })],
+    ['roadmaps', ROADMAP_REQUIRED, (over) => addRoadmap(db, { player_id: 'contract-player', ...over })],
+  ];
+  for (const [table, required, insert] of tables) {
+    for (const column of required) {
+      expect(thrown(() => insert({ [column]: null })).message, `${table}.${column}`).toMatch(
+        new RegExp(`NOT NULL constraint failed: ${table}\\.${column}\\b`),
+      );
+    }
+  }
+  expect(thrown(() => addProfile(db, { player_id: 'x', locale: 'de' })).message).toMatch(/CHECK constraint failed: locale IN/);
+  expect(thrown(() => addProfile(db, { player_id: 'x', minutes_per_session: 25 })).message).toMatch(/CHECK constraint failed: minutes_per_session IN/);
+  expect(thrown(() => addProfile(db, { player_id: 'x', days_per_week: 7 })).message).toMatch(/CHECK constraint failed: days_per_week BETWEEN/);
+  expect(thrown(() => addProfile(db, { player_id: 'x', age: AGE_MAX + 1 })).message).toMatch(/CHECK constraint failed: age BETWEEN/);
+  expect(thrown(() => addResult(db, { player_id: 'contract-player', skipped: 2, client_uuid: uuid(50) })).message).toMatch(/CHECK constraint failed: skipped IN/);
+  expect(thrown(() => addRoadmap(db, { player_id: 'contract-player', json: 'not json' })).message).toMatch(/CHECK constraint failed: json_valid\(json\)/);
+  expect(thrown(() => addResult(db, { player_id: 'ghost', client_uuid: uuid(51) })).message).toMatch(/FOREIGN KEY constraint failed/);
+  expect(thrown(() => addRoadmap(db, { player_id: 'ghost' })).message).toMatch(/FOREIGN KEY constraint failed/);
+  addResult(db, { player_id: 'contract-player', client_uuid: uuid(52) });
+  expect(thrown(() => addResult(db, { player_id: 'contract-player', client_uuid: uuid(52) })).message).toMatch(/UNIQUE constraint failed: test_results\.client_uuid/);
+  db.run(`DELETE FROM test_results WHERE player_id = 'contract-player'`);
   db.run(`DELETE FROM player_profiles WHERE player_id = 'contract-player'`);
-  expect(count(db, 'test_results', `player_id = 'contract-player'`)).toBe(0);
-  expect(count(db, 'roadmaps', `player_id = 'contract-player'`)).toBe(0);
+
+  // Cascade to both child tables.
+  seedPlayer(db, 'cascade-player');
+  db.run(`DELETE FROM player_profiles WHERE player_id = 'cascade-player'`);
+  expect(count(db, 'test_results', `player_id = 'cascade-player'`)).toBe(0);
+  expect(count(db, 'roadmaps', `player_id = 'cascade-player'`)).toBe(0);
 }
 
 // --- the migration ---------------------------------------------------------------------------
@@ -378,6 +416,9 @@ describe('002_player: migration', () => {
     expect(header).toMatch(/rebuild/i);
     expect(header).toMatch(/no (name|email)/i);
     expect(header).toMatch(/free TEXT/i);
+    expect(header).toMatch(/z\.uuid/);
+    expect(header).toMatch(/hour 24/i);
+    expect(header).toMatch(/whitespace/i);
   });
 
   test('re-running is a no-op and the recorded checksum is the sha256 of the file bytes, unchanged', () => {
@@ -394,14 +435,48 @@ describe('002_player: migration', () => {
     expect(rows(db, 'SELECT type, name, sql FROM sqlite_master ORDER BY name')).toEqual(schemaBefore);
   });
 
-  test('a hypothetical later 003 that adds things does not break the player contract', () => {
+  test('a later 003 that ADDs COLUMNs to all three tables and adds a cascading table does not break the player contract', () => {
     const db = migrated('later');
 
     expect(one<{ v: number }>(db, 'SELECT max(version) AS v FROM schema_migrations').v).toBe(3);
+    // the columns 003 added really are there and nullable (so a closed-world "exactly these columns" pin would fail here)
+    expect(nullableColumns(db, 'player_profiles')).toContain('consent_video');
+    expect(nullableColumns(db, 'test_results')).toContain('note');
+    expect(nullableColumns(db, 'roadmaps')).toContain('note');
+
     expectPlayerContract(db);
-    addProfile(db);
-    addResult(db, { note: 'from 003' } as Record<string, Cell>);
+
+    addProfile(db, { consent_video: 1 });
+    addResult(db, { note: 'from 003' });
+    addRoadmap(db, { note: 'from 003' });
+    db.run(`INSERT INTO consents (player_id) VALUES ('p1')`);
     expect(one<{ note: string }>(db, 'SELECT note FROM test_results').note).toBe('from 003');
+    expect(one<{ consent_video: number }>(db, 'SELECT consent_video FROM player_profiles WHERE player_id = ?', 'p1').consent_video).toBe(1);
+    db.run(`DELETE FROM player_profiles WHERE player_id = 'p1'`);
+    expect(count(db, 'consents')).toBe(0); // 003's own cascade works next to 002's
+    expect(count(db, 'test_results')).toBe(0);
+    expect(count(db, 'roadmaps')).toBe(0);
+  });
+
+  test('on the 002 file alone the three tables have exactly the contract columns, nullability, foreign keys and no extra unique index', () => {
+    const db = migrated('pair');
+
+    for (const [table, types] of Object.entries(COLUMN_TYPES)) {
+      const columns = rows<{ name: string }>(db, `SELECT name FROM pragma_table_info('${table}')`).map((r) => r.name);
+      expect(columns.sort(), table).toEqual(Object.keys(types).sort());
+    }
+    expect(nullableColumns(db, 'player_profiles')).toEqual([]);
+    expect(nullableColumns(db, 'roadmaps')).toEqual([]);
+    expect(nullableColumns(db, 'test_results').sort()).toEqual([...RESULT_OPTIONAL].sort());
+    for (const table of ['test_results', 'roadmaps']) {
+      const fks = rows<Record<string, unknown>>(db, `SELECT * FROM pragma_foreign_key_list('${table}')`);
+      expect(fks, table).toHaveLength(1);
+      expect(fks[0]).toMatchObject({ table: 'player_profiles', from: 'player_id', to: 'player_id', on_delete: 'CASCADE', on_update: 'CASCADE' });
+    }
+    expect(rows(db, `SELECT name FROM pragma_index_list('roadmaps') WHERE "unique" = 1 AND origin <> 'pk'`)).toEqual([]);
+    addProfile(db);
+    const row = one<Record<string, unknown>>(db, 'SELECT * FROM player_profiles');
+    expect(Object.keys(row).sort()).toEqual([...PROFILE_REQUIRED].sort());
   });
 
   test('the real schema passes the contract (every enum/CHECK/STRICT/NOT NULL assertion runs against the full current schema)', () => {
@@ -487,15 +562,13 @@ describe('002_player: STRICT typing', () => {
 });
 
 describe('002_player: required columns are NOT NULL', () => {
-  test('PRAGMA table_info marks every contract-required column NOT NULL and every optional one nullable', () => {
+  test('PRAGMA table_info marks every contract-required column NOT NULL and every optional one nullable (positive pins)', () => {
     const db = migrated('all');
 
     expect(notNullColumns(db, 'player_profiles')).toEqual(expect.arrayContaining(PROFILE_REQUIRED));
     expect(notNullColumns(db, 'test_results')).toEqual(expect.arrayContaining(RESULT_REQUIRED));
     expect(notNullColumns(db, 'roadmaps')).toEqual(expect.arrayContaining(ROADMAP_REQUIRED));
-    expect(nullableColumns(db, 'test_results').sort()).toEqual([...RESULT_OPTIONAL].sort());
-    expect(nullableColumns(db, 'player_profiles')).toEqual([]);
-    expect(nullableColumns(db, 'roadmaps')).toEqual([]);
+    expect(nullableColumns(db, 'test_results')).toEqual(expect.arrayContaining(RESULT_OPTIONAL));
   });
 
   test('inserting NULL into any required column is rejected as NOT NULL, on all three tables', () => {
@@ -601,25 +674,40 @@ describe('002_player: CHECK lists and bounds mirror the contract', () => {
     }
   });
 
-  test('level, goal, equipment and space take every contract value (they are free TEXT on purpose) but never blank', () => {
+  test('level, goal, equipment and space take every contract value (they are free TEXT on purpose)', () => {
     const db = migrated('all');
     let n = 0;
     for (const level of EXPERIENCE_LEVELS) addProfile(db, { player_id: `lv-${n++}`, level });
     for (const goal of GOALS) addProfile(db, { player_id: `go-${n++}`, goal });
     for (const equipment of EQUIPMENT) addProfile(db, { player_id: `eq-${n++}`, equipment });
     for (const space of SPACES) addProfile(db, { player_id: `sp-${n++}`, space });
-    expect(count(db, 'player_profiles')).toBe(n);
-
-    for (const column of ['level', 'goal', 'equipment', 'space']) {
-      expect(thrown(() => addProfile(db, { player_id: 'blank', [column]: '' })).message, column).toMatch(
-        new RegExp(`CHECK constraint failed: ${column} <> ''`),
-      );
-    }
+    addProfile(db, { player_id: 'inner space', level: 'a b' }); // blank means nothing but whitespace, not "has a space"
+    expect(count(db, 'player_profiles')).toBe(n + 1);
   });
 
-  test('player_id must be non-blank', () => {
+  const BLANKS = ['', ' ', '   ', '\t', '\n', '\r', '\r\n', ' \t\n ', '\t\t'];
+
+  test('level, goal, equipment and space are never blank: empty, spaces, tab, newline and carriage return are all refused', () => {
     const db = migrated('all');
-    expect(thrown(() => addProfile(db, { player_id: '' })).message).toMatch(/CHECK constraint failed: player_id <> ''/);
+
+    for (const column of ['level', 'goal', 'equipment', 'space']) {
+      for (const blank of BLANKS) {
+        expect(thrown(() => addProfile(db, { player_id: 'blank', [column]: blank })).message, `${column}=${JSON.stringify(blank)}`).toMatch(
+          new RegExp(`CHECK constraint failed: trim\\(${column}, `),
+        );
+      }
+    }
+    expect(count(db, 'player_profiles')).toBe(0);
+  });
+
+  test('player_id is never blank: empty, spaces, tab, newline and carriage return are all refused', () => {
+    const db = migrated('all');
+
+    for (const blank of BLANKS) {
+      expect(thrown(() => addProfile(db, { player_id: blank })).message, JSON.stringify(blank)).toMatch(/CHECK constraint failed: trim\(player_id, /);
+    }
+    addProfile(db, { player_id: 'auth-user-abc123' });
+    expect(count(db, 'player_profiles')).toBe(1);
   });
 });
 
@@ -632,8 +720,9 @@ describe('002_player: foreign keys and cascade', () => {
 
     for (const table of ['test_results', 'roadmaps']) {
       const fks = rows<Record<string, unknown>>(db, `SELECT * FROM pragma_foreign_key_list('${table}')`);
-      expect(fks, table).toHaveLength(1);
-      expect(fks[0]).toMatchObject({ table: 'player_profiles', from: 'player_id', to: 'player_id', on_delete: 'CASCADE' });
+      expect(fks, table).toContainEqual(
+        expect.objectContaining({ table: 'player_profiles', from: 'player_id', to: 'player_id', on_delete: 'CASCADE' }),
+      );
     }
   });
 
@@ -773,6 +862,70 @@ describe('002_player: test_results replay key', () => {
     expect(count(db, 'test_results')).toBe(1);
   });
 
+  test('hyphens are only allowed at positions 9, 14, 19 and 24: no all-hyphen string, no hyphen in a hex position', () => {
+    const db = migrated('all');
+    addProfile(db);
+    const bad = [
+      '-'.repeat(36),
+      '00000000-0000-4000-8000-00000000000-', // hyphen as the last hex digit
+      '-0000000-0000-4000-8000-000000000001', // hyphen as the first hex digit
+      '0000000-0-000-4000-8000-000000000001', // hyphen at position 10, none at 9
+      '00000000-0000-4000-8000-0000-0000001', // group boundary moved
+      '00000000-0000-4-00-8000-000000000001', // hyphen inside the version group
+      '00000000-0000-4000-80-0-000000000001',
+      '000000000-000-4000-8000-000000000001',
+      '00000000_0000_4000_8000_000000000001', // wrong separator
+    ];
+    for (const client_uuid of bad) {
+      expect(client_uuid).toHaveLength(36);
+      expect(thrown(() => addResult(db, { client_uuid })).message, client_uuid).toMatch(/CHECK constraint failed/);
+    }
+    expect(count(db, 'test_results')).toBe(0);
+    addResult(db, { client_uuid: '0190f1c2-7a3b-4c5d-8e9f-0a1b2c3d4e5f' }); // a real v4 is still fine
+  });
+
+  test('the shape mirrors z.uuid() (ClientUuid) exactly on lower-case input: version 1-8, variant 8/9/a/b, nil and max accepted', () => {
+    const db = migrated('all');
+    addProfile(db);
+    const candidates = [
+      '00000000-0000-0000-0000-000000000000', // nil: Zod accepts
+      'ffffffff-ffff-ffff-ffff-ffffffffffff', // max: Zod accepts
+      '00000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-9000-000000000001',
+      '00000000-0000-4000-a000-000000000001',
+      '00000000-0000-4000-b000-000000000001',
+      '00000000-0000-4000-c000-000000000001', // variant c: Zod refuses
+      '00000000-0000-4000-0000-000000000001', // variant 0: Zod refuses
+      '00000000-0000-4000-f000-000000000001',
+      '00000000-0000-0000-8000-000000000001', // version 0: Zod refuses
+      '00000000-0000-9000-8000-000000000001', // version 9: Zod refuses
+      '00000000-0000-f000-8000-000000000001',
+      '00000000-0000-0000-0000-000000000001',
+      '00000000-0000-ffff-ffff-ffffffffffff',
+      '0190f1c2-7a3b-7c5d-8e9f-0a1b2c3d4e5f', // v7
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((v) => `00000000-0000-${v}000-8000-000000000001`),
+    ];
+
+    candidates.forEach((client_uuid, i) => {
+      const zodAccepts = ClientUuid.safeParse(client_uuid).success;
+      const dbAccepts = (() => {
+        try {
+          addResult(db, { client_uuid });
+          return true;
+        } catch (e) {
+          expect((e as Error).message, client_uuid).toMatch(/CHECK constraint failed/);
+          return false;
+        }
+      })();
+      expect(dbAccepts, `${client_uuid} (candidate ${i})`).toBe(zodAccepts);
+      // what Zod hands the server is what the column stores: the lower-cased form
+      if (zodAccepts) expect(ClientUuid.parse(client_uuid)).toBe(client_uuid);
+    });
+    // upper case parses in Zod (it is lower-cased there) but is refused raw: the server must store the parsed form
+    expect(ClientUuid.parse('0190F1C2-7A3B-4C5D-8E9F-0A1B2C3D4E5F')).toBe('0190f1c2-7a3b-4c5d-8e9f-0a1b2c3d4e5f');
+    expect(thrown(() => addResult(db, { client_uuid: '0190F1C2-7A3B-4C5D-8E9F-0A1B2C3D4E5F' })).message).toMatch(/CHECK constraint failed/);
+  });
+
   test('the same player can hold many results for one test (history); only client_uuid is unique', () => {
     const db = migrated('all');
     addProfile(db);
@@ -784,7 +937,8 @@ describe('002_player: test_results replay key', () => {
     const db = migrated('all');
     addProfile(db);
 
-    expect(rows(db, `SELECT * FROM pragma_foreign_key_list('test_results')`).map((r) => (r as { table: string }).table)).toEqual(['player_profiles']);
+    const alone = migrated('pair'); // on the 002 file alone the only FK is to player_profiles
+    expect(rows(alone, `SELECT * FROM pragma_foreign_key_list('test_results')`).map((r) => (r as { table: string }).table)).toEqual(['player_profiles']);
     addResult(db, { test_slug: 'a-test-no-seed-knows-about', client_uuid: uuid(1) }); // not in skill_tests
     for (const bad of ['', 'has space', 'a/b', 'x'.repeat(129)]) {
       expect(thrown(() => addResult(db, { test_slug: bad, client_uuid: uuid(2) })).message, `"${bad.slice(0, 20)}"`).toMatch(/CHECK constraint failed/);
@@ -846,7 +1000,8 @@ describe('002_player: roadmaps', () => {
     const ids = rows<{ id: number }>(db, 'SELECT id FROM roadmaps ORDER BY id').map((r) => r.id);
     expect(ids).toHaveLength(3);
     expect(ids).toEqual([...ids].sort((a, b) => a - b));
-    const uniques = rows<{ name: string }>(db, `SELECT name FROM pragma_index_list('roadmaps') WHERE "unique" = 1 AND origin <> 'pk'`);
+    const alone = migrated('pair'); // 002's own definition has no unique index besides the primary key
+    const uniques = rows<{ name: string }>(alone, `SELECT name FROM pragma_index_list('roadmaps') WHERE "unique" = 1 AND origin <> 'pk'`);
     expect(uniques).toEqual([]);
   });
 
@@ -868,7 +1023,12 @@ describe('002_player: roadmaps', () => {
 
 describe('002_player: timestamps are canonical UTC text so that text order is time order', () => {
   const GOOD = '2026-01-01T00:00:00.000Z';
+  const ALSO_GOOD = ['2026-01-01T23:59:59.999Z', '2026-12-31T23:59:59.999Z', '2026-02-28T12:30:45.001Z'];
   const BAD = [
+    '2026-01-01T24:00:00.000Z', // hour 24: strftime round-trips it, Zod refuses it, and it is the same instant as 01-02T00:00
+    '2026-01-01T24:59:59.999Z',
+    '2026-01-01T00:60:00.000Z',
+    '2026-01-01T00:00:60.000Z',
     '2026-01-01T00:00:00Z', // no milliseconds
     '2026-01-01T05:00:00.000+05:00', // offset, not UTC
     '2026-01-01 00:00:00.000Z', // space instead of T
@@ -891,9 +1051,14 @@ describe('002_player: timestamps are canonical UTC text so that text order is ti
 
     cases.forEach(([name, insert], i) => {
       const column = name.split('.')[1] as string;
-      expect(() => insert(GOOD, 100 + i), name).not.toThrow();
+      expect(() => insert(GOOD, 100 + i * 10), name).not.toThrow();
+      expect(Timestamp.safeParse('2026-01-01T24:00:00.000Z').success).toBe(false); // the contract agrees hour 24 is not a time
+      ALSO_GOOD.forEach((good, k) => {
+        expect(() => insert(good, 101 + i * 10 + k), `${name}=${good}`).not.toThrow();
+        expect(Timestamp.safeParse(good).success, good).toBe(true);
+      });
       BAD.forEach((bad, j) => {
-        const err = thrown(() => insert(bad, 200 + i * 20 + j));
+        const err = thrown(() => insert(bad, 300 + i * 20 + j));
         expect(err.message, `${name}=${JSON.stringify(bad)}`).toMatch(new RegExp(`CHECK constraint failed: strftime\\(.*\\) IS ${column}`));
       });
     });
@@ -998,7 +1163,7 @@ describe('002_player: the progress queries the contracts imply are index lookups
 // --- the schema can hold what the contracts serve --------------------------------------------------------------
 
 describe('002_player: stores contract records and reads them back through the contract parsers', () => {
-  test('a PlayerProfile round-trips: the row maps to exactly the strict request shape (no extra key) and the view', () => {
+  test('a PlayerProfile round-trips: the row maps to the strict request shape and the view', () => {
     const db = migrated('all');
     addProfile(db);
 
@@ -1017,8 +1182,8 @@ describe('002_player: stores contract records and reads them back through the co
 
     expect(PlayerProfile.parse(fromRow)).toEqual(PROFILE);
     expect(PlayerProfileView.parse(fromRow)).toEqual(PROFILE);
-    // the row carries the contract fields plus its own key and timestamps, and nothing else
-    expect(Object.keys(r).sort()).toEqual([...PROFILE_REQUIRED].sort());
+    // the row carries the contract fields plus its own key and timestamps (exact shape: see the 002-alone test)
+    expect(Object.keys(r)).toEqual(expect.arrayContaining(PROFILE_REQUIRED));
   });
 
   test('a baseline result, a skipped one (value 0) and a retest result round-trip through BaselineResult and TestResult', () => {
