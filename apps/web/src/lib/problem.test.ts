@@ -210,7 +210,7 @@ describe('describeProblem: every generic status maps to its localized message in
       const view = describeProblem(error, translators.en);
       expect(view.kind).toBe(kind);
       expect(view.status).toBe(status);
-      expect(MESSAGE_KEYS[kind]).toBe(`problem:${key}`);
+      expect<string>(MESSAGE_KEYS[kind]).toBe(`problem:${key}`);
     });
 
     test.each([...LOCALES])('in %s: formMessage and toast carry that locale\'s text for the key', (locale) => {
@@ -649,7 +649,7 @@ describe('real server output (apps/api/src/http/problem.ts) round-trips into fie
     const view = describeProblem(error, translators.en);
     expect(view.kind).toBe('validation');
     expect(Object.keys(view.fieldErrors)).toEqual(['profile.age', 'items.0.name', 'a/b', 'c~d']);
-    const message = (path: (string | number)[]) => result.error.issues.find((issue) => issue.path.join('.') === path.join('.'))?.message;
+    const message = (path: (string | number)[]) => result.error.issues.find((issue) => issue.path.join('.') === path.join('.'))?.message ?? '(no such issue)';
     expect(view.fieldErrors['profile.age']).toEqual([message(['profile', 'age'])]);
     expect(view.fieldErrors['items.0.name']).toEqual([message(['items', 0, 'name'])]);
     expect(view.formMessage).toBe(text('en', 'validation'));
