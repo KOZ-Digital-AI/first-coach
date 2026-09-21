@@ -63,12 +63,16 @@ const ROADMAP: Roadmap = {
   tracks: [
     { skill: 'ball-mastery', level: 2, source: 'test' },
     { skill: 'dribbling', level: 3, source: 'self' },
+    { skill: 'weak-foot', level: 1, source: 'self' },
   ],
   goal: 'control',
   weeks: 4,
   sessionsPerWeek: 3,
   minutesPerSession: 20,
-  focus: [{ skill: 'ball-mastery', level: 2, targetLevel: 3, reason: 'goal' }],
+  focus: [
+    { skill: 'ball-mastery', level: 2, targetLevel: 3, reason: 'goal' },
+    { skill: 'weak-foot', level: 1, targetLevel: 2, reason: 'weakest' },
+  ],
 };
 const RECOVERED = RecoverResponse.parse({ profile: PROFILE, roadmap: ROADMAP });
 
@@ -657,8 +661,9 @@ describe('languages', () => {
     const m = messages[locale];
     respond = () => problem(422);
     const view = await renderRecover({ locale });
-    await view.user.click(codeInput());
-    await view.user.type(codeInput(), CODE);
+    const input = screen.getByRole('textbox', { name: m.label });
+    await view.user.click(input);
+    await view.user.type(input, CODE);
     await view.user.click(screen.getByRole('button', { name: m.submit }));
     expect((await screen.findByRole('alert')).textContent).toContain(m.wrong);
 
