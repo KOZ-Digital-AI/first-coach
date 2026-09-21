@@ -10,6 +10,8 @@ set -euo pipefail
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 # a hermetic run: nothing from the caller's environment may change the topology under test
 unset E2E_WEB E2E_WEB_DIST E2E_API_PORT E2E_API_ENTRY E2E_KEEP E2E_ARTIFACTS_DIR E2E_ALLOW_BLOCKED E2E_BOOT_TIMEOUT
+# the API's fail-closed auth reads these; the harness owns them for its API child (see README)
+unset NODE_ENV BETTER_AUTH_URL BETTER_AUTH_SECRET BETTER_AUTH_TRUSTED_ORIGINS
 # shellcheck source=lib.sh
 source "$HERE/lib.sh"
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/e2e-libtest.XXXXXX")"
@@ -57,10 +59,40 @@ run_child() {
   CHILD_RC=$rc
 }
 
+# auth_probe <label prefix>: proves the running stack's Better Auth accepts the harness origin. Self-contained
+# (only lib.sh helpers), so a child shell can source it too. Uses API_URL as the Origin, as a browser would.
+cat >"$WORK/auth-probe.sh" <<'PROBE'
+auth_probe() {
+  local p=$1 out status cookie wrong right
+  out=$(curl -s -i --max-time "$E2E_HTTP_TIMEOUT" -X POST "$API_URL/api/auth/sign-in/anonymous" \
+    -H "Origin: $API_URL" -H 'Content-Type: application/json' -d '{}') || true
+  status=$(head -n1 <<<"$out" | tr -d '\r' | cut -d' ' -f2)
+  cookie=$(grep -i '^set-cookie: better-auth.session_token=' <<<"$out" | head -n1 | sed -E 's/^[^:]*: *([^;]*);.*/\1/' | tr -d '\r') || true
+  assert_eq "$status" 200 "$p: anonymous sign-in with the harness Origin returns 200" || true
+  assert_eq "$([ -n "$cookie" ] && echo yes || echo no)" yes "$p: the sign-in sets a better-auth.session_token cookie" || true
+  wrong=$(curl -s -o /dev/null -w '%{http_code}' --max-time "$E2E_HTTP_TIMEOUT" -X POST "$API_URL/api/auth/sign-out" \
+    -H 'Origin: http://127.0.0.1:1' -H "Cookie: $cookie" -H 'Content-Type: application/json' -d '{}') || true
+  assert_eq "$wrong" 403 "$p: a cookie with a WRONG Origin is refused 403 (the origin check is really on)" || true
+  right=$(curl -s -o /dev/null -w '%{http_code}' --max-time "$E2E_HTTP_TIMEOUT" -X POST "$API_URL/api/auth/sign-out" \
+    -H "Origin: $API_URL" -H "Cookie: $cookie" -H 'Content-Type: application/json' -d '{}') || true
+  assert_eq "$right" 200 "$p: a cookie with the harness Origin is accepted (BETTER_AUTH_URL == the harness origin)" || true
+}
+PROBE
+# shellcheck source=/dev/null
+source "$WORK/auth-probe.sh"
+
 # --- 0. the port picker ------------------------------------------------------------------
 FREE=$(_e2e_free_port)
 assert_eq "$(yes_if test "$FREE" -ge 1024)" yes "the free port is unprivileged ($FREE)"
 assert_eq "$(yes_if port_open "$FREE")" no "the free port is really free"
+
+# --- 0b. fail-closed auth under the harness, API-only topology; a caller's NODE_ENV / BETTER_AUTH_URL cannot break it --------
+# The child exports hostile values (production, a wrong URL) and no secret: the harness must still boot the API
+# (NODE_ENV=development, BETTER_AUTH_URL=<its own origin>) and Better Auth must accept the harness origin.
+run_child "export NODE_ENV=production BETTER_AUTH_URL=http://127.0.0.1:9; unset BETTER_AUTH_SECRET; . '$WORK/auth-probe.sh'; E2E_WEB=off start_stack && auth_probe 'web=off'"
+[ "$CHILD_RC" -eq 0 ] || printf '%s\n' "$CHILD_OUT" >&2
+assert_eq "$CHILD_RC|$(yes_if grep -Eq '^--- e2e summary: 4 passed, 0 failed, 0 blocked, web=off -- PASS' <<<"$CHILD_OUT")" "0|yes" "web=off: the API boots under fail-closed auth and accepts the harness origin, whatever NODE_ENV/BETTER_AUTH_URL the caller had" || true
+assert_eq "$(yes_if contains "$CHILD_OUT" 'dev-only-better-auth-secret')" no "web=off: no secret is printed" || true
 
 # --- 1. start_stack: the real API and the real built web, one origin --------------------------
 start_stack
@@ -83,7 +115,11 @@ if [ -r "/proc/$API_PID/environ" ]; then
   assert_eq "$(yes_if grep -Fxq "APP_DB_PATH=$DB_PATH" <<<"$API_ENV")" yes "the API got the temp APP_DB_PATH"
   assert_eq "$(yes_if grep -Fxq "MEDIA_DIR=$MEDIA_DIR" <<<"$API_ENV")" yes "the API got the temp MEDIA_DIR"
   assert_eq "$(yes_if grep -Fxq "WEB_DIST=$DIST" <<<"$API_ENV")" yes "the API got the built dist as WEB_DIST"
+  assert_eq "$(yes_if grep -Fxq "NODE_ENV=development" <<<"$API_ENV")" yes "the API runs with NODE_ENV=development (fail-closed auth boots without a secret)"
+  assert_eq "$(yes_if grep -Fxq "BETTER_AUTH_URL=$API_URL" <<<"$API_ENV")" yes "the API got BETTER_AUTH_URL == the origin the harness uses ($API_URL)"
+  assert_eq "$(yes_if grep -q '^BETTER_AUTH_SECRET=' <<<"$API_ENV")" no "the harness never sets BETTER_AUTH_SECRET"
 fi
+auth_probe 'web=api'
 
 # --- 2. assert_api: positive ---------------------------------------------------------------
 assert_api /health '.ok == true'
