@@ -1,0 +1,762 @@
+{
+  "sport": "football",
+  "track": "weak-foot",
+  "drills": [
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-air-swings",
+      "title": {
+        "kk": "Ауада сермеу",
+        "ru": "Махи в воздухе",
+        "en": "Air swings"
+      },
+      "goal": {
+        "kk": "Күшті аяғыңның үстінде берік тұрып, әлсіз аяғыңды баяу сермеп тұр, сонда әлсіз аяғың жұмсақ әрі бір қалыппен қозғалуды үйренеді.",
+        "ru": "Крепко встань на сильную ногу и медленно качай слабую, чтобы слабая нога училась двигаться плавно.",
+        "en": "Stand steady on your stronger foot and swing your weaker foot slowly, so your weaker leg learns to move smoothly."
+      },
+      "instructions": {
+        "kk": "1. Бос 3 × 3 метрлік алаңда тұрып, қолыңды қанаттай етіп екі жаққа жай.\n2. Күшті аяғыңның үстінде тізеңді сәл бүгіп тұр да, көзіңді алдыңдағы бір нүктеге қада.\n3. Әлсіз аяғыңды төмен әрі баяу, жұмсақ маятник сияқты алға-артқа он рет серме.\n4. Одан кейін оны алдыңда оңға-солға он рет сермеп, аяғыңның ұшымен ауада кішкентай шеңбер сыз.\n5. Аяғыңды жерге қой, аяқтарыңды сілкіп ал да, тағы бір рет қайтала. Шайқалсаң, аяғыңды жерге қойып, қайта баста.",
+        "ru": "1. Встань в свободном месте 3 на 3 метра и разведи руки в стороны, как крылья.\n2. Встань на сильную ногу, слегка согни колено и смотри на одну точку перед собой.\n3. Медленно и низко качай слабую ногу вперёд и назад десять раз, как мягкий маятник.\n4. Потом десять раз покачай её из стороны в сторону перед собой и нарисуй носком в воздухе маленький круг.\n5. Поставь ногу на пол, встряхни ноги и повтори ещё раз. Если качнуло, просто поставь ногу и начни заново.",
+        "en": "1. Stand in a free 3 by 3 metre space and hold your arms out to the sides like wings.\n2. Balance on your stronger foot with a slightly bent knee and look at one spot in front of you.\n3. Swing your weaker foot forward and back ten times, low and slow, like a gentle pendulum.\n4. Swing it side to side in front of you ten times, then draw a small circle in the air with your toes.\n5. Put your foot down, shake out your legs and repeat once more. If you wobble, put your foot down and start again."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Аяғыңды биік әрі жылдам сермейсің, сондықтан денең бүйірге ауып кетеді.",
+          "ru": "Ты машешь ногой высоко и быстро, и тело заваливается набок.",
+          "en": "You swing your leg high and fast and your body tips to the side."
+        },
+        {
+          "kk": "Тірек аяғыңның тізесін түзу қатырып тұрасың да, тобығың шайқалады.",
+          "ru": "Ты выпрямляешь опорное колено до упора, и голеностоп шатается.",
+          "en": "You lock your standing knee straight and your ankle wobbles."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Құрғақ, тегіс еденде жалаң аяқ немесе табаны тайғанамайтын аяқ киіммен тұр, тайғақ едендегі шұлықпен тұрма.",
+          "ru": "Стой на сухом ровном полу босиком или в обуви с нескользкой подошвой, но не в носках на скользком полу.",
+          "en": "Stand on a dry, flat floor in bare feet or shoes with grip, never in socks on a slippery floor."
+        },
+        {
+          "kk": "Алдымен жылын: орныңда жиырма қадам жүріп, тобығыңды баяу айналдыр.",
+          "ru": "Сначала разомнись: пройди на месте двадцать шагов и медленно покрути стопами.",
+          "en": "Warm up first: march on the spot for twenty steps and roll your ankles slowly."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-sole-drag"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "nothing",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-sole-drag",
+      "title": {
+        "kk": "Табанмен сүйреу",
+        "ru": "Протяжка подошвой",
+        "en": "Sole drag"
+      },
+      "goal": {
+        "kk": "Күшті аяғың қозғалмай тұрғанда, әлсіз аяғыңның табанымен допты қысқа сызықпен алға-артқа сүйреп, доптың табаныңның астында тұрғанын сезін.",
+        "ru": "Почувствуй мяч под подошвой слабой ноги, ведя его туда и обратно по короткой линии, пока сильная нога стоит неподвижно.",
+        "en": "Feel the ball under the sole of your weaker foot as you drag it back and forth in a short line while your stronger foot stands still."
+      },
+      "instructions": {
+        "kk": "1. Допты 3 × 3 метрлік алаңның ортасындағы еденге қой.\n2. Оның қасында күшті аяғыңның үстінде тізеңді сәл бүгіп тұр да, әлсіз аяғыңның табанын доптың үстіне жеңіл қой.\n3. Допты өзіңе қарай баяу сүйреп, содан кейін қайта алға итер. Әр сүйреу бір кішкентай қадамдай болсын, барлығы он рет.\n4. Аяқ ұшыңды жоғары ұста, әлсіз аяғың жеңіл болсын: допты ешқашан дене салмағыңмен баспа.\n5. Бірнеше рет тыныс алып демал, сосын допты бүйірге қарай сүйреп, қайта әкел, бұл да он рет.",
+        "ru": "1. Положи мяч на пол в середине места 3 на 3 метра.\n2. Встань рядом на сильную ногу с чуть согнутым коленом и легко поставь подошву слабой ноги на мяч сверху.\n3. Медленно потяни мяч к себе, а потом снова толкни вперёд. Каждое движение длиной в один маленький шаг, всего десять раз.\n4. Держи носок приподнятым, а слабую ногу лёгкой: никогда не дави на мяч весом тела.\n5. Отдохни несколько вдохов, потом десять раз потяни мяч в сторону и верни обратно.",
+        "en": "1. Put the ball on the floor in the middle of your 3 by 3 metre space.\n2. Stand beside it on your stronger foot with a slightly bent knee and rest the sole of your weaker foot lightly on top of the ball.\n3. Drag the ball slowly towards you, then push it forward again. Make each drag one small step long and do ten drags.\n4. Keep your toes up and your weaker foot light, so you never press down on the ball with your weight.\n5. Rest for a few breaths, then drag the ball to the side and back ten times."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допты дене салмағыңмен басасың да, ол сырғып шығып кетеді.",
+          "ru": "Ты давишь на мяч весом тела, и он выскакивает.",
+          "en": "You press down on the ball with your body weight and it pops away."
+        },
+        {
+          "kk": "Тірек аяғыңның ұшымен тұрып, шайқалып кетесің.",
+          "ru": "Ты стоишь на носке опорной ноги и качаешься.",
+          "en": "You stand on the toes of your standing foot and wobble."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допқа салмағыңды салма: ауыр аяқтың астындағы домалақ доп тобығыңды бұрап жіберуі мүмкін.",
+          "ru": "Не опирайся весом на мяч: катящийся мяч под тяжёлой ногой может подвернуть голеностоп.",
+          "en": "Never lean your weight on the ball: a rolling ball under a heavy foot can twist your ankle."
+        },
+        {
+          "kk": "Алдымен жылын: орныңда он рет баяу тізеңді көтер.",
+          "ru": "Сначала разомнись: сделай десять медленных подъёмов колена на месте.",
+          "en": "Warm up first: do ten slow knee lifts on the spot."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-fifty-touches",
+        "weak-foot-roll-and-stop"
+      ],
+      "regressionSlugs": [
+        "weak-foot-air-swings"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-fifty-touches",
+      "title": {
+        "kk": "Әлсіз аяқпен елу жанасу",
+        "ru": "Пятьдесят касаний слабой ногой",
+        "en": "Fifty weaker-foot touches"
+      },
+      "goal": {
+        "kk": "Тек әлсіз аяғыңмен елу баяу әрі бақыланатын жанасу жаса және оларды дауыстап санап отыр: әр жанасудың мақсаты болсын.",
+        "ru": "Сделай пятьдесят медленных контролируемых касаний только слабой ногой и считай их вслух, чтобы у каждого касания была цель.",
+        "en": "Make fifty slow, controlled touches with only your weaker foot and count them out loud, so every touch has a purpose."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңда еденде үш үлкен қадамдай сызық таңда немесе оны көз алдыңа елестет де, допты сызықтың бір ұшына қой.\n2. Доптың артында аяқтарыңды жамбас еніндей ашып, тізеңді сәл бүгіп тұр.\n3. Әлсіз аяғыңның ішкі жағымен допты кішкентай қадамдай алға итер, соңынан жүріп, әр жанасуды дауыстап санап отыр.\n4. Сызықтың соңында допты әлсіз аяғыңның табанымен тоқтат, күшті аяғың қасында тегіс әрі берік тұрсын, сосын бұрылып, допты кері итер.\n5. Елу жанасуға жеткенше жалғастыр, әр он жанасудан кейін бірнеше рет тыныс алып демал.",
+        "ru": "1. Выбери на полу линию длиной в три больших шага в своём месте 3 на 3 метра или представь её и положи мяч в начало.\n2. Встань за мячом, ноги на ширине бёдер, колени чуть согнуты.\n3. Подтолкни мяч вперёд на маленький шаг внутренней стороной слабой ноги, иди за ним и считай каждое касание вслух.\n4. В конце линии останови мяч подошвой слабой ноги, а сильную ногу держи рядом ровно и твёрдо, потом развернись и подтолкни мяч обратно.\n5. Продолжай, пока не наберёшь пятьдесят касаний, и после каждых десяти отдыхай несколько вдохов.",
+        "en": "1. Pick a line on the floor about three big steps long in your 3 by 3 metre space, or imagine one, and put the ball at one end.\n2. Stand behind the ball with your feet hip-width apart and your knees a little bent.\n3. Nudge the ball forward a small step with the inside of your weaker foot, walk after it and count each touch out loud.\n4. At the end of the line stop the ball with the sole of your weaker foot, keeping your stronger foot flat and steady beside it, then turn and nudge the ball back.\n5. Keep going until you reach fifty touches, and rest for a few breaths after every ten."
+      },
+      "dose": {
+        "reps": 50,
+        "sets": 1
+      },
+      "mistakes": [
+        {
+          "kk": "Доп алыстап кетісімен күшті аяғыңа ауысып кетесің.",
+          "ru": "Как только мяч укатывается, ты переключаешься на сильную ногу.",
+          "en": "You switch to your stronger foot as soon as the ball rolls away."
+        },
+        {
+          "kk": "Допты итерудің орнына ұрасың, сондықтан ол алысқа кетеді.",
+          "ru": "Ты бьёшь по мячу вместо того, чтобы подталкивать его, и он убегает далеко.",
+          "en": "You hit the ball instead of nudging it, so it runs far from you."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Әр жанасуды кішкентай жаса: тым алысқа итерілген допты қуып, сүрініп кетуің мүмкін.",
+          "ru": "Делай каждое касание маленьким: слишком далеко толкнув мяч, ты будешь спешить за ним и можешь споткнуться.",
+          "en": "Keep every touch small: a ball nudged too far makes you rush after it and trip."
+        },
+        {
+          "kk": "Алдымен жылын: орныңда жиырма баяу қадам жасап, тобығыңды жайлап айналдыр.",
+          "ru": "Сначала разомнись: сделай двадцать медленных шагов на месте и мягко покрути стопами.",
+          "en": "Warm up first with twenty slow steps on the spot and gentle ankle circles."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-inside-outside-walk"
+      ],
+      "regressionSlugs": [
+        "weak-foot-sole-drag"
+      ],
+      "minutes": 5,
+      "level": 1,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-roll-and-stop",
+      "title": {
+        "kk": "Домалат та табанмен тоқтат",
+        "ru": "Прокати и останови подошвой",
+        "en": "Roll, then sole stop"
+      },
+      "goal": {
+        "kk": "Баяу домалап келе жатқан допты әлсіз аяғыңның табанымен тоқтатып, оны орнында ұста.",
+        "ru": "Останови медленно катящийся мяч подошвой слабой ноги и удержи его на месте.",
+        "en": "Stop a slowly rolling ball under the sole of your weaker foot and hold it still."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның бір жиегінде допты аяғыңның алдына қойып тұр.\n2. Допты күшті аяғыңмен жайлап итер, сонда ол еденмен баяу, екі қадамдай домалайды.\n3. Соңынан жүріп, доп баяулағанда, әлсіз аяғыңның табанын доптың үстіне жеңіл қойып, оны тоқтат.\n4. Допты екі секунд қозғалтпай ұста, аяқ ұшың жоғары, тірек тізең жұмсақ болсын.\n5. Бұрылып, кері қарай қайтала. Сегіз рет тоқтат, демал, сосын тағы сегіз рет тоқтат.",
+        "ru": "1. Встань у края места 3 на 3 метра, мяч у ног.\n2. Мягко толкни мяч сильной ногой так, чтобы он медленно покатился по полу шага на два.\n3. Иди за ним и, когда он замедлится, легко поставь подошву слабой ноги сверху и останови его.\n4. Удерживай мяч неподвижно две секунды: носок приподнят, опорное колено мягкое.\n5. Развернись и повтори в обратную сторону. Сделай восемь остановок, отдохни и сделай ещё восемь.",
+        "en": "1. Stand at one edge of your 3 by 3 metre space with the ball at your feet.\n2. Push the ball gently with your stronger foot so that it rolls slowly along the floor, about two steps.\n3. Walk after it and, as it slows down, rest the sole of your weaker foot lightly on top of it to stop it.\n4. Hold the ball still for two seconds, with your toes up and your standing knee soft.\n5. Turn around and repeat back the other way. Make eight stops, rest, then make eight more."
+      },
+      "dose": {
+        "reps": 8,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допқа басып қаласың да, ол бүйірге қарай секіріп кетеді.",
+          "ru": "Ты топаешь по мячу, и он отскакивает в сторону.",
+          "en": "You stamp on the ball and it jumps away to the side."
+        },
+        {
+          "kk": "Аяғыңды тым кеш қоясың, доп сенен өтіп кеткеннен кейін.",
+          "ru": "Ты ставишь ногу слишком поздно, когда мяч уже прокатился мимо.",
+          "en": "You put your foot down too late, after the ball has rolled past you."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допты аздап қана итер: жылдам доптың жұмсақ тоқтату қиын, ол сені асықтырады.",
+          "ru": "Толкай мяч совсем немного: быстрый мяч трудно остановить мягко, и он заставляет тебя спешить.",
+          "en": "Push the ball only a little: a fast ball is hard to stop softly and makes you rush."
+        },
+        {
+          "kk": "Алдымен жылын: алаңды аяқ ұшыңмен, сосын өкшеңмен жүріп өт.",
+          "ru": "Сначала разомнись: пройди по месту на носках, потом на пятках.",
+          "en": "Warm up first: walk across the space on tiptoes and then on your heels."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-wall-return-stop"
+      ],
+      "regressionSlugs": [
+        "weak-foot-sole-drag"
+      ],
+      "minutes": 4,
+      "level": 1,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-wall-taps",
+      "title": {
+        "kk": "Қабырғаға жұмсақ түрту",
+        "ru": "Мягкие толчки в стену",
+        "en": "Gentle wall taps"
+      },
+      "goal": {
+        "kk": "Қабырғадан екі қадам жерден допты әлсіз аяғыңның ішкі жағымен қабырғаға жұмсақ әрі түзу домалат.",
+        "ru": "Катни мяч в стену с двух шагов внутренней стороной слабой ноги, мягко и прямо.",
+        "en": "Roll the ball to the wall from two steps away with the inside of your weaker foot, softly and straight."
+      },
+      "instructions": {
+        "kk": "1. Далада немесе залда тегіс қабырға тап та, одан екі үлкен қадамдай жерде тұр, доп алдыңдағы еденде жатсын.\n2. Доптың қасында күшті аяғыңның үстінде тізеңді сәл бүгіп тұр да, әлсіз аяғыңның ішкі жағын қабырғаға қарат.\n3. Допты әлсіз аяғыңның ішкі жағымен ойыншық көлікті домалатқандай жайлап итер.\n4. Доп кері домалап келсін, оны қолыңмен тоқтатып, қайта еденге қой.\n5. Он рет итер, демал, содан кейін тағы екі рет қайтала.",
+        "ru": "1. Найди ровную стену на улице или в зале и встань в двух больших шагах от неё, мяч лежит на полу перед тобой.\n2. Встань рядом с мячом на сильную ногу с чуть согнутым коленом и направь внутреннюю сторону слабой ноги на стену.\n3. Толкни мяч внутренней стороной слабой ноги так же мягко, как катят игрушечную машинку.\n4. Дай мячу вернуться, останови его рукой и положи на место.\n5. Сделай десять толчков, отдохни и повтори ещё два раза.",
+        "en": "1. Find a smooth wall outdoors or in a hall and stand two big steps away from it, with the ball on the floor in front of you.\n2. Stand beside the ball on your stronger foot with a slightly bent knee and point the inside of your weaker foot at the wall.\n3. Push the ball with the inside of your weaker foot, as gently as rolling a toy car.\n4. Let the ball roll back, stop it with your hand and put it down again.\n5. Do ten pushes, rest for a few breaths and repeat two more times."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Допқа аяғыңның ішкі жағымен емес, ұшымен тиесің.",
+          "ru": "Ты бьёшь мяч носком, а не внутренней стороной стопы.",
+          "en": "You hit the ball with your toe instead of the inside of your foot."
+        },
+        {
+          "kk": "Аяғыңды артқа алыс тартасың, сондықтан доп қисайып кетеді.",
+          "ru": "Ты далеко отводишь ногу назад, и мяч идёт криво.",
+          "en": "You swing your leg far back and the ball goes crooked."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жұмсақ доп алып, артында терезе, есік не адам жоқ қабырғаны таңда.",
+          "ru": "Возьми мягкий мяч и выбери стену, за которой нет окон, дверей и людей.",
+          "en": "Use a soft ball and choose a wall with no windows, doors or people behind it."
+        },
+        {
+          "kk": "Алдымен жылын: отыз секунд жеңіл жүріп ал және допты жайлап итер, сонда доп баяу қайтады.",
+          "ru": "Сначала разомнись: тридцать секунд походи лёгким шагом и толкай мяч мягко, чтобы он возвращался медленно.",
+          "en": "Warm up first with thirty seconds of easy walking, and keep the pushes gentle so the ball comes back slowly."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-wall-ladder",
+        "weak-foot-wall-return-stop"
+      ],
+      "minutes": 5,
+      "level": 1,
+      "ageMin": 7,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-inside-outside-walk",
+      "title": {
+        "kk": "Ішкі және сыртқы жағымен жүру",
+        "ru": "Ходьба с касаниями изнутри и снаружи",
+        "en": "Inside and outside walk"
+      },
+      "goal": {
+        "kk": "Баяу жүріп келе жатып, допқа әлсіз аяғыңның алдымен ішкі, сосын сыртқы жағымен жанас та, допты бір қадамнан алыс жібермей ұста.",
+        "ru": "Касайся мяча внутренней, а затем внешней стороной слабой ноги, медленно идя, и держи мяч не дальше одного шага от себя.",
+        "en": "Touch the ball with the inside and then the outside of your weaker foot as you walk slowly, keeping it within one step of you."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның бір жиегінен бастап, допты алдыңа қойып, баяу жүр.\n2. Допқа әлсіз аяғыңның ішкі жағымен, сосын сол аяқтың сыртқы жағымен жанас, әр жанасудан кейін бір қадам жаса.\n3. Ырғақты сақтау үшін ішке, сыртқа, ішке, сыртқа деп сыбырлап айт.\n4. Қарсы жиекке жеткенде, күшті аяғыңның үстінде берік тұрып, допты әлсіз аяғыңның табанымен тоқтат, сосын бұрылып, кері жүр.\n5. Қырық бес секунд жаттық, демал, осылай үш рет қайтала.",
+        "ru": "1. Начни у края места 3 на 3 метра, мяч перед тобой, и иди медленно.\n2. Коснись мяча внутренней стороной слабой ноги, потом внешней стороной этой же ноги и делай шаг после каждого касания.\n3. Тихо говори: внутрь, наружу, внутрь, наружу, чтобы держать ровный ритм.\n4. У дальнего края останови мяч подошвой слабой ноги, твёрдо стоя на сильной, потом развернись и иди обратно.\n5. Работай сорок пять секунд, отдохни и повтори три раза.",
+        "en": "1. Start at one edge of your 3 by 3 metre space with the ball in front of you and walk slowly.\n2. Touch the ball with the inside of your weaker foot, then with the outside of the same foot, and take a step after each touch.\n3. Say in, out, in, out quietly to keep a steady rhythm.\n4. At the far edge, stop the ball with the sole of your weaker foot while you stand steady on your stronger foot, then turn and walk back.\n5. Work for forty-five seconds, rest, and repeat three times."
+      },
+      "dose": {
+        "durationSec": 45,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Допқа аяқ ұшыңмен тиесің, сондықтан ол секіріп кетеді.",
+          "ru": "Ты касаешься мяча носком, и он отскакивает.",
+          "en": "You touch the ball with your toes and it bounces away."
+        },
+        {
+          "kk": "Үлкен адымдап жүресің де, допты артта қалдырасың.",
+          "ru": "Ты делаешь большие шаги и оставляешь мяч позади.",
+          "en": "You take big strides and leave the ball behind you."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тегіс жерде баяу жүр: аяқтың сыртқы жағымен тез бұрылу тобықты бұрап жіберуі мүмкін.",
+          "ru": "Иди медленно по ровному месту: резкие повороты на внешней стороне стопы могут подвернуть голеностоп.",
+          "en": "Walk slowly on flat ground: quick turns on the outside of the foot can twist your ankle."
+        },
+        {
+          "kk": "Алдымен жылын: алаңды екі рет айнала жүріп, әр тізеңді он реттен көтер.",
+          "ru": "Сначала разомнись: дважды обойди место и десять раз подними каждое колено.",
+          "en": "Warm up first by walking round the space twice and lifting each knee ten times."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-circle-dribble"
+      ],
+      "regressionSlugs": [
+        "weak-foot-fifty-touches"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-wall-ladder",
+      "title": {
+        "kk": "Қабырғаға пас баспалдағы",
+        "ru": "Лестница пасов в стену",
+        "en": "Wall ladder"
+      },
+      "goal": {
+        "kk": "Қабырғаға әлсіз аяғыңмен екі, үш және төрт метр жерден пас бер: доп жермен жүріп, көздеген жеріңе барсын.",
+        "ru": "Отдавай пас в стену слабой ногой с двух, трёх и четырёх метров: мяч идёт по земле и попадает туда, куда ты целишься.",
+        "en": "Pass to the wall with your weaker foot from two, three and four metres, keeping the ball low and sending it where you aim."
+      },
+      "instructions": {
+        "kk": "1. Тегіс қабырға тап та, одан екі метр, яғни төрт кішкентай қадамдай жерде тұр, доп алдыңда жатсын.\n2. Доптың қасында күшті аяғыңның үстінде тізеңді сәл бүгіп тұр да, қабырғадан тиетін бір нүктені көзде.\n3. Әлсіз аяғыңның ішкі жағымен он рет пас бер. Доп алыстап кетсе, пастар арасында оны қолыңмен тоқтат.\n4. Үш метрге шегініп, тағы он пас бер, сосын төрт метрге шегініп, тағы он пас бер.\n5. Пастарың қисайса, бір қадам жақындап, баяуырақ жаса.",
+        "ru": "1. Найди ровную стену и встань в двух метрах от неё, это примерно четыре маленьких шага, мяч перед тобой.\n2. Встань рядом с мячом на сильную ногу с чуть согнутым коленом и выбери на стене точку, в которую хочешь попасть.\n3. Отдай десять пасов внутренней стороной слабой ноги. Если мяч укатывается, останавливай его рукой между пасами.\n4. Отойди на три метра и сделай ещё десять пасов, потом отойди на четыре метра и сделай ещё десять.\n5. Если пасы идут криво, подойди на шаг ближе и делай их медленнее.",
+        "en": "1. Find a smooth wall and stand two metres away from it, about four small steps, with the ball in front of you.\n2. Stand beside the ball on your stronger foot with a slightly bent knee and look at a spot on the wall you want to hit.\n3. Pass ten times with the inside of your weaker foot. If the ball rolls away, stop it with your hand between passes.\n4. Step back to three metres and make ten more passes, then step back to four metres for ten more.\n5. If your passes go crooked, step one step closer and slow down."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Артқа шалқайып, допқа аяқтың ұшымен тиесің.",
+          "ru": "Ты откидываешься назад и бьёшь мяч носком.",
+          "en": "You lean back and hit the ball with your toe."
+        },
+        {
+          "kk": "Қабырғадағы нысанаға емес, аяғыңа қарайсың.",
+          "ru": "Ты смотришь на ноги, а не на точку на стене.",
+          "en": "You look at your feet instead of at the target spot on the wall."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жұмсақ доп алып, терезесі жоқ қабырғаны таңда және өзге адамдарды доптың жолынан алыс ұста.",
+          "ru": "Возьми мягкий мяч, выбери стену без окон и держи других людей подальше от линии движения мяча.",
+          "en": "Use a soft ball, pick a wall with no windows and keep other people well away from the line of the ball."
+        },
+        {
+          "kk": "Алдымен жылын: орныңда жеңіл жүгіріп, жамбасыңды айналдыр, ал кері шегінгенде тегіс, бос жерде тұр.",
+          "ru": "Сначала разомнись: легко побегай на месте и покрути тазом, а отходить назад можно только по ровному свободному месту.",
+          "en": "Warm up first with easy jogging on the spot and hip circles, and step back only on flat, clear ground."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-receive-and-exit"
+      ],
+      "regressionSlugs": [
+        "weak-foot-wall-taps"
+      ],
+      "minutes": 7,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-circle-dribble",
+      "title": {
+        "kk": "Әлсіз аяқпен шеңбер",
+        "ru": "Круг слабой ногой",
+        "en": "Weaker-foot circle"
+      },
+      "goal": {
+        "kk": "Допты тек әлсіз аяғыңмен шағын шеңбермен жүргізіп, одан алыстамай жақын жүр.",
+        "ru": "Веди мяч по маленькому кругу только слабой ногой, оставаясь рядом с ним.",
+        "en": "Guide the ball around a small circle using only your weaker foot, and stay close to it."
+      },
+      "instructions": {
+        "kk": "1. 3 × 3 метрлік алаңның ортасында еденге ені екі үлкен қадамдай шеңбер елестет.\n2. Допты шеңбердің жиегіне қой да, күшті аяғыңды берік қойып, тізеңді сәл бүгіп, оның қасында тұр.\n3. Допты әлсіз аяғыңның ішкі жағымен шеңбермен жүргіз: әр қадамға бір кішкентай жанасу.\n4. Бір шеңберді баяу толық айнал, допты әлсіз аяғыңның табанымен тоқтат та, қарсы бағытқа қарай айнал.\n5. Жанасулар арасында басыңды көтеріп, шеңбердің ортасына қара, сосын допқа қайта қара.",
+        "ru": "1. Представь на полу круг шириной в два больших шага в середине места 3 на 3 метра.\n2. Положи мяч на край круга и встань рядом, твёрдо поставив сильную ногу и слегка согнув колени.\n3. Веди мяч по кругу внутренней стороной слабой ноги: одно маленькое касание на каждый шаг.\n4. Медленно пройди круг целиком, останови мяч подошвой слабой ноги и иди по кругу в другую сторону.\n5. Между касаниями поднимай голову и смотри на середину круга, потом снова на мяч.",
+        "en": "1. Imagine a circle on the floor about two big steps wide in the middle of your 3 by 3 metre space.\n2. Put the ball on the edge of the circle and stand beside it with your stronger foot planted firmly and your knees a little bent.\n3. Guide the ball around the circle with the inside of your weaker foot, one small touch for each step.\n4. Walk one whole circle slowly, stop the ball with the sole of your weaker foot and go round the other way.\n5. Look up at the middle of the circle between touches, then look back at the ball."
+      },
+      "dose": {
+        "durationSec": 40,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Шеңберді үлкейте бересің, ақыры доп алаңыңнан шығып кетеді.",
+          "ru": "Ты делаешь круг всё шире, пока мяч не выходит из твоего места.",
+          "en": "You make the circle wider and wider until the ball leaves your space."
+        },
+        {
+          "kk": "Бір үлкен жанасу жасап, содан кейін допты қуып жетуге тура келеді.",
+          "ru": "Ты делаешь одно большое касание и потом бежишь догонять мяч.",
+          "en": "You take one big touch and then have to run to catch the ball."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Шеңбер мен жанасуларды кішкентай ұста: алаңнан шығып кеткен доп сені асықтырып, сүріндіреді.",
+          "ru": "Держи круг и касания маленькими: убежавший из места мяч заставляет спешить и спотыкаться.",
+          "en": "Keep the circle and the touches small: a ball that escapes your space makes you rush and trip."
+        },
+        {
+          "kk": "Баяу бұрыл және алдымен жылын: сызықпен өкшеден аяқ ұшына қарай жүріп ал, себебі бір аяқта тез айналу тізеге ауыр.",
+          "ru": "Поворачивайся медленно и сначала разомнись: пройди с пятки на носок вдоль линии, ведь быстрый разворот на одной ноге тяжёл для колена.",
+          "en": "Turn slowly and warm up first with a heel-to-toe walk along a line, because a quick spin on one foot is hard on the knee."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-jog-and-switch"
+      ],
+      "regressionSlugs": [
+        "weak-foot-inside-outside-walk"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "ball",
+      "space": "home_3x3"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-wall-return-stop",
+      "title": {
+        "kk": "Қабырғаға пас беріп, табанмен тоқтату",
+        "ru": "Пас в стену и остановка подошвой",
+        "en": "Wall pass and sole stop"
+      },
+      "goal": {
+        "kk": "Қабырғаға пас беріп, қайтып келген допты әлсіз аяғыңмен тоқтат, сонда доп жаныңда қалады.",
+        "ru": "Отдай пас в стену и останови вернувшийся мяч слабой ногой так, чтобы он остался рядом.",
+        "en": "Pass to the wall, then stop the ball that comes back with your weaker foot so that it stays close to you."
+      },
+      "instructions": {
+        "kk": "1. Тегіс қабырғадан үш үлкен қадамдай жерде тұр, доп алдыңда жатсын.\n2. Допты әлсіз аяғыңның ішкі жағымен қабырғаға жайлап пас бер.\n3. Доп кері келе жатқанда, күшті аяғыңның үстінде берік тұрып, әлсіз аяғыңның табанын доптың үстіне жеңіл қойып, оны тоқтат.\n4. Ішінен екіге дейін санап шық, сосын қабырғаға қайта пас бер.\n5. Он пас беріп, он рет тоқтат, бірнеше рет тыныс алып демал да, тағы бір рет қайтала.",
+        "ru": "1. Встань в трёх больших шагах от ровной стены, мяч перед тобой.\n2. Мягко отдай мяч в стену внутренней стороной слабой ноги.\n3. Когда мяч возвращается, встань твёрдо на сильную ногу и легко поставь подошву слабой ноги на мяч, чтобы остановить его.\n4. Сосчитай про себя до двух и снова отдай пас в стену.\n5. Сделай десять пасов и десять остановок, отдохни несколько вдохов и повтори ещё раз.",
+        "en": "1. Stand three big steps from a smooth wall with the ball in front of you.\n2. Pass the ball gently to the wall with the inside of your weaker foot.\n3. As the ball comes back, stand steady on your stronger foot and rest the sole of your weaker foot lightly on top of the ball to stop it.\n4. Count two in your head, then pass to the wall again.\n5. Make ten passes with ten stops, rest for a few breaths and do it once more."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Аяғыңды қатты созасың да, доп аяғыңнан секіріп кетеді.",
+          "ru": "Ты вытягиваешь негнущуюся ногу, и мяч отскакивает от стопы.",
+          "en": "You reach out with a stiff leg and the ball bounces off your foot."
+        },
+        {
+          "kk": "Доп қайтып келе жатқанда допқа емес, қабырғаға қарайсың.",
+          "ru": "Ты смотришь на стену, а не на мяч, когда он возвращается.",
+          "en": "You watch the wall instead of the ball as it comes back."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Пастарды жайлап бер, сонда доп баяу қайтады; терезесі не шыны есігі жоқ қабырғаны таңда.",
+          "ru": "Отдавай пасы мягко, чтобы мяч возвращался медленно, и выбери стену без окон и стеклянных дверей.",
+          "en": "Keep your passes gentle so the ball comes back slowly, and choose a wall that has no windows or glass doors."
+        },
+        {
+          "kk": "Алдымен жеңіл жүгіріп жылын, ал допты тегіс жерде жеңіл табанмен тоқтат, сонда тірек аяғың тайып кетпейді.",
+          "ru": "Сначала разомнись лёгким бегом, а мяч останавливай лёгкой подошвой на ровной земле, чтобы опорная нога не скользила.",
+          "en": "Warm up first with easy jogging, and stop the ball with a light sole on flat ground so your standing foot does not slip."
+        }
+      ],
+      "progressionSlugs": [
+        "weak-foot-receive-and-exit",
+        "weak-foot-partner-pass-and-stop"
+      ],
+      "regressionSlugs": [
+        "weak-foot-wall-taps",
+        "weak-foot-roll-and-stop"
+      ],
+      "minutes": 6,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-receive-and-exit",
+      "title": {
+        "kk": "Қабылдау және шығу",
+        "ru": "Приём и выход",
+        "en": "Receive and exit"
+      },
+      "goal": {
+        "kk": "Қабырғадан қайтқан допты әлсіз аяғыңмен қабылдап, бос орынға жібер, екі рет жанасып, қабырғаға кері пас бер.",
+        "ru": "Прими мяч от стены слабой ногой, отправь его в свободное место, сделай два касания и отдай пас обратно в стену.",
+        "en": "Receive the ball from the wall with your weaker foot, push it into free space, take two touches and pass back to the wall."
+      },
+      "instructions": {
+        "kk": "1. Тегіс қабырғадан төрт үлкен қадамдай жерде тұрып, өз қасыңнан доп барады деген бос орынды таңда.\n2. Допты әлсіз аяғыңмен қабырғаға жайлап пас бер.\n3. Доп қайтып келмей тұрып, бос орын өзіңнің қай жағыңда екенін шеш те, дауыстап айт.\n4. Допты әлсіз аяғыңның ішкі жағымен қабылдап, оны бос орынға жұмсақ итер.\n5. Әлсіз аяғыңмен екі кішкентай жанасу жасап, допты қабырғаға қайта пас бер.\n6. Сегіз айналым жаса, демал, тағы екі рет қайтала, күшті аяғың берік тұрсын.",
+        "ru": "1. Встань в четырёх больших шагах от ровной стены и выбери рядом с собой свободное место, куда пойдёт мяч.\n2. Мягко отдай мяч в стену слабой ногой.\n3. Пока мяч не вернулся, реши, с какой стороны от тебя свободное место, и скажи это вслух.\n4. Прими мяч внутренней стороной слабой ноги и мягко отправь его в свободное место.\n5. Сделай два маленьких касания слабой ногой и снова отдай пас в стену.\n6. Сделай восемь кругов, отдохни и повтори ещё два раза, держа сильную ногу твёрдо.",
+        "en": "1. Stand four big steps from a smooth wall and choose a free space beside you where the ball will go.\n2. Pass the ball gently to the wall with your weaker foot.\n3. Before the ball comes back, decide which side of you the free space is on, and say it out loud.\n4. Receive the ball with the inside of your weaker foot and push it softly into the free space.\n5. Take two small touches with your weaker foot, then pass the ball back to the wall.\n6. Do eight rounds, rest, and repeat two more times, keeping your stronger foot steady."
+      },
+      "dose": {
+        "reps": 8,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Допты денеңнің астында қабылдайсың, сондықтан ол аяқтарыңның арасында қалады.",
+          "ru": "Ты принимаешь мяч под собой, и он застревает между ногами.",
+          "en": "You take the ball under your body, so it gets stuck between your feet."
+        },
+        {
+          "kk": "Қайда баратыныңды доп келіп болғаннан кейін ғана шешесің.",
+          "ru": "Ты решаешь, куда идти, только когда мяч уже пришёл.",
+          "en": "You decide where to go only after the ball has already arrived."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жұмсақ доп алып, терезесіз қабырғаны таңда, пастарды жайлап бер, сонда доп баяу қайтады.",
+          "ru": "Выбери мягкий мяч и стену без окон и отдавай пасы мягко, чтобы мяч возвращался медленно.",
+          "en": "Choose a soft ball and a wall without windows, and keep your passes gentle so the ball comes back slowly."
+        },
+        {
+          "kk": "Алдымен жеңіл жүгіріп, тобығыңды айналдырып жылын, допқа секіріп барма: баяу басып кел, сонда тірек аяғың берік жерде тұрады.",
+          "ru": "Сначала разомнись лёгкой пробежкой и вращением стоп и не прыгай на мяч: подходи медленно, чтобы опорная нога стояла на твёрдой земле.",
+          "en": "Warm up first with a gentle jog and ankle circles, and never hop onto the ball: step in slowly so your standing foot has firm ground."
+        }
+      ],
+      "regressionSlugs": [
+        "weak-foot-wall-ladder",
+        "weak-foot-wall-return-stop"
+      ],
+      "minutes": 7,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "ball_wall",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": true,
+      "slug": "weak-foot-partner-pass-and-stop",
+      "title": {
+        "kk": "Досыңмен пас беріп, тоқтату",
+        "ru": "Пас и остановка с другом",
+        "en": "Pass and stop with a friend"
+      },
+      "goal": {
+        "kk": "Досыңа әлсіз аяғыңмен жұмсақ пас беріп, оның пасын да әлсіз аяғыңмен тоқтат, допты жерден көтерме.",
+        "ru": "Отдавай другу мягкий пас слабой ногой и останавливай его пас слабой ногой, не поднимая мяч над землёй.",
+        "en": "Pass gently to a friend with your weaker foot and stop the friend's pass with your weaker foot, keeping the ball on the ground."
+      },
+      "instructions": {
+        "kk": "1. Досыңнан үш метр, яғни алты кішкентай қадамдай жерде бетпе-бет тұр, араларыңда тегіс, бос жол болсын.\n2. Допты досыңа әлсіз аяғыңның ішкі жағымен жерден, домалатқандай жұмсақ пас бер.\n3. Досың допты өзінің әлсіз аяғының табанымен тоқтатып, сол тәсілмен кері пас береді.\n4. Күшті аяғыңның үстінде берік тұрып, қайтқан допты қайта пас бермес бұрын әлсіз аяғыңның табанымен тоқтат.\n5. Он пастан беріп, сосын кім бастайтынын ауыстырып, демалып, қайтала.",
+        "ru": "1. Встань в трёх метрах от друга, это примерно шесть маленьких шагов, лицом друг к другу, между вами ровная свободная полоса.\n2. Отдай мяч другу по земле внутренней стороной слабой ноги, мягко, как будто катишь.\n3. Друг останавливает его подошвой своей слабой ноги и отдаёт обратно так же.\n4. Твёрдо встань на сильную ногу и останови вернувшийся мяч подошвой слабой ноги, прежде чем отдавать пас снова.\n5. Сделай десять пасов, потом поменяйтесь, кто начинает, отдохните и повторите.",
+        "en": "1. Stand three metres from a friend, about six small steps, facing each other with a flat, free lane between you.\n2. Pass the ball along the ground to your friend with the inside of your weaker foot, softly, like a roll.\n3. Your friend stops it with the sole of their weaker foot and passes it back the same way.\n4. Stand steady on your stronger foot and stop the returning ball under the sole of your weaker foot before you pass again.\n5. Make ten passes, then swap who starts, rest and repeat."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Тым қатты пас бересің, сондықтан досың допты қууға мәжбүр болады.",
+          "ru": "Ты отдаёшь пас слишком сильно, и другу приходится бегать за мячом.",
+          "en": "You pass too hard and your friend has to chase the ball."
+        },
+        {
+          "kk": "Допты тоқтатпай тұрып пас бересің, сондықтан ол ешқашан орнына түспейді.",
+          "ru": "Ты отдаёшь пас, не остановив мяч, и он никак не успокаивается.",
+          "en": "You pass before you have stopped the ball, so it never settles."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Досыңнан кем дегенде үш метр алыс тұр да, допты тек жермен жібер, сонда доп ешкімнің бетіне тимейді.",
+          "ru": "Стойте не ближе трёх метров друг от друга и отдавайте пасы только по земле, чтобы мяч никогда не попал в лицо.",
+          "en": "Stand at least three metres apart and pass only along the ground, so a ball can never reach a face."
+        },
+        {
+          "kk": "Алдымен жылын: тізеңді он рет баяу көтер. Біреуіңнің аяғы не тобығы ауырса, бірден тоқтауға досыңмен келіс.",
+          "ru": "Сначала разомнись: медленно подними колено десять раз. Договоритесь сразу остановиться, если у кого-то заболит стопа или голеностоп.",
+          "en": "Warm up first with ten slow knee lifts, and agree with your friend to stop at once if anyone feels pain in a foot or ankle."
+        },
+        {
+          "kk": "Араларыңдағы жолды тегіс ұста, тас пен ойыншықтардан тазала.",
+          "ru": "Держи полосу между вами ровной, без камней и игрушек.",
+          "en": "Keep the lane between you flat and clear of stones and toys."
+        }
+      ],
+      "regressionSlugs": [
+        "weak-foot-wall-return-stop"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "ball",
+      "space": "yard"
+    },
+    {
+      "ageMax": 14,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0",
+      "partner": false,
+      "slug": "weak-foot-jog-and-switch",
+      "title": {
+        "kk": "Жүгіріп жүріп аяқ ауыстыру",
+        "ru": "Бег и смена ноги",
+        "en": "Jog and switch"
+      },
+      "goal": {
+        "kk": "Допты жеңіл қарқынмен алып жүріп, әр бесінші жанасуда әдейі әлсіз аяғыңа ауысып, үш жанасу жаса, доп жаныңда болсын.",
+        "ru": "Веди мяч лёгким темпом и на каждом пятом касании сознательно переходи на слабую ногу на три касания, держа мяч рядом.",
+        "en": "Dribble at an easy pace and, on every fifth touch, switch to your weaker foot on purpose for three touches, keeping the ball close."
+      },
+      "instructions": {
+        "kk": "1. Ұзындығы он үлкен қадамдай тегіс, ашық жер тап та, екі басын сызықпен немесе табиғи жиегімен белгіле.\n2. Күшті аяғыңның кішкентай жанасуларымен допты баяу жүргіз де, жанасуларыңды дауыстап санап отыр.\n3. Бесінші жанасуда ауыс деп айт та, келесі үш жанасуды әлсіз аяғыңмен жаса.\n4. Күшті аяғыңа қайта оралып, санай бер, келесі бесінші жанасуда тағы ауыс.\n5. Соңында допты табаныңмен тоқтатып, баяу бұрыл да, кері қайт. Жаяу баста, доп жаныңда тұрғанда ғана жүгір.\n6. Төрт рет өтіп, әрқайсысының арасында демал.",
+        "ru": "1. Найди ровное открытое место длиной около десяти больших шагов и отметь каждый конец линией или естественным краем.\n2. Медленно веди мяч вдоль него маленькими касаниями сильной ногой и считай касания вслух.\n3. На пятом касании скажи меняй и сделай следующие три касания слабой ногой.\n4. Вернись к сильной ноге, продолжай считать и снова меняй на следующем пятом касании.\n5. В конце останови мяч подошвой, медленно развернись и вернись. Начни шагом и переходи на лёгкий бег, только когда мяч остаётся рядом.\n6. Сделай четыре пробежки и отдыхай между ними.",
+        "en": "1. Find a flat, open area about ten big steps long and mark each end with a line or a natural edge.\n2. Dribble slowly along it with small touches of your stronger foot and count your touches out loud.\n3. On touch five, say switch and use your weaker foot for the next three touches.\n4. Go back to your stronger foot, keep counting and switch again on the next fifth touch.\n5. Stop the ball with your sole at the end, turn slowly and come back. Start at a walk and jog only when the ball stays close.\n6. Make four runs and rest between them."
+      },
+      "dose": {
+        "durationSec": 40,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Бесінші жанасуға жеткенде ауысуды ұмытып кетесің.",
+          "ru": "Ты забываешь сменить ногу на пятом касании.",
+          "en": "You forget to switch when you reach the fifth touch."
+        },
+        {
+          "kk": "Ауысқан сәтте үлкен жанасу жасайсың да, доп алыстап кетеді.",
+          "ru": "В момент смены ты делаешь большое касание, и мяч убегает.",
+          "en": "You take a big touch at the moment of the switch and the ball runs away."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жаяу баста да, тек құрғақ, тегіс жерде ғана жүгір, дымқыл тас төсемде не тайғақ жапырақта жүгірме.",
+          "ru": "Начинай шагом и бегай только по сухой ровной земле, а не по мокрой плитке или скользким листьям.",
+          "en": "Start at a walk and jog only on dry, flat ground, never on wet paving or slippery leaves."
+        },
+        {
+          "kk": "Соңғы сызыққа жетпей баяула да, допты табаныңмен тоқтат, жолдан да, қоршаудан да алыс бол.",
+          "ru": "Замедлись перед конечной линией и останови мяч подошвой, держась подальше от дорог и заборов.",
+          "en": "Slow down before the end line and stop the ball with your sole, well away from roads and fences."
+        },
+        {
+          "kk": "Алдымен жылын: баяу жүгіріп, тобығыңды жайлап айналдыр.",
+          "ru": "Сначала разомнись: медленно побегай и мягко покрути стопами.",
+          "en": "Warm up first with a slow jog and gentle ankle rolls."
+        }
+      ],
+      "regressionSlugs": [
+        "weak-foot-circle-dribble"
+      ],
+      "minutes": 7,
+      "level": 3,
+      "ageMin": 10,
+      "equipment": "ball",
+      "space": "yard"
+    }
+  ]
+}
