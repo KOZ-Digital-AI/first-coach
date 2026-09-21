@@ -184,7 +184,7 @@ function renderAdmin(path: string, locale: Locale = 'en') {
 
 const trimSlash = (pathname: string) => (pathname.length > 1 ? pathname.replace(/\/$/, '') : pathname);
 const nav = () => screen.findByRole('navigation', { name: NAV_LABEL });
-const navLinks = () => within(screen.getByRole('navigation', { name: NAV_LABEL })).getAllByRole('link');
+const navLinks = (label = NAV_LABEL) => within(screen.getByRole('navigation', { name: label })).getAllByRole('link');
 const currentLinks = () => navLinks().filter((link) => link.getAttribute('aria-current') === 'page');
 const text = (element: Element) => (element.textContent ?? '').replace(/\s+/g, ' ').trim();
 /** The list item (row) of the contribution named `name`. */
@@ -284,7 +284,7 @@ describe('the admin nav: Review queue', () => {
     test(`says its own word in ${locale} (never a raw key) and goes to the same place`, async () => {
       renderAdmin('/admin/drills', locale);
       await screen.findByRole('navigation', { name: layoutMessages[locale].navLabel });
-      const first = navLinks()[0]!;
+      const first = navLinks(layoutMessages[locale].navLabel)[0]!;
       expect(text(first)).toBe(layoutMessages[locale].reviewQueue);
       expect(text(first)).not.toContain('reviewQueue');
       expect(first.getAttribute('href')).toBe('/admin');
