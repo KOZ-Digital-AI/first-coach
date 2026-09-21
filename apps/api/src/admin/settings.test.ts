@@ -32,7 +32,7 @@ const SETTINGS_REQUIRED = ['key', 'value', 'updated_at'];
 const COLUMN_TYPES: Record<string, string> = { key: 'TEXT', value: 'TEXT', updated_at: 'TEXT' };
 
 /** What the bead's acceptance criteria give as the defaults, restated here on purpose (not imported). */
-const CRITERIA_DEFAULTS = {
+const CRITERIA_DEFAULTS: Settings = {
   minStatusByAgeBand: { u10: 'COMMUNITY', u14: 'COMMUNITY', adult: 'COMMUNITY' },
   uploadMaxMb: 50,
   aiPlannerEnabled: true,
@@ -217,8 +217,8 @@ describe('settings: typed defaults', () => {
 
   test('the age bands and setting keys are exported for consumers, and the schema has exactly those keys', () => {
     expect([...AGE_BANDS]).toEqual(['u10', 'u14', 'adult']);
-    expect([...SETTING_KEYS].sort()).toEqual(Object.keys(CRITERIA_DEFAULTS).sort());
-    expect(Object.keys(SettingsSchema.shape).sort()).toEqual([...SETTING_KEYS].sort());
+    expect([...SETTING_KEYS].sort() as string[]).toEqual(Object.keys(CRITERIA_DEFAULTS).sort());
+    expect(Object.keys(SettingsSchema.shape).sort()).toEqual([...SETTING_KEYS].sort() as string[]);
   });
 
   test('every band takes every real TrustStatus and nothing else', () => {
@@ -509,7 +509,8 @@ describe('settings: updateSettings', () => {
       const err = thrown(() => updateSettings(db, patch, D1));
       expect(err).toBeInstanceOf(InvalidSettingsError);
       const issues = (err as InvalidSettingsError).issues;
-      expect(issues.map((i) => i.path), JSON.stringify(patch)).toContain(path);
+      // an invalid element is reported at its own path ("retestIntervalsDays.0"), which still names the setting
+      expect(issues.some((i) => i.path === path || i.path.startsWith(`${path}.`)), `${JSON.stringify(patch)}: ${JSON.stringify(issues)}`).toBe(true);
       expect(err.message, JSON.stringify(patch)).toContain(path);
       expect(count(db), `${JSON.stringify(patch)} left rows behind`).toBe(0);
       return err as InvalidSettingsError;
@@ -790,7 +791,9 @@ describe('003_settings: migration', () => {
     const header = readFileSync(join(MIGRATIONS_DIR, SQL_FILE), 'utf8')
       .split('\n')
       .filter((line) => line.startsWith('--'))
-      .join('\n');
+      .map((line) => line.replace(/^--\s*/, ''))
+      .join(' ')
+      .replace(/\s+/g, ' '); // a phrase may wrap across comment lines
     expect(header).toMatch(/key\/value|key-value/i);
     expect(header).toMatch(/one row per/i);
     expect(header).toMatch(/knows no setting names/i);
