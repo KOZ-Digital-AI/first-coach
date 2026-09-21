@@ -115,6 +115,14 @@ const DRAFT_NAME = 'contribute-form';
 // not exported, so it is repeated here to save a draft on every change (that module saves only when a 401 hits).
 const DRAFT_STORAGE_KEY = `fc:draft:${DRAFT_NAME}`;
 const BYTES_PER_MB = 1024 * 1024;
+/**
+ * How long the meta counts as fresh. It is static reference data (sports, the skill tree, upload limits) that only changes with a
+ * release, so it is read once per visit (fc-mol-70i.14). React Query's default (stale at once) made the form fetch it again whenever
+ * it remounted, e.g. after the session re-read that hides the form (Gate), and on reconnect: the j5 gate saw 3 non-auth /api calls
+ * against a budget of 2. The client keeps the query for 14 days (bootstrap.ts), so this is what decides. Sign-out clears the whole
+ * client, and the language is in the key, so a fresh visit or another language still reads its own.
+ */
+const META_STALE_MS = 30 * 60 * 1000;
 
 const TEXT_KEYS = [
   'name',
@@ -413,7 +421,9 @@ function ContributeScreen({ deps }: { deps: Omit<ContributeDeps, 'session'> }) {
     queryKey: ['contribute', 'meta', locale],
     queryFn: ({ signal }) => api.get(`${ENDPOINTS.getMeta.path}?locale=${locale}`, { schema: ContributionMeta, signal }),
     retry: false,
+    staleTime: META_STALE_MS,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // React Query clears `error` the moment a retry starts when there is no data yet. Keep the last failure on screen so Try again
