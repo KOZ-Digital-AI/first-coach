@@ -420,6 +420,15 @@ describe("wired into POST /api/contributions", () => {
       expect(mediaFiles()).toEqual(filesBefore);
     });
 
+    test("the duplicate is refused BEFORE its files are looked at: a duplicate with an unusable file is a 409, not a 415", async () => {
+      const alice = await signUp("alice@example.com");
+      await createOk(alice);
+      const notAVideo = new File([new Uint8Array(64).fill(65)], "clip.mp4", { type: "video/mp4" });
+      const res = await create(alice, form(validPayload(), { video: notAVideo }));
+      expect(res.status).toBe(409);
+      expect(mediaFiles()).toEqual([]);
+    });
+
     test("attachments do not make a submission different: the content is the payload", async () => {
       const alice = await signUp("alice@example.com");
       await createOk(alice);
