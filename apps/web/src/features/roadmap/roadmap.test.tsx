@@ -494,7 +494,8 @@ describe('error', () => {
     await waitFor(() => expect(page.meCalls()).toHaveLength(2));
     expect(screen.getByRole<HTMLButtonElement>('button', { name: text('en', 'retry') }).disabled).toBe(true);
     second.resolve(json(ME));
-    await waitFor(() => expect(screen.queryByText(text('en', 'stale.title'))).toBeNull());
+    // A boolean, not the element: a failed toBeNull() pretty-prints the whole DOM node (seconds), which starves waitFor's polling.
+    await waitFor(() => expect(screen.queryByText(text('en', 'stale.title')) === null).toBe(true));
     expect(primaryLink()).toBeTruthy();
   });
 });
