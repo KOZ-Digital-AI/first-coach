@@ -193,6 +193,24 @@ describe.each([...LOCALES])('locale %s', (locale) => {
     }
   });
 
+  test('renders every paragraph, list item and closing paragraph of every section, as real list items for the lists', () => {
+    renderPage(locale);
+    for (const section of PRIVACY_SECTIONS) {
+      const title = valueAt(messages[locale], `sections.${section.id}.title`) as string;
+      const region = screen.getByRole('region', { name: title });
+      for (const key of [...section.paragraphs, ...section.items, ...section.closing]) {
+        expect(region.textContent).toContain(valueAt(messages[locale], `sections.${section.id}.${key}`) as string);
+      }
+      expect(region.querySelectorAll('li')).toHaveLength(section.items.length);
+    }
+  });
+
+  test('the stored-data list is a real list with one item per kept thing', () => {
+    renderPage(locale);
+    const stored = screen.getByRole('region', { name: valueAt(messages[locale], 'sections.stored.title') as string });
+    expect(stored.querySelectorAll('ul > li').length).toBeGreaterThanOrEqual(4);
+  });
+
   test('says who runs the service: KOZ AI', () => {
     renderPage(locale);
     const who = valueAt(messages[locale], 'sections.who.title') as string;
