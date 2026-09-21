@@ -17,10 +17,10 @@ variable is needed only to override them.
 
 | Path | Variable | What is in it |
 | --- | --- | --- |
-| `/data/app.db` | `APP_DB_PATH` | The application database (commons, players, sessions, contributions, settings, Better Auth tables). WAL mode, so `app.db-wal` and `app.db-shm` appear next to it. |
-| `/data/media` | `MEDIA_DIR` | Uploaded contribution attachments, one flat directory of server-named files. `/health` reports whether it is writable; the `30-uploads` hook reconciles it at every start. |
+| `/data/app.db` | `APP_DB_PATH` | The application database (commons, players, sessions, contributions and their attachment rows, admin settings, privacy consents and recovery codes, the AI call log, video analyses, Better Auth tables). WAL mode, so `app.db-wal` and `app.db-shm` appear next to it. |
+| `/data/media` | `MEDIA_DIR` | Uploaded contribution attachments (written by `POST` and `PUT` `/api/contributions`), one flat directory of server-named files. `/health` reports whether it is writable; the `30-uploads` hook reconciles it at every start. |
 | `/data/backups` | `BACKUP_DIR` | Nightly database backups, `first-coach-YYYY-MM-DD.sqlite`. |
-| `/data/mastra.db` | `MASTRA_DB_PATH` | Reserved for the AI framework. Validated, but no code writes it at this revision. |
+| `/data/mastra.db` | `MASTRA_DB_PATH` | Where `getMastra()` in `apps/api/src/mastra/index.ts` would open the Mastra LibSQL store. Nothing calls `getMastra()` at this revision (the AI agents are built without a Mastra instance and keep no memory), so no code writes this file. |
 
 The web build is in the image at `apps/web/dist` and the seed content at `config/commons`; neither is on the
 volume.
@@ -55,16 +55,16 @@ elsewhere in the API. No value belongs in the repo: `.env.example` holds placeho
 | `PORT` | Optional | `4111` | HTTP port. Railway injects it; leave it alone on Railway. Must be an integer from 1 to 65535. |
 | `APP_DB_PATH` | Optional | `./data/app.db` (image: `/data/app.db`) | SQLite database file. The parent directory is created if missing. |
 | `MEDIA_DIR` | Optional | `./data/media` (image: `/data/media`) | Upload directory. The `30-uploads` hook creates it if missing and sweeps it at boot. `/health` `mediaWritable` is true only when the variable is set, the directory exists and it is writable. |
-| `MASTRA_DB_PATH` | Optional | unset (image: `/data/mastra.db`) | Validated only; nothing writes it yet. |
+| `MASTRA_DB_PATH` | Optional | unset (image: `/data/mastra.db`) | Location of the Mastra store, read only by `getMastra()` in `apps/api/src/mastra/index.ts` (default `./data/mastra.db`). Nothing calls `getMastra()` yet, so nothing writes the file. |
 | `BACKUP_DIR` | Optional | `backups` next to the database file (image: `/data/backups`) | Where the nightly backup is written. |
 | `WEB_DIST` | Optional | `apps/web/dist` | Built web app served by the API. |
 | `BUILD_VERSION` | Optional | image default `dev` | Reported as `version` by `/health`, read on every request. Set it to the git SHA of the deploy so you can tell builds apart. |
 | `BETTER_AUTH_SECRET` | Required in production | none | Signs sessions. At least 32 characters; generate with `openssl rand -hex 32`. Never commit it. |
 | `BETTER_AUTH_URL` | Required in production | none | Public base URL of the app, `https://` plus the Railway domain. Railway can fill it from a reference to its public-domain variable. |
-| `OPENAI_API_KEY` | Optional | unset | Leave unset and the AI features are off; the product works without it. `/health` `aiAvailable` shows whether it is set (never the key). |
-| `OPENAI_MODEL` | Optional | unset | Text model name. Validated only; no code reads it yet. |
-| `OPENAI_VISION_MODEL` | Optional | unset | Image-understanding model name. Validated only; no code reads it yet. |
-| `VITE_CONTACT_EMAIL` | Optional | unset | Contact address for the web app, read at web build time. The Dockerfile declares no build argument for it and the web code does not use it yet, so setting it on Railway has no effect at this revision. |
+| `OPENAI_API_KEY` | Optional | unset | Leave unset and the AI features (the AI planner, the drill explainer and the Beta video coach) are off; the product works without it. Mastra's model router reads it from the environment. `/health` `aiAvailable` shows whether it is set (never the key). |
+| `OPENAI_MODEL` | Optional | unset (falls back to `gpt-4o-mini`) | Text model name, used as `openai/<OPENAI_MODEL>` by the Mastra AI planner (`POST /api/player/today/ai-plan`) and the drill explainer. Read per request in `apps/api/src/mastra/model.ts`; a blank value counts as unset. |
+| `OPENAI_VISION_MODEL` | Optional | unset (falls back to the text model name) | Image-understanding model name, used as `openai/<OPENAI_VISION_MODEL>` by the Beta video coach (`POST /api/player/video-analyses`). Read in `apps/api/src/mastra/model.ts`. |
+| `VITE_CONTACT_EMAIL` | Optional | unset | Contact address for the web app, read at web build time by the privacy and terms pages (`import.meta.env.VITE_CONTACT_EMAIL`; without a plain address they leave the contact line out). The Dockerfile declares no build argument for it, so the image build never sees it and setting it on Railway has no effect at this revision. |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Optional | none | Comma-separated extra origins Better Auth accepts (for example a custom domain next to the Railway one). Read by `apps/api/src/auth/better-auth.ts`, not by `env.ts`. Wildcards are rejected in production. |
 | `SEED_DIR` | Optional | `config/commons` (image: `/app/config/commons`) | Directory the seed loader reads. Read by the `20-seed` boot hook, not by `env.ts`. If you set it, it must exist or the boot aborts. |
 | `ADMIN_PASSWORD` | CLI only | none | Read only by the admin CLI. Do not store it as a service variable. |
@@ -98,7 +98,9 @@ service with a volume. Reasons:
 - SQLite is a single file on one volume. Two writers on two machines would corrupt it, and the API keeps one
   synchronous connection.
 - The nightly backup is scheduled inside the process (`40-backup`). Two instances would both run it.
-- The auth rate limiter counts in memory, so a second instance would have its own counters.
+- The write-route rate limiter (`POST /api/contributions`, and the recovery-code attempts) counts in process memory and
+  resets on restart, so a second instance would have its own counters. Better Auth's own limiter keeps its counters in
+  SQLite.
 
 Because of the volume, Railway never runs the old and new deployment at the same time, so every deploy has a
 short downtime while the new container boots and passes its healthcheck.
@@ -133,7 +135,8 @@ admin@example.org --name "First Admin"`, using the container from the restore dr
 ## Deploy and rollback
 
 **Deploy.** Push to the branch the service is connected to, or trigger a redeploy in the Railway dashboard.
-Railway builds the image (the build runs `bun run typecheck` and the web build, see the Dockerfile), starts the
+Railway builds the image (the build runs `bun run typecheck` and the web build, see the Dockerfile; the web build's
+`prebuild` step downloads the pose model for the video coach, so the build needs outbound network access), starts the
 container and polls `/health` for up to 120 seconds (`healthcheckTimeout`). The new deployment takes traffic
 only after `/health` answers 2xx. If the container crashes, `ON_FAILURE` restarts it up to 10 times.
 
@@ -263,8 +266,11 @@ Every start (deploy, crash restart, redeploy) runs the same sequence, in this or
 On SIGTERM or SIGINT the server stops the backup schedule, stops accepting requests, closes the database and
 exits; Railway sends SIGTERM when it replaces a deployment.
 
-The upload store (`apps/api/src/contributions/uploads.ts`) exists, but no HTTP route calls it yet, so
-`/data/media` stays empty until an upload endpoint ships.
+The upload store (`apps/api/src/contributions/uploads.ts`) is used by `apps/api/src/http/routes/contributions.routes.ts`:
+`POST /api/contributions` and `PUT /api/contributions/:id` store the attachments of a contribution (one video and up to
+three files, checked by their magic bytes) in `/data/media`, capped per file by the admin setting `uploadMaxMb`
+(default 50, read on every request). `GET /api/media/:attachmentId` serves them. So `/data/media` fills as soon as
+contributors submit with attachments, and the boot sweep above has real work to do.
 
 ## Health endpoint
 
@@ -276,7 +282,7 @@ The upload store (`apps/api/src/contributions/uploads.ts`) exists, but no HTTP r
 | `version` | `BUILD_VERSION` (trimmed, read per request), else the API package version. |
 | `database` | `"ok"` when a probe query succeeded. |
 | `publishedDrills` | Number of published drills. Greater than 0 once the seed has loaded. |
-| `migration` | Name of the latest applied migration, for example `006_contributions`. |
+| `migration` | Name of the latest applied migration, for example `009_video`. |
 | `aiAvailable` | `true` when `OPENAI_API_KEY` is set and not blank. |
 | `aiPlannerEnabled` | `true` unless an admin switched the AI planner off in admin settings. Read per request. Not a secret. |
 | `mediaWritable` | `true` when `MEDIA_DIR` is set, exists and is writable. Expect `true` on Railway. |
@@ -290,7 +296,7 @@ it does not monitor it afterwards, so use an uptime monitor for that.
 **BETTER_AUTH_SECRET.** Take a manual backup first. Generate a new value (`openssl rand -hex 32`), set it on the
 service and redeploy. Sessions are signed with this secret, so every existing session stops being valid:
 admins and contributors sign in again, and players (anonymous sessions last 90 days) lose access to the progress
-tied to their old session. Password hashes are stored in the database and are not derived from the secret, so
+tied to their old session, unless they saved a recovery code (`POST /api/player/recover` restores it on a new session). Password hashes are stored in the database and are not derived from the secret, so
 sign in as an admin afterwards to confirm. If someone is locked out, `reset-password` in the admin CLI recovers
 an admin. Rotate only when the secret may have leaked.
 
@@ -303,35 +309,59 @@ Someone asks for a drill to be removed (rights, safety, a child's image, a mista
 
 1. Record who asked, when, which drill slug and why.
 2. Take a manual backup.
-3. Unpublish the drill. The intended tool is the admin action `POST /api/admin/drills/:slug/unpublish` with a
-   `reason`. It exists as a contract in `apps/api/src/shared/admin.ts` but is not implemented or mounted as a
-   route at this revision, so it cannot be used yet. What the read side honours today is the
-   `drills.unpublished_at` column: a drill is published when it is `NULL` and has a current version, and the
-   commons API and the export leave out any drill where it is set. Setting it is a database change made by a
-   developer with the backup in hand; do not improvise it on production.
+3. Unpublish the drill as an admin, in the web app or through the API. In the web app open the admin **Drills**
+   screen (`/admin/drills`, `apps/web/src/routes/admin/drills.tsx`), choose Unpublish on the drill, and give the reason
+   in the confirmation dialog. The screen calls the mounted endpoint `POST /api/admin/drills/:slug/unpublish` with
+   `{"reason": "..."}` (`apps/api/src/http/routes/admin-drills.routes.ts`, admin session required). It sets
+   `drills.unpublished_at` and writes a review row that keeps the reason. The drill disappears from the commons API and
+   from `/api/commons/export.json` at once, and its attachments stop being served publicly (only the submitter and an
+   admin can still read them; `GET /api/media/:attachmentId` answers 404 for everyone else). Every version row and every
+   file is kept, as evidence for a rights complaint. A re-publish endpoint is not implemented, so an unpublish cannot be undone in the app; do not
+   unpublish to test. An unknown or already unpublished slug is a 404, a blank reason a 422. No manual database edit is needed.
 4. Take the content out of the source too. Remove or edit the drill under `config/commons` and ship it, or a
    restored database or a fresh volume would publish it again. The seed loader never deletes a drill, and it
    does not clear `unpublished_at`.
 5. Uploaded media lives under `/data/media`, and a file is kept only while a `contribution_attachments` row
-   references it. When uploads are in use, once the rows are gone the next start's `30-uploads` sweep deletes
-   the files (after the 10 minute grace). No route stores uploads yet, so today the directory is empty.
+   references it. Unpublishing does not delete files. If the files themselves must go (a child's image), a developer
+   has to remove the attachment rows with the backup in hand; the next start's `30-uploads` sweep then deletes the
+   files (after the 10 minute grace).
 6. Check that the drill is gone from the commons API and from `/api/commons/export.json`.
 
 ## Turning AI and video off
 
 Two independent switches:
 
-- **From admin settings.** Send an admin request to `/api/admin/settings` (PUT, signed in as an admin) with:
+- **From the admin settings screen.** Sign in as an admin and open `/admin/settings`
+  (`apps/web/src/routes/admin/settings.tsx`). It edits the values behind `GET` and `PUT` `/api/admin/settings`: the
+  minimum trust status a drill needs per age band (`u10`, `u14`, `adult`; default `COMMUNITY`), the upload size cap in
+  megabytes (`uploadMaxMb`, default 50), the AI planner switch (`aiPlannerEnabled`), the video coach switch
+  (`videoCoachEnabled`) and the retest intervals in days (default 7, 14, 30). Save sends only what you changed. The
+  screen also shows whether an OpenAI key is configured (from `/health`) and says the model names live in the server
+  environment; it cannot edit `OPENAI_API_KEY`, `OPENAI_MODEL` or `OPENAI_VISION_MODEL`.
+  The same change can be sent as an admin request (PUT, signed in as an admin) with:
 
 ```json
 { "aiPlannerEnabled": false, "videoCoachEnabled": false }
 ```
 
-  The values are stored in the database and read on every request, so no restart is needed. There is no settings
-  screen in the web app yet, and the AI and video routes that would read these flags are not in the API at this
-  revision, so today they are stored but nothing consumes them.
-- **By key.** Delete `OPENAI_API_KEY` from the service and redeploy. `/health` then reports
-  `aiAvailable: false`.
+  The values are stored in the database and read on every request, so no restart is needed.
+  - `aiPlannerEnabled: false` makes `POST /api/player/today/ai-plan` answer today's ordinary session with a `disabled`
+    fallback (status 200), and `/health` reports `aiPlannerEnabled: false`. The drill explainer
+    (`POST /api/player/drills/:versionId/explain`) is not gated by this switch.
+  - `videoCoachEnabled: false` makes `POST /api/player/video-analyses` answer 403 (`Video coach disabled`).
+- **By key.** Delete `OPENAI_API_KEY` from the service and redeploy. `/health` then reports `aiAvailable: false`, the
+  AI planner answers the ordinary session with a `no_key` fallback, and the explainer and the video coach answer 503
+  (`ai_unavailable`).
+
+### The AI planner path
+
+The AI planner is a Mastra agent (`apps/api/src/mastra`), and it chooses, it does not write: the server computes the
+candidate drill set (published versions, the player's profile, the admin minimum status per age band), the agent may
+answer only with ids from that set plus minutes and a reason, and a validator (`apps/api/src/mastra/validator.ts`)
+rejects anything else. On any failure (switch off, no key, a timeout of 20 seconds, a provider error, an invalid
+answer) the player gets the ordinary rule-based session and the call is logged in the `ai_calls` table (ids and codes,
+never the player's note). The model is `openai/<OPENAI_MODEL>`. Once a day's session is an AI plan, a repeat request
+answers it as stored without another provider call.
 
 ## Updating the seed
 
@@ -393,11 +423,14 @@ Tick these in order on the first deploy, and again after any change to the Railw
 
 ## Rate limiting behind Railway's proxy
 
-In production Better Auth rate-limits its auth endpoints in memory, keyed by client IP (anonymous sign-in has a roomier
-rule of 30 per minute so a classroom behind one NAT can start together). It reads the client IP from the
-`X-Forwarded-For` header set by the platform proxy. That is only safe if the proxy sets or overwrites the
-header. If Railway passes a client-supplied `X-Forwarded-For` through, a caller that rotates the header value
-evades the limiter, and a caller with no header shares one bucket with everyone.
+In production Better Auth rate-limits its auth endpoints keyed by client IP, with the counters in the SQLite database
+(`apps/api/src/auth/rate-limit.ts` holds the numbers): email sign-in and sign-up 10 per 15 minutes each, and
+anonymous sign-in a roomier 30 per hour so a classroom behind one NAT can start together. Two write routes have their
+own per-process limiter: `POST /api/contributions` (10 a day per user and IP) and the player recovery attempts (5 per
+15 minutes per IP). All of them read the client IP from the `X-Forwarded-For` header set by the platform proxy, and
+trust it only when it holds exactly one valid address; a chain of several values, an invalid value or no header falls
+into one shared bucket. That is only safe if the proxy sets or overwrites the header. If Railway passes a
+client-supplied single-address `X-Forwarded-For` through, a caller that rotates the header value evades the limiter.
 
 This has **not been verified** and must be checked at deploy time, on the real Railway domain: send repeated
 sign-in attempts with different spoofed `X-Forwarded-For` values and confirm the limiter still throttles them
@@ -425,13 +458,15 @@ Everything above is derived from the repository. These things have not been done
 - **Rate limiter.** Railway's `X-Forwarded-For` behaviour is an open deploy-time check (section above).
 - **Restore.** The restore CLI is tested in the repo, but the drill above has not been run end to end, and the
   restore on Railway has never been rehearsed.
-- **OpenAI key.** No key has been provisioned. The AI features have not been exercised, and the API has no AI
-  code path yet.
+- **OpenAI key.** No key has been provisioned. The AI planner, the drill explainer and the Beta video coach exist in the
+  API, but their tests inject fake agents, so the real OpenAI call path (and the `gpt-4o-mini` default model) has not
+  been exercised.
 - **Native Kazakh review.** The Kazakh (`kk`) text in the app and in the seed drills was drafted with AI and has
   not been read by a native Kazakh speaker. It carries the status `COMMUNITY` until real coaches review it.
-- **Not built yet.** The unpublish admin endpoint, an admin settings screen, an HTTP route that stores uploads
-  (the store and its startup sweep exist) and a command-line backup entry point do not exist at this revision.
-  The startup sweep itself has never run against a real Railway volume.
+- **Not built yet.** A command-line backup entry point does not exist at this revision (the manual backup above uses
+  `bun -e`), and neither does a way to publish a drill again after an unpublish. The upload routes, the unpublish
+  endpoint and the admin Drills and settings screens are built, but none has run on Railway, and the startup sweep has
+  never run against a real Railway volume.
 - **Railway config format.** Railway's documentation marks config as code (`railway.json`) as deprecated in
   favour of Infrastructure as Code; existing files keep working until 2026-12-01. The keys used here were
   checked against Railway's JSON schema on 2026-09-21. Migrate before that date.
