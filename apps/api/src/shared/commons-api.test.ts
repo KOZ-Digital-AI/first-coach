@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { fromZodError } from "../http/problem";
 import type { EndpointSpec } from "./domain";
-import { CommonsExport, DrillDetail, DrillListResponse, SkillGraph } from "./commons";
+import { CommonsExport, DrillDetail, DrillListQuery, DrillListResponse, SkillGraph } from "./commons";
 import {
   CommonsDrillParams,
   CommonsDrillQuery,
@@ -83,9 +83,9 @@ describe("CommonsDrillQuery", () => {
     expect(CommonsDrillQuery.parse({ locale })).toEqual({ locale });
   });
 
-  test("the query has exactly the six criteria parameters", () => {
+  test("the query has the six criteria parameters plus the cursor and limit pagination controls", () => {
     expect(Object.keys(CommonsDrillQuery.shape).sort()).toEqual(
-      ["equipment", "level", "locale", "q", "skill", "status"],
+      ["cursor", "equipment", "level", "limit", "locale", "q", "skill", "status"],
     );
   });
 
@@ -172,6 +172,87 @@ describe("query failures become a 400 problem with a pointer", () => {
     });
     expect([...found].sort()).toEqual(["/level", "/status"]);
   });
+});
+
+describe("CommonsDrillQuery pagination (cursor and limit, so nextCursor can be followed)", () => {
+  test("accepts a cursor on its own and keeps it verbatim", () => {
+    expect(CommonsDrillQuery.parse({ cursor: "eyJvIjoyMH0" })).toEqual({ cursor: "eyJvIjoyMH0" });
+  });
+
+  test("accepts a limit on its own", () => {
+    expect(CommonsDrillQuery.parse({ limit: 20 })).toEqual({ limit: 20 });
+  });
+
+  test("a limit that arrives as a query string parses to the number", () => {
+    expect(CommonsDrillQuery.parse({ limit: "20" })).toEqual({ limit: 20 });
+  });
+
+  test("accepts cursor and limit together", () => {
+    expect(CommonsDrillQuery.parse({ cursor: "abc", limit: "5" })).toEqual({ cursor: "abc", limit: 5 });
+  });
+
+  test("accepts cursor and limit together with the six criteria keys", () => {
+    expect(CommonsDrillQuery.parse({ ...fullQuery(), cursor: "abc", limit: "50" })).toEqual({
+      ...fullQuery(),
+      cursor: "abc",
+      limit: 50,
+    });
+  });
+
+  test("the six criteria parameters are unchanged: they still parse alone", () => {
+    expect(CommonsDrillQuery.parse(fullQuery())).toEqual(fullQuery());
+  });
+
+  test("rejects a limit of 0", () => {
+    expect(ok(CommonsDrillQuery, { limit: 0 })).toBe(false);
+  });
+
+  test("rejects a negative limit", () => {
+    expect(ok(CommonsDrillQuery, { limit: -1 })).toBe(false);
+  });
+
+  test("rejects a limit that is not a number", () => {
+    expect(ok(CommonsDrillQuery, { limit: "abc" })).toBe(false);
+  });
+
+  test("rejects a fractional limit", () => {
+    expect(ok(CommonsDrillQuery, { limit: 1.5 })).toBe(false);
+  });
+
+  test("rejects a fractional limit that arrives as a string", () => {
+    expect(ok(CommonsDrillQuery, { limit: "1.5" })).toBe(false);
+  });
+
+  test("rejects a limit of 0 that arrives as a string", () => {
+    expect(ok(CommonsDrillQuery, { limit: "0" })).toBe(false);
+  });
+
+  test("rejects an empty cursor", () => {
+    expect(ok(CommonsDrillQuery, { cursor: "" })).toBe(false);
+  });
+
+  test("a bad limit points at /limit", () => {
+    expect(pointers(CommonsDrillQuery, { limit: 0 })).toEqual(["/limit"]);
+  });
+
+  test("an empty cursor points at /cursor", () => {
+    expect(pointers(CommonsDrillQuery, { cursor: "" })).toEqual(["/cursor"]);
+  });
+
+  test("still rejects space: it is not one of the criteria's parameters", () => {
+    expect(ok(CommonsDrillQuery, { space: "yard" })).toBe(false);
+  });
+
+  test("still rejects an unknown key next to a valid cursor and limit", () => {
+    expect(ok(CommonsDrillQuery, { cursor: "abc", limit: 20, colour: "red" })).toBe(false);
+  });
+
+  test.each(["20", 20, "1", "0", 0, "-1", -1, "abc", "1.5", 1.5, "", " ", "1e2", "0x10"])(
+    "limit %p is judged exactly as commons.ts's DrillListQuery judges it",
+    (limit) => {
+      expect(ok(CommonsDrillQuery, { limit })).toBe(ok(DrillListQuery, { limit }));
+    },
+  );
 });
 
 describe("CommonsDrillParams", () => {
