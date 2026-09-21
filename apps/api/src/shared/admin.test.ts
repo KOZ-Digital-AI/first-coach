@@ -754,10 +754,17 @@ describe("CONTRIBUTION_TRANSITIONS (derived: state -> actions the UI may offer)"
     ["pending", "approve"],
     ["pending", "reject"],
     ["pending", "request_changes"],
-    ["changes_requested", "reject"],
   ] satisfies Array<[ContributionStateName, string]>)("%s allows %s", (state, action) => {
     const allowed: readonly string[] = CONTRIBUTION_TRANSITIONS[state];
     expect(allowed).toContain(action);
+  });
+
+  test("pending offers exactly approve, reject and request_changes", () => {
+    expect([...CONTRIBUTION_TRANSITIONS.pending].sort()).toEqual(["approve", "reject", "request_changes"]);
+  });
+
+  test("changes_requested offers no admin action (it waits for the contributor to resubmit)", () => {
+    expect(CONTRIBUTION_TRANSITIONS.changes_requested).toEqual([]);
   });
 
   test("changes_requested does not allow approve (it awaits the contributor's changes)", () => {
