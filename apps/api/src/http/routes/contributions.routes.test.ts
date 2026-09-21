@@ -524,6 +524,12 @@ describe("POST /api/contributions", () => {
       expectNothingStored();
     });
 
+    test("the `video` part must be a video: a real png sent as video is a 415 and nothing is stored", async () => {
+      const alice = await signUpContributor();
+      await expectProblem(await create(alice, form(validPayload(), { video: pngFile("photo.png") })), 415);
+      expectNothingStored();
+    });
+
     test("a file over settings.uploadMaxMb is a 413 and no file is left, including the ones stored before it", async () => {
       updateSettings(db, { uploadMaxMb: 1 });
       const alice = await signUpContributor();
@@ -548,6 +554,29 @@ describe("POST /api/contributions", () => {
       const alice = await signUpContributor();
       const res = await create(alice, form(validPayload(), { files: [file(pdfOfSize(8 * MIB), "huge.pdf", "application/pdf")] }));
       await expectProblem(res, 413);
+      expectNothingStored();
+    });
+
+    test("a body with no Content-Length is cut off once it passes the total limit: 413 and the rest is never pulled", async () => {
+      updateSettings(db, { uploadMaxMb: 1 }); // total limit = (1 video + 3 files) x 1 MiB + 1 MiB of framing = 5 MiB
+      const alice = await signUpContributor();
+      const chunk = new Uint8Array(MIB).fill(0x78);
+      let pulled = 0;
+      const body = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          pulled += 1;
+          if (pulled > 40) controller.close();
+          else controller.enqueue(chunk);
+        },
+      });
+      const res = await app.request(COLLECTION, {
+        method: "POST",
+        headers: { ...authHeaders(alice), "content-type": "multipart/form-data; boundary=----test-boundary" },
+        body,
+        duplex: "half",
+      } as RequestInit);
+      await expectProblem(res, 413);
+      expect(pulled).toBeLessThan(15); // it stopped reading near 5 MiB, it did not drain 40 MiB
       expectNothingStored();
     });
 
