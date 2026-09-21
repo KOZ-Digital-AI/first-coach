@@ -1,0 +1,684 @@
+{
+  "sport": "football",
+  "track": "juggling-coordination",
+  "drills": [
+    {
+      "slug": "juggling-stork-stand",
+      "title": {
+        "kk": "Ләйлектей бір аяқта тұру",
+        "ru": "Стойка аиста",
+        "en": "Stork stand"
+      },
+      "goal": {
+        "kk": "Әр аяғыңда бес секундтан тұрақты тұр: футболдағы әр қимылдың негізі — тепе-теңдік.",
+        "ru": "Постой устойчиво на одной ноге по пять секунд на каждой: равновесие лежит в основе каждого движения в футболе.",
+        "en": "Stand steadily on one foot for five seconds on each side: balance is the base of every football move."
+      },
+      "instructions": {
+        "kk": "1. Бос жерде аяқтарыңды түйістіріп тұр, қолдарыңды қанаттай екі жаққа жай.\n2. Көз деңгейіңдегі алдыңдағы бір қозғалмайтын нүктені таңда да, көзіңді содан алма.\n3. Оң аяғыңды тізеңнен бүгіп, еденнен сәл көтеріп, бір аяқта қозғалмай тұр. Дауыстап беске дейін сана.\n4. Аяғыңды баяу жерге қой, дем ал да, сол аяғыңа ауыс.\n5. Теңселіп кетсең, аяғыңды еденге қойып, басынан баста. Әр аяқпен үш реттен ұстап тұр.",
+        "ru": "1. Встань на свободном месте, ноги вместе, руки разведи в стороны, как крылья.\n2. Выбери неподвижную точку прямо перед собой на уровне глаз и не отрывай от неё взгляд.\n3. Слегка приподними правую ногу над полом, согнув колено, и замри на одной ноге. Вслух сосчитай до пяти.\n4. Медленно поставь ногу, вдохни и смени опорную ногу на левую.\n5. Если качнуло, поставь ногу на пол и начни сначала. Сделай по три удержания на каждой ноге.",
+        "en": "1. Stand in a clear space with your feet together and your arms out to the sides like wings.\n2. Pick a still spot straight ahead of you, level with your eyes, and keep looking at it.\n3. Lift your right foot a little off the floor with the knee bent, and hold still on one foot. Count out loud to five.\n4. Put the foot down slowly, take a breath and change to the left foot.\n5. If you wobble, put your foot down and start again. Do three holds on each foot."
+      },
+      "dose": {
+        "reps": 3,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Төмен, аяғыңа қарайсың, сондықтан теңселіп кетесің.",
+          "ru": "Ты смотришь вниз на ноги, и тебя качает.",
+          "en": "You look down at your feet, so you wobble."
+        },
+        {
+          "kk": "Тынысыңды ұстап, қолыңды қатырып аласың.",
+          "ru": "Ты задерживаешь дыхание и напрягаешь руки.",
+          "en": "You hold your breath and stiffen your arms."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тегіс еденде жалаң аяқ немесе тайып кетпейтін шұлықпен тұр, жиһаздан және өткір бұрыштардан аулақ бол; құлап кете жаздасаң, аяғыңды еденге қой.",
+          "ru": "Стой на ровном полу босиком или в нескользящих носках, подальше от мебели и острых углов; если почувствуешь, что падаешь, поставь ногу на пол.",
+          "en": "Stand on a flat floor in bare feet or grippy socks, away from furniture and sharp corners, and put your foot down whenever you feel you might fall."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-knee-touch-march"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 5,
+      "ageMax": 14,
+      "equipment": "nothing",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-drum-roll-feet",
+      "title": {
+        "kk": "Аяқпен барабан соғу",
+        "ru": "Барабанная дробь ногами",
+        "en": "Drum-roll feet"
+      },
+      "goal": {
+        "kk": "Аяқтарыңмен еденді жылдам әрі жеңіл түртіп, ырғақты бірқалыпты ұста.",
+        "ru": "Быстро и легко постукивай ногами по полу на месте и держи ровный ритм.",
+        "en": "Tap your feet quickly and lightly on the floor, left and right, and keep an even rhythm."
+      },
+      "instructions": {
+        "kk": "1. Тік тұр: аяқтарың жамбас еніндей, тізең сәл бүгулі, дене салмағың аяқ ұшында болсын.\n2. Аяқтарыңмен еденді бірінен соң бірін баяу түртіп тұр: сол, оң, сол, оң. Он түртуді сана.\n3. Енді барабан соққандай жылдамдата түс, бірақ түртулерің кішкентай әрі жеңіл болсын.\n4. Аяғың жұмыс істеп тұрғанда көзіңді тура қарат, иығыңды босаң ұста.\n5. Он бес секундтан төрт айналым жаса, айналымдар арасында бірнеше рет дем ал.",
+        "ru": "1. Встань прямо: ноги на ширине таза, колени слегка согнуты, вес на передней части стопы.\n2. Постукивай ногами по полу по очереди, медленно: левая, правая, левая, правая. Сосчитай десять касаний.\n3. Теперь ускоряйся, как барабанная дробь, но пусть касания остаются маленькими и лёгкими.\n4. Пока ноги работают, смотри прямо перед собой и держи плечи расслабленными.\n5. Сделай четыре круга по пятнадцать секунд и между кругами отдохни несколько вдохов.",
+        "en": "1. Stand tall with your feet hip-width apart, your knees a little bent and your weight on the front of your feet.\n2. Tap your feet on the floor one after the other, slowly: left, right, left, right. Count ten taps.\n3. Now go faster, like a drum roll, but keep the taps small and light.\n4. Keep your eyes straight ahead and your shoulders loose while your feet work.\n5. Do four rounds of fifteen seconds and rest for a few breaths between rounds."
+      },
+      "dose": {
+        "durationSec": 15,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Өкшеңмен қатты тепкілейсің, аяқ ұшымен жеңіл түртпейсің.",
+          "ru": "Ты сильно топаешь пятками, вместо того чтобы легко касаться пола носком.",
+          "en": "You stamp hard on your heels instead of tapping lightly with your toes."
+        },
+        {
+          "kk": "Түртулерің біркелкі емес: бір аяғың екіншісінен екі есе жылдам жүреді.",
+          "ru": "Ритм сбивается: одна нога идёт вдвое быстрее другой.",
+          "en": "Your rhythm gets uneven: one foot goes twice as fast as the other."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Құрғақ еденде аяқкиім немесе тайып кетпейтін шұлық киіп тұр, еденде сүрінетін ештеңе жоқ екенін тексер; аяқ ауырлап кетсе, тоқтап демал.",
+          "ru": "Стой на сухом полу в обуви или в нескользящих носках, проверь, что на полу нечем споткнуться; если ноги отяжелели, остановись и отдохни.",
+          "en": "Wear shoes or grippy socks on a dry floor and check that there is nothing on it to trip over; if your legs feel heavy, stop and rest."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-knee-touch-march"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 6,
+      "ageMax": 14,
+      "equipment": "nothing",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-drop-bounce-catch",
+      "title": {
+        "kk": "Түсір, секірсін, ұста",
+        "ru": "Урони, дай отскочить, поймай",
+        "en": "Drop, bounce, catch"
+      },
+      "goal": {
+        "kk": "Допты түсіріп, бір рет секіргенін көр де, екі қолыңмен ұста: көзің мен қолың доптың секіруін оқуды үйренеді.",
+        "ru": "Урони мяч, проследи за одним отскоком и поймай двумя руками: глаза и руки учатся читать отскок.",
+        "en": "Drop the ball, watch it bounce once and catch it in both hands, so your eyes and hands learn to read the bounce."
+      },
+      "instructions": {
+        "kk": "1. Бос жердің ортасына тұр да, допты екі қолыңмен белің деңгейінде ұста.\n2. Допты жіберіп жібер, ол тура аяғыңның алдына түссін.\n3. Қолыңа емес, допқа қара да, оның бір рет секіруіне мүмкіндік бер.\n4. Доп көтеріліп келе жатқанда екі қолыңмен ұста, қолыңды сәл жұмсарт: доп қолыңнан секіріп кетпесін.\n5. Он рет түсіргеннен кейін допты сәл биіктеу ұстап, тағы он рет түсір.",
+        "ru": "1. Встань посреди свободного места и держи мяч двумя руками на уровне пояса.\n2. Просто отпусти мяч, чтобы он упал прямо перед твоими ногами.\n3. Смотри на мяч, а не на свои руки, и дай ему один раз отскочить.\n4. Поймай мяч двумя руками, когда он поднимается, и слегка пружинь руками, чтобы он не выскочил.\n5. После десяти бросков держи мяч чуть выше и сделай ещё десять.",
+        "en": "1. Stand in the middle of your space and hold the ball in both hands at waist height.\n2. Simply let go, so the ball falls straight down in front of your feet.\n3. Watch the ball, not your hands, and let it bounce one time.\n4. Catch it with both hands as it rises, letting your hands give a little so it does not pop out.\n5. After ten drops, hold the ball a little higher and do ten more."
+      },
+      "dose": {
+        "reps": 10,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допты жіберудің орнына төмен итересің, сондықтан ол қашып кетеді.",
+          "ru": "Ты толкаешь мяч вниз, вместо того чтобы отпустить, и он отскакивает в сторону.",
+          "en": "You push the ball down instead of letting it go, so it bounces away."
+        },
+        {
+          "kk": "Қолыңды тым ерте жауып, допты өткізіп аласың.",
+          "ru": "Ты слишком рано сводишь руки и промахиваешься мимо мяча.",
+          "en": "You close your hands too early and miss the ball."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Допты терезеден, шамнан және сөрелерден аулақ ұста; доп домалап кетсе, соңынан жүгірме, жай барып ал.",
+          "ru": "Держи мяч подальше от окон, ламп и полок; если он укатился, не бегай за ним, а спокойно подойди и возьми.",
+          "en": "Keep the ball away from windows, lamps and shelves, and if it rolls off, walk over and fetch it instead of running after it."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-bounce-juggle"
+      ],
+      "minutes": 4,
+      "level": 1,
+      "ageMin": 5,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-bounce-juggle",
+      "title": {
+        "kk": "Секіртіп жонглирлеу",
+        "ru": "Жонглирование с отскоком",
+        "en": "Bounce juggle"
+      },
+      "goal": {
+        "kk": "Допқа бір рет жанас, бір рет секіртіп жіберіп, қайталай бер: доп аласа, ырғақ тегіс болсын.",
+        "ru": "Коснись мяча ногой один раз, дай ему один раз отскочить и повтори: мяч низко, ритм ровный.",
+        "en": "Touch the ball once, let it bounce once and repeat, keeping the ball low and the rhythm even."
+      },
+      "instructions": {
+        "kk": "1. Допты екі қолыңа алып, аяқтарыңды жамбас еніндей ашып тұр.\n2. Допты жіберіп жібер де, ол секіріп көтеріліп келе жатқанда оң аяғыңның үстімен жайлап түрт: доп тізеден жоғары шықпасын.\n3. Доп бір рет секірсін де, тағы түрт. Ырғақ осындай: жанасу, секіру, жанасу, секіру.\n4. Тізеңді көтеріп, көзіңді допқа қадап тұр. Қатарынан үш рет жанасып, допты қолыңмен ұстап ал.\n5. Оңай болған соң, әр жанасудан кейін аяқты ауыстыр. Бес айналым жаса.",
+        "ru": "1. Возьми мяч в обе руки и встань, поставив ноги на ширину таза.\n2. Отпусти мяч и, когда он поднимается после отскока, мягко коснись его верхом правой стопы: мяч должен взлетать не выше колена.\n3. Дай мячу один раз отскочить и коснись его снова. Ритм такой: касание, отскок, касание, отскок.\n4. Держи колено поднятым, а взгляд на мяче. Сделай три касания подряд и поймай мяч руками.\n5. Когда станет легко, меняй ногу после каждого касания. Сделай пять кругов.",
+        "en": "1. Hold the ball in both hands and stand with your feet hip-width apart.\n2. Drop the ball and, as it comes up from the bounce, tap it gently with the top of your right foot so it rises no higher than your knee.\n3. Let it bounce once, then tap it again. That is the rhythm: touch, bounce, touch, bounce.\n4. Keep your knee lifted and your eyes on the ball. Make three touches in a row, then catch the ball.\n5. When it feels easy, change feet after every touch. Do five rounds."
+      },
+      "dose": {
+        "reps": 3,
+        "sets": 5
+      },
+      "mistakes": [
+        {
+          "kk": "Допты тым биік теуіп, жоғалтып аласың.",
+          "ru": "Ты бьёшь по мячу слишком высоко и теряешь его.",
+          "en": "You kick the ball too high and lose it."
+        },
+        {
+          "kk": "Тізеңді көтерудің орнына аяғыңды түзу созасың.",
+          "ru": "Ты тянешь прямую ногу, вместо того чтобы поднять колено.",
+          "en": "You reach with a straight leg instead of lifting your knee."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Әр жанасуды аласа жаса, сонда доп бетіңе не терезеге тимейді; баспалдақтың, жолдың және басқа балалардың жанында жаттықпа.",
+          "ru": "Делай каждое касание низким, чтобы мяч не попал в лицо или в окно, и не тренируйся рядом с лестницей, дорогой и другими детьми.",
+          "en": "Keep every touch low so the ball cannot hit your face or a window, and never practise near steps, roads or other children."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-lift-and-catch"
+      ],
+      "regressionSlugs": [
+        "juggling-drop-bounce-catch"
+      ],
+      "minutes": 5,
+      "level": 1,
+      "ageMin": 7,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-lift-and-catch",
+      "title": {
+        "kk": "Допты аяқпен көтеріп ұстау",
+        "ru": "Подними ногой и поймай",
+        "en": "Lift and catch"
+      },
+      "goal": {
+        "kk": "Допты аяғыңның үстімен жайлап көтеріп, екі қолыңмен ұста: көзің, аяғың және қолың бір ырғақпен жұмыс істейді.",
+        "ru": "Мягко подними мяч верхом стопы и поймай двумя руками: глаза, нога и руки работают в одном ритме.",
+        "en": "Lift the ball softly with the top of your foot and catch it in both hands, so your eyes, foot and hands work in one rhythm."
+      },
+      "instructions": {
+        "kk": "1. Аяқтарыңды сәл ашып тұр, допты екі қолыңмен белің деңгейінде ұста.\n2. Допты оң аяғыңның үстіне түсір: аяқ ұшың алға қарасын, аяғың жерден сәл көтеріңкі болсын.\n3. Аяғыңды жайлап жоғары көтер, сонда доп белден жоғары шықпай, жұмсақ секіреді.\n4. Көзіңмен допты қадағала да, екі қолыңмен ұстап ал.\n5. Оң аяқпен сегіз рет, содан кейін сол аяқпен сегіз рет жаса.",
+        "ru": "1. Поставь ноги чуть врозь и держи мяч двумя руками на уровне пояса.\n2. Урони мяч на верх правой стопы: носок смотрит вперёд, стопа слегка приподнята над полом.\n3. Мягко подними ногу вверх, чтобы мяч подпрыгнул не выше пояса.\n4. Следи за мячом глазами и поймай его двумя руками.\n5. Сделай восемь подъёмов правой ногой, потом восемь левой.",
+        "en": "1. Stand with your feet a little apart and hold the ball in both hands at waist height.\n2. Drop the ball onto the top of your right foot, toes pointing forward and the foot just off the floor.\n3. Lift your foot softly so the ball pops up no higher than your waist.\n4. Follow the ball with your eyes and catch it in both hands.\n5. Do eight lifts with your right foot, then eight with your left."
+      },
+      "dose": {
+        "reps": 8,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Аяғыңды сілтеп жібересің, сондықтан доп алысқа ұшады.",
+          "ru": "Ты машешь ногой, и мяч улетает далеко.",
+          "en": "You swing your leg, so the ball flies far away."
+        },
+        {
+          "kk": "Аяқ ұшың төмен қарайды, сондықтан доп аяқтан домалап кетеді.",
+          "ru": "Носок смотрит вниз, и мяч скатывается со стопы.",
+          "en": "Your toes point down, so the ball rolls off your foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Шөпте немесе тайғанақ емес еденде тұр, допты тек белге дейін көтер; теңселсең, аяғыңды жерге қойып, допты қолыңа алып тыныштандыр.",
+          "ru": "Стой на траве или на нескользком полу, поднимай мяч только до пояса, а если качнуло, поставь ногу и подержи мяч в руках.",
+          "en": "Stand on grass or a floor that is not slippery, lift the ball only to waist height, and if you wobble, put your foot down and hold the ball still."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-touch-catch-reset"
+      ],
+      "regressionSlugs": [
+        "juggling-bounce-juggle"
+      ],
+      "minutes": 4,
+      "level": 2,
+      "ageMin": 7,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-touch-catch-reset",
+      "title": {
+        "kk": "Жанас, ұста, қайта баста",
+        "ru": "Коснись, поймай, начни заново",
+        "en": "Touch, catch, reset"
+      },
+      "goal": {
+        "kk": "Қатарынан екі-үш рет жанасып, допты ұстап ал да, сабырмен қайта баста: қателік допты қуып жүгіруге айналмасын.",
+        "ru": "Сделай два-три касания подряд, поймай мяч и спокойно начни заново, чтобы ошибка не превращалась в погоню.",
+        "en": "Make two or three touches in a row, then catch the ball and reset calmly, so a mistake never turns into a chase."
+      },
+      "instructions": {
+        "kk": "1. Допты екі қолыңмен кеудеңнің деңгейінде ұстап, бір рет байсалды дем ал.\n2. Допты оң аяғыңның үстіне түсіріп, тізеңнің деңгейіне дейін жайлап көтер. Бұл — бірінші жанасу.\n3. Допқа тағы бір рет жанас: бір аяқпен де, екінші аяқпен де болады, бірақ екі жанасу да кеудеңнен төмен болсын.\n4. Не болса да, допты екі қолыңмен ұстап ал да, бір сәт қозғалмай тұр. Бұл — қайта бастау.\n5. Екі жанасудан алты айналым жаса. Алтауы да сәтті болса, әр айналымда үш жанасу жаса.",
+        "ru": "1. Держи мяч двумя руками на уровне груди и сделай один спокойный вдох.\n2. Урони мяч на верх правой стопы и мягко подними его до уровня колена. Это первое касание.\n3. Коснись мяча ещё раз, той же ногой или другой, и держи оба касания ниже груди.\n4. Что бы ни случилось, поймай мяч двумя руками и на миг замри. Это твой сброс.\n5. Сделай шесть кругов по два касания. Когда все шесть удались, делай в каждом круге по три касания.",
+        "en": "1. Hold the ball in both hands at chest height and take one calm breath.\n2. Drop the ball onto the top of your right foot and lift it softly to knee height. That is touch one.\n3. Touch it once more, with the same foot or the other, and keep both touches below your chest.\n4. Catch the ball with both hands, whatever happens, and hold it still for a moment. That is your reset.\n5. Do six rounds of two touches. When all six go well, make it three touches in each round."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Нашар жанасудан кейін тоқтап қайта бастаудың орнына допты қуып кетесің.",
+          "ru": "После неудачного касания ты бежишь за мячом, вместо того чтобы остановиться и начать заново.",
+          "en": "After a bad touch you run after the ball instead of stopping to reset."
+        },
+        {
+          "kk": "Тізеңді қатырасың, сондықтан доп ұшып кетеді.",
+          "ru": "Ты зажимаешь колено, и мяч улетает.",
+          "en": "You lock your knee, so the ball flies off."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Доп қашып кетсе, жіберіп жібер: оны жолға немесе баспалдақпен төмен қуып жүгірме, жай барып алып, қайта баста.",
+          "ru": "Если мяч укатился, пусть катится: не гонись за ним на дорогу или вниз по лестнице, спокойно подойди, возьми его и начни заново.",
+          "en": "If the ball gets away, let it go: never chase it into a road or down steps, walk over and fetch it, then reset."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-ladder-3-5-7"
+      ],
+      "regressionSlugs": [
+        "juggling-lift-and-catch"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 7,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-ladder-3-5-7",
+      "title": {
+        "kk": "Жонглирлеу баспалдағы 3-5-7",
+        "ru": "Лестница жонглирования 3-5-7",
+        "en": "Juggle ladder 3-5-7"
+      },
+      "goal": {
+        "kk": "Үш, бес және жеті жанасудан тұратын баспалдақпен көтеріл, әр саты арасында допты ұстап, сабырмен қайта баста.",
+        "ru": "Поднимись по лесенке из трёх, пяти и семи касаний, ловя мяч и спокойно начиная заново между ступенями.",
+        "en": "Climb a ladder of three, five and seven touches, catching the ball and resetting calmly between the rungs."
+      },
+      "instructions": {
+        "kk": "1. Тегіс, ашық жер тап: құрғақ шөп немесе таза аула, айналаңда бірнеше метр бос болсын.\n2. Аяқтарыңмен қатарынан үш рет жонглирле де, допты ұстап алып, иығыңды босат.\n3. Бес рет жонглирле, допты ұстап ал да, иығыңды тағы босат.\n4. Жеті рет жонглирлеп, допты ұстап ал. Бұл — бір толық баспалдақ.\n5. Баспалдақпен үш рет көтеріл. Доп ертерек түсіп кетсе, оны алып, сол сатыны қайталап жаса.",
+        "ru": "1. Найди ровное открытое место, например сухую траву или чистый двор, где вокруг на несколько метров ничего нет.\n2. Сделай три касания подряд ногами, потом поймай мяч и встряхни плечами.\n3. Сделай пять касаний, поймай мяч и снова встряхни плечами.\n4. Сделай семь касаний и поймай мяч. Это одна полная лесенка.\n5. Пройди лесенку три раза. Если мяч упал раньше времени, подними его и повтори ту же ступень.",
+        "en": "1. Find flat, open ground, such as dry grass or a clean yard, with nothing around you for a few metres.\n2. Juggle three touches in a row with your feet, then catch the ball and shake out your shoulders.\n3. Juggle five touches, catch the ball and shake out your shoulders again.\n4. Juggle seven touches and catch the ball. That is one full ladder.\n5. Climb the ladder three times. If the ball falls early, pick it up and repeat the same rung."
+      },
+      "dose": {
+        "reps": 3
+      },
+      "mistakes": [
+        {
+          "kk": "Иығыңды қатырып, тынысыңды ұстайсың, сондықтан доп ұшып кетеді.",
+          "ru": "Ты зажимаешь плечи и задерживаешь дыхание, и мяч улетает.",
+          "en": "You tense your shoulders and hold your breath, so the ball flies away."
+        },
+        {
+          "kk": "Баспалдақпен асығып көтеріліп, доп ұсталып, тынышталмай жатып келесі сатыны бастайсың.",
+          "ru": "Ты торопишься и начинаешь следующую ступень, пока мяч ещё не пойман и не успокоился.",
+          "en": "You rush the climb and start the next rung before the ball is caught and still."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тегіс, құрғақ жерде, жолдан, баспалдақтан және басқа балалардан аулақ жаттық; аяқтарың шаршаса, жаттығуды тоқтат: шаршаған аяқ тез тайып кетеді.",
+          "ru": "Тренируйся на ровной сухой земле, подальше от дороги, лестницы и других детей, и заканчивай, когда ноги устали: усталая нога скользит быстрее.",
+          "en": "Practise on flat, dry ground away from roads, steps and other children, and stop the ladder when your legs feel tired, because tired legs slip."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-alternating-feet"
+      ],
+      "regressionSlugs": [
+        "juggling-touch-catch-reset"
+      ],
+      "minutes": 6,
+      "level": 2,
+      "ageMin": 8,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "yard",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-knee-touch-march",
+      "title": {
+        "kk": "Тізеге тиіп жүру",
+        "ru": "Марш с касанием колена",
+        "en": "Knee-touch march"
+      },
+      "goal": {
+        "kk": "Қол мен аяқты айқаса байланыстыр: тізеңді көтеріп, оған қарама-қарсы қолыңмен тиіп, ырғақты бірқалыпты ұста.",
+        "ru": "Свяжи руки и ноги крест-накрест: поднимай колено и касайся его противоположной рукой в ровном ритме.",
+        "en": "Link your hands and feet in a crossed pattern: lift a knee and touch it with the opposite hand in a steady beat."
+      },
+      "instructions": {
+        "kk": "1. Бос жерде тік тұр: аяқтарың түйіс, қолдарың бойыңда.\n2. Оң тізеңді жамбас деңгейіне дейін көтеріп, сол қолыңмен оған тиіп, аяғыңды жерге қой.\n3. Сол тізеңді көтеріп, оң қолыңмен оған тиіп. Бірқалыпты ырғақпен жүре бер: бір, екі, бір, екі.\n4. Сегіз қадамнан кейін тізеге тиюдің арасына шапалақ қос: ырғақ енді «тию, шапалақ, тию, шапалақ» болады.\n5. Отыз секунд жүр, бірнеше рет дем алып демал да, төрт айналым жаса.",
+        "ru": "1. Встань прямо на свободном месте: ноги вместе, руки вдоль тела.\n2. Подними правое колено до уровня бедра, коснись его левой рукой и поставь ногу.\n3. Подними левое колено и коснись его правой рукой. Шагай в ровном ритме: раз, два, раз, два.\n4. После восьми шагов добавь хлопок между касаниями колена: касание, хлопок, касание, хлопок.\n5. Шагай тридцать секунд, отдохни несколько вдохов и сделай четыре круга.",
+        "en": "1. Stand tall in a clear space with your feet together and your arms by your sides.\n2. Lift your right knee to hip height and touch it with your left hand, then put the foot down.\n3. Lift your left knee and touch it with your right hand. Keep marching in a steady beat: one, two, one, two.\n4. After eight steps, add a clap between the knee touches, so the beat becomes touch, clap, touch, clap.\n5. March for thirty seconds, rest for a few breaths, and do four rounds."
+      },
+      "dose": {
+        "durationSec": 30,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Тізеге қарама-қарсы қолмен емес, өзімен бір жақтағы қолмен тиесің.",
+          "ru": "Ты касаешься колена рукой с той же стороны, а не противоположной.",
+          "en": "You touch the knee with the hand on the same side instead of the opposite hand."
+        },
+        {
+          "kk": "Тізені көтерудің орнына, оған жету үшін алға еңкейесің.",
+          "ru": "Ты наклоняешься вперёд к колену, вместо того чтобы поднять колено.",
+          "en": "You bend forward to reach the knee instead of lifting the knee up."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тегіс, құрғақ еденде жүр де, баяу баста; басың айналса немесе тепе-теңдігіңді жоғалтсаң, тоқтап, біраз отыр.",
+          "ru": "Шагай по ровному сухому полу и начинай медленно; если закружилась голова или ты теряешь равновесие, остановись и посиди немного.",
+          "en": "March on a flat, dry floor and start slowly; if you feel dizzy or lose your balance, stop and sit down for a moment."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-hop-and-freeze"
+      ],
+      "regressionSlugs": [
+        "juggling-stork-stand",
+        "juggling-drum-roll-feet"
+      ],
+      "minutes": 4,
+      "level": 2,
+      "ageMin": 6,
+      "ageMax": 14,
+      "equipment": "nothing",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-hop-and-freeze",
+      "title": {
+        "kk": "Секір де, қатып қал",
+        "ru": "Прыжки и замри",
+        "en": "Hop and freeze"
+      },
+      "goal": {
+        "kk": "Бір аяқпен секіріп, жұмсақ түсіп, үш секунд бойы тепе-теңдікті сақтап қатып қал.",
+        "ru": "Попрыгай на одной ноге и замри на мягком приземлении, удерживая равновесие три секунды.",
+        "en": "Hop on one foot and freeze on a soft landing, holding your balance for three seconds."
+      },
+      "instructions": {
+        "kk": "1. Жұмсақ, тегіс шөп немесе тайғанақ емес еден тап, айналаңда ештеңе болмасын.\n2. Алдымен сол аяғыңда тұр, оң тізеңді бүгіп, қолыңды екі жаққа жай.\n3. Осы бір аяғыңмен он шағын секіріс жаса: аяқтың ұшына, тізеңді бүгіп, жұмсақ түс.\n4. Оныншы секірістен кейін түсіп, қатып қал: екінші аяғыңды жерге тигізбей, тепе-теңдікті үш секунд сақта.\n5. Аяқты ауыстырып, оң аяқпен дәл солай жаса. Әр аяқпен үш айналым жаса.",
+        "ru": "1. Найди мягкую ровную траву или нескользкий пол, где вокруг ничего нет.\n2. Сначала встань на левую ногу, согни правое колено и разведи руки в стороны.\n3. Сделай десять маленьких прыжков на этой одной ноге, приземляясь мягко на носок с согнутым коленом.\n4. После десятого прыжка приземлись и замри: удерживай равновесие три секунды, не ставя вторую ногу.\n5. Смени ногу и сделай то же на правой. Сделай по три круга на каждой ноге.",
+        "en": "1. Find soft, flat grass or a non-slippery floor with nothing around you.\n2. Start on your left foot: bend your right knee and hold your arms out to the sides.\n3. Make ten small hops on that one foot, landing softly on the front of the foot with a bent knee.\n4. On the tenth hop, land and freeze: keep your balance for three seconds without putting the other foot down.\n5. Change feet and do the same on the right foot. Do three rounds on each foot."
+      },
+      "dose": {
+        "reps": 3,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Түзу, қатқан тізеңмен әрі бүкіл табаныңмен қатты түсесің.",
+          "ru": "Ты приземляешься на прямое жёсткое колено и на всю стопу.",
+          "en": "You land on a stiff, straight knee and on flat feet."
+        },
+        {
+          "kk": "Тым биік секіріп, теңселіп кетесің, ал секірістер кішкентай болуы керек.",
+          "ru": "Ты прыгаешь слишком высоко и теряешь равновесие, а прыжки должны быть маленькими.",
+          "en": "You hop too high and wobble instead of keeping the hops small."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тек жұмсақ шөпте немесе тегіс, тайғанақ емес еденде секір, баспалдақта, жол жиегінде немесе дымқыл жерде секірме; тұрақсыз болсаң, аяғыңды қойып демал.",
+          "ru": "Прыгай только на мягкой траве или ровном нескользком полу, не на ступеньках, бордюре или мокрой земле; если неустойчиво, поставь ногу и отдохни.",
+          "en": "Hop only on soft grass or a flat, non-slippery floor, never on steps, kerbs or wet ground; if you feel unsteady, put your foot down and rest."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-step-compass"
+      ],
+      "regressionSlugs": [
+        "juggling-knee-touch-march"
+      ],
+      "minutes": 5,
+      "level": 3,
+      "ageMin": 8,
+      "ageMax": 14,
+      "equipment": "nothing",
+      "space": "yard",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-step-compass",
+      "title": {
+        "kk": "Қадамдар компасы",
+        "ru": "Шаги по компасу",
+        "en": "Step compass"
+      },
+      "goal": {
+        "kk": "Төрт бағытқа шағын жылдам қадам жасап, ортаға қайта оралып, тепе-теңдікті және бірқалыпты ырғақты сақта.",
+        "ru": "Делай быстрые маленькие шаги в четыре стороны и возвращайся в середину, сохраняя равновесие и ровный ритм.",
+        "en": "Take quick, small steps in four directions and back to the middle, keeping your balance and an even rhythm."
+      },
+      "instructions": {
+        "kk": "1. Бос жердің ортасында тұр да, еденде үлкен айқыш сызық бар, сен оның дәл ортасындасың деп ойла.\n2. Оң аяғыңмен алға кішкентай қадам жасап, ортаға қайт. Дәл солай сол аяғыңмен жаса.\n3. Оңға, артқа және солға да солай қадам жасап, әр бағытты дауыстап айт: алға, оңға, артқа, солға.\n4. Айқыштың айналасында тоқтамай айналғанша жылдамда: қадамдарың кішкентай, дене салмағың аяқ ұшында болсын.\n5. Жиырма секундтан төрт айналым жаса. Соңғы екі айналымда бағыттарды жаңа ретпен айт: мысалы, солға, артқа, алға, оңға.",
+        "ru": "1. Встань посреди свободного места и представь на полу большой крест, а себя в его центре.\n2. Сделай маленький шаг вперёд правой ногой и вернись в середину. То же сделай левой ногой.\n3. Так же шагай вправо, назад и влево, вслух называя каждое направление: вперёд, вправо, назад, влево.\n4. Ускоряйся, пока не начнёшь без остановки кружить вокруг креста маленькими шагами, с весом на передней части стопы.\n5. Сделай четыре круга по двадцать секунд. В последних двух кругах называй направления в новом порядке, например влево, назад, вперёд, вправо.",
+        "en": "1. Stand in the middle of your space and imagine a big cross on the floor with you in the centre.\n2. Take a small step forward with your right foot and bring it back to the middle. Do the same with your left foot.\n3. Do the same to the right, to the back and to the left, saying each direction out loud: forward, right, back, left.\n4. Speed up until you circle the cross without stopping, with small steps and your weight on the front of your feet.\n5. Do four rounds of twenty seconds. In the last two rounds, call the directions in a new order, such as left, back, forward, right."
+      },
+      "dose": {
+        "durationSec": 20,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Үлкен қадам жасап, айқыштың ортасынан адасып кетесің.",
+          "ru": "Ты делаешь большие шаги и теряешь середину креста.",
+          "en": "You take big steps and lose the middle of the cross."
+        },
+        {
+          "kk": "Бүйірге қадам жасағанда аяқтарыңды айқастырып, өзіңді сүріндіресің.",
+          "ru": "При шаге вбок ты скрещиваешь ноги и спотыкаешься.",
+          "en": "You cross your feet when stepping sideways and trip yourself up."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Қадамдарың кішкентай болсын, еденнен орындықтарды, ойыншықтарды және сырғанайтын кілемдерді алып таста; тек баяу түрі оңай болғанда ғана жылдамда.",
+          "ru": "Делай маленькие шаги и убери с пола стулья, игрушки и скользящие коврики; ускоряйся, только когда медленный вариант стал лёгким.",
+          "en": "Keep the steps small and clear the floor of chairs, toys and loose rugs; speed up only when the slow version feels easy."
+        }
+      ],
+      "regressionSlugs": [
+        "juggling-hop-and-freeze"
+      ],
+      "minutes": 5,
+      "level": 3,
+      "ageMin": 8,
+      "ageMax": 14,
+      "equipment": "nothing",
+      "space": "home_3x3",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-alternating-feet",
+      "title": {
+        "kk": "Аяқты алмастырып жонглирлеу",
+        "ru": "Чередование ног",
+        "en": "Alternating feet"
+      },
+      "goal": {
+        "kk": "Оң және сол аяқпен кезектесіп жонглирле де, үзілмеген ең жақсы серияңды жазып қой.",
+        "ru": "Жонглируй правой и левой ногой по очереди и запиши свою лучшую серию без остановки.",
+        "en": "Juggle with your right and left foot in turn and write down your best unbroken run."
+      },
+      "instructions": {
+        "kk": "1. Айналаңда бос орын бар тегіс жерде тұр да, допты екі қолыңа ал.\n2. Допты түсіріп, оң аяғыңмен аласа, шамамен тізе деңгейінде түрт.\n3. Келесі жанасуды сол аяғыңмен жаса, содан кейін оң, содан кейін сол: әр жанасудан кейін аяқты ауыстыр.\n4. Жанасуларыңды дауыстап сана. Доп түсіп кетсе, оны ұстап ал немесе бір рет секіртіп, жаңа серияны баста.\n5. Алты серия жаса. Ең жақсы нәтижеңді жазып қой да, келесі жолы одан асып түсуге тырыс.",
+        "ru": "1. Встань на ровном месте, где вокруг есть свободное пространство, и держи мяч двумя руками.\n2. Урони мяч и коснись его правой ногой невысоко, примерно на уровне колена.\n3. Следующее касание сделай левой ногой, потом правой, потом левой: меняй ногу после каждого касания.\n4. Считай касания вслух. Когда мяч упал, поймай его или дай ему один раз отскочить и начни новую серию.\n5. Сделай шесть серий. Запиши лучшую серию и постарайся побить её в следующий раз.",
+        "en": "1. Stand on flat ground with room around you and hold the ball in both hands.\n2. Drop the ball and touch it with your right foot, keeping the touch low, about knee height.\n3. Touch it with your left foot next, then your right, then your left: switch feet after every touch.\n4. Count your touches out loud. When the ball drops, catch it or let it bounce once, and start a new run.\n5. Do six runs. Write down your best run and try to beat it next time."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Күшті аяғың бәрін өзі істеп, әлсіз аяғың қарап тұрады.",
+          "ru": "Сильная нога делает всё сама, а слабая только смотрит.",
+          "en": "Your stronger foot takes over and your weaker foot only watches."
+        },
+        {
+          "kk": "Аяқты ауыстырғанда аяғыңды кең сілтейсің, сондықтан доп бүйірге ұшады.",
+          "ru": "Меняя ногу, ты широко машешь ногой, и мяч улетает вбок.",
+          "en": "You swing your leg wide when you switch feet, so the ball flies off sideways."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тірек аяғың дірілдей бастағанда тоқтап демал: шаршаған аяқ оңай тайып кетеді; тегіс жерде, жолдан аулақ жаттық.",
+          "ru": "Остановись и отдохни, когда опорная нога начинает дрожать: усталая нога легко скользит; тренируйся на ровной земле подальше от дороги.",
+          "en": "Stop and rest when your standing leg starts to shake, because a tired leg slips easily, and play on flat ground away from roads."
+        }
+      ],
+      "progressionSlugs": [
+        "juggling-thigh-and-foot"
+      ],
+      "regressionSlugs": [
+        "juggling-ladder-3-5-7"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "yard",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "juggling-thigh-and-foot",
+      "title": {
+        "kk": "Сан және аяқ",
+        "ru": "Бедро и стопа",
+        "en": "Thigh and foot"
+      },
+      "goal": {
+        "kk": "Аяқпен жанасулардың арасында допты санмен тыныштандырып, қолыңды қолданбай тегіс ырғақ сақта.",
+        "ru": "Успокаивай мяч бедром между касаниями стопой и держи ровный ритм, не помогая себе руками.",
+        "en": "Use your thigh to calm the ball between foot touches and keep a smooth rhythm without your hands."
+      },
+      "instructions": {
+        "kk": "1. Айналаңда бос орын бар тегіс жерде тұр да, допты екі қолыңа ал.\n2. Допты оң санына түсір: тізеңді көтеріп, санды жалпақ үстелдей ұста, содан кейін допты ұстап ал. Бесеуін оң санмен, бесеуін сол санмен жаса.\n3. Енді аяқ, сан, аяқ ретімен жанас: допқа алдымен аяқтың үстімен, содан кейін санмен, тағы аяқпен жанасып, ұстап ал.\n4. Сан допты жұмсартсын: доп аласа әрі жақын қалып, келесі жанасуға дайын болсын.\n5. Бұл тыныш шыққан соң, әр төртінші-бесінші аяқ жанасуынан кейін бір рет санмен де жанас. Алты серия жаса.",
+        "ru": "1. Встань на ровном месте, где вокруг есть свободное пространство, и держи мяч двумя руками.\n2. Урони мяч на правое бедро, подняв колено так, чтобы бедро стало ровным столиком, и поймай мяч. Сделай пять раз, потом пять раз левым бедром.\n3. Теперь по схеме стопа, бедро, стопа: коснись мяча верхом стопы, потом бедром, потом снова стопой и поймай его.\n4. Пусть бедро смягчает мяч, чтобы он оставался низко и рядом, готовый к следующему касанию.\n5. Когда получается спокойно, добавляй одно касание бедром после каждого четвёртого-пятого касания стопой. Сделай шесть серий.",
+        "en": "1. Stand on flat ground with room around you and hold the ball in both hands.\n2. Drop the ball onto your right thigh, raising the knee so the thigh is a flat table, and catch the ball. Do five, then five with your left thigh.\n3. Now go foot, thigh, foot: touch the ball with the top of your foot, then your thigh, then your foot again, and catch it.\n4. Let your thigh cushion the ball so it stays low and close, ready for the next touch.\n5. When that feels calm, add one thigh touch after every fourth or fifth foot touch. Do six runs."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Тізеңді тым биік көтересің, сондықтан доп бетіңнің жанынан жоғары ұшады.",
+          "ru": "Ты поднимаешь колено слишком высоко, и мяч взлетает мимо лица.",
+          "en": "You lift your knee too high, so the ball flies up past your face."
+        },
+        {
+          "kk": "Допқа санмен емес, тізеңмен тиесің.",
+          "ru": "Ты бьёшь по мячу коленом, а не бедром.",
+          "en": "You hit the ball with your knee instead of your thigh."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тек аяқ пен санды қолдан, допты ешқашан басыңмен ойнама; тегіс, құрғақ жерде тұр да, аяқтарың шаршаса, демал.",
+          "ru": "Используй только стопы и бёдра и никогда не играй мячом головой; стой на ровной сухой земле и отдыхай, когда ноги устали.",
+          "en": "Use only your feet and thighs and never play the ball with your head; stand on flat, dry ground and rest when your legs feel tired."
+        }
+      ],
+      "regressionSlugs": [
+        "juggling-alternating-feet"
+      ],
+      "minutes": 7,
+      "level": 3,
+      "ageMin": 10,
+      "ageMax": 14,
+      "equipment": "ball",
+      "space": "yard",
+      "partner": false,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    }
+  ]
+}
