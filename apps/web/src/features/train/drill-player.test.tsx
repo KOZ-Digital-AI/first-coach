@@ -101,7 +101,10 @@ const ROADMAP = {
   currentLevelLabel: 'Basic',
   sessionsPerWeek: 3,
   minutesPerSession: 20,
-  focus: [{ skill: 'dribbling', level: 2, targetLevel: 3, reason: 'goal' }],
+  focus: [
+    { skill: 'dribbling', level: 2, targetLevel: 3, reason: 'goal' },
+    { skill: 'weak-foot', level: 1, targetLevel: 2, reason: 'weakest' },
+  ],
 };
 
 function session(items: unknown[] = [ITEM_1, SLALOM, ITEM_3]): TodaySession {
