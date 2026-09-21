@@ -11,7 +11,11 @@ import {
   SeedSkillGraphFile,
   SeedSkillNode,
   SeedSkillNodeBase,
+  SeedTest,
+  SeedTestBase,
   SeedTestsFile,
+  THRESHOLD_BANDS,
+  THRESHOLD_LEVELS,
 } from "./seed-schema";
 
 type Path = (string | number)[];
@@ -414,5 +418,177 @@ describe("seed data converts to the wire contracts", () => {
       safety: seedDrill.safety ?? [],
     };
     expect(DrillContent.safeParse(content).success).toBe(true);
+  });
+});
+
+describe("optional level thresholds on a test", () => {
+  // [t2, t3, t4, t5] are the values needed to REACH levels 2..5 for one age band.
+  const higher = { upTo9: [5, 10, 15, 20], from10to13: [8, 14, 20, 26], from14: [10, 18, 26, 34] };
+  // A slalom-style time in seconds: lower is better, so reaching a level needs a SMALLER value.
+  const lower = { upTo9: [30, 26, 22, 18], from10to13: [28, 24, 20, 16], from14: [26, 22, 18, 14] };
+
+  const higherTest = (thresholds: unknown = higher) => skillTest({ thresholds });
+  const lowerTest = (thresholds: unknown = lower) => skillTest({ slug: "slalom-time", direction: "lower", thresholds });
+
+  const bands = [...THRESHOLD_BANDS];
+
+  test("the bands and the number of boundaries are exported", () => {
+    expect([...THRESHOLD_BANDS]).toEqual(["upTo9", "from10to13", "from14"]);
+    expect(THRESHOLD_LEVELS).toBe(4);
+  });
+
+  test("a higher-is-better test with rising boundaries passes and nothing is stripped", () => {
+    const sample = higherTest();
+    const result = SeedTest.safeParse(sample);
+    if (!result.success) throw new Error(JSON.stringify(result.error.issues));
+    expect<unknown>(result.data).toEqual(sample);
+  });
+
+  test("a lower-is-better test with falling boundaries passes and nothing is stripped", () => {
+    const sample = lowerTest();
+    const result = SeedTest.safeParse(sample);
+    if (!result.success) throw new Error(JSON.stringify(result.error.issues));
+    expect<unknown>(result.data).toEqual(sample);
+  });
+
+  test("a test without thresholds stays valid", () => {
+    expect(issuePaths(SeedTest, skillTest())).toBeNull();
+    expect(issuePaths(SeedTest, skillTest({ direction: "lower" }))).toBeNull();
+  });
+
+  test("a tests file mixing a test with thresholds and one without passes", () => {
+    const file = testsFile([higherTest(), lowerTest(), skillTest({ slug: "wall-passes-30s" })]);
+    const result = SeedTestsFile.safeParse(file);
+    if (!result.success) throw new Error(JSON.stringify(result.error.issues));
+    expect<unknown>(result.data).toEqual(file);
+  });
+
+  test("the file-level path carries the tests index in front of thresholds.<band>", () => {
+    const file = testsFile([skillTest(), higherTest({ ...higher, from10to13: [8, 14, 14, 26] })]);
+    expect(issuePaths(SeedTestsFile, file)).toEqual([["tests", 1, "thresholds", "from10to13"]]);
+  });
+
+  test.each(bands)("non-monotonic boundaries in the %s band fail at thresholds.<band>", (band) => {
+    expect(issuePaths(SeedTest, higherTest({ ...higher, [band]: [5, 20, 10, 30] }))).toEqual([["thresholds", band]]);
+    expect(issuePaths(SeedTest, lowerTest({ ...lower, [band]: [30, 10, 20, 5] }))).toEqual([["thresholds", band]]);
+  });
+
+  test.each(bands)("falling boundaries in the %s band of a higher-is-better test fail at thresholds.<band>", (band) => {
+    expect(issuePaths(SeedTest, higherTest({ ...higher, [band]: [20, 15, 10, 5] }))).toEqual([["thresholds", band]]);
+  });
+
+  test.each(bands)("rising boundaries in the %s band of a lower-is-better test fail at thresholds.<band>", (band) => {
+    expect(issuePaths(SeedTest, lowerTest({ ...lower, [band]: [18, 22, 26, 30] }))).toEqual([["thresholds", band]]);
+  });
+
+  test.each([
+    ["the first pair", [10, 10, 15, 20], [30, 30, 22, 18]],
+    ["the middle pair", [5, 10, 10, 20], [30, 22, 22, 18]],
+    ["the last pair", [5, 10, 15, 15], [30, 26, 18, 18]],
+    ["all four", [7, 7, 7, 7], [7, 7, 7, 7]],
+  ])("equal neighbours in %s are rejected", (_name, rising, falling) => {
+    expect(issuePaths(SeedTest, higherTest({ ...higher, upTo9: rising }))).toEqual([["thresholds", "upTo9"]]);
+    expect(issuePaths(SeedTest, lowerTest({ ...lower, from14: falling }))).toEqual([["thresholds", "from14"]]);
+  });
+
+  test("every offending band is reported, each once, at its own path", () => {
+    const thresholds = { upTo9: [5, 5, 15, 20], from10to13: higher.from10to13, from14: [34, 26, 18, 10] };
+    expect(issuePaths(SeedTest, higherTest(thresholds))).toEqual([
+      ["thresholds", "upTo9"],
+      ["thresholds", "from14"],
+    ]);
+  });
+
+  test("boundaries may be negative or fractional", () => {
+    expect(issuePaths(SeedTest, higherTest({ ...higher, upTo9: [-2, -0.5, 0.25, 3.75] }))).toBeNull();
+    expect(issuePaths(SeedTest, lowerTest({ ...lower, upTo9: [3.75, 0.25, -0.5, -2] }))).toBeNull();
+  });
+
+  test("ordering ACROSS bands is not enforced here", () => {
+    const backwards = { upTo9: [50, 60, 70, 80], from10to13: [5, 6, 7, 8], from14: [1, 2, 3, 4] };
+    expect(issuePaths(SeedTest, higherTest(backwards))).toBeNull();
+  });
+
+  test.each([
+    ["3", [5, 10, 15]],
+    ["5", [5, 10, 15, 20, 25]],
+    ["0", []],
+  ])("%s boundaries instead of four fail at thresholds.upTo9", (_len, upTo9) => {
+    expect(issuePaths(SeedTest, higherTest({ ...higher, upTo9 }))).toEqual([["thresholds", "upTo9"]]);
+  });
+
+  test("a band that is not an array fails at thresholds.<band>", () => {
+    for (const upTo9 of ["5,10,15,20", 5, null, { 0: 5, 1: 10, 2: 15, 3: 20 }]) {
+      expect(issuePaths(SeedTest, higherTest({ ...higher, upTo9 }))).toEqual([["thresholds", "upTo9"]]);
+    }
+  });
+
+  test.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+    ["a numeric string", "10"],
+    ["null", null],
+  ])("%s as a boundary is rejected at or under thresholds.upTo9", (_name, bad) => {
+    const paths = issuePaths(SeedTest, higherTest({ ...higher, upTo9: [5, bad, 15, 20] }));
+    expect(paths).not.toBeNull();
+    for (const path of paths ?? []) expect(path.slice(0, 2)).toEqual(["thresholds", "upTo9"]);
+  });
+
+  test("a non-finite boundary never passes on a lower-is-better test either", () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      expect(ok(SeedTest, lowerTest({ ...lower, from14: [bad, 22, 18, 14] }))).toBe(false);
+      expect(ok(SeedTest, lowerTest({ ...lower, from14: [26, 22, 18, bad] }))).toBe(false);
+    }
+  });
+
+  test("an unknown band key is rejected at thresholds and names the key", () => {
+    const result = SeedTest.safeParse(higherTest({ ...higher, upTo8: [1, 2, 3, 4] }));
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toHaveLength(1);
+    const [issue] = result.error.issues;
+    expect(issue?.code).toBe("unrecognized_keys");
+    expect(issue?.path).toEqual(["thresholds"]);
+    expect((issue as { keys?: string[] } | undefined)?.keys).toEqual(["upTo8"]);
+  });
+
+  test.each(bands)("a thresholds object missing %s fails at thresholds.<band>", (band) => {
+    const partial = { ...higher } as Record<string, unknown>;
+    delete partial[band];
+    expect(issuePaths(SeedTest, higherTest(partial))).toEqual([["thresholds", band]]);
+  });
+
+  test("an empty thresholds object names all three missing bands", () => {
+    expect(issuePaths(SeedTest, higherTest({}))).toEqual([
+      ["thresholds", "upTo9"],
+      ["thresholds", "from10to13"],
+      ["thresholds", "from14"],
+    ]);
+  });
+
+  test("thresholds that are not an object fail at thresholds", () => {
+    for (const thresholds of [null, [], "high", 5]) {
+      expect(issuePaths(SeedTest, higherTest(thresholds))).toEqual([["thresholds"]]);
+    }
+  });
+
+  test("a bad direction is reported at direction and no threshold verdict is invented", () => {
+    expect(issuePaths(SeedTest, skillTest({ direction: "sideways", thresholds: higher }))).toEqual([["direction"]]);
+  });
+
+  test("SeedTestBase is unrefined: pick() works and its fields still validate", () => {
+    const picked = SeedTestBase.pick({ slug: true, thresholds: true });
+    expect(picked.safeParse({ slug: "juggling-max", thresholds: higher }).success).toBe(true);
+    expect(picked.safeParse({ slug: "juggling-max", thresholds: { ...higher, upTo9: [1, 2, 3] } }).success).toBe(false);
+  });
+
+  test("the refined SeedTest is the base plus the monotonic rule", () => {
+    expect(issuePaths(SeedTestBase, higherTest({ ...higher, upTo9: [20, 15, 10, 5] }))).toBeNull();
+    expect(issuePaths(SeedTest, higherTest({ ...higher, upTo9: [20, 15, 10, 5] }))).toEqual([["thresholds", "upTo9"]]);
+  });
+
+  test("the wire SkillTest is unchanged: it has no thresholds field", () => {
+    expect("thresholds" in SkillTest.shape).toBe(false);
   });
 });

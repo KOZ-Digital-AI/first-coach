@@ -12,7 +12,7 @@
 // slugs unique per file. Everything else below is DERIVED from the wire contracts and marked
 // so.
 //
-// The object-level rule (ageMin <= ageMax) makes Zod 4 throw on `.pick()/.omit()/.partial()`,
+// The object-level rules (ageMin <= ageMax; test thresholds vs direction) make Zod 4 throw on `.pick()/.omit()/.partial()`,
 // so the unrefined `*Base` objects are exported next to the refined ones.
 import { z } from "zod";
 import { AGE_MAX, AGE_MIN, SKILL_LEVEL_MAX, SKILL_LEVEL_MIN, Semver, TestDirection } from "../shared/domain";
@@ -92,8 +92,51 @@ export type SeedSkillGraphFile = z.infer<typeof SeedSkillGraphFile>;
 
 // --- tests.json -------------------------------------------------------------------------------
 
-/** Derived: SkillTest with a seed protocol and kebab slugs. */
-export const SeedTest = z.strictObject({
+/** The age bands a test's level thresholds are given for. */
+export const THRESHOLD_BANDS = ["upTo9", "from10to13", "from14"] as const;
+export type ThresholdBand = (typeof THRESHOLD_BANDS)[number];
+
+/** Boundaries per band: the values that reach levels 2, 3, 4 and 5. */
+export const THRESHOLD_LEVELS = 4;
+
+/**
+ * `[t2, t3, t4, t5]` are the values needed to REACH levels 2..5 in one age band: `value >= t`
+ * for a higher-is-better test, `value <= t` for a lower-is-better one. Below (higher) or above
+ * (lower) the first boundary is level 1. Zod 4's `z.number()` already rejects NaN and +-Infinity.
+ */
+const ThresholdBoundaries = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+export const SeedTestThresholds = z.strictObject({
+  upTo9: ThresholdBoundaries,
+  from10to13: ThresholdBoundaries,
+  from14: ThresholdBoundaries,
+});
+export type SeedTestThresholds = z.infer<typeof SeedTestThresholds>;
+
+/** Strictly increasing (higher) or strictly decreasing (lower); equal neighbours are rejected. */
+const isMonotonic = (boundaries: readonly number[], direction: TestDirection): boolean =>
+  boundaries.every((value, index) => {
+    const previous = boundaries[index - 1];
+    if (previous === undefined) return true;
+    return direction === "higher" ? value > previous : value < previous;
+  });
+
+/** Reported at `thresholds.<band>`. Ordering ACROSS bands is content, not schema. */
+const thresholdsMonotonic = (ctx: z.core.ParsePayload<{ direction: TestDirection; thresholds?: SeedTestThresholds }>): void => {
+  const { direction, thresholds } = ctx.value;
+  if (thresholds === undefined) return;
+  for (const band of THRESHOLD_BANDS) {
+    if (isMonotonic(thresholds[band], direction)) continue;
+    ctx.issues.push({
+      code: "custom",
+      input: thresholds[band],
+      path: ["thresholds", band],
+      message: `Thresholds must be strictly ${direction === "higher" ? "increasing" : "decreasing"} for a ${direction}-is-better test`,
+    });
+  }
+};
+
+/** Derived: SkillTest with a seed protocol and kebab slugs; `thresholds` is seed-only (not on the wire). */
+export const SeedTestBase = z.strictObject({
   slug: Slug,
   skill: Slug,
   metric: z.string().min(1),
@@ -101,7 +144,9 @@ export const SeedTest = z.strictObject({
   direction: TestDirection,
   protocol: SeedText,
   equipment: Equipment,
+  thresholds: SeedTestThresholds.optional(),
 });
+export const SeedTest = SeedTestBase.check(thresholdsMonotonic);
 export type SeedTest = z.infer<typeof SeedTest>;
 
 export const SeedTestsFile = z
