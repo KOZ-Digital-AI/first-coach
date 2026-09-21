@@ -369,6 +369,19 @@ describe("GET /api/admin/contributions", () => {
     expect(diff.find((entry) => entry.field === "author")).toMatchObject({ before: "FIRST COACH Genesis", after: "Coach Bota" });
   });
 
+  test("the diff is taken in the payload's own locale", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const id = submit(alice.id, improvementPayload({ locale: "en", name: "Sole Rolls", instructions: "Roll the ball under your sole." }));
+    const admin = await signUpAdmin();
+
+    const item = (await queue(admin.cookie, "?state=pending")).find((entry) => entry.contribution.id === id)!;
+    const fields = item.diff!.map((entry) => entry.field);
+    expect(fields).toContain("instructions.en");
+    expect(fields).not.toContain("instructions.ru");
+    expect(fields).not.toContain("name.en");
+    expect(item.diff!.find((entry) => entry.field === "instructions.en")!.before).toContain("Rest the sole of your right foot");
+  });
+
   test("duplicateOf names the other contribution when the content hash matches, and only then", async () => {
     const alice = await signUpContributor("alice@example.com", "Alice");
     const bob = await signUpContributor("bob@example.com", "Bob");
@@ -577,21 +590,30 @@ describe("POST decision: an illegal transition is a 409 problem", () => {
 // --- the strict body: nothing unknown reaches the service --------------------------------------------
 
 describe("POST decision: the body is strict", () => {
-  test.each(["authorName", "author", "kind", "locale", "targetDrillSlug", "improvementKind", "rightsAttested", "noCommercialContent", "website"])(
-    "edits.%s is refused with 422 and never reaches the stored payload",
-    async (key) => {
-      const alice = await signUpContributor("alice@example.com", "Alice");
-      const admin = await signUpAdmin();
-      const id = submit(alice.id);
-      const before = snapshot(id);
+  // Each value is one the field WOULD accept (a valid kind, locale, slug, ...), so only the route's own
+  // narrowing of `edits` can refuse it, never the value's type.
+  test.each([
+    ["authorName", "Mallory"],
+    ["author", "Mallory"],
+    ["kind", "improvement"],
+    ["locale", "en"],
+    ["targetDrillSlug", DRILL_SLUG],
+    ["improvementKind", "safety"],
+    ["rightsAttested", true],
+    ["noCommercialContent", true],
+    ["website", ""],
+  ] as const)("edits.%s is refused with 422 and never reaches the stored payload", async (key, value) => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id);
+    const before = snapshot(id);
 
-      const res = await decide(admin.cookie, id, { action: "approve", edits: { [key]: "hijack" } });
-      await expectProblem(res, 422);
-      expect(await pointersOf(res)).toContain(`/edits/${key}`);
-      expect(snapshot(id)).toEqual(before);
-      expect(payloadColumnOf(id)).not.toContain("hijack");
-    },
-  );
+    const res = await decide(admin.cookie, id, { action: "approve", edits: { [key]: value } });
+    await expectProblem(res, 422);
+    expect(await pointersOf(res)).toContain(`/edits/${key}`);
+    expect(snapshot(id)).toEqual(before);
+    expect(stateOf(id)).toBe("pending");
+  });
 
   test("edits are refused for a reject too: the schema is checked before any action", async () => {
     const alice = await signUpContributor("alice@example.com", "Alice");
