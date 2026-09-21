@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101815" />
+  <title>FIRST COACH — Open Sport Commons</title>
+  <meta name="description" content="Free open coaching infrastructure for every child." />
+  <style>
+:root {
+  --bg: #f4f3ee;
+  --paper: #fffefa;
+  --ink: #101815;
+  --muted: #68716c;
+  --line: #d8ddd8;
+  --accent: #2e7d53;
+  --accent-2: #dff1e6;
+  --dark: #101815;
+  --danger: #b8473d;
+  --warning: #a16a18;
+  --radius: 18px;
+  --shadow: 0 18px 60px rgba(19, 34, 27, .08);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 76px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 0 28px;
+  border-bottom: 1px solid rgba(16,24,21,.1);
+  backdrop-filter: blur(18px);
+  background: rgba(244,243,238,.88);
+}
+.brand { border: 0; background: none; display: flex; align-items: center; gap: 10px; color: var(--ink); text-align: left; }
+.brand-mark { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: var(--dark); color: white; font-weight: 800; letter-spacing: -.04em; }
+.brand strong { display: block; font-size: 13px; letter-spacing: .08em; }
+.brand small { display: block; font-size: 10px; color: var(--muted); letter-spacing: .08em; margin-top: 2px; }
+.nav { display: flex; justify-content: center; gap: 6px; }
+.nav button, .ghost { border: 0; background: transparent; color: var(--ink); padding: 10px 12px; border-radius: 10px; }
+.nav button:hover, .ghost:hover { background: rgba(16,24,21,.06); }
+.top-actions { display: flex; align-items: center; gap: 8px; }
+.top-actions select { border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 9px 10px; color: var(--ink); }
+main { min-height: calc(100vh - 160px); }
+.container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+.hero { padding: 92px 0 54px; }
+.hero-grid { display: grid; grid-template-columns: 1.12fr .88fr; gap: 64px; align-items: center; }
+.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 700; color: var(--accent); }
+h1 { font-size: clamp(48px, 7vw, 96px); line-height: .94; letter-spacing: -.065em; margin: 18px 0 24px; max-width: 900px; }
+.hero p { font-size: 20px; line-height: 1.45; max-width: 720px; color: #39423e; }
+.cta-row { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+.primary, .secondary, .danger-btn, .small-btn {
+  border: 0; border-radius: 12px; padding: 14px 18px; font-weight: 700;
+}
+.primary { background: var(--dark); color: white; }
+.primary:hover { transform: translateY(-1px); }
+.secondary { background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+.danger-btn { background: #f7e4e2; color: var(--danger); }
+.small-btn { padding: 8px 10px; border: 1px solid var(--line); background: var(--paper); }
+.hero-card { background: var(--dark); color: white; border-radius: 28px; padding: 28px; min-height: 430px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow); }
+.hero-number { font-size: 128px; line-height: .8; letter-spacing: -.08em; font-weight: 800; }
+.hero-card .open-label { color: #a6cdb8; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
+.hero-card h3 { font-size: 32px; line-height: 1.05; letter-spacing: -.04em; margin: 12px 0; }
+.hero-card p { color: #c9d1cd; font-size: 15px; }
+.stat-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; margin: 34px 0 72px; }
+.stat { background: var(--paper); padding: 22px; }
+.stat strong { display: block; font-size: 26px; letter-spacing: -.04em; }
+.stat span { color: var(--muted); font-size: 13px; }
+.section { padding: 54px 0; }
+.section h2 { font-size: clamp(32px,5vw,60px); line-height: 1; letter-spacing: -.05em; margin: 0 0 16px; }
+.section-copy { max-width: 760px; color: var(--muted); font-size: 18px; line-height: 1.5; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 30px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: 0 8px 24px rgba(15,28,22,.025); }
+.card h3 { margin: 8px 0 8px; font-size: 20px; letter-spacing: -.025em; }
+.card p { margin: 0; color: var(--muted); line-height: 1.45; }
+.step { display: grid; grid-template-columns: 44px 1fr; gap: 12px; }
+.step-num { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-2); color: var(--accent); display: grid; place-items: center; font-weight: 800; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 26px; box-shadow: var(--shadow); }
+.page-head { padding: 44px 0 24px; }
+.page-head h1 { font-size: clamp(40px,6vw,74px); margin: 10px 0 10px; }
+.page-head p { color: var(--muted); font-size: 18px; max-width: 780px; }
+.form-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-weight: 700; font-size: 13px; }
+.field small { color: var(--muted); }
+input, select, textarea { width: 100%; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 12px 13px; color: var(--ink); outline: none; }
+input:focus, select:focus, textarea:focus { border-color: #89ad99; box-shadow: 0 0 0 3px rgba(46,125,83,.08); }
+textarea { min-height: 110px; resize: vertical; }
+.onboarding { max-width: 840px; margin: 0 auto 70px; }
+.progressline { display: flex; gap: 6px; margin-bottom: 22px; }
+.progressline span { height: 5px; border-radius: 999px; flex: 1; background: #dce1dd; }
+.progressline span.active { background: var(--accent); }
+.option-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 18px 0 8px; }
+.option { border: 1px solid var(--line); background: var(--paper); border-radius: 14px; padding: 16px; text-align: left; }
+.option.active { border-color: var(--accent); background: var(--accent-2); }
+.option strong { display: block; }
+.option span { color: var(--muted); font-size: 13px; }
+.actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; }
+.assessment-grid { display: grid; gap: 12px; }
+.assessment-row { display: grid; grid-template-columns: 1.3fr 2fr auto; gap: 14px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.skill-pill { display: inline-flex; align-items: center; gap: 7px; background: var(--accent-2); color: var(--accent); padding: 6px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+.two-col { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+.roadmap { display: grid; gap: 12px; }
+.roadmap-item { border-left: 3px solid var(--accent); padding: 14px 16px; background: #f7faf8; border-radius: 0 14px 14px 0; }
+.roadmap-item h4 { margin: 0 0 6px; }
+.roadmap-item p { margin: 0; color: var(--muted); font-size: 14px; }
+.session-list { display: grid; gap: 12px; margin-top: 18px; }
+.drill { border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 52px 1fr auto; gap: 14px; align-items: center; background: var(--paper); }
+.drill-index { width: 44px; height: 44px; border-radius: 13px; background: var(--dark); color: white; display: grid; place-items: center; font-weight: 800; }
+.drill h4 { margin: 0 0 5px; }
+.drill p { margin: 0; color: var(--muted); font-size: 13px; }
+.drill.done { opacity: .65; }
+.drill.done .drill-index { background: var(--accent); }
+.metric-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+.metric { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.metric strong { display: block; font-size: 30px; letter-spacing: -.04em; }
+.metric span { color: var(--muted); font-size: 12px; }
+.skill-tree { display: grid; gap: 12px; }
+.skill-node { display: grid; grid-template-columns: 180px 1fr 58px; gap: 12px; align-items: center; }
+.bar { height: 10px; border-radius: 999px; background: #e2e6e3; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.commons-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 22px; }
+.commons-card { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: var(--paper); display: flex; flex-direction: column; gap: 10px; }
+.commons-card h3 { margin: 0; }
+.commons-card .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 11px; padding: 5px 8px; border-radius: 999px; background: #edf0ed; color: #56605b; }
+.verified { background: #e5f4eb; color: var(--accent); }
+.video-beta { border: 1px dashed #99aaa0; background: #f7faf8; border-radius: 16px; padding: 22px; }
+.notice { border-radius: 14px; padding: 13px 14px; background: #f0f5f2; color: #315343; font-size: 13px; }
+.notice.warn { background: #fbf2e5; color: #77511d; }
+.admin-list { display: grid; gap: 12px; }
+.admin-item { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--paper); }
+.admin-actions { display: flex; gap: 8px; margin-top: 12px; }
+.empty { border: 1px dashed var(--line); border-radius: 16px; padding: 28px; color: var(--muted); text-align: center; }
+footer { border-top: 1px solid var(--line); margin-top: 68px; padding: 28px; display: flex; justify-content: space-between; gap: 20px; color: var(--muted); font-size: 12px; }
+footer div { display: flex; flex-direction: column; gap: 4px; }
+footer strong { color: var(--ink); }
+@media (max-width: 900px) {
+  .topbar { grid-template-columns: 1fr auto; padding: 0 16px; }
+  .nav { display: none; }
+  .hero-grid, .two-col { grid-template-columns: 1fr; }
+  .hero { padding-top: 54px; }
+  .hero-card { min-height: 320px; }
+  .cards, .commons-grid { grid-template-columns: 1fr 1fr; }
+  .stat-strip, .metric-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+  .option-grid { grid-template-columns: 1fr; }
+  .skill-node { grid-template-columns: 130px 1fr 48px; }
+}
+@media (max-width: 600px) {
+  .container { width: min(100% - 24px, 1180px); }
+  .top-actions .ghost { display:none; }
+  .cards, .commons-grid { grid-template-columns: 1fr; }
+  .stat-strip, .metric-grid { grid-template-columns: 1fr; }
+  .hero-number { font-size: 96px; }
+  .assessment-row, .drill { grid-template-columns: 1fr; }
+  .skill-node { grid-template-columns: 1fr; }
+  footer { flex-direction: column; }
+}
+
+</style>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <button class="brand" data-route="home" aria-label="FIRST COACH home">
+        <span class="brand-mark">FC</span>
+        <span>
+          <strong>FIRST COACH</strong>
+          <small>БІРІНШІ БАПКЕР</small>
+        </span>
+      </button>
+      <nav class="nav" aria-label="Primary navigation">
+        <button data-route="train">Тренироваться</button>
+        <button data-route="commons">Open Commons</button>
+        <button data-route="contribute">Добавить методику</button>
+        <button data-route="progress">Прогресс</button>
+      </nav>
+      <div class="top-actions">
+        <select id="langSelect" aria-label="Language">
+          <option value="ru">RU</option>
+          <option value="kk">KZ</option>
+          <option value="en">EN</option>
+        </select>
+        <button class="ghost" data-route="admin">Admin</button>
+      </div>
+    </header>
+
+    <main id="view"></main>
+
+    <footer>
+      <div>
+        <strong>FIRST COACH</strong>
+        <span>Open human skill development infrastructure.</span>
+      </div>
+      <div>
+        <span>Software: MIT · Knowledge: CC BY-SA 4.0</span>
+        <span>Created by KOZ AI · Genesis release 2026</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+const SKILLS = [
+  { id: 'ball', name: 'Ball mastery', nameRu: 'Контроль мяча' },
+  { id: 'dribbling', name: 'Dribbling', nameRu: 'Дриблинг' },
+  { id: 'passing', name: 'Passing & first touch', nameRu: 'Пас и первый приём' },
+  { id: 'weakfoot', name: 'Weak foot', nameRu: 'Слабая нога' },
+  { id: 'juggling', name: 'Juggling & coordination', nameRu: 'Жонглирование и координация' },
+];
+
+const BASE_DRILLS = [
+  { id:'b1', skill:'ball', title:'100 Foundation Touches', titleRu:'100 базовых касаний', level:1, duration:5, equipment:'ball', age:'7+', goal:'control', instructions:'Inside-inside, outside-outside, sole rolls. Keep the ball within one step.', mistakes:'Looking only at the ball; touches too strong.', progression:'Increase speed without losing control.', regression:'Slow down and use smaller touches.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'b2', skill:'ball', title:'Inside / Outside Rhythm', titleRu:'Ритм внутренняя / внешняя', level:2, duration:6, equipment:'ball', age:'8+', goal:'control', instructions:'Alternate inside and outside touches with the same foot, then switch.', mistakes:'Straight legs; heavy first touch.', progression:'Add forward movement and head-up moments.', regression:'Perform stationary.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'b3', skill:'ball', title:'Sole Pull-Push', titleRu:'Подошва: pull-push', level:2, duration:5, equipment:'ball', age:'8+', goal:'control', instructions:'Pull ball with sole, push diagonally with inside of foot. Alternate sides.', mistakes:'Standing too upright.', progression:'Add direction change every fourth repetition.', regression:'Use one foot only.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'d1', skill:'dribbling', title:'Five-Gate Slalom', titleRu:'Слалом через 5 ворот', level:1, duration:7, equipment:'ball + 5 markers', age:'7+', goal:'dribbling', instructions:'Build five gates 1.5–2m apart. Dribble through using both feet.', mistakes:'Too few touches; ball too far from body.', progression:'Time the run and reduce errors.', regression:'Increase gate spacing.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'d2', skill:'dribbling', title:'Change of Direction Box', titleRu:'Квадрат смены направления', level:2, duration:6, equipment:'ball + 4 markers', age:'8+', goal:'dribbling', instructions:'Dribble to each corner and use a different turn at each marker.', mistakes:'Turning before controlling the ball.', progression:'Use weak foot for every second turn.', regression:'Walk through technique first.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'d3', skill:'dribbling', title:'Head-Up Dribble', titleRu:'Дриблинг с поднятой головой', level:3, duration:6, equipment:'ball', age:'9+', goal:'awareness', instructions:'Dribble in a 4x4m area. Every 3–4 touches, lift eyes and call a visible number/object.', mistakes:'Losing ball while scanning.', progression:'Add a partner giving visual cues.', regression:'Reduce speed.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'p1', skill:'passing', title:'Wall Pass 60', titleRu:'60 секунд пасов в стену', level:1, duration:5, equipment:'ball + wall', age:'7+', goal:'passing', instructions:'Pass against a wall and receive with the inside of foot. Count clean returns in 60 seconds.', mistakes:'Standing flat; receiving under body.', progression:'Alternate feet every pass.', regression:'Move closer to wall.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'p2', skill:'passing', title:'First Touch Gate', titleRu:'Первый приём в ворота', level:2, duration:7, equipment:'ball + wall + 2 markers', age:'8+', goal:'first-touch', instructions:'Create a small gate to the side. Receive wall pass and direct first touch through gate.', mistakes:'Stopping ball dead; body closed.', progression:'Alternate gate side randomly.', regression:'Widen gate.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'p3', skill:'passing', title:'Two-Touch Tempo', titleRu:'Темп в два касания', level:3, duration:6, equipment:'ball + wall', age:'9+', goal:'passing', instructions:'One touch to control, second to pass. Maintain rhythm for 45 seconds.', mistakes:'Extra touches; standing still.', progression:'Increase distance from wall.', regression:'Use stronger foot only.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'w1', skill:'weakfoot', title:'Weak Foot 50', titleRu:'50 касаний слабой ногой', level:1, duration:5, equipment:'ball', age:'7+', goal:'weak-foot', instructions:'Complete 50 controlled inside touches using only weaker foot.', mistakes:'Switching to dominant foot under pressure.', progression:'Add outside touches.', regression:'Stationary only.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'w2', skill:'weakfoot', title:'Weak Foot Wall Ladder', titleRu:'Лестница пасов слабой ногой', level:2, duration:7, equipment:'ball + wall', age:'8+', goal:'weak-foot', instructions:'10 passes from 2m, then 10 from 3m, then 10 from 4m using weaker foot.', mistakes:'Leaning back; hitting with toe.', progression:'One-touch passes.', regression:'Stay at 2m.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'w3', skill:'weakfoot', title:'Weak Foot Control & Exit', titleRu:'Приём и выход слабой ногой', level:3, duration:7, equipment:'ball + wall', age:'9+', goal:'weak-foot', instructions:'Receive with weaker foot into space, take two touches, pass back with same foot.', mistakes:'First touch under body.', progression:'Add direction cue before receive.', regression:'Use a larger space.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'j1', skill:'juggling', title:'Bounce Juggle', titleRu:'Жонглирование с отскоком', level:1, duration:5, equipment:'ball', age:'7+', goal:'coordination', instructions:'One touch, one bounce. Alternate feet when possible.', mistakes:'Kicking too high.', progression:'Reduce bounce frequency.', regression:'Catch ball after each touch.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'j2', skill:'juggling', title:'Juggle Ladder 3-5-7', titleRu:'Лестница жонглирования 3-5-7', level:2, duration:6, equipment:'ball', age:'8+', goal:'coordination', instructions:'Complete 3 touches, reset; 5 touches, reset; 7 touches, reset. Repeat ladder.', mistakes:'Tense shoulders; chasing the ball.', progression:'3-5-10 ladder.', regression:'Allow one bounce.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+  { id:'j3', skill:'juggling', title:'Alternating Feet', titleRu:'Чередование ног', level:3, duration:6, equipment:'ball', age:'9+', goal:'coordination', instructions:'Juggle alternating right-left. Record best uninterrupted sequence.', mistakes:'Dominant foot taking over.', progression:'Add thigh touch every fifth contact.', regression:'Allow one bounce after two touches.', status:'COMMUNITY', source:'FIRST COACH Genesis', license:'CC BY-SA 4.0' },
+];
+
+const state = {
+  route: location.hash.replace('#','') || 'home',
+  onboardingStep: 0,
+  profile: JSON.parse(localStorage.getItem('fc_profile') || 'null'),
+  assessment: JSON.parse(localStorage.getItem('fc_assessment') || '{}'),
+  progress: JSON.parse(localStorage.getItem('fc_progress') || '{}'),
+  contributions: JSON.parse(localStorage.getItem('fc_contributions') || '[]'),
+  approved: JSON.parse(localStorage.getItem('fc_approved') || '[]'),
+  sessionDone: JSON.parse(localStorage.getItem('fc_session_done') || '[]'),
+  temp: {},
+};
+
+function allDrills(){ return [...BASE_DRILLS, ...state.approved]; }
+function skillName(id){ const s=SKILLS.find(x=>x.id===id); return s ? s.nameRu : id; }
+function save(){
+  localStorage.setItem('fc_profile', JSON.stringify(state.profile));
+  localStorage.setItem('fc_assessment', JSON.stringify(state.assessment));
+  localStorage.setItem('fc_progress', JSON.stringify(state.progress));
+  localStorage.setItem('fc_contributions', JSON.stringify(state.contributions));
+  localStorage.setItem('fc_approved', JSON.stringify(state.approved));
+  localStorage.setItem('fc_session_done', JSON.stringify(state.sessionDone));
+}
+function route(r){ state.route=r; location.hash=r; render(); window.scrollTo(0,0); }
+window.addEventListener('hashchange',()=>{ state.route=location.hash.replace('#','')||'home'; render(); });
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-route]');
+  if (b) route(b.dataset.route);
+});
+
+function homeView(){
+  return `
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow">Open sport commons · Genesis release</div>
+        <h1>Every child deserves a great first coach.</h1>
+        <p>Бесплатная открытая система, которая превращает знания тренеров в персональный путь развития: оценка навыков → roadmap → тренировки → прогресс → следующий шаг.</p>
+        <div class="cta-row">
+          <button class="primary" data-route="train">Начать тренировку</button>
+          <button class="secondary" data-route="contribute">Добавить свою методику</button>
+        </div>
+      </div>
+      <aside class="hero-card">
+        <div>
+          <div class="open-label">Opened to everyone</div>
+          <div class="hero-number">60</div>
+        </div>
+        <div>
+          <h3>60 years.<br>One open foundation.<br>Free for everyone.</h3>
+          <p>Создано KOZ AI как инфраструктура, которую тренеры, академии и сообщества смогут улучшать вместе.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="container">
+      <div class="stat-strip">
+        <div class="stat"><strong>${allDrills().length}</strong><span>открытых drills в MVP</span></div>
+        <div class="stat"><strong>5</strong><span>skill tracks</span></div>
+        <div class="stat"><strong>${state.contributions.length}</strong><span>community contributions</span></div>
+        <div class="stat"><strong>0 ₸</strong><span>доступ для пользователя</span></div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <div class="eyebrow">Как это работает</div>
+      <h2>Не каталог упражнений.<br>Система развития навыков.</h2>
+      <p class="section-copy">FIRST COACH строится вокруг Skill Graph: каждый навык связан с prerequisites, тестами, упражнениями и прогрессией. AI выбирает из открытой проверяемой базы, а не придумывает методику из воздуха.</p>
+      <div class="cards">
+        ${[
+          ['01','Оцени себя','Короткий baseline показывает текущий уровень по ключевым навыкам.'],
+          ['02','Получи roadmap','Система выбирает слабые зоны и собирает план под время, место и инвентарь.'],
+          ['03','Тренируйся','Пошаговые сессии с упражнениями, ошибками, progression и regression.'],
+          ['04','Измеряй прогресс','Skill tests и история результатов показывают реальное улучшение.'],
+          ['05','Добавляй знания','Любой тренер может предложить методику, видео или улучшение.'],
+          ['06','Улучшай Commons','После review вклад становится частью открытой базы знаний.'],
+        ].map(x=>`<div class="card step"><div class="step-num">${x[0]}</div><div><h3>${x[1]}</h3><p>${x[2]}</p></div></div>`).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function onboardingView(){
+  if (state.profile && Object.keys(state.assessment).length>=5) return trainingView();
+  const step = state.onboardingStep;
+  const profile = state.temp.profile || state.profile || { age:'12', level:'beginner', goal:'control', days:'3', minutes:'20', space:'yard', equipment:'ball' };
+  state.temp.profile = profile;
+  const progress = Array.from({length:4},(_,i)=>`<span class="${i<=step?'active':''}"></span>`).join('');
+
+  let body='';
+  if(step===0){
+    body=`<div class="panel"><div class="progressline">${progress}</div><div class="eyebrow">Step 1 / 4</div><h2>Кто тренируется?</h2><div class="form-grid">
+      <div class="field"><label>Возраст</label><input id="age" type="number" min="6" max="60" value="${profile.age}" /></div>
+      <div class="field"><label>Опыт</label><select id="level"><option value="beginner" ${profile.level==='beginner'?'selected':''}>Начинающий</option><option value="basic" ${profile.level==='basic'?'selected':''}>Базовый</option><option value="intermediate" ${profile.level==='intermediate'?'selected':''}>Средний</option></select></div>
+      <div class="field full"><label>Главная цель</label><select id="goal"><option value="control">Увереннее контролировать мяч</option><option value="dribbling">Улучшить дриблинг</option><option value="passing">Пас и первый приём</option><option value="weakfoot">Подтянуть слабую ногу</option><option value="coordination">Координация</option></select></div>
+    </div><div class="actions"><span></span><button class="primary" onclick="nextOnboarding(0)">Продолжить</button></div></div>`;
+  }
+  if(step===1){
+    body=`<div class="panel"><div class="progressline">${progress}</div><div class="eyebrow">Step 2 / 4</div><h2>Какие есть условия?</h2><div class="form-grid">
+      <div class="field"><label>Тренировок в неделю</label><select id="days"><option>2</option><option ${profile.days==='3'?'selected':''}>3</option><option>4</option><option>5</option></select></div>
+      <div class="field"><label>Минут на тренировку</label><select id="minutes"><option>15</option><option ${profile.minutes==='20'?'selected':''}>20</option><option>30</option><option>45</option></select></div>
+      <div class="field"><label>Где</label><select id="space"><option value="room">Дома / маленькое пространство</option><option value="yard" ${profile.space==='yard'?'selected':''}>Двор / площадка</option><option value="field">Поле</option></select></div>
+      <div class="field"><label>Инвентарь</label><select id="equipment"><option value="ball">Только мяч</option><option value="wall">Мяч + стена</option><option value="markers">Мяч + маркеры</option></select></div>
+    </div><div class="actions"><button class="secondary" onclick="prevOnboarding()">Назад</button><button class="primary" onclick="nextOnboarding(1)">Продолжить</button></div></div>`;
+  }
+  if(step===2){
+    body=`<div class="panel"><div class="progressline">${progress}</div><div class="eyebrow">Step 3 / 4</div><h2>Baseline assessment</h2><p class="section-copy">Оцените текущий уровень. В MVP это self-assessment; дальше его заменят измеримые skill tests и video assessment.</p>
+      <div class="assessment-grid">${SKILLS.map(s=>`<div class="assessment-row"><div><strong>${s.nameRu}</strong><div><span class="skill-pill">Skill</span></div></div><input type="range" min="1" max="5" value="${state.assessment[s.id]||2}" data-assess="${s.id}" /><strong id="val-${s.id}">${state.assessment[s.id]||2}/5</strong></div>`).join('')}</div>
+      <div class="actions"><button class="secondary" onclick="prevOnboarding()">Назад</button><button class="primary" onclick="nextOnboarding(2)">Построить roadmap</button></div>
+    </div>`;
+  }
+  if(step===3){
+    const road = buildRoadmap(profile, state.assessment);
+    body=`<div class="panel"><div class="progressline">${progress}</div><div class="eyebrow">Step 4 / 4</div><h2>Ваш первый roadmap готов.</h2><p class="section-copy">Фокус на ближайшие 4 недели — не «тренировать всё», а закрыть 2–3 самых слабых звена.</p>
+      <div class="roadmap">${road.focus.map((f,i)=>`<div class="roadmap-item"><h4>${i+1}. ${skillName(f.skill)}</h4><p>Уровень сейчас: ${f.score}/5 · Цель: ${Math.min(5,f.score+1)}/5 · ${f.reason}</p></div>`).join('')}</div>
+      <div class="notice" style="margin-top:18px">План: ${profile.days} тренировок в неделю × ${profile.minutes} минут. Система будет менять упражнения по мере прогресса.</div>
+      <div class="actions"><button class="secondary" onclick="prevOnboarding()">Назад</button><button class="primary" onclick="finishOnboarding()">Открыть сегодняшнюю тренировку</button></div>
+    </div>`;
+  }
+  return `<section class="page-head"><div class="container onboarding"><div class="eyebrow">FIRST COACH / Football</div><h1>Соберём ваш первый путь.</h1>${body}</div></section>`;
+}
+
+window.nextOnboarding = function(from){
+  if(from===0){
+    state.temp.profile.age=document.getElementById('age').value;
+    state.temp.profile.level=document.getElementById('level').value;
+    state.temp.profile.goal=document.getElementById('goal').value;
+  }
+  if(from===1){
+    ['days','minutes','space','equipment'].forEach(id=>state.temp.profile[id]=document.getElementById(id).value);
+  }
+  if(from===2){
+    document.querySelectorAll('[data-assess]').forEach(el=>state.assessment[el.dataset.assess]=Number(el.value));
+  }
+  state.onboardingStep++;
+  render();
+}
+window.prevOnboarding = function(){ state.onboardingStep=Math.max(0,state.onboardingStep-1); render(); }
+window.finishOnboarding = function(){ state.profile={...state.temp.profile}; save(); state.onboardingStep=0; route('train'); }
+
+document.addEventListener('input', e=>{
+  if(e.target.matches('[data-assess]')) document.getElementById('val-'+e.target.dataset.assess).textContent=e.target.value+'/5';
+});
+
+function buildRoadmap(profile=state.profile, assessment=state.assessment){
+  const entries = SKILLS.map(s=>({skill:s.id, score:Number(assessment[s.id]||2)})).sort((a,b)=>a.score-b.score);
+  const preferredMap = { control:'ball', dribbling:'dribbling', passing:'passing', weakfoot:'weakfoot', coordination:'juggling' };
+  const preferred = preferredMap[profile?.goal];
+  if(preferred){
+    const idx=entries.findIndex(x=>x.skill===preferred);
+    if(idx>0){ const [x]=entries.splice(idx,1); entries.unshift(x); }
+  }
+  return { focus: entries.slice(0,3).map(x=>({...x, reason: x.skill===preferred?'Это ваша заявленная цель.':'Это одна из самых слабых зон baseline.'})) };
+}
+
+function pickSession(){
+  const road=buildRoadmap();
+  const targetMinutes=Number(state.profile?.minutes||20);
+  let chosen=[]; let total=0;
+  for(const f of road.focus){
+    const maxLevel=Math.max(1,Math.min(3,Math.ceil((Number(f.score)||2)/2)+1));
+    const candidates=allDrills().filter(d=>d.skill===f.skill && d.level<=maxLevel).sort((a,b)=>a.level-b.level);
+    for(const d of candidates){
+      if(!chosen.find(x=>x.id===d.id) && total+d.duration<=targetMinutes+3){ chosen.push(d); total+=d.duration; break; }
+    }
+  }
+  for(const d of allDrills()){
+    if(total>=targetMinutes-2) break;
+    if(!chosen.find(x=>x.id===d.id) && total+d.duration<=targetMinutes+4){ chosen.push(d); total+=d.duration; }
+  }
+  return {chosen,total};
+}
+
+function trainingView(){
+  if(!state.profile || Object.keys(state.assessment).length<5) return onboardingView();
+  const {chosen,total}=pickSession();
+  const done=state.sessionDone;
+  const completed=chosen.filter(d=>done.includes(d.id)).length;
+  return `<section class="page-head"><div class="container"><div class="eyebrow">Today's session</div><h1>${total} минут. Один конкретный следующий шаг.</h1><p>Roadmap собран из утверждённой базы упражнений с учётом baseline, цели и доступного времени.</p></div></section>
+  <section><div class="container two-col">
+    <div class="panel"><div class="skill-pill">${completed}/${chosen.length} completed</div><h2 style="margin-top:12px">Сегодня</h2><div class="session-list">${chosen.map((d,i)=>`<div class="drill ${done.includes(d.id)?'done':''}"><div class="drill-index">${done.includes(d.id)?'✓':i+1}</div><div><h4>${d.titleRu}</h4><p>${skillName(d.skill)} · ${d.duration} мин · Level ${d.level}</p><p style="margin-top:6px">${d.instructions}</p></div><button class="small-btn" onclick="toggleDrill('${d.id}')">${done.includes(d.id)?'Вернуть':'Готово'}</button></div>`).join('')}</div>${completed===chosen.length?`<div class="notice" style="margin-top:16px"><strong>Session complete.</strong> Прогресс сохранён. Следующая сессия будет пересобрана на основе roadmap.</div>`:''}</div>
+    <div>
+      <div class="panel"><div class="eyebrow">Current focus</div><h2>Roadmap</h2><div class="roadmap">${buildRoadmap().focus.map(f=>`<div class="roadmap-item"><h4>${skillName(f.skill)}</h4><p>Baseline ${f.score}/5 → target ${Math.min(5,f.score+1)}/5</p></div>`).join('')}</div></div>
+      <div class="video-beta" style="margin-top:18px"><div class="eyebrow">Beta concept</div><h3>AI Video Coach</h3><p>Загрузите короткий ролик. В production здесь будет pose + ball tracking + skill-specific rubric. В MVP мы не выдаём фальшивую автоматическую оценку.</p><input type="file" accept="video/*" onchange="videoSelected(this)"/><div id="videoResult" style="margin-top:10px"></div></div>
+    </div>
+  </div></section>`;
+}
+window.toggleDrill=function(id){
+  if(state.sessionDone.includes(id)) state.sessionDone=state.sessionDone.filter(x=>x!==id); else { state.sessionDone.push(id); state.progress.sessions=(state.progress.sessions||0)+1/allDrills().length; state.progress.minutes=(state.progress.minutes||0)+(allDrills().find(d=>d.id===id)?.duration||0); }
+  save(); render();
+}
+window.videoSelected=function(input){
+  if(!input.files?.[0]) return;
+  const el=document.getElementById('videoResult');
+  el.innerHTML=`<div class="notice warn"><strong>${input.files[0].name}</strong> выбран. Автоматический scoring намеренно отключён в MVP: для него нужен реальный CV pipeline и валидированная rubric.</div>`;
+}
+
+function progressView(){
+  const sessions = Math.floor((state.progress.sessions||0)*10)/10;
+  const mins = Math.round(state.progress.minutes||0);
+  const scores = SKILLS.map(s=>({s,score:Number(state.assessment[s.id]||0)}));
+  return `<section class="page-head"><div class="container"><div class="eyebrow">My journey</div><h1>Прогресс должен быть измеримым.</h1><p>В production здесь будут повторные skill tests и динамика по каждому skill node. MVP уже хранит локальный профиль и тренировочную активность.</p></div></section>
+  <section><div class="container">
+    <div class="metric-grid"><div class="metric"><strong>${sessions}</strong><span>session progress units</span></div><div class="metric"><strong>${mins}</strong><span>минут тренировок</span></div><div class="metric"><strong>${state.sessionDone.length}</strong><span>упражнений выполнено</span></div><div class="metric"><strong>${allDrills().length}</strong><span>drills в Commons</span></div></div>
+    <div class="panel"><div class="eyebrow">Skill tree</div><h2>Baseline skills</h2><div class="skill-tree">${scores.map(x=>`<div class="skill-node"><strong>${x.s.nameRu}</strong><div class="bar"><span style="width:${x.score*20}%"></span></div><span>${x.score||0}/5</span></div>`).join('')}</div><div class="cta-row"><button class="secondary" onclick="resetAssessment()">Пройти assessment заново</button></div></div>
+  </div></section>`;
+}
+window.resetAssessment=function(){ state.onboardingStep=2; route('train'); }
+
+function commonsView(){
+  return `<section class="page-head"><div class="container"><div class="eyebrow">Open Sport Commons</div><h1>Спортивные знания как public infrastructure.</h1><p>Каждый drill имеет источник, статус и лицензию. Любой человек может предложить улучшение; после review оно становится новой версией открытой базы.</p><div class="cta-row"><button class="primary" onclick="exportCommons()">Скачать Commons JSON</button><button class="secondary" data-route="contribute">Предложить методику</button></div></div></section>
+  <section><div class="container"><div class="notice">MVP dataset: ${allDrills().length} drills. Production schema должна хранить version history, reviewers, sources, age/safety constraints и expert verification.</div><div class="commons-grid">${allDrills().map(d=>`<article class="commons-card"><div class="meta"><span class="tag ${d.status==='EXPERT VERIFIED'?'verified':''}">${d.status}</span><span class="tag">${skillName(d.skill)}</span><span class="tag">Level ${d.level}</span></div><h3>${d.titleRu||d.title}</h3><p>${d.instructions}</p><small>${d.duration} мин · ${d.equipment} · ${d.age}</small><small>Source: ${d.source||d.author||'Community'} · ${d.license||'CC BY-SA 4.0'}</small></article>`).join('')}</div></div></section>`;
+}
+window.exportCommons=function(){
+  const payload={schema_version:'0.1.0', license:'CC BY-SA 4.0', generated_at:new Date().toISOString(), sports:[{id:'football',skills:SKILLS,drills:allDrills()}]};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='open-sport-commons-v0.1.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function contributeView(){
+  return `<section class="page-head"><div class="container"><div class="eyebrow">Contribute</div><h1>Добавьте знание, которое сможет использовать кто угодно.</h1><p>Форма специально сделана не как GitHub issue: тренер должен иметь возможность внести методику без технических навыков.</p></div></section>
+  <section><div class="container"><form class="panel" id="contribForm" onsubmit="submitContribution(event)"><div class="form-grid">
+    <div class="field"><label>Название упражнения</label><input name="titleRu" required placeholder="Напр. Первый приём в сторону" /></div>
+    <div class="field"><label>Skill</label><select name="skill">${SKILLS.map(s=>`<option value="${s.id}">${s.nameRu}</option>`).join('')}</select></div>
+    <div class="field"><label>Возраст</label><input name="age" value="8+" /></div>
+    <div class="field"><label>Уровень</label><select name="level"><option value="1">1 — Foundation</option><option value="2">2 — Basic</option><option value="3">3 — Intermediate</option></select></div>
+    <div class="field"><label>Длительность, мин</label><input name="duration" type="number" min="1" value="6" /></div>
+    <div class="field"><label>Инвентарь</label><input name="equipment" value="ball" /></div>
+    <div class="field full"><label>Как выполнять</label><textarea name="instructions" required></textarea></div>
+    <div class="field"><label>Частые ошибки</label><textarea name="mistakes"></textarea></div>
+    <div class="field"><label>Как усложнить</label><textarea name="progression"></textarea></div>
+    <div class="field"><label>Как упростить</label><textarea name="regression"></textarea></div>
+    <div class="field"><label>Safety notes</label><textarea name="safety"></textarea></div>
+    <div class="field"><label>Автор / источник</label><input name="author" required /></div>
+    <div class="field"><label>Ссылка на источник</label><input name="sourceUrl" placeholder="https://" /></div>
+    <div class="field full"><label>Видео</label><input type="file" accept="video/*" /><small>В MVP видео не загружается на сервер. Production: object storage + moderation.</small></div>
+  </div><div class="notice" style="margin-top:16px">После отправки методика получает статус <strong>COMMUNITY / PENDING REVIEW</strong>. Она не попадает в тренировочные планы до модерации.</div><div class="cta-row"><button class="primary" type="submit">Отправить contribution</button></div></form></div></section>`;
+}
+window.submitContribution=function(e){
+  e.preventDefault(); const fd=new FormData(e.target); const item=Object.fromEntries(fd.entries()); item.id='c'+Date.now(); item.level=Number(item.level); item.duration=Number(item.duration); item.status='PENDING REVIEW'; item.license='CC BY-SA 4.0'; item.createdAt=new Date().toISOString(); state.contributions.unshift(item); save(); alert('Contribution сохранён и отправлен на review.'); route('commons');
+}
+
+function adminView(){
+  return `<section class="page-head"><div class="container"><div class="eyebrow">Moderation</div><h1>Review queue</h1><p>Упрощённая MVP-панель. В production нужны роли, audit log, reviewer identity и version history.</p></div></section>
+  <section><div class="container"><div class="panel"><h2>Pending contributions</h2><div class="admin-list">${state.contributions.length?state.contributions.map(c=>`<div class="admin-item"><div class="meta"><span class="tag">${c.status}</span><span class="tag">${skillName(c.skill)}</span></div><h3>${c.titleRu}</h3><p>${c.instructions}</p><small>Автор: ${c.author||'—'} · ${c.createdAt?new Date(c.createdAt).toLocaleString():'—'}</small><div class="admin-actions"><button class="primary" onclick="approveContribution('${c.id}')">Approve</button><button class="danger-btn" onclick="rejectContribution('${c.id}')">Reject</button></div></div>`).join(''):`<div class="empty">Очередь пуста.</div>`}</div></div></div></section>`;
+}
+window.approveContribution=function(id){
+  const idx=state.contributions.findIndex(x=>x.id===id); if(idx<0)return; const c={...state.contributions[idx],status:'COMMUNITY',source:candidateSource(state.contributions[idx])}; state.approved.push(c); state.contributions.splice(idx,1); save(); render();
+}
+function candidateSource(c){ return c.author || 'Community contributor'; }
+window.rejectContribution=function(id){ state.contributions=state.contributions.filter(x=>x.id!==id); save(); render(); }
+
+function render(){
+  const view=document.getElementById('view');
+  const routes={home:homeView,train:onboardingView,progress:progressView,commons:commonsView,contribute:contributeView,admin:adminView};
+  view.innerHTML=(routes[state.route]||homeView)();
+}
+
+render();
+
+</script>
+</body>
+</html>

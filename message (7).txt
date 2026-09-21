@@ -1,0 +1,609 @@
+FIRST COACH / БІРІНШІ БАПКЕР
+Every child deserves a great first coach.
+FIRST COACH — бесплатная open-source платформа, которая помогает человеку самостоятельно развивать спортивные навыки по проверенным методикам профессиональных тренеров.
+Проект создаётся KOZ AI к 60-летию Кайрата Боранбаева.
+Но проект не является цифровым памятником Кайрату Боранбаеву.
+Смысл подарка:
+KOZ AI создаёт для него инфраструктуру.
+Кайрат Боранбаев открывает её людям бесплатно.
+На старте — футбол.
+В дальнейшем архитектура должна позволять добавлять любые виды спорта.
+1. Главная идея
+Сегодня качество спортивного обучения сильно зависит от того:
+где родился ребёнок;
+есть ли рядом хорошая академия;
+могут ли родители оплачивать тренера;
+есть ли у школьного тренера качественная методология;
+знает ли сам ребёнок, как правильно тренироваться самостоятельно.
+При этом огромное количество профессионального coaching knowledge уже существует у тренеров, академий, федераций и спортсменов.
+Проблема в том, что оно фрагментировано и плохо масштабируется.
+FIRST COACH должен превратить эти знания в открытую систему:
+Expert knowledge → structured methodology → skill graph → assessment → personal roadmap → training → progress → reassessment.
+2. Что получает пользователь
+Пользователь заходит и отвечает на несколько вопросов:
+возраст;
+вид спорта;
+опыт;
+что хочет улучшить;
+сколько раз в неделю может заниматься;
+сколько времени есть;
+где тренируется: дома / двор / поле / зал;
+какое оборудование есть;
+есть ли партнёр;
+какие навыки уже умеет выполнять.
+Затем проходит короткий baseline assessment.
+Например:
+Football
+Ball control
+Passing
+Dribbling
+Juggling
+Weak foot
+Coordination
+После этого система создаёт:
+MY ROADMAP
+Например:
+Current level: Foundation
+Сейчас:
+Ball Control — Level 2
+Passing — Level 1
+Dribbling — Level 2
+Weak Foot — Level 1
+Цель:
+Confidence with the ball
+План:
+4 weeks
+3 sessions/week
+20 min/session
+Сегодня:
+Ball mastery — 5 min
+Inside/outside touches — 4 min
+Wall passing — 5 min
+Weak-foot control — 4 min
+Skill test — 2 min
+Каждое упражнение содержит:
+короткое видео;
+объяснение;
+цель;
+количество повторений / время;
+common mistakes;
+progressions;
+regressions;
+необходимые условия;
+безопасность.
+После тренировки пользователь отмечает результат.
+Система постепенно перестраивает roadmap.
+3. Главное отличие: Skill Graph
+Не строить продукт вокруг каталога тренировок.
+Основой должен быть Skill Graph.
+Каждый спорт раскладывается в дерево навыков.
+Например:
+Football
+→ Ball Control
+ → Basic touches
+ → Inside/outside
+ → Sole control
+ → Direction change
+ → First touch
+ → Receiving under movement
+→ Passing
+ → Short passing
+ → First-touch pass
+ → Weak-foot passing
+ → Passing accuracy
+ → Moving pass
+→ Dribbling
+→ Shooting
+→ Coordination
+→ Physical preparation
+→ Decision making
+У каждого skill node должны быть:
+prerequisites;
+drills;
+tests;
+levels;
+expected outcomes;
+common mistakes;
+age suitability;
+equipment requirements;
+safety notes.
+То есть пользователь не просто «делает тренировку».
+Он движется по карте навыков.
+4. AI Coach
+AI не должен самостоятельно придумывать спортивную методологию каждый раз.
+Это критически важно.
+AI работает поверх подтверждённой базы знаний.
+Логика:
+User profile + current skills + goals + constraints → AI → approved drills → personal training plan.
+AI может:
+объяснить упражнение проще;
+подобрать упражнение;
+адаптировать тренировку;
+уменьшить/увеличить сложность;
+собрать программу;
+анализировать прогресс;
+отвечать на вопросы;
+переводить методики;
+превращать экспертные документы в структурированные данные.
+Но AI не должен бесконтрольно придумывать новые упражнения для детей.
+5. AI VIDEO COACH
+Это отдельная сильная функция.
+Пользователь выбирает навык:
+Analyse my dribbling
+Ставит телефон.
+Записывает 10–30 секунд.
+Загружает видео.
+Система анализирует видео по rubric данного skill.
+Например:
+Inside / Outside Dribbling
+System looks at:
+body position;
+number of touches;
+ball distance;
+use of both feet;
+rhythm;
+control;
+change of direction.
+Результат:
+Your analysis
+Ball control
+7/10
+Body positioning
+6/10
+Weak foot
+3/10
+Consistency
+7/10
+Focus next
+Your weak foot is currently limiting your movement.
+Recommended next
+Weak-foot inside touches
+Alternating touches
+Slow slalom
+Repeat assessment after 3 sessions
+Главная функция анализа — не сказать:
+«Ты играешь на 63/100».
+А ответить:
+«Что тебе тренировать следующим?»
+6. Видеоанализ: техническая архитектура
+Для MVP не пытаться строить proprietary computer vision model.
+Можно начать с:
+Video
+↓
+frame extraction
+↓
+pose detection
+↓
+AI vision analysis
+↓
+skill-specific rubric
+↓
+structured feedback
+MediaPipe уже может определять 33 landmarks тела и рассчитан в том числе на real-time fitness use cases. Это можно использовать как базовый pose layer.
+Но для футбола одного pose estimation недостаточно — нужно видеть ещё и мяч.
+Поэтому архитектура должна предусматривать:
+Person tracking + pose estimation + ball/object tracking + multimodal analysis.
+Важно:
+на запуске видеоанализ обозначить как Beta.
+Он не должен быть обязательным для использования продукта.
+7. Skill Tests
+В v0.1 основной assessment лучше строить не только через AI-video, а через простые измеримые tests.
+Например:
+Juggling
+Maximum consecutive touches.
+Wall Passing
+Successful passes in 60 seconds.
+Ball Mastery
+Touches in 30 seconds.
+Slalom
+Completion time + errors.
+Weak Foot
+Successful passes / attempts.
+Пользователь записывает результат.
+Получаем объективный baseline.
+Через 7/14/30 дней повторяем тест.
+Показываем:
+Your previous result: 14
+Today: 21
++50%
+Это даёт пользователю реальное ощущение развития.
+8. OPEN KNOWLEDGE
+Это основа всей идеи.
+Любой тренер, спортсмен или академия сможет улучшать FIRST COACH.
+Но не через GitHub.
+Для обычного тренера должна быть простая кнопка:
+CONTRIBUTE A METHOD
+Он выбирает:
+Sport
+Skill
+Age
+Level
+И заполняет:
+Название упражнения
+Что оно развивает
+Как выполнять
+Сколько времени
+Какой нужен инвентарь
+Для какого уровня
+Частые ошибки
+Как усложнить
+Как упростить
+Safety considerations
+Source / author
+Можно загрузить:
+видео;
+фотографии;
+PDF;
+текст;
+методичку.
+9. AI INGESTION
+После загрузки AI сам превращает материал в стандарт FIRST COACH.
+Например тренер загрузил 40-страничную методичку.
+AI:
+извлекает упражнения;
+определяет skills;
+определяет возраст;
+определяет difficulty;
+создаёт drills;
+находит prerequisites;
+структурирует progressions;
+добавляет safety fields;
+создаёт draft Skill Graph;
+отправляет человеку на подтверждение.
+Это особенно важно для следующего этапа с Академией «Кайрат».
+Мы не будем «дообучать модель на PDF».
+Правильнее:
+Academy methodology → structured extraction → expert validation → FIRST COACH Knowledge Base.
+После этого AI Coach использует уже утверждённую методику.
+10. Система доверия
+Контент нельзя делить просто на хороший / плохой.
+Нужно несколько статусов.
+COMMUNITY
+Добавлено пользователем.
+REVIEWED
+Проверено тренером.
+EXPERT VERIFIED
+Проверено квалифицированным экспертом.
+ACADEMY VERIFIED
+Официальная методология спортивной организации.
+Например:
+Verified by FC Kairat Academy
+В будущем:
+Verified by federation
+Verified by national team coach
+Verified by Paralympic coach
+и т.д.
+Каждая методика должна хранить:
+автора;
+источник;
+дату;
+версию;
+историю изменений;
+reviewers;
+лицензию.
+11. Community improvement
+FIRST COACH должен работать как Wikipedia + GitHub, но для спортивных методик.
+У каждого drill:
+Suggest improvement
+Пользователь может предложить:
+другое объяснение;
+новую progression;
+более простой вариант;
+другую возрастную адаптацию;
+перевод;
+новое видео;
+accessibility adaptation;
+safety improvement.
+Создаётся новая версия.
+Например:
+Drill v1.0
+↓
+coach contribution
+↓
+v1.1
+↓
+expert review
+↓
+approved.
+История всегда сохраняется.
+12. Open source
+Проект состоит из двух открытых частей.
+A. FIRST COACH SOFTWARE
+Web/mobile application.
+Публичный GitHub repository.
+B. OPEN SPORT COMMONS
+Структурированная открытая база спортивных знаний.
+Не просто JSON с тренировками.
+Это должен стать открытый формат описания спортивной методики.
+Например:
+Sport
+└── Skill
+    ├── prerequisites
+    ├── levels
+    ├── drills
+    ├── assessments
+    ├── progressions
+    ├── regressions
+    ├── age ranges
+    ├── equipment
+    ├── safety
+    └── sources
+Другой разработчик должен иметь возможность взять Open Sport Commons и создать собственное приложение поверх него.
+Это важная часть социального эффекта.
+Мы создаём не только продукт.
+Мы создаём public infrastructure.
+13. Content licensing
+Для methodology layer использовать открытую лицензию вроде:
+CC BY-SA
+Это позволяет людям:
+использовать;
+переводить;
+улучшать;
+распространять;
+при сохранении attribution и открытости производных материалов.
+Для software отдельно выбирается open-source license.
+Не копировать упражнения и видео FIFA, UEFA и коммерческих сервисов в нашу базу только потому, что они доступны онлайн.
+Контент FIFA, например, защищён авторскими правами и не становится open source автоматически.
+Стартовый контент должен быть:
+создан нами;
+создан приглашёнными тренерами;
+передан с разрешением правообладателя;
+находиться под совместимой открытой лицензией.
+14. MVP К 22 СЕНТЯБРЯ
+Не пытаться за три дня сделать всё.
+На день рождения должна работать красивая настоящая v0.1.
+SPORT
+Football only.
+LANGUAGE
+Қазақша
+Русский
+English
+USERS
+Player.
+Coach/contributor.
+Admin.
+MVP PLAYER FLOW
+Landing
+→ Start training
+→ Age
+→ Current level
+→ Goal
+→ Equipment
+→ Available space
+→ Days/week
+→ Time/session
+→ baseline skill test
+→ generated roadmap
+→ Today's training
+→ complete training
+→ progress screen.
+15. Стартовые skill tracks
+Не делать весь футбол.
+Начать с индивидуальных навыков, которые человек действительно может тренировать самостоятельно.
+1. Ball mastery
+2. Dribbling
+3. Passing / first touch
+4. Weak foot
+5. Juggling
+Этого достаточно.
+16. Первые 60 drills
+Символический launch dataset:
+60 OPEN SESSIONS
+или
+60 FOUNDING DRILLS
+Пример:
+12 Ball Mastery
+12 Dribbling
+12 Passing
+12 First Touch / Weak Foot
+12 Juggling / Coordination
+AI может помочь подготовить первоначальный draft.
+Но перед маркировкой контента как VERIFIED хотя бы один настоящий тренер должен его просмотреть.
+Если проверки ещё нет:
+FIRST COACH Community Draft
+Не притворяться, что AI-generated methodology является академической методикой.
+17. Contribution flow должен войти уже в MVP
+Это принципиально.
+К 22 сентября пользователь уже должен иметь возможность нажать:
+CONTRIBUTE
+И предложить тренировку.
+Форма:
+Name
+Sport
+Skill
+Age
+Difficulty
+Goal
+Instructions
+Duration
+Equipment
+Common mistakes
+Progression
+Regression
+Safety
+Upload video
+Source
+Author
+После отправки:
+Thank you.
+Your contribution will become part of the Open Sport Commons after review.
+Если этого нет, заявление про open source будет выглядеть декоративно.
+18. Admin
+Минимальная moderation panel.
+Admin видит:
+Pending contributions.
+Может:
+Approve
+Reject
+Edit
+Request changes
+Mark as verified.
+Обязательно хранить автора contribution.
+19. Progress
+Dashboard:
+MY JOURNEY
+Sessions completed
+Minutes trained
+Current streak
+Skills improving
+Assessment history
+И Skill Tree.
+Например:
+Ball Mastery
+Basic Touches ✓
+Inside Touches ✓
+Outside Touches ✓
+Alternating Touches ●
+Direction Change ○
+Speed Control ○
+Где:
+✓ mastered
+● training now
+○ locked / next
+Это гораздо сильнее обычного списка упражнений.
+20. Gamification
+Очень лёгкая.
+Не делать детское казино.
+Можно использовать:
+Training streak
+Skills unlocked
+Hours trained
+Personal bests
+Milestones
+Например:
+FIRST SESSION
+1000 TOUCHES
+10 TRAINING DAYS
+WEAK FOOT LEVEL 2
+Но основной feedback:
+сравнение человека с самим собой, а не глобальный рейтинг детей.
+21. Privacy / children
+Так как продукт предназначен детям, privacy должна быть частью архитектуры с первого дня.
+По умолчанию:
+видео пользователя private;
+никакой публичной ленты детей;
+никаких личных сообщений между взрослыми и детьми;
+никаких публичных профилей ребёнка;
+raw video можно удалять после анализа;
+пользователь отдельно разрешает использовать видео для улучшения моделей;
+данные не используются для рекламы.
+Для детского спорта safeguarding нельзя прикручивать потом: FIFA отдельно рассматривает защиту детей как обязательную часть футбольных программ.
+22. Low-resource mode
+Если задача действительно про impact, приложение должно работать не только у ребёнка с последним iPhone.
+Поэтому:
+PWA first.
+Должно работать:
+на дешёвом Android;
+с плохим интернетом;
+с минимальным количеством видео;
+с предварительной загрузкой тренировки;
+offline после загрузки session.
+Фильтр:
+EQUIPMENT
+Nothing
+Ball only
+Ball + wall
+Cones
+Full field
+Это критическая feature.
+Ребёнок из маленького города должен иметь возможность выбрать:
+I have a ball and 3×3 metres.
+И получить нормальную тренировку.
+Вот где появляется социальный эффект.
+23. Что показываем Кайрату Боранбаеву
+Landing:
+FIRST COACH
+Every child deserves a great first coach.
+Created by KOZ AI.
+Opened to everyone on the 60th birthday of Kairat Boranbayev.
+Дальше:
+60 YEARS.
+60 OPEN TRAINING SESSIONS.
+FREE FOR EVERYONE.
+Кнопка:
+START TRAINING
+Вторая:
+CONTRIBUTE
+24. Что происходит после дня рождения
+22 сентября — не финал проекта.
+Это:
+Genesis release / v0.1
+Следующий этап:
+FC Kairat Knowledge Drop
+Переданные Академией «Кайрат» методики загружаются в FIRST COACH.
+AI структурирует их.
+Тренеры Академии подтверждают.
+Появляется:
+FC KAIRAT VERIFIED PATH
+После этого можно подключать:
+другие академии;
+отдельных тренеров;
+федерации;
+школы;
+паралимпийские организации;
+другие страны.
+25. Масштабирование на другие виды спорта
+Архитектура изначально sport-agnostic.
+Например:
+FIRST COACH
+Football
+Basketball
+Running
+Boxing
+Tennis
+Swimming
+Adaptive sports
+Каждый спорт имеет собственный Skill Graph.
+Core engine остаётся тем же:
+Assess
+→ Understand level
+→ Build roadmap
+→ Train
+→ Measure
+→ Improve.
+26. Главный impact metric
+Не:
+Downloads.
+Не:
+AI requests.
+Не:
+Количество страниц.
+Основной вопрос:
+ARE PEOPLE GETTING BETTER?
+Поэтому измеряем:
+Users with baseline assessment.
+Users who returned for reassessment.
+Median improvement.
+Sessions completed.
+Training hours delivered.
+Active contributors.
+Verified coaches.
+Open methodologies.
+Countries/cities reached.
+Количество детей, которые получили structured training бесплатно.
+27. North Star
+Number of people who demonstrably improved a skill using free open coaching knowledge.
+28. Что FIRST COACH не должен становиться
+Не social network.
+Не TikTok спортивных видео.
+Не marketplace тренеров.
+Не SaaS Академии «Кайрат».
+Не рекламный проект.
+Не AI-chatbot.
+Не каталог случайных упражнений.
+Не продукт, который говорит ребёнку, что тот станет профессиональным футболистом.
+Это:
+OPEN HUMAN SKILL DEVELOPMENT INFRASTRUCTURE.
+Футбол — только первый use case.
+29. Формула продукта
+World's coaching knowledge
+Open community
+Structured skill graph
+AI personalization
+Computer vision assessment
+=
+FIRST COACH
+Great coaching should not depend on where you were born.
+30. Самая важная фраза продукта
+Every child deserves access to a great first coach.
+Именно эту идею Кайрат Боранбаев открывает людям на своё 60-летие.
