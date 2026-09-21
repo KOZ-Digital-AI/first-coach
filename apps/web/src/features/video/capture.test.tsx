@@ -1010,7 +1010,9 @@ describe('what is sent', () => {
     expect(request.keyframes).toEqual(KEYFRAMES.slice(0, request.keyframes.length));
     expect(request.keyframes.length).toBeGreaterThanOrEqual(3);
     expect(request.keyframes.length).toBeLessThanOrEqual(6);
-    expect(request.features).toEqual(extractFeatures(FRAMES, { aspectRatio: VIDEO_SIZE.videoWidth / VIDEO_SIZE.videoHeight }));
+    const expectedFeatures = extractFeatures(FRAMES, { aspectRatio: VIDEO_SIZE.videoWidth / VIDEO_SIZE.videoHeight });
+    expect(expectedFeatures === null).toBe(false);
+    expect(request.features).toEqual(expectedFeatures as NonNullable<typeof expectedFeatures>);
     expect(request.features.framesAnalysed).toBe(58);
     // no video, no blob, no object URL in what leaves the device
     expect(containsBinary(request)).toBe(false);
@@ -1021,7 +1023,7 @@ describe('what is sent', () => {
   test('without an injected `analyse` the default call is one JSON POST to /api/player/video-analyses that carries no file', async () => {
     const world = makeWorld();
     const { analyse: _unused, ...withoutAnalyse } = world.deps;
-    const view = renderVideo({ ...world, deps: withoutAnalyse });
+    const view = renderVideo({ ...world, deps: withoutAnalyse } as World);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
     await heading('Your feedback');
