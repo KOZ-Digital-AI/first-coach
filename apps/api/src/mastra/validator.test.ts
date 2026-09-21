@@ -156,6 +156,7 @@ describe("validatePlan: reasons", () => {
     "Watch http://evil.test",
     "ftp://files.example.org/x",
     "Try www.example.com today",
+    "Try www.football-drills for more",
     "Details at example.com/train",
     "Read this on youtube.com",
     "Смотри видео на example.kz/video",
