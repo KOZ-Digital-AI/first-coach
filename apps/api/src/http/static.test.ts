@@ -282,6 +282,21 @@ describe("serving files from the dist dir", () => {
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(HASHED_JS);
   });
+
+  test("immutable needs both a request under assets/ and a real file under assets/", async () => {
+    // Requested outside assets/, real file inside it.
+    symlinkSync(join(dist, "assets/app-Abc12345.js"), join(dist, "alias.js"));
+    symlinkSync(join(dist, "assets/app-Abc12345.js"), join(dist, "sub/assets/alias.js"));
+    // Requested under assets/, real file outside it.
+    symlinkSync(join(dist, "sw.js"), join(dist, "assets/sw-alias.js"));
+    const app = mount();
+
+    for (const path of ["/alias.js", "/sub/assets/alias.js", "/assets/sw-alias.js"]) {
+      const res = await get(app, path);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("cache-control")).toBe("no-cache");
+    }
+  });
 });
 
 describe("client routes fall back to index.html", () => {
@@ -464,12 +479,16 @@ describe("path traversal is rejected", () => {
     await expectCleanNotFound(await get(app, "/sub%2F..%2Fx.txt"));
   });
 
-  test("a percent-encoded backslash is rejected even when a file with that literal name exists", async () => {
+  test("a percent-encoded backslash is a 404, not the SPA shell, and never reaches a file with that literal name", async () => {
     writeFileSync(join(dist, "back\\slash.txt"), SECRET);
     const app = mount();
 
     await expectCleanNotFound(await get(app, "/back%5cslash.txt"));
     await expectCleanNotFound(await get(app, "/back%5Cslash.txt"));
+    // Extension-less, so only the backslash guard keeps these from the SPA fallback.
+    for (const path of ["/dashboard%5cx", "/train%5c", "/%5c", "/settings/%5cprofile"]) {
+      await expectCleanNotFound(await get(app, path));
+    }
   });
 
   test("a NUL byte is a 404, not the SPA shell and not a 500", async () => {
