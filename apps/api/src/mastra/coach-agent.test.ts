@@ -187,6 +187,11 @@ describe("createCoachAgent", () => {
     expect(JSON.stringify(format.schema)).toContain("drillVersionId");
     expect(JSON.stringify(format.schema)).toContain("minutes");
     expect(JSON.stringify(format.schema)).toContain("reason");
+    // AiPlan is strict and its items are required and non-empty
+    const schema = format.schema as unknown as { required: string[]; additionalProperties: boolean; properties: { items: { minItems: number } } };
+    expect(schema.required).toEqual(["items"]);
+    expect(schema.additionalProperties).toBe(false);
+    expect(schema.properties.items.minItems).toBe(1);
   });
 });
 
