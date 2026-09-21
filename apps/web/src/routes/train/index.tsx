@@ -1,10 +1,11 @@
 import { pickLocalized } from '@api-types/primitives';
 import { ENDPOINTS, type SessionEvent, type TodayItem, type TodaySession } from '@api-types/session';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { Check, ChevronRight } from 'lucide-react';
 import { type ComponentType, createContext, type MouseEvent, type ReactNode, useContext, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { seedTodayFromDevice } from '../../bootstrap';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { EmptyState } from '../../components/ui/empty-state';
@@ -29,6 +30,11 @@ import { type TodaySlotProps, useSlot } from '../../lib/slots';
  *     answer to. The request sends `?locale=<ui locale>` and `X-Timezone: <the device's IANA zone>` (the server's "today" is
  *     the player's local day). It never retries by itself: Try again is the way out. A cached session is shown at once and
  *     refreshed behind it; a refresh that fails keeps the cached session on screen with a notice.
+ *     OFFLINE COLD RELOAD (fc-mol-eay.12): the session cannot be read and the request fails, but the device holds the last session:
+ *     the persisted cache (restored a moment after the failed request, which then shows it) or, when that has none, the session
+ *     the last player downloaded (`seedTodayFromDevice`, bootstrap.ts, put into the same ['today'] cache so the drill player and the
+ *     finish button work from it). Either way it is shown with the "could not refresh" notice; the error state stays only when the
+ *     device holds nothing. A failed `ensureSession` never decides anything on its own: its answer is caught, as before.
  *  2. A player who is not onboarded (the server answers 404 "not onboarded") is sent to /train/onboarding (history replace, so
  *     Back does not bounce them here again). A player whose anonymous session THIS visit just created (ensureSession resolves
  *     `{ created: true }`, fc-mol-9l4.16) cannot be onboarded yet, so the answer is known without asking: the same redirect,
@@ -243,6 +249,17 @@ function TodayPage() {
     // `navigate` is a fresh closure on every render; the redirect must fire once per failure, not once per render.
   }, [notOnboarded]);
 
+  // The request failed and the cache holds no session (no persisted cache): fall back to the one the last player downloaded. A 404
+  // "not onboarded" is an answer, not a failure, so it never gets a device copy.
+  const queryClient = useQueryClient();
+  const [deviceCopyAt, setDeviceCopyAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (!today.isError || notOnboarded || today.data !== undefined) return;
+    const at = seedTodayFromDevice(queryClient);
+    if (at !== undefined) setDeviceCopyAt(at);
+  }, [today.isError, today.data, notOnboarded, queryClient]);
+  const showingDeviceCopy = deviceCopyAt !== null && today.dataUpdatedAt === deviceCopyAt;
+
   // --- finishing ---
   const [saving, setSaving] = useState(false);
   const [finishFailure, setFinishFailure] = useState<string | null>(null);
@@ -388,7 +405,7 @@ function TodayPage() {
         {session === undefined ? null : <p className="m-0 max-w-[65ch] text-lg text-ink">{t('lead')}</p>}
       </header>
 
-      {session !== undefined && today.isError && !notOnboarded ? <Notice tone="warn">{t('stale')}</Notice> : null}
+      {session !== undefined && (today.isError || showingDeviceCopy) && !notOnboarded ? <Notice tone="warn">{t('stale')}</Notice> : null}
 
       <div className="flex flex-col gap-5 rounded-card border border-line bg-paper p-5 shadow-soft sm:p-7">{body}</div>
 
