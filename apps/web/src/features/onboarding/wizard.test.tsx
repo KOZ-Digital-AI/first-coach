@@ -20,7 +20,7 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
+const { act, cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
@@ -179,8 +179,10 @@ function mountWizard(setup: Setup = {}) {
   // itself is not exported: a non-Route export would pull zod, the auth client and the API client into the entry bundle).
   const Page = Route.options.component;
   if (Page === undefined) throw new Error('the /train/onboarding route has no component');
+  const client = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  let queryClient = client();
   const tree = () => (
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <WizardDepsContext.Provider value={{ api, ensureSession, navigate, ...(setup.storage === undefined ? {} : { storage: setup.storage }) }}>
           <Page />
@@ -196,8 +198,11 @@ function mountWizard(setup: Setup = {}) {
     ensureSession,
     navigate,
     unmount: view.unmount,
-    remount: () => {
+    i18n,
+    /** Leave and come back. A reload loses the query cache; navigating away inside the app keeps it. */
+    remount: ({ keepCache = false } = {}) => {
       view.unmount();
+      if (!keepCache) queryClient = client();
       render(tree());
     },
     optionCalls: () => server.calls.filter((call) => call.method === 'GET'),
@@ -297,6 +302,32 @@ describe('loads the options once', () => {
     await answerConditions(wizard);
     expect(wizard.startCalls()).toHaveLength(0);
     expect(wizard.ensureSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('the options are cached per language', () => {
+  test('leaving the page and coming back inside the app does not ask again', async () => {
+    const wizard = mountWizard();
+    await atStep(1);
+    wizard.remount({ keepCache: true });
+    await atStep(1);
+    expect(wizard.optionCalls()).toHaveLength(1);
+  });
+
+  test('switching the interface language asks once more for that language and keeps the questions on screen meanwhile', async () => {
+    const second = deferred<Response>();
+    let call = 0;
+    const wizard = mountWizard({ server: { options: () => (++call === 1 ? json(OPTIONS) : second.promise) } });
+    await atStep(1);
+    await act(async () => {
+      await wizard.i18n.changeLanguage('ru');
+    });
+    await waitFor(() => expect(wizard.optionCalls().map((c) => c.url)).toEqual(['/api/onboarding/football?locale=en', '/api/onboarding/football?locale=ru']));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByLabelText('Возраст')).toBeTruthy();
+    second.resolve(json(OPTIONS));
+    await waitFor(() => expect(wizard.optionCalls()).toHaveLength(2));
+    expect(screen.getByLabelText('Возраст')).toBeTruthy();
   });
 });
 
@@ -589,8 +620,10 @@ describe('submit on the last step', () => {
     // Real browsers disable every control inside a disabled fieldset; happy-dom does not evaluate that inheritance.
     expect(continueButton().closest('fieldset[disabled]')).not.toBeNull();
     expect(button('Back').closest('fieldset[disabled]')).not.toBeNull();
-    await wizard.user.click(continueButton());
-    await wizard.user.click(continueButton());
+    // user-event skips controls inside a disabled fieldset, so click natively: the handler itself must refuse a second submit.
+    const again = continueButton();
+    act(() => again.click());
+    act(() => again.click());
     expect(wizard.startCalls()).toHaveLength(1);
     expect(wizard.ensureSession).toHaveBeenCalledTimes(1);
     expect(wizard.navigate).not.toHaveBeenCalled();
