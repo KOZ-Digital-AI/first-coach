@@ -190,7 +190,7 @@ describe('key parity checker (synthetic maps)', () => {
     ]);
   });
 
-  test.each(LOCALES)('a key missing in %s alone is caught', (missing) => {
+  test.each([...LOCALES])('a key missing in %s alone is caught', (missing) => {
     const full = { a: 'text' };
     const source = { kk: full, ru: full, en: full, [missing]: {} };
     const problems = parityProblems({ '../a/x.messages.ts': { default: source } });
@@ -658,13 +658,13 @@ describe('language switch (features/i18n/header-extra.tsx)', () => {
     expect(buttons.map((el) => el.textContent)).toEqual(LOCALES.map((locale) => LANGUAGE_NAMES[locale]));
   });
 
-  test.each(LOCALES)('with %s current, aria-pressed is true on that button only', (current) => {
+  test.each([...LOCALES])('with %s current, aria-pressed is true on that button only', (current) => {
     renderSwitch(current);
     const pressed = screen.getAllByRole('button').map((el) => el.getAttribute('aria-pressed'));
     expect(pressed).toEqual(LOCALES.map((locale) => (locale === current ? 'true' : 'false')));
   });
 
-  test.each(LOCALES)('with %s current, only that button carries the check icon (state is not colour alone)', (current) => {
+  test.each([...LOCALES])('with %s current, only that button carries the check icon (state is not colour alone)', (current) => {
     renderSwitch(current);
     for (const locale of LOCALES) {
       const icons = button(LANGUAGE_NAMES[locale]).querySelectorAll('svg');
