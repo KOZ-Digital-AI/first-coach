@@ -31,8 +31,9 @@ import { register as registerToday } from "./player-today.routes";
 // routes mounted next to the route under test. Players are real anonymous sign-ins that onboard through
 // POST /api/player/start (the technique of player-swap.routes.test.ts).
 //
-// Player PROFILE below: age 12, basic, ball, yard, 20 minutes. On the seed that is 43 candidates and a deterministic
-// session of 4 drills / 19 minutes, item-1 being a 3-minute warm-up (probed before these tests were written).
+// Player PROFILE below: age 12, basic, ball, yard, 20 minutes. On the seed that is 43 candidates whoever the player is
+// (the pool does not depend on the player id). The deterministic session, on the other hand, is seeded by the player id
+// (its drills and minutes vary), so no test here assumes more of it than: it has 2+ items, item-1..item-n, no skill test.
 
 const SEED_DIR = resolve(import.meta.dir, "../../../../../config/commons");
 const DEV_ORIGIN = "http://localhost:4111"; // the dev default BETTER_AUTH_URL
@@ -706,8 +707,9 @@ describe("POST /api/player/today/ai-plan: finished items are never altered", () 
     expect(answer.items[0]!.done).toBe(true);
     expect(answer.items.slice(1).every((item) => item.done === false)).toBe(true);
     expect(answer.totalMinutes).toBe(20);
-    // the dropped unfinished items' ids (item-2..item-4) are not reused by the new ones
-    expect(stored.slice(1).map((i) => i.itemId)).toEqual(["item-5", "item-6"]);
+    // the dropped unfinished items' ids (item-2..item-n) are not reused by the new ones
+    const n = before.items.length;
+    expect(stored.slice(1).map((i) => i.itemId)).toEqual([`item-${n + 1}`, `item-${n + 2}`]);
   });
 
   test("an item finished WHILE the agent runs is kept as finished and not duplicated by the plan", async () => {
@@ -724,8 +726,8 @@ describe("POST /api/player/today/ai-plan: finished items are never altered", () 
       expect(offeredIds(call)).toContain(inPlan.drillVersionId);
       return {
         items: [
-          { drillVersionId: inPlan.drillVersionId, minutes: inPlan.minutes, reason: "Keep going with this one." },
-          { drillVersionId: other.versionId, minutes: budget - inPlan.minutes, reason: "Then something new." },
+          { drillVersionId: inPlan.drillVersionId, minutes: Math.floor(budget / 2), reason: "Keep going with this one." },
+          { drillVersionId: other.versionId, minutes: budget - Math.floor(budget / 2), reason: "Then something new." },
         ],
       };
     });
@@ -748,11 +750,12 @@ describe("POST /api/player/today/ai-plan: finished items are never altered", () 
     await boot({ createAgent: agent.createAgent, env: KEY_ENV });
     const player = await onboardedPlayer();
     const session = await todayOk(player);
-    // a stored state the swap route can produce: everything finished, 21 minutes in all
+    // a stored state the swap route can produce: everything finished, 21 minutes in all (the first item takes the difference)
+    const others = session.items.slice(1).reduce((sum, item) => sum + item.minutes, 0);
     const done = session.items.map((item, index) => ({
       itemId: item.itemId,
       drillVersionId: item.drillVersionId,
-      minutes: index === 0 ? item.minutes + 2 : item.minutes,
+      minutes: index === 0 ? 21 - others : item.minutes,
       ...(item.reason === undefined ? {} : { reason: item.reason }),
       done: true,
     }));
