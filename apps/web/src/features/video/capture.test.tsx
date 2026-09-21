@@ -1325,7 +1325,7 @@ describe('what is sent', () => {
     const view = renderVideo(world);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    expect(await screen.findByText('Video Coach is switched off')).toBeTruthy();
+    expect(await screen.findByText('Video analysis is unavailable right now')).toBeTruthy(); // fc-mol-8nt.13: was 'Video Coach is switched off'
     expect(hasRole('button', 'Try again')).toBe(false);
     expect((screen.getByRole('link', { name: 'Back to training' }) as HTMLAnchorElement).getAttribute('href')).toBe('/train');
   });
