@@ -41,7 +41,9 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * - "each opens the review screen": the review is a view of this same route, not a second route (this bead owns one route file), and
  *   opening it costs no request because the list already carries the full payload and the diff. Back returns to the list, on the same
  *   tab, with focus on the button that opened it. It is component state, not the URL: the address does not name a contribution.
- *   Contract gap to report: the admin layout's "Review queue" link goes to /admin/queue, which no route serves (index.tsx is /admin).
+ *   Since fc-ndo the admin layout's "Review queue" link goes to /admin (this route), and the title of every row is also a link to the
+ *   dedicated review screen, /admin/contributions/<id> (routes/admin/contributions.$id.tsx, fc-mol-0v3.10): the title, not a new
+ *   button, because this bead's messages file gets no new string. The row's inline Review button is unchanged.
  * - Tabs = one request each (`?state=`), pending first and selected; the tab list is a real ARIA tab list with arrow keys. The API
  *   has no counts and no pagination, so a tab shows no count and the list is the whole state.
  * - "attachment indicator": "Files: 2" with a paperclip, only when the contribution has files. "Possible duplicate" is a written
@@ -70,6 +72,8 @@ const ROW_BUTTON_ID = (id: string) => `queue-review-${id}`;
 
 const EYEBROW = 'm-0 text-xs font-bold tracking-[.12em] text-accent uppercase';
 const H2 = 'm-0 text-xl leading-[1.2] font-bold tracking-[-.025em] wrap-anywhere text-ink';
+// The row title as a link: 44px tall, underlined (a link is never told apart by colour alone), the words wrap on a 360px screen.
+const TITLE_LINK = 'inline-flex min-h-tap max-w-full items-center underline decoration-2 underline-offset-4 hover:decoration-accent';
 const LINK =
   'inline-flex min-h-tap min-w-tap max-w-full items-center justify-center gap-2 rounded-control border border-line bg-paper px-4.5 py-2.5 text-center font-bold wrap-anywhere text-ink hover:bg-bg';
 // 44px tall, wrapping words, a check icon on the chosen tab: the choice is never colour alone.
@@ -175,7 +179,11 @@ function Row({ item, locale, onOpen }: { item: ModerationQueueItem; locale: Loca
     <li>
       <Card className="grid gap-3">
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-          <h2 className={clsx(H2, 'min-w-0')}>{payload.name}</h2>
+          <h2 className={clsx(H2, 'min-w-0')}>
+            <Link to="/admin/contributions/$id" params={{ id: contribution.id }} className={TITLE_LINK}>
+              {payload.name}
+            </Link>
+          </h2>
           <div className="flex flex-wrap gap-2">
             <Tag>
               {improvement ? <Wrench aria-hidden="true" className="size-3.5 shrink-0" /> : <FilePlus2 aria-hidden="true" className="size-3.5 shrink-0" />}

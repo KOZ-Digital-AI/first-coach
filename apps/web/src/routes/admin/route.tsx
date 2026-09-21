@@ -35,19 +35,25 @@ import '../../lib/i18n';
  * - "the unauthorized page" is rendered by this layout in place (URL unchanged, no redirect): no separate route exists.
  * - "sign-in with redirect" is `/account/sign-in?redirect=<encoded path, query and hash of the requested page>`. The sign-in
  *   screen is routes/account/sign-in.tsx (bead 70i.7, not part of this bead); it must accept only same-origin paths in `redirect`.
- * - Sub-navigation targets are /admin/queue, /admin/drills, /admin/impact and /admin/settings (ADMIN_NAV below). The pages
- *   are other beads' routes and are not in the typed route tree yet, hence the `as never` on `to`.
+ * - Sub-navigation targets are /admin (the review queue: routes/admin/index.tsx is the index route of this layout; there is no
+ *   /admin/queue route, fc-ndo), /admin/drills, /admin/impact and /admin/settings (ADMIN_NAV below). `to` keeps its `as never`
+ *   cast (the nav is one table of plain strings); the queue link matches its path exactly so it is not current on the others.
  * - Pages under this layout render their own <main> (the convention of the existing pages); the layout adds the nav only.
  */
 
 const SIGN_IN_PATH = '/account/sign-in';
 const ROLE_ADMIN = 'admin';
 
+/**
+ * `exact`: the link is current only on that very path. The queue is /admin itself (the index route), a prefix of every admin URL,
+ * so without it "Review queue" would be marked current on every admin page. The other sections keep the prefix match: they stay
+ * current on their own sub-pages.
+ */
 const ADMIN_NAV = [
-  { to: '/admin/queue', label: 'reviewQueue' },
-  { to: '/admin/drills', label: 'drills' },
-  { to: '/admin/impact', label: 'impact' },
-  { to: '/admin/settings', label: 'settings' },
+  { to: '/admin', label: 'reviewQueue', exact: true },
+  { to: '/admin/drills', label: 'drills', exact: false },
+  { to: '/admin/impact', label: 'impact', exact: false },
+  { to: '/admin/settings', label: 'settings', exact: false },
 ] as const;
 
 /** The part of Better Auth's `useSession()` result that the layout reads; the real result is assignable to it. */
@@ -152,9 +158,9 @@ function AdminNav() {
     <nav aria-label={t('navLabel')} className="mx-auto w-full max-w-295 border-b border-line px-3 pt-6 pb-4 sm:px-5">
       <p className={EYEBROW}>{t('eyebrow')}</p>
       <ul className="mt-2 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        {ADMIN_NAV.map(({ to, label }) => (
+        {ADMIN_NAV.map(({ to, label, exact }) => (
           <li key={to} className="min-w-0">
-            <Link to={to as never} className={NAV_LINK}>
+            <Link to={to as never} activeOptions={{ exact }} className={NAV_LINK}>
               {({ isActive }: { isActive: boolean }) => (
                 <>
                   {isActive && <Check aria-hidden="true" className="size-4 shrink-0" />}
