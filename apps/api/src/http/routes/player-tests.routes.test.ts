@@ -8,12 +8,14 @@ import { createApp, type AppDeps } from "../../app";
 import { loadSeed } from "../../commons/seed-loader";
 import { openDatabase } from "../../db/database";
 import { MIGRATIONS_DIR, migrate } from "../../db/migrate";
+import { ingestEvents } from "../../player/events";
 import type { PlayerProfile, Roadmap } from "../../shared/domain";
 import { ENDPOINTS, TestResultsResponse } from "../../shared/journey";
 import type { TestResult, TestResultsRequest } from "../../shared/journey";
 import { ENDPOINTS as ONBOARDING, StartResponse } from "../../shared/onboarding";
 import type { BaselineResult } from "../../shared/onboarding";
 import { PROBLEM_CONTENT_TYPE } from "../../shared/primitives";
+import type { SessionEvent } from "../../shared/session";
 
 // POST /api/player/test-results (fc-mol-0bt.5): the retest batch. Every test runs the real createApp on a
 // fresh in-memory database migrated with the real migrations and loaded with the REAL football seed, with
@@ -278,6 +280,50 @@ describe("POST /api/player/test-results, a better retest", () => {
     expect(body.roadmap.tracks.find((track) => track.skill === "passing-first-touch")).toEqual({ skill: "passing-first-touch", level: 4, source: "test" });
   });
 
+  test("a track whose test was skipped at the baseline and not retaken keeps the self-declared level (source self)", async () => {
+    const results = baseline();
+    results[1] = { testSlug: "wall-passing-60s", value: 0, skipped: true, clientUuid: results[1]!.clientUuid };
+    const { player } = await onboarded(results);
+    const body = await retestOk(player, batch(result("weak-foot-passes", 9)));
+    // the skipped 0 is not a measurement: were it read as one, passing would be level 1 from a test
+    expect(body.roadmap.tracks.find((track) => track.skill === "passing-first-touch")).toEqual({ skill: "passing-first-touch", level: 2, source: "self" });
+    expect(body.roadmap.tracks.find((track) => track.skill === "weak-foot")).toEqual({ skill: "weak-foot", level: 5, source: "test" });
+  });
+
+  test("slalom errors add their time penalty: 7 s clean is level 5, 7 s with one error is 8 s, level 4", async () => {
+    const { player: clean } = await onboarded();
+    const { player: sloppy } = await onboarded();
+    const fast = await retestOk(clean, batch(result("slalom-time", 7, { errors: 0 })));
+    const withError = await retestOk(sloppy, batch(result("slalom-time", 7, { errors: 1 })));
+    expect(levelsOf(fast.roadmap).dribbling).toBe(5);
+    expect(levelsOf(withError.roadmap).dribbling).toBe(4);
+  });
+
+  test("the X-Timezone header reaches the journey in the answer: the streak counts days in the player's zone", async () => {
+    const { player } = await onboarded();
+    // finished 2026-03-08T22:00Z; "now" is 2026-03-10T12:00Z: two days ago in UTC (no streak), yesterday in Asia/Almaty (UTC+5)
+    const version = (db.query(
+      `SELECT d.current_version_id AS id FROM drills d JOIN drill_skills ds ON ds.drill_id = d.id AND ds.is_primary = 1
+         JOIN skills s ON s.id = ds.skill_id WHERE s.slug = 'ball-mastery' ORDER BY d.slug LIMIT 1`,
+    ).get() as { id: string }).id;
+    const graphVersion = (db.query("SELECT graph_version FROM sports WHERE slug = 'football'").get() as { graph_version: string }).graph_version;
+    const items = [{ itemId: "i1", drillVersionId: version, minutes: 5, done: false, content: { goal: { en: "g" } } }];
+    db.run("INSERT INTO sessions (id, player_id, date, planner, graph_version, items) VALUES ('s1', ?, '2026-03-08', 'rules', ?, ?)", [player.id, graphVersion, JSON.stringify(items)]);
+    const at = "2026-03-08T22:00:00.000Z";
+    const events: SessionEvent[] = [
+      { clientUuid: uuid(), sessionId: "s1", type: "drill_done", at, itemId: "i1" },
+      { clientUuid: uuid(), sessionId: "s1", type: "session_finished", at },
+    ];
+    ingestEvents(db, player.id, events);
+
+    const utc = TestResultsResponse.parse(await (await retest(player.cookie, batch(result("wall-passing-60s", 30)))).json());
+    const almaty = TestResultsResponse.parse(
+      await (await retest(player.cookie, batch(result("wall-passing-60s", 31)), { "x-timezone": "Asia/Almaty" })).json(),
+    );
+    expect(utc.journey.metrics.streakDays).toBe(0);
+    expect(almaty.journey.metrics.streakDays).toBe(1);
+  });
+
   test("timestamps are canonical ISO 8601 UTC with milliseconds", async () => {
     const { player } = await onboarded();
     setSystemTime(new Date("2026-03-11T08:30:15.123Z"));
@@ -473,6 +519,22 @@ describe("POST /api/player/test-results, access", () => {
     expect(count("test_results")).toBe(0);
     expect(count("roadmaps")).toBe(0);
     expect(count("player_profiles")).toBe(0);
+  });
+
+  test("a database whose sport is not seeded cannot build a plan: 503 problem, nothing is stored", async () => {
+    db.close();
+    db = openDatabase(":memory:");
+    migrate(db, MIGRATIONS_DIR); // migrated, NOT seeded
+    app = await buildApp();
+    const player = await signInPlayer();
+    db.run(
+      `INSERT INTO player_profiles (player_id, age, level, goal, equipment, space, partner, days_per_week, minutes_per_session, locale)
+       VALUES (?, 12, 'basic', 'dribbling', 'ball', 'yard', 0, 3, 20, 'ru')`,
+      [player.id],
+    );
+    await expectProblem(await retest(player.cookie, batch(result("wall-passing-60s", 60))), 503);
+    expect(count("test_results")).toBe(0);
+    expect(count("roadmaps")).toBe(0);
   });
 
   test("the player is always the session's: a playerId in the body is a 422 and never read", async () => {
