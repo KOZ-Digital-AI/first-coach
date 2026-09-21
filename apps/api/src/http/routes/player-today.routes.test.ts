@@ -8,6 +8,7 @@ import { createApp, type AppDeps } from "../../app";
 import { loadSeed } from "../../commons/seed-loader";
 import { openDatabase } from "../../db/database";
 import { MIGRATIONS_DIR, migrate } from "../../db/migrate";
+import { SESSION_REASON_FILL, SESSION_REASON_FOCUS, SESSION_REASON_WARMUP } from "../../planner/session";
 import { ingestEvents } from "../../player/events";
 import type { PlayerProfile } from "../../shared/domain";
 import { ENDPOINTS as ONBOARDING, StartResponse } from "../../shared/onboarding";
@@ -234,6 +235,10 @@ describe("GET /api/player/today: creating today's session", () => {
     expect(new Set(session.items.map((item) => item.itemId)).size).toBe(session.items.length);
     expect(new Set(session.items.map((item) => item.drillVersionId)).size).toBe(session.items.length);
     expect(session.items.every((item) => item.done === false)).toBe(true);
+    // Each item says why it is there, and the session opens with a warm-up.
+    const reasons = [SESSION_REASON_WARMUP, SESSION_REASON_FOCUS, SESSION_REASON_FILL];
+    expect(session.items.every((item) => item.reason !== undefined && reasons.includes(item.reason))).toBe(true);
+    expect(session.items[0]!.reason).toBe(SESSION_REASON_WARMUP);
     expect(session.roadmapSummary).toEqual({
       currentLevelLabel: player.start.roadmap.currentLevelLabel,
       focus: player.start.roadmap.focus,
@@ -246,8 +251,9 @@ describe("GET /api/player/today: creating today's session", () => {
     const rows = sessionRows(player.id);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ id: session.id, date: session.date, planner: "rules", graph_version: graphVersion, finished_at: null });
-    const stored = JSON.parse(rows[0]!.items) as Array<{ itemId: string; drillVersionId: string }>;
+    const stored = JSON.parse(rows[0]!.items) as Array<{ itemId: string; drillVersionId: string; reason?: string }>;
     expect(stored.map((item) => [item.itemId, item.drillVersionId])).toEqual(session.items.map((item) => [item.itemId, item.drillVersionId]));
+    expect(stored.map((item) => item.reason)).toEqual(session.items.map((item) => item.reason));
   });
 
   test("every item carries its version's own status, attribution and minutes, and a drill version that exists", async () => {
@@ -313,6 +319,37 @@ describe("GET /api/player/today: content in the requested locale and en", () => 
     expect(usable(kk.goal.kk)).toBe(true);
     expect(usable(ru.goal.ru)).toBe(true);
     expect(kk.goal.en).toBe(ru.goal.en);
+  });
+});
+
+describe("GET /api/player/today: a text that lacks the requested locale", () => {
+  test("is filled requested -> ru -> en in the requested locale's slot and in en; the default locale is the profile's", async () => {
+    const player = await onboardedPlayer({ locale: "kk" });
+    const first = await todayOk(player);
+    const old = versionRow(first.items[0]!.drillVersionId);
+    // A version of that drill whose goal and instructions exist in ru only, and the session pointed at it.
+    db.query(
+      `INSERT INTO drill_versions (id, drill_id, semver, parent_version_id, status, content, equipment, space, partner, age_min, age_max,
+                                   level, minutes, license, author_name, author_user_id, source, source_url, origin, change_summary, created_at)
+       SELECT 'ru-only-version', drill_id, '8.8.8', id, status,
+              json_remove(content, '$.goal.kk', '$.goal.en', '$.instructions.kk', '$.instructions.en'),
+              equipment, space, partner, age_min, age_max, level, minutes, license, author_name, author_user_id, source, source_url,
+              'seed', NULL, created_at
+         FROM drill_versions WHERE id = ?`,
+    ).run(old.id);
+    db.query("UPDATE sessions SET items = json_set(items, '$[0].drillVersionId', 'ru-only-version') WHERE player_id = ?").run(player.id);
+
+    const profileLocale = (await todayOk(player)).items[0]!.content; // no ?locale: the profile's kk
+    const goalRu = profileLocale.goal.ru;
+    expect(usable(goalRu)).toBe(true);
+    expect(profileLocale.goal.kk).toBe(goalRu);
+    expect(profileLocale.goal.en).toBe(goalRu);
+    expect(profileLocale.instructions.kk).toBe(profileLocale.instructions.ru);
+    expect(profileLocale.instructions.en).toBe(profileLocale.instructions.ru);
+
+    const asEn = (await todayOk(player, { locale: "en" })).items[0]!.content;
+    expect(asEn.goal.en).toBe(goalRu);
+    expect(asEn.goal.ru).toBe(goalRu);
   });
 });
 
@@ -429,6 +466,15 @@ describe("GET /api/player/today: how the session is picked", () => {
 
     // The session is stable: asking again gives the same skill test and total.
     expect(await todayOk(player)).toEqual(session);
+  });
+
+  test("a retest that is due only for kit the player lacks (wall, cones) is not offered", async () => {
+    const player = await onboardedPlayer();
+    db.query("UPDATE test_results SET recorded_at = ? WHERE player_id = ? AND test_slug IN ('slalom-time', 'wall-passing-60s', 'weak-foot-passes')").run(
+      new Date(Date.now() - 40 * DAY_MS).toISOString(),
+      player.id,
+    );
+    expect((await todayOk(player)).skillTest).toBeUndefined();
   });
 
   test("with no retest due there is no skillTest", async () => {
