@@ -15,6 +15,7 @@ import { MIGRATIONS_DIR, migrate } from "../../db/migrate";
 import type { VideoAgentOutput } from "../../mastra/video-agent";
 import { candidates } from "../../planner/candidates";
 import { setConsents } from "../../player/consents";
+import * as repo from "../../player/video-repo";
 import type { PlayerProfile } from "../../shared/domain";
 import { ENDPOINTS as ONBOARDING, StartResponse } from "../../shared/onboarding";
 import type { BaselineResult, StartRequest } from "../../shared/onboarding";
@@ -399,6 +400,16 @@ async function captureOutput<T>(run: () => T | Promise<T>): Promise<{ result: T;
   }
 }
 
+/** Wall time and the growth of the process's resident memory while `run` ran (the garbage is collected first). */
+async function measured<T>(run: () => T | Promise<T>): Promise<{ result: T; ms: number; rssGrowthMb: number }> {
+  Bun.gc(true);
+  const before = process.memoryUsage().rss;
+  const started = performance.now();
+  const result = await run();
+  const ms = performance.now() - started;
+  return { result, ms, rssGrowthMb: (process.memoryUsage().rss - before) / (1024 * 1024) };
+}
+
 const expectClean = (text: string, sent: Frame[]): void => {
   for (const print of fingerprints(sent)) expect(text.includes(print)).toBe(false);
 };
@@ -727,6 +738,86 @@ describe("the body is read under a hard limit", () => {
     expectNothingHappened();
   });
 
+  test("a huge keyframes array is an immediate 422 with bounded work: the schema never sees it", async () => {
+    const player = await readyPlayer();
+    const items = 450_000; // a body of about 1.4 MB: under the body limit, so only the array bound can stop it
+    for (const element of ["{}", "1", "[]"]) {
+      const text = `{"skillSlug":"${SKILL}","keyframes":[${Array(items).fill(element).join(",")}]}`;
+      const work = await measured(() => postJson(player, text));
+      const body = await expectProblem(work.result, 422);
+      expect(body.errors?.some((e) => e.pointer === "/keyframes")).toBe(true);
+      expect(body.errors?.length ?? 0).toBeLessThanOrEqual(20);
+      expect(work.ms).toBeLessThan(500);
+      expect(work.rssGrowthMb).toBeLessThan(300);
+    }
+    expectNothingHappened();
+  });
+
+  test("more than six keyframes is a 422 at /keyframes whatever the frames hold", async () => {
+    const player = await readyPlayer();
+    const seven = { skillSlug: SKILL, keyframes: Array.from({ length: KEYFRAME_MAX_COUNT + 1 }, () => ({})) };
+    const body = await expectProblem(await postJson(player, seven), 422);
+    expect(body.errors?.map((e) => e.pointer)).toEqual(["/keyframes"]);
+    expectNothingHappened();
+  });
+
+  test("a body of unknown keys produces a bounded answer: at most 20 issues, in bounded time and memory", async () => {
+    const player = await readyPlayer();
+    const keys = Array.from({ length: 150_000 }, (_, i) => `"k${i}":1`).join(",");
+    const work = await measured(() => postJson(player, `{${keys}}`));
+    const body = await expectProblem(work.result, 422);
+    expect(body.errors?.length ?? 0).toBeLessThanOrEqual(20);
+    expect(work.ms).toBeLessThan(500);
+    expect(work.rssGrowthMb).toBeLessThan(300);
+    // the same inside a keyframe and inside the features
+    const inside = Array.from({ length: 20_000 }, (_, i) => `"k${i}":1`).join(",");
+    const nested = await measured(() =>
+      postJson(player, `{"features":{"meanVisibility":0.9,"framesAnalysed":50,${inside}},"keyframes":[{${inside}}]}`),
+    );
+    const nestedBody = await expectProblem(nested.result, 422);
+    expect(nestedBody.errors?.length ?? 0).toBeLessThanOrEqual(20);
+    expect(nested.ms).toBeLessThan(500);
+    expectNothingHappened();
+  });
+
+  test("multipart: thousands of tiny parts are a 400 before any is parsed, in bounded time", async () => {
+    const player = await readyPlayer();
+    const boundary = "----many";
+    const part = `--${boundary}\r\nContent-Disposition: form-data; name="x"\r\n\r\n1\r\n`;
+    const text = `${part.repeat(15_000)}--${boundary}--\r\n`;
+    const work = await measured(() =>
+      app.request(PATH, { method: "POST", headers: { "content-type": `multipart/form-data; boundary=${boundary}`, cookie: player.cookie }, body: text }),
+    );
+    await expectProblem(work.result, 400);
+    expect(work.ms).toBeLessThan(500);
+    expect(work.rssGrowthMb).toBeLessThan(300);
+    expectNothingHappened();
+  });
+
+  test("multipart: up to 16 keyframe or unknown parts give a bounded 422, and a payload full of keys or frames is bounded too", async () => {
+    const player = await readyPlayer();
+    const sent = frames(15); // payload + 15 parts = 16
+    const many = await expectProblem(await postForm(player, multipartOf(requestBody({}, sent), sent)), 422);
+    expect(many.errors?.length ?? 0).toBeLessThanOrEqual(20);
+    expect(many.errors?.some((e) => e.pointer === "/keyframes")).toBe(true);
+
+    const three = frames();
+    const bombs: Record<string, unknown>[] = [
+      { ...requestBody({}, three), keyframes: Array.from({ length: 20_000 }, () => ({})) },
+      { ...requestBody({}, three), ...Object.fromEntries(Array.from({ length: 4_000 }, (_, i) => [`k${i}`, 1])), keyframes: undefined },
+    ];
+    for (const payload of bombs) {
+      const form = new FormData();
+      form.append("payload", JSON.stringify(payload));
+      three.forEach((f) => form.append("keyframes", new Blob([f.bytes], { type: "image/jpeg" }), "f.jpg"));
+      const work = await measured(() => postForm(player, form));
+      const body = await expectProblem(work.result, 422);
+      expect(body.errors?.length ?? 0).toBeLessThanOrEqual(20);
+      expect(work.ms).toBeLessThan(500);
+    }
+    expectNothingHappened();
+  });
+
   test("a body that is not JSON, or not a JSON object, is a 400", async () => {
     const player = await readyPlayer();
     await expectProblem(await postJson(player, "{not json"), 400);
@@ -1004,6 +1095,124 @@ describe("a finished analysis", () => {
     VideoAnalysis.parse(JSON.parse(text));
     expect(text.includes(echoed)).toBe(false);
     expectNoImageBytes(sent);
+    expect(rows("video_analyses")).toBe(1);
+  });
+
+  test("lone surrogates in the model's text can never turn into a 500 after the paid call: the model is asked once, the row is stored", async () => {
+    const player = await readyPlayer();
+    // JSON spells a lone surrogate as the six characters \udXXX: 60 of them are a run the table refuses
+    const high = "\ud800".repeat(60);
+    const low = "\udc00".repeat(60);
+    const mixed = `${high}${low}`;
+    agent = makeAgent(() =>
+      outputOf({ scores: CRITERIA.map((key, i) => ({ key, score: 5, note: [high, low, mixed, `ok ${high}`, `${low} ok`][i % 5] as string })), focusNext: mixed }),
+    );
+    await rebuild();
+    const res = await postJson(player, requestBody());
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    const analysis = VideoAnalysis.parse(JSON.parse(text));
+    expect(agent.calls).toHaveLength(1);
+    expect(rows("video_analyses")).toBe(1);
+    expect(rows("ai_calls")).toBe(1);
+    expect(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(text)).toBe(false);
+    expect(text).not.toMatch(/\\ud[89ab]/i);
+    // each lone half became U+FFFD: the text is kept (repaired), not thrown away
+    // (the last high half and the first low half of `mixed` meet: they are a well-formed pair, U+10000, and stay one)
+    const fffd = "\ufffd";
+    const repaired = `${fffd.repeat(59)}\u{10000}${fffd.repeat(59)}`;
+    expect(analysis.focusNext).toBe(repaired);
+    expect(analysis.scores.map((s) => s.note)).toEqual(
+      CRITERIA.map((_, i) => [fffd.repeat(60), fffd.repeat(60), repaired, `ok ${fffd.repeat(60)}`, `${fffd.repeat(60)} ok`][i % 5]),
+    );
+  });
+
+  test("a well-formed surrogate pair (an emoji) in the model's text is kept", async () => {
+    const player = await readyPlayer();
+    agent = makeAgent(() => outputOf({ scores: CRITERIA.map((key) => ({ key, score: 7, note: "Great touch \u26bd \ud83d\ude00 keep going" })), focusNext: "Smile \ud83d\ude00" }));
+    await rebuild();
+    const analysis = VideoAnalysis.parse(await (await postJson(player, requestBody())).json());
+    expect(analysis.focusNext).toBe("Smile \ud83d\ude00");
+    expect(analysis.scores[0]?.note).toBe("Great touch \u26bd \ud83d\ude00 keep going");
+  });
+
+  test("fitForTable: what would not fit the table is degraded (notes emptied, focus replaced, drills dropped), what fits is untouched", () => {
+    const drill = { drillVersionId: "v1", slug: "s1", title: "A drill", reason: "Because." };
+    const scores = CRITERIA.map((key) => ({ key, label: `Label ${key}`, score: 6, note: "Nice and steady." }));
+    const untouched = repo.fitForTable({ scores, focusNext: "Keep going.", recommended: [drill] }, "fallback");
+    expect(untouched).toEqual({ scores, focusNext: "Keep going.", recommended: [drill] });
+
+    // text cleanText would never let through (a run of 256 alphabet characters, six-character escapes of a lone surrogate)
+    const runs = ["a".repeat(300), "\ud800".repeat(60)];
+    for (const note of runs) {
+      const fitted = repo.fitForTable({ scores: scores.map((s) => ({ ...s, note })), focusNext: "Keep going.", recommended: [drill] }, "fallback");
+      expect(fitted.scores.map((s) => s.note)).toEqual(scores.map(() => ""));
+      expect(fitted.scores.map(({ note: _, ...rest }) => rest)).toEqual(scores.map(({ note: _, ...rest }) => rest));
+    }
+    expect(repo.fitForTable({ scores: scores.map((s) => ({ ...s, note: "word ".repeat(4000) })), focusNext: "x", recommended: [] }, "fallback").scores.every((s) => s.note === "")).toBe(true);
+    for (const focusNext of ["b".repeat(300), "word ".repeat(500)]) {
+      expect(repo.fitForTable({ scores, focusNext, recommended: [] }, "fallback").focusNext).toBe("fallback");
+    }
+    expect(repo.fitForTable({ scores, focusNext: "x", recommended: [{ ...drill, title: "T".repeat(300) }] }, "fallback").recommended).toEqual([]);
+  });
+
+  test("fitForTable: the table's limits are exact (a run of 255 fits and 256 does not; 2000 focus characters fit and 2001 do not; 16384 JSON characters fit and 16385 do not)", () => {
+    const drill = { drillVersionId: "v1", slug: "s1", title: "A drill", reason: "Because." };
+    const scores = CRITERIA.map((key) => ({ key, label: `Label ${key}`, score: 6, note: "" }));
+    const fit = (over: Partial<Parameters<typeof repo.fitForTable>[0]>) => repo.fitForTable({ scores, focusNext: "ok", recommended: [], ...over }, "fallback");
+    const words = (length: number) => "ab cd ".repeat(Math.ceil(length / 6)).slice(0, length); // spaces: no run
+
+    // runs of the base64 alphabet (a backslash is part of it)
+    expect(fit({ scores: scores.map((s, i) => (i === 0 ? { ...s, note: "a".repeat(255) } : s)) }).scores[0]?.note).toBe("a".repeat(255));
+    expect(fit({ scores: scores.map((s, i) => (i === 0 ? { ...s, note: "a".repeat(256) } : s)) }).scores[0]?.note).toBe("");
+    expect(fit({ focusNext: "a".repeat(255) }).focusNext).toBe("a".repeat(255));
+    expect(fit({ focusNext: "a".repeat(256) }).focusNext).toBe("fallback");
+    expect(fit({ recommended: [{ ...drill, title: "a".repeat(255) }] }).recommended).toHaveLength(1);
+    expect(fit({ recommended: [{ ...drill, title: "a".repeat(256) }] }).recommended).toEqual([]);
+
+    // the focus is 2000 characters at most, and never blank
+    expect(fit({ focusNext: words(2000) }).focusNext).toBe(words(2000));
+    expect(fit({ focusNext: words(2001) }).focusNext).toBe("fallback");
+    expect(fit({ focusNext: "   " }).focusNext).toBe("fallback");
+
+    // a JSON column is 16384 characters at most
+    const withTotal = (total: number) => {
+      const base = JSON.stringify(scores).length;
+      return scores.map((s, i) => (i === 0 ? { ...s, note: words(total - base) } : s));
+    };
+    expect(JSON.stringify(withTotal(16384)).length).toBe(16384);
+    expect(fit({ scores: withTotal(16384) }).scores[0]?.note.length).toBeGreaterThan(1000);
+    expect(fit({ scores: withTotal(16385) }).scores[0]?.note).toBe("");
+    const listOf = (total: number) => {
+      const base = JSON.stringify([{ ...drill, title: "" }]).length;
+      return [{ ...drill, title: words(total - base) }];
+    };
+    expect(JSON.stringify(listOf(16384)).length).toBe(16384);
+    expect(fit({ recommended: listOf(16384) }).recommended).toHaveLength(1);
+    expect(fit({ recommended: listOf(16385) }).recommended).toEqual([]);
+  });
+
+  test("a rubric with many criteria (notes that together do not fit the table) is degraded to empty notes, never a 500 after the model call", async () => {
+    const player = await readyPlayer();
+    const seedDir = join(dir, "seed");
+    mkdirSync(join(seedDir, "football"), { recursive: true });
+    type SeedRubric = { skill: string; criteria: object[] };
+    const file = JSON.parse(readFileSync(join(DEFAULT_SEED_DIR, "football", "rubrics.json"), "utf8")) as { rubrics: SeedRubric[] };
+    const rubric = file.rubrics.find((r) => r.skill === SKILL) as SeedRubric;
+    const template = rubric.criteria[0] as object;
+    rubric.criteria = Array.from({ length: 40 }, (_, i) => ({ ...template, key: `crit-${i + 1}` }));
+    writeFileSync(join(seedDir, "football", "rubrics.json"), JSON.stringify(file));
+    process.env.SEED_DIR = seedDir;
+
+    const note = "steady and calm ".repeat(40).slice(0, 600); // 600 characters of words: 40 of them are far over 16384
+    agent = makeAgent(() => outputOf({ scores: Array.from({ length: 40 }, (_, i) => ({ key: `crit-${i + 1}`, score: 6, note })) }));
+    await rebuild();
+    const res = await postJson(player, requestBody());
+    expect(res.status).toBe(200);
+    const analysis = VideoAnalysis.parse(await res.json());
+    expect(analysis.scores).toHaveLength(40);
+    expect(analysis.scores.every((s) => s.note === "" && s.score === 6 && s.label.length > 0)).toBe(true);
+    expect(agent.calls).toHaveLength(1);
     expect(rows("video_analyses")).toBe(1);
   });
 
@@ -1315,14 +1524,14 @@ describe("idempotent by clientUuid", () => {
     expect(rows("video_analyses")).toBe(1);
   });
 
-  test("two requests in flight with the same clientUuid store ONE row and both answer it", async () => {
+  test("two requests in flight with the same clientUuid share ONE model call, store ONE row and both answer it", async () => {
     const player = await readyPlayer();
     let release: () => void = () => {};
     const gate = new Promise<void>((resolveGate) => {
       release = resolveGate;
     });
     agent = makeAgent(async (call) => {
-      if (call >= 2) release();
+      if (call === 1) setTimeout(release, 100); // long enough for the second request to arrive while this one is in flight
       await gate;
       return outputOf();
     });
@@ -1333,7 +1542,35 @@ describe("idempotent by clientUuid", () => {
     expect(b.status).toBe(200);
     const first = VideoAnalysis.parse(await a.json());
     const second = VideoAnalysis.parse(await b.json());
-    expect(second.id).toBe(first.id);
+    expect(second).toEqual(first);
+    expect(agent.calls).toHaveLength(1); // the paid call is made once
+    expect(rows("video_analyses")).toBe(1);
+    expect(rows("ai_calls")).toBe(1);
+  });
+
+  test("an in-flight failure is shared by the duplicate, and is forgotten: a later retry asks the model again", async () => {
+    const player = await readyPlayer();
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolveGate) => {
+      release = resolveGate;
+    });
+    let failing = true;
+    agent = makeAgent(async (call) => {
+      if (call === 1) setTimeout(release, 100);
+      await gate;
+      if (failing) throw new Error("provider down");
+      return outputOf();
+    });
+    await rebuild();
+    const body = requestBody();
+    const [a, b] = await Promise.all([postJson(player, body), postJson(player, body)]);
+    await expectProblem(a, 502);
+    await expectProblem(b, 502);
+    expect(agent.calls).toHaveLength(1);
+    failing = false;
+    const retry = await postJson(player, body);
+    expect(retry.status).toBe(200);
+    expect(agent.calls).toHaveLength(2);
     expect(rows("video_analyses")).toBe(1);
   });
 
