@@ -16,7 +16,7 @@ if (typeof document === 'undefined') {
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
 const { Route } = await import('../../routes/admin/contributions.$id');
-const { cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react');
+const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react');
 
 // NOTE: never `expect(element).toBeNull()` / `.toBe(element)`. When such an assertion FAILS, bun pretty-prints the happy-dom
 // element (a huge circular object graph): it can take a minute. Compare to null / with === and assert on the boolean instead.
@@ -961,6 +961,27 @@ describe('in flight', () => {
     const button = approveButton();
     fireEvent.click(button);
     fireEvent.click(button);
+    await waitFor(() => expect(decisionCalls()).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(decisionCalls()).toHaveLength(1);
+    held.release(json(approvedResponse(NEW_ITEM)));
+    await screen.findByText('Approved. The method is now in the commons.');
+    expect(decisionCalls()).toHaveLength(1);
+  });
+});
+
+describe('in flight: one batch', () => {
+  test('two clicks inside ONE batch (nothing re-rendered between them, so the button is still enabled for both) send one request', async () => {
+    const user = userEvent.setup();
+    const held = deferred();
+    serve({ decide: [() => held.promise] });
+    await renderLoaded('c-new', 'Cone slalom');
+    await tickAll(user);
+    const button = approveButton();
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
     await waitFor(() => expect(decisionCalls()).toHaveLength(1));
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(decisionCalls()).toHaveLength(1);
