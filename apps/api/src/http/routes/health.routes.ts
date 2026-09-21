@@ -8,13 +8,20 @@
 //   publishedDrills number   published drills (commons getStats().drills)
 //   migration      string    name of the latest applied schema_migrations row, e.g. '003_settings'
 //   aiAvailable    boolean   OPENAI_API_KEY is set and non-blank (never the key itself)
+//   aiPlannerEnabled boolean the admin setting of that name (getSettings(db).aiPlannerEnabled, the
+//                            same source the ai-plan route reads), read per request; the default
+//                            (true) when nothing valid is stored. It lets a player's client hide
+//                            the AI button (the settings route is admin-only). Only this one flag
+//                            is exposed, never another setting.
 //   mediaWritable  boolean   MEDIA_DIR is set, exists and is writable (false when unset/blank;
 //                            checked with accessSync only, nothing is created, the path is not echoed)
 // 503 body: { ok: false, version, database: 'error' } only. It is returned when the probe or any
-// DB-backed detail read throws (a database without schema_migrations is not healthy). The details
-// that need no database (aiAvailable, mediaWritable) are omitted there too, for consistency.
+// DB-backed detail read throws (a database without schema_migrations is not healthy; a failing
+// settings read counts as one). aiPlannerEnabled and the details that need no database
+// (aiAvailable, mediaWritable) are omitted there too, for consistency.
 import { accessSync, constants } from 'node:fs';
 import type { Hono } from 'hono';
+import { getSettings } from '../../admin/settings';
 import type { AppDeps } from '../../app';
 import { getStats } from '../../commons/repo';
 import type { HealthResponse } from '../../shared/primitives';
@@ -48,6 +55,7 @@ export function register(app: Hono, deps: AppDeps): void {
         publishedDrills,
         migration: latest.name,
         aiAvailable: Boolean(process.env.OPENAI_API_KEY?.trim()),
+        aiPlannerEnabled: getSettings(deps.db).aiPlannerEnabled,
         mediaWritable: isMediaWritable(),
       };
       return c.json(body, 200);
