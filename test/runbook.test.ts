@@ -603,7 +603,8 @@ describe("runbook sections", () => {
   }
 
   test("RAILWAY_RUN_UID=0 is spelled out and tied to the volume", () => {
-    const text = section(runbook, /RAILWAY_RUN_UID/);
+    // Body only: the heading itself already contains the words, so it must not satisfy the check.
+    const text = section(runbook, /RAILWAY_RUN_UID/).split("\n").slice(1).join("\n");
     expect(text).toContain("RAILWAY_RUN_UID=0");
     expect(text).toMatch(/volume/i);
   });
