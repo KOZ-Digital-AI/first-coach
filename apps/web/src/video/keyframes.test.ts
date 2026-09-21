@@ -62,8 +62,8 @@ describe('selectKeyframeIndices', () => {
 
   test('scores a frame by the mean visibility of its landmarks, a missing visibility counting as 0', () => {
     // slice 0 = [scattered, steady]. scattered: 20 landmarks at 0.6 and 13 without a visibility, mean 0.364 but median 0.6.
-    const scattered = poseFrame(0, 0.6);
-    for (let i = 20; i < LANDMARK_COUNT; i += 1) scattered.landmarks[i] = { x: 0.5, y: 0.5 };
+    const noVisibility = Object.fromEntries(Array.from({ length: LANDMARK_COUNT - 20 }, (_, i) => [20 + i, { x: 0.5, y: 0.5 }])) as Record<number, Landmark>;
+    const scattered = poseFrame(0, 0.6, noVisibility);
     const steady = poseFrame(0.1, 0.4); // mean 0.4
     const rest = series([0.1, 0.1, 0.1, 0.1]);
     expect(selectKeyframeIndices([scattered, steady, ...rest], 3)).toEqual([1, 2, 4]);
