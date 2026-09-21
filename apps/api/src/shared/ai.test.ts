@@ -4,6 +4,8 @@ import { join } from "node:path";
 import type { z } from "zod";
 import {
   AI_FALLBACK_CODES,
+  AI_NOTE_MAX_CHARS,
+  AI_PLAN_TIMEOUT_MS,
   AI_UNAVAILABLE,
   AiFallbackCode,
   AiPlan,
@@ -13,6 +15,7 @@ import {
   ExplainParams,
   ExplainRequest,
   ExplainResponse,
+  aiPlanUnknownIds,
 } from "./ai";
 import { ProblemDetails } from "./primitives";
 
@@ -114,6 +117,16 @@ const makeExplainResponse = (patch: Record<string, unknown> = {}): Record<string
 
 // --- AiPlanRequest ---------------------------------------------------------------------------
 
+describe("AI limits", () => {
+  test("AI_NOTE_MAX_CHARS is the criteria's 200", () => {
+    expect(AI_NOTE_MAX_CHARS).toBe(200);
+  });
+
+  test("AI_PLAN_TIMEOUT_MS is the criteria's hard 20 s server timeout", () => {
+    expect(AI_PLAN_TIMEOUT_MS).toBe(20_000);
+  });
+});
+
 describe("AiPlanRequest", () => {
   test("parses a note", () => {
     expect(AiPlanRequest.parse({ note: "my ankle is tired" })).toEqual({ note: "my ankle is tired" });
@@ -123,12 +136,12 @@ describe("AiPlanRequest", () => {
     expect(ok(AiPlanRequest, {})).toBe(true);
   });
 
-  test("accepts a note of exactly 200 characters", () => {
-    expect(ok(AiPlanRequest, { note: "a".repeat(200) })).toBe(true);
+  test("accepts a note of exactly AI_NOTE_MAX_CHARS characters", () => {
+    expect(ok(AiPlanRequest, { note: "a".repeat(AI_NOTE_MAX_CHARS) })).toBe(true);
   });
 
-  test("rejects a note of 201 characters", () => {
-    expect(ok(AiPlanRequest, { note: "a".repeat(201) })).toBe(false);
+  test("rejects a note one character over AI_NOTE_MAX_CHARS", () => {
+    expect(ok(AiPlanRequest, { note: "a".repeat(AI_NOTE_MAX_CHARS + 1) })).toBe(false);
   });
 
   test("rejects a non-string note", () => {
@@ -197,6 +210,11 @@ describe("AiPlanResponse", () => {
 
   test("rejects an AI item with a blank reason", () => {
     const items = [makeItem(), makeItem({ itemId: "item-2", drillVersionId: "wall-passes-v2", reason: "" })];
+    expect(ok(AiPlanResponse, makeAiSession({ items }))).toBe(false);
+  });
+
+  test("rejects an AI item with a whitespace-only reason", () => {
+    const items = [makeItem(), makeItem({ itemId: "item-2", drillVersionId: "wall-passes-v2", reason: "   " })];
     expect(ok(AiPlanResponse, makeAiSession({ items }))).toBe(false);
   });
 
@@ -288,6 +306,45 @@ describe("AiPlan", () => {
 
   test("rejects an unknown key on an item", () => {
     expect(ok(AiPlan, makePlan({ items: [makePlanItem({ extra: true })] }))).toBe(false);
+  });
+});
+
+// --- aiPlanUnknownIds (the server-candidate-set rule, executable) ---------------------------
+
+describe("aiPlanUnknownIds", () => {
+  const plan = AiPlan.parse(makePlan());
+
+  test("returns [] when every plan id is a candidate", () => {
+    expect(aiPlanUnknownIds(plan, ["weak-foot-50-v1", "wall-passes-v2", "unused-v1"])).toEqual([]);
+  });
+
+  test("returns the one id that is not a candidate", () => {
+    expect(aiPlanUnknownIds(plan, ["weak-foot-50-v1"])).toEqual(["wall-passes-v2"]);
+  });
+
+  test("returns several unknown ids in plan order", () => {
+    expect(aiPlanUnknownIds(plan, ["unrelated-v1"])).toEqual(["weak-foot-50-v1", "wall-passes-v2"]);
+  });
+
+  test("deduplicates an unknown id the plan repeats", () => {
+    const repeated = AiPlan.parse(
+      makePlan({
+        items: [
+          makePlanItem({ drillVersionId: "ghost-v1" }),
+          makePlanItem({ drillVersionId: "wall-passes-v2" }),
+          makePlanItem({ drillVersionId: "ghost-v1" }),
+        ],
+      }),
+    );
+    expect(aiPlanUnknownIds(repeated, ["wall-passes-v2"])).toEqual(["ghost-v1"]);
+  });
+
+  test("with an empty candidate set every plan id is unknown", () => {
+    expect(aiPlanUnknownIds(plan, [])).toEqual(["weak-foot-50-v1", "wall-passes-v2"]);
+  });
+
+  test("accepts any iterable as the candidate set (a Set here)", () => {
+    expect(aiPlanUnknownIds(plan, new Set(["weak-foot-50-v1", "wall-passes-v2"]))).toEqual([]);
   });
 });
 
@@ -391,14 +448,9 @@ describe("ai_unavailable problem", () => {
     expect(AI_UNAVAILABLE).toBe("ai_unavailable");
   });
 
-  test("a 503 problem body carrying it parses through primitives' ProblemDetails", () => {
-    const parsed = ProblemDetails.parse({
-      type: AI_UNAVAILABLE,
-      title: "AI Coach is unavailable",
-      status: 503,
-    });
-    expect(parsed.type).toBe("ai_unavailable");
-    expect(parsed.status).toBe(503);
+  test("the constant survives a parse through primitives' ProblemDetails as the problem type", () => {
+    const parsed = ProblemDetails.parse({ type: AI_UNAVAILABLE, title: "AI Coach is unavailable", status: 503 });
+    expect(parsed.type).toBe(AI_UNAVAILABLE);
   });
 });
 
