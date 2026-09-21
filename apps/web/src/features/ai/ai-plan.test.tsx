@@ -383,6 +383,22 @@ describe('the standard plan (planner "rules" with a fallback code)', () => {
     await waitFor(() => expect(plans().length).toBe(2));
   });
 
+  test('trying again while in flight: the progress replaces the earlier note (one status region, no stale claim)', async () => {
+    let attempt = 0;
+    const second = deferred<Response>();
+    const { user, plans } = mount({ plan: () => (++attempt === 1 ? json({ ...session(), fallback: { code: 'timeout' } }) : second.promise) });
+    await user.click(control() as HTMLButtonElement);
+    await screen.findByText(STANDARD);
+    await user.click(control('Try AI again') as HTMLButtonElement);
+    await waitFor(() => expect(plans().length).toBe(2));
+
+    expect(screen.queryByText(STANDARD)).toBeNull();
+    expect(screen.getAllByRole('status').length).toBe(1);
+    expect(within(screen.getByRole('status')).getByText('The AI coach is planning your session…')).toBeTruthy();
+    await act(async () => second.resolve(json(aiSession())));
+    expect(await screen.findByText('AI-personalised from approved drills')).toBeTruthy();
+  });
+
   test.each(['disabled', 'no_key'])('code %s: nothing to retry, so the button goes and only the note stays', async (code) => {
     const { user } = mount({ plan: () => json({ ...session(), fallback: { code } }) });
     await user.click(control() as HTMLButtonElement);
