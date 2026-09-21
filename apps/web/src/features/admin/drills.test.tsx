@@ -536,6 +536,20 @@ describe('changing the status: what the row does with the answer', () => {
     expect(within(rowOf('Wall Passes')).queryByRole('region', { name: messages.en.row.latest }) === null).toBe(true);
   });
 
+  test('the row is updated from the response itself: it already reads the new status while the refetch is still in flight', async () => {
+    const gate = deferred<Response>();
+    let served = 0;
+    stubNetwork({
+      list: () => (served++ === 0 ? json({ items: rows.map(summaryOf), nextCursor: null, total: rows.length, facets: EMPTY_FACETS }) : gate.promise),
+    });
+    const { user } = await renderLoaded();
+    await markAcademy(user);
+    await waitFor(() => expect(listCalls()).toHaveLength(2));
+    expect(text(rowOf('Ghost Ball'))).toContain('Verified by FC Kairat Academy');
+    expect(text(rowOf('Ghost Ball'))).not.toContain('Community Draft');
+    gate.resolve(json({ items: rows.map(summaryOf), nextCursor: null, total: rows.length, facets: EMPTY_FACETS }));
+  });
+
   test('"latest" is the newest review by date, whatever order the reviews come in', async () => {
     const older: DrillReview = { ...OLD_REVIEW, note: 'The older note.', at: '2026-01-01T00:00:00.000Z' };
     const newer: DrillReview = { ...OLD_REVIEW, note: 'The newer note.', from: 'REVIEWED', to: 'EXPERT_VERIFIED', at: '2026-09-01T00:00:00.000Z' };
@@ -727,6 +741,21 @@ describe('unpublish: confirming', () => {
     const block = notice.closest('[role="status"]') as HTMLElement;
     expect(text(block)).toContain('Ghost Ball');
     expect(text(block)).toContain('Rights complaint from the photographer.');
+  });
+
+  test('the row leaves the list from the response itself, while the refetch is still in flight, and the other rows stay', async () => {
+    const gate = deferred<Response>();
+    let served = 0;
+    stubNetwork({
+      list: () => (served++ === 0 ? json({ items: rows.map(summaryOf), nextCursor: null, total: rows.length, facets: EMPTY_FACETS }) : gate.promise),
+    });
+    const { user } = await renderLoaded();
+    await confirmUnpublish(user);
+    await waitFor(() => expect(listCalls()).toHaveLength(2));
+    expect(screen.queryByRole('heading', { name: 'Ghost Ball' }) === null).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Wall Passes' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'First Touch Box' })).toBeTruthy();
+    gate.resolve(json({ items: rows.map(summaryOf), nextCursor: null, total: rows.length, facets: EMPTY_FACETS }));
   });
 
   test('focus lands on that notice once the row is gone, so a keyboard user is not dropped at the top of the page', async () => {
