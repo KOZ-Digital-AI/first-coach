@@ -312,8 +312,12 @@ describe('after signing in with ?redirect=/contribute the coach lands on the for
     const readsBefore = server.sessionReads;
     await signUp();
 
-    // The session is being re-read (Better Auth's own refresh, or the sign-in screen's): the answer is not in yet.
-    await waitFor(() => expect(server.sessionReads).toBeGreaterThan(readsBefore));
+    // The session is being re-read: the sign-in screen's own read first, then (about 10 ms after the reply) Better Auth's
+    // signal-driven refresh, which aborts the first. Wait until both have been asked (an event, not a fixed time).
+    await waitFor(() => expect(server.sessionReads).toBeGreaterThanOrEqual(readsBefore + 2));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0)); // let the aborted first read settle: the screen must still be waiting
+    });
     // Whatever the screen shows while it waits, it is neither the form nor a redirect back to sign-in.
     expect(screen.queryByRole('button', { name: SUBMIT_FORM }) === null).toBe(true);
     expect(visited.includes('/account/sign-in')).toBe(false);
