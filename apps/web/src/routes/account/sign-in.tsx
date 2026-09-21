@@ -53,6 +53,16 @@ import '../../lib/i18n';
  *  - The guest note ("your progress stays with you") depends on the API linking the guest to the new account (onLinkAccount,
  *    bug bead fc-mol-70i.12); see sign-in.messages.ts.
  *
+ * The session atom (bug fc-mol-70i.13). Better Auth refreshes its session atom (the one `useSession()` reads, and with it every
+ * contributor gate: /contribute, /admin, the drill page's "Suggest improvement") only ~10 ms AFTER a sign-up / sign-in reply, from a
+ * `setTimeout` that toggles `$sessionSignal`. Until then the atom still holds the OLD anonymous guest session, not refetching and not
+ * pending, which looks like a settled answer: a gate that mounted in that window read "signed out" and sent the fresh coach straight
+ * back here ("You are already signed in. Continue"). So a success does not navigate at once: `settleSession` asks the atom to re-read
+ * (`refetch`) and waits until it is neither pending nor refetching (Better Auth may supersede our read with its own signal-driven
+ * one; that one is waited for too). Only then does the screen leave, so the next screen never sees the guest. No timer, no fixed
+ * delay. A read that fails still lets the screen leave: the gate shows its own "could not check your account" state with Try again.
+ * Only the atom is touched: the gates themselves stay as strict as before (only `isAnonymous === false` is a contributor).
+ *
  * Readings of the criteria where they are open
  *  - "empty" state: the visitor is already signed in with an account, so there is nothing to fill in (Continue instead).
  *  - "loading": the one-time session read (a small status line; the form is already usable) and the request in flight
@@ -68,10 +78,26 @@ import '../../lib/i18n';
 /** The reply shape of a Better Auth client call. `data` is unknown on purpose: it is checked here, not trusted. */
 type Reply = { data?: unknown; error?: unknown };
 
+/** What a Better Auth session atom holds (`client.$store.atoms.session`), as far as this screen reads it. */
+interface SessionAtomValue {
+  isPending?: boolean;
+  /** Set while the session is being re-read; `data` then still holds the PREVIOUS session. */
+  isRefetching?: boolean;
+  refetch?: () => unknown;
+}
+
+/** The part of a nanostores atom that `settleSession` uses; Better Auth's session atom is assignable to it. */
+export interface SessionAtom {
+  get(): SessionAtomValue;
+  subscribe(listener: (value: SessionAtomValue) => void): () => void;
+}
+
 export interface SignInClient {
   getSession(): Promise<Reply>;
   signUp: { email(input: { name: string; email: string; password: string }): Promise<Reply> };
   signIn: { email(input: { email: string; password: string }): Promise<Reply> };
+  /** The real client has it: the shared session atom. A client without one (a test double) has nothing to wait for. */
+  $store?: { atoms: Record<string, SessionAtom | undefined> };
 }
 
 export interface SignInDeps {
@@ -147,6 +173,36 @@ function classifySession(reply: Reply): SessionKind {
   if (typeof user !== 'object' || user === null) return 'unknown';
   if (user.isAnonymous === true) return 'guest';
   return user.isAnonymous === false ? 'account' : 'unknown';
+}
+
+const stillReading = (value: SessionAtomValue): boolean => value.isPending === true || value.isRefetching === true;
+
+/**
+ * Resolves once the shared session atom has re-read the session after a sign-up / sign-in and is idle again (neither pending nor
+ * refetching), i.e. once the data in it is the NEW session and not the guest's. Never rejects: a failed read is recorded in the atom
+ * itself, and the screens that read it handle that (fail closed, with Try again).
+ */
+async function settleSession(atom: SessionAtom | undefined): Promise<void> {
+  const refetch = atom?.get().refetch;
+  if (atom === undefined || typeof refetch !== 'function') return;
+  try {
+    await refetch();
+  } catch {
+    // the atom keeps the failure; leaving is still right
+  }
+  // Better Auth's own signal-driven refresh may have replaced ours (it aborts the read in flight): wait for whichever is still running.
+  if (!stillReading(atom.get())) return;
+  await new Promise<void>((resolve) => {
+    let idle = false;
+    let stop: (() => void) | undefined;
+    stop = atom.subscribe((value) => {
+      if (stillReading(value)) return;
+      idle = true;
+      stop?.();
+      resolve();
+    });
+    if (idle) stop(); // the listener ran before `stop` existed (nanostores calls it once at once)
+  });
 }
 
 // Same shape the server's zod email needs: something@domain.tld, no spaces.
@@ -319,6 +375,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
       deps.resetSession();
       deps.resetSessionExpired();
       setStatus('done');
+      await settleSession(client.$store?.atoms.session); // the next screen must not see the guest session (see "The session atom")
       deps.navigate(redirect);
       return; // `sending` stays set: the form is finished
     }
