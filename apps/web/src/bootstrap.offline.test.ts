@@ -419,7 +419,11 @@ describe('wireAppPlayerSession with the app-wide auth client (the real defaults)
   // The whole page load as main.tsx and the shell do it, with only the network faked: the wiring's default session signal (the
   // app-wide authClient's session atom), the shell's `useSession` (lib/auth), and a counting fake in place of the network.
   // The events client, the persister and the build version stay fakes (they are not what is under test). One test, in order,
-  // because the app-wide client's atom is module state that outlives a test.
+  // because the app-wide client's atom is module state that outlives a test: the test puts every atom of that client back
+  // (see `restoreAppClient`) so that the next test file of the same process (the admin layout reads the real session hook and
+  // expects it to start out LOADING) finds it as it was at import time.
+  const APP_ATOM_UNMOUNT_MS = 1100; // nanostores keeps an atom mounted for 1000 ms after its last listener has gone
+  type AtomState = { value: unknown; set(value: unknown): void };
   test('a fresh visitor: exactly ONE get-session for the load, no sign-in; a session a screen creates later is wired exactly once', async () => {
     const requests: string[] = [];
     let session: { session: { id: string }; user: { id: string; isAnonymous: boolean } } | null = null;
@@ -439,13 +443,23 @@ describe('wireAppPlayerSession with the app-wide auth client (the real defaults)
         return new Response('not found', { status: 404 });
       },
     };
+    // (`atoms` is a proxy that cannot be enumerated: the session atom and the signal that makes it refetch are named.)
+    const appAtoms = ['session', '$sessionSignal'].map((name) => (authClient.$store.atoms as unknown as Record<string, AtomState>)[name] as AtomState);
+    const initialAtomValues = appAtoms.map((atom) => atom.value);
+    const restoreAppClient = async () => {
+      // Once unmounted (no listener, and the 1000 ms linger over) a set only stores the value: nothing refetches.
+      await new Promise<void>((resolve) => setTimeout(resolve, APP_ATOM_UNMOUNT_MS));
+      appAtoms.forEach((atom, i) => atom.set(initialAtomValues[i]));
+    };
     const h = harness();
     const { watchSession: _fake, ...faked } = h.deps;
     let teardown = () => {};
+    let unmountShell = () => {};
     try {
       // main.tsx: the wiring runs before the first render; then the shell mounts and subscribes to the session.
       teardown = wireAppPlayerSession(new QueryClient(), faked);
       const shell = renderHook(() => useSession());
+      unmountShell = shell.unmount;
       for (let i = 0; i < 100 && shell.result.current.isPending; i += 1) await new Promise<void>((resolve) => setTimeout(resolve, 5));
       await new Promise<void>((resolve) => setTimeout(resolve, 60));
       expect(shell.result.current.isPending).toBe(false);
@@ -460,9 +474,11 @@ describe('wireAppPlayerSession with the app-wide auth client (the real defaults)
       expect(requests.filter((request) => request.includes('sign-in'))).toEqual(['POST /api/auth/sign-in/anonymous']);
     } finally {
       teardown();
+      unmountShell();
       settings.fetch.interceptor = originalInterceptor;
+      await restoreAppClient();
     }
-  });
+  }, 15_000);
 });
 
 describe('watchAuthSession: the session-change signal from a Better Auth session atom', () => {
