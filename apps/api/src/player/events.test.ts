@@ -1,10 +1,14 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { Database } from 'bun:sqlite';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { OFFLINE_EVENT_MAX_AGE_DAYS } from '../shared/session';
 import type { SessionEvent } from '../shared/session';
 import { openDatabase } from '../db/database';
 import { migrate } from '../db/migrate';
 import { EventTimeError, SessionNotFoundError, ingestEvents, progressSummary } from './events';
+import * as events from './events';
 
 // Every test runs against a real, migrated :memory: database (001-005) with real profile and session rows.
 
@@ -184,7 +188,23 @@ describe('ingestEvents: ownership', () => {
     expect(foreign).toBeInstanceOf(SessionNotFoundError);
     expect(unknown).toBeInstanceOf(SessionNotFoundError);
     expect(foreign.name).toBe(unknown.name);
-    expect(foreign.message.replace('s2', 'X')).toBe(unknown.message.replace('nope', 'X'));
+    expect(foreign.message).toBe(unknown.message);
+    expect(foreign.sessionId).toBe('s2');
+    expect(unknown.sessionId).toBe('nope');
+  });
+
+  test('the message never echoes the raw session id (a 1 MB id gives a short message); .sessionId keeps it', () => {
+    const huge = 'x'.repeat(1_000_000);
+    let error: unknown;
+    try {
+      ingestEvents(db, 'p1', [ev('drill_done', { sessionId: huge, itemId: 'i1' })], clock);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(SessionNotFoundError);
+    expect((error as SessionNotFoundError).message.length).toBeLessThan(100);
+    expect((error as SessionNotFoundError).message).not.toContain('xxxx');
+    expect((error as SessionNotFoundError).sessionId).toBe(huge);
   });
 
   test("a foreign player replaying player A's client_uuid against A's session is rejected and alters nothing", () => {
@@ -269,6 +289,68 @@ describe('ingestEvents: the offline window', () => {
     const e = ev('drill_done', { itemId: 'i1', at: iso(NOW.getTime() - 5 * DAY) });
     expect(() => ingestEvents(db, 'p1', [e], { now: () => new Date(NOW.getTime() + 40 * DAY) })).toThrow(EventTimeError);
     expect(() => ingestEvents(db, 'p1', [e], clock)).not.toThrow();
+  });
+
+  test.each([
+    ['a day that does not exist', '2026-02-30T10:00:00Z'],
+    ['hour 24', '2026-03-10T24:00:00Z'],
+    ['month 13', '2026-13-01T00:00:00Z'],
+    ['no offset', '2026-03-10T10:00:00'],
+    ['a space instead of T', '2026-03-10 10:00:00Z'],
+    ['a date only', '2026-03-10'],
+  ])('the shared Timestamp contract decides what an `at` is: %s is rejected as invalid', (_name, at) => {
+    const before = snapshot();
+    let error: unknown;
+    try {
+      ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1', at })], clock);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(EventTimeError);
+    expect((error as EventTimeError).reason).toBe('invalid');
+    expect(snapshot()).toEqual(before);
+  });
+
+  describe('replay tolerance: a stored event is not window-checked again', () => {
+    const later = { now: () => new Date(NOW.getTime() + 5 * DAY) };
+
+    test("an event already stored for the caller's own session, retried after it aged out (34 days), is accepted and changes nothing", () => {
+      const old = ev('drill_done', { itemId: 'i1', at: iso(NOW.getTime() - 29 * DAY) });
+      ingestEvents(db, 'p1', [old], clock);
+      const before = snapshot();
+      expect(() => ingestEvents(db, 'p1', [old], later)).not.toThrow();
+      expect(snapshot()).toEqual(before);
+    });
+
+    test('a NEW event past the window is still rejected, even next to a stored old one; nothing is written', () => {
+      const old = ev('drill_done', { itemId: 'i1', at: iso(NOW.getTime() - 29 * DAY) });
+      ingestEvents(db, 'p1', [old], clock);
+      const before = snapshot();
+      const fresh = ev('drill_done', { itemId: 'i2', at: iso(NOW.getTime() - 29 * DAY) });
+      let error: unknown;
+      try {
+        ingestEvents(db, 'p1', [old, fresh], later);
+      } catch (e) {
+        error = e;
+      }
+      expect(error).toBeInstanceOf(EventTimeError);
+      expect((error as EventTimeError).reason).toBe('too_old');
+      expect((error as EventTimeError).clientUuid).toBe(fresh.clientUuid);
+      expect(snapshot()).toEqual(before);
+    });
+
+    test("a client_uuid stored for another player's session does not exempt the caller: it is new for them and window-checked", () => {
+      addSession('s2', 'p2');
+      const old = ev('drill_done', { itemId: 'i1', at: iso(NOW.getTime() - 29 * DAY) });
+      ingestEvents(db, 'p1', [old], clock);
+      expect(() => ingestEvents(db, 'p2', [{ ...old, sessionId: 's2' }], later)).toThrow(EventTimeError);
+    });
+
+    test('a stored event is exempt from the window but its `at` must still be a valid timestamp', () => {
+      const old = ev('drill_done', { itemId: 'i1', at: iso(NOW.getTime() - 29 * DAY) });
+      ingestEvents(db, 'p1', [old], clock);
+      expect(() => ingestEvents(db, 'p1', [{ ...old, at: 'garbage' }], later)).toThrow(EventTimeError);
+    });
   });
 });
 
@@ -494,5 +576,204 @@ describe('progressSummary', () => {
     const progress = ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1' })], { ...clock, timeZone: 'Asia/Almaty' });
     expect(progress).toEqual({ sessionsCompleted: 1, minutesTrained: 10, streakDays: 1 });
     expect(progress).toEqual(summary({ timeZone: 'Asia/Almaty' }));
+  });
+});
+
+describe('ingestEvents: a batch touching several sessions of one player', () => {
+  test('every touched session is recomputed, not just the first: flags and finished_at', () => {
+    addSession('s3');
+    ingestEvents(
+      db,
+      'p1',
+      [ev('drill_done', { sessionId: 's3', itemId: 'i2' }), ev('drill_done', { itemId: 'i1' }), ev('session_finished', { sessionId: 's3' })],
+      clock,
+    );
+    expect(doneFlags('s1')).toEqual([true, false, false]);
+    expect(doneFlags('s3')).toEqual([false, true, false]);
+    expect(sessionRow('s1').finished_at).toBeNull();
+    expect(sessionRow('s3').finished_at).not.toBeNull();
+  });
+
+  test('the order of the events in the batch does not matter for which sessions are recomputed', () => {
+    addSession('s3');
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1' }), ev('drill_done', { sessionId: 's3', itemId: 'i3' })], clock);
+    expect(doneFlags('s1')).toEqual([true, false, false]);
+    expect(doneFlags('s3')).toEqual([false, false, true]);
+  });
+});
+
+describe('ingestEvents: the log of a session is read by (at, id) through the session index', () => {
+  const planOf = (sql: string): string =>
+    (db.query(`EXPLAIN QUERY PLAN ${sql}`).all('s1') as Array<{ detail: string }>).map((r) => r.detail).join('\n');
+
+  test('the statement orders by (at, id)', () => {
+    expect(typeof events.SESSION_LOG_SQL).toBe('string');
+    expect(events.SESSION_LOG_SQL).toContain('ORDER BY at, id');
+  });
+
+  test('its query plan uses session_events_by_session and needs no temp b-tree', () => {
+    expect(typeof events.SESSION_LOG_SQL).toBe('string');
+    const plan = planOf(events.SESSION_LOG_SQL);
+    expect(plan).toContain('session_events_by_session');
+    expect(plan).not.toContain('TEMP B-TREE');
+  });
+
+  test('one event on the last of 2000 sessions x 10 events is ingested quickly (a sanity bound, not a benchmark)', () => {
+    const base = Date.UTC(2019, 0, 1);
+    db.transaction(() => {
+      const session = db.query("INSERT INTO sessions (id, player_id, date, planner, graph_version, items) VALUES (?1, 'p1', ?2, 'rules', '1.0.0', ?3)");
+      const event = db.query("INSERT INTO session_events (player_id, session_id, client_uuid, type, item_id, at) VALUES ('p1', ?1, ?2, 'drill_done', 'i1', ?3)");
+      for (let i = 0; i < 2000; i++) {
+        session.run(`big${i}`, iso(base + i * DAY).slice(0, 10), items());
+        for (let k = 0; k < 10; k++) event.run(`big${i}`, uuid(1_000 + i * 10 + k), iso(base + i * DAY + k * 1000));
+      }
+    }).immediate();
+    const started = performance.now();
+    const progress = ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 'big1999', itemId: 'i2' })], clock);
+    const elapsed = performance.now() - started;
+    expect(doneFlags('big1999')).toEqual([true, true, false]);
+    expect(progress.minutesTrained).toBe(30);
+    expect(elapsed).toBeLessThan(50);
+  });
+});
+
+describe('ingestEvents: the (at, id) tie-break', () => {
+  const at = iso(NOW.getTime() - 60_000);
+
+  test('same `at`, undone inserted before done: the later row (done) wins', () => {
+    ingestEvents(db, 'p1', [ev('drill_undone', { itemId: 'i1', at }), ev('drill_done', { itemId: 'i1', at })], clock);
+    expect(doneFlags('s1')).toEqual([true, false, false]);
+  });
+
+  test('same `at`, done inserted before undone: the later row (undone) wins', () => {
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1', at }), ev('drill_undone', { itemId: 'i1', at })], clock);
+    expect(doneFlags('s1')).toEqual([false, false, false]);
+  });
+
+  test('same `at` across batches: the batch that arrived later wins, in both directions', () => {
+    ingestEvents(db, 'p1', [ev('drill_undone', { itemId: 'i1', at })], clock);
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1', at })], clock);
+    expect(doneFlags('s1')).toEqual([true, false, false]);
+    ingestEvents(db, 'p1', [ev('drill_undone', { itemId: 'i1', at })], clock);
+    expect(doneFlags('s1')).toEqual([false, false, false]);
+  });
+});
+
+describe('ingestEvents: transactions', () => {
+  let dir: string | undefined;
+  afterEach(() => {
+    if (dir !== undefined) rmSync(dir, { recursive: true, force: true });
+    dir = undefined;
+  });
+
+  test("inside the caller's transaction the batch joins it: visible there, gone after the outer ROLLBACK", () => {
+    db.run('BEGIN');
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1' }), ev('session_finished')], clock);
+    expect(db.inTransaction).toBe(true);
+    expect(eventCount()).toBe(2);
+    expect(doneFlags('s1')).toEqual([true, false, false]);
+    db.run('ROLLBACK');
+    expect(eventCount()).toBe(0);
+    expect(doneFlags('s1')).toEqual([false, false, false]);
+    expect(sessionRow('s1').finished_at).toBeNull();
+  });
+
+  test("inside the caller's transaction, the outer COMMIT keeps the batch", () => {
+    db.run('BEGIN');
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1' })], clock);
+    db.run('COMMIT');
+    expect(eventCount()).toBe(1);
+    expect(doneFlags('s1')).toEqual([true, false, false]);
+  });
+
+  test('a failing batch inside the caller transaction undoes only its own work; the outer transaction stays usable', () => {
+    db.run('BEGIN');
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1' })], clock);
+    const bad = { ...ev('drill_done', { itemId: 'i2' }), type: 'not_a_type' } as unknown as SessionEvent;
+    expect(() => ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i2' }), bad], clock)).toThrow(/CHECK constraint failed/);
+    expect(() => ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 'nope', itemId: 'i2' })], clock)).toThrow(SessionNotFoundError);
+    expect(db.inTransaction).toBe(true);
+    expect(eventCount()).toBe(1);
+    ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i3' })], clock);
+    db.run('COMMIT');
+    expect(eventCount()).toBe(2);
+    expect(doneFlags('s1')).toEqual([true, false, true]);
+  });
+
+  test("the same with a Bun db.transaction() as the caller's transaction (savepoint), inner failure caught", () => {
+    const outer = db.transaction(() => {
+      ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i1' })], clock);
+      const bad = { ...ev('drill_done', { itemId: 'i2' }), type: 'not_a_type' } as unknown as SessionEvent;
+      try {
+        ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i2' }), bad], clock);
+      } catch {
+        /* the outer work goes on */
+      }
+      ingestEvents(db, 'p1', [ev('drill_done', { itemId: 'i3' })], clock);
+    });
+    outer();
+    expect(eventCount()).toBe(2);
+    expect(doneFlags('s1')).toEqual([true, false, true]);
+  });
+
+  test('a standalone call takes the write lock up front (BEGIN IMMEDIATE): with a writer active it fails as locked, before it even checks ownership', () => {
+    dir = mkdtempSync(join(tmpdir(), 'events-lock-'));
+    const path = join(dir, 'app.db');
+    db.close();
+    db = openDatabase(path);
+    migrate(db);
+    addProfile('p1');
+    addProfile('p2');
+    addSession('s1');
+    addSession('s2', 'p2');
+    const writer = openDatabase(path);
+    try {
+      db.run('PRAGMA busy_timeout = 0');
+      writer.run('BEGIN IMMEDIATE');
+      let error: unknown;
+      try {
+        // A foreign session: a DEFERRED transaction would get as far as SessionNotFoundError, since reading needs no write lock.
+        ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 's2', itemId: 'i1' })], clock);
+      } catch (e) {
+        error = e;
+      }
+      expect(error).toBeInstanceOf(Error);
+      expect(error).not.toBeInstanceOf(SessionNotFoundError);
+      expect((error as Error).message).toMatch(/locked|busy/i);
+      writer.run('ROLLBACK');
+      expect(() => ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 's2', itemId: 'i1' })], clock)).toThrow(SessionNotFoundError);
+    } finally {
+      writer.close();
+    }
+  });
+});
+
+describe('ingestEvents: the items JSON is rewritten only where a flag changes, and only that flag', () => {
+  /** Hand-written, not JSON.stringify: numeric-like keys, a number JS cannot round-trip, -0.0 and 1.50 must survive byte for byte. */
+  const RAW =
+    '[{"itemId":"i1","drillVersionId":"d1@1.0.0","minutes":10,"done":false,"content":{"1":"a","0":"b","big":12345678901234567890,"neg":-0.0,"frac":1.50}},' +
+    '{"itemId":"i2","drillVersionId":"d2@1.0.0","minutes":20,"done":false,"content":{"z":1.50,"a":[1,2]}}]';
+  const itemsText = (id: string): string => (db.query('SELECT items FROM sessions WHERE id = ?').get(id) as { items: string }).items;
+
+  test('flipping one flag changes exactly the bytes of that flag (key order, number text, other items untouched)', () => {
+    addSession('raw', 'p1', { items: RAW });
+    ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 'raw', itemId: 'i1' })], clock);
+    expect(itemsText('raw')).toBe(RAW.replace('"done":false', '"done":true'));
+    ingestEvents(db, 'p1', [ev('drill_undone', { sessionId: 'raw', itemId: 'i1' })], clock);
+    expect(itemsText('raw')).toBe(RAW);
+  });
+
+  test('an event that leaves every flag as it is does not touch the stored text at all (whitespace survives)', () => {
+    const spaced = '[ {"itemId":"i1", "minutes": 10, "done": true} , {"itemId":"i2","minutes":20,"done": false} ]';
+    addSession('spaced', 'p1', { items: spaced });
+    // i1 is derived done (a drill_done for it) and is stored done; a result changes nothing.
+    ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 'spaced', itemId: 'i1' }), ev('result', { sessionId: 'spaced', value: 4 })], clock);
+    expect(itemsText('spaced')).toBe(spaced);
+  });
+
+  test('two flags changing in one batch are both written', () => {
+    addSession('raw', 'p1', { items: RAW });
+    ingestEvents(db, 'p1', [ev('drill_done', { sessionId: 'raw', itemId: 'i1' }), ev('drill_done', { sessionId: 'raw', itemId: 'i2' })], clock);
+    expect(itemsText('raw')).toBe(RAW.replaceAll('"done":false', '"done":true'));
   });
 });
