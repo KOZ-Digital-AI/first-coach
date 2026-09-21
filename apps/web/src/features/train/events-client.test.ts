@@ -44,7 +44,10 @@ const makeSessionJson = (patch: Record<string, unknown> = {}): Record<string, un
     currentLevelLabel: 'Foundation',
     sessionsPerWeek: 3,
     minutesPerSession: 20,
-    focus: [{ skill: 'weakfoot', level: 1, targetLevel: 2, reason: 'Your stated goal.' }],
+    focus: [
+      { skill: 'weakfoot', level: 1, targetLevel: 2, reason: 'Your stated goal.' },
+      { skill: 'passing', level: 1, targetLevel: 2, reason: 'One of the weakest areas.' },
+    ],
   },
   ...patch,
 });
@@ -175,7 +178,7 @@ describe('submitEvents', () => {
     const returned = await client.submitEvents(makeEvents(1));
 
     const expected = TodaySession.parse(makeSessionJson());
-    expect(queryClient.getQueryData(TODAY)).toEqual(expected);
+    expect(queryClient.getQueryData<TodaySession>(TODAY)).toEqual(expected);
     expect(returned.session).toEqual(expected);
     expect(returned.progress).toEqual({ sessionsCompleted: 4, minutesTrained: 80, streakDays: 2 });
     expect(returned.nextSessionDate).toBe('2026-09-23');
@@ -186,7 +189,7 @@ describe('submitEvents', () => {
     queryClient.setQueryData(TODAY, { id: 'old-session', staleOnlyField: true, items: [{ itemId: 'gone' }] });
     await client.submitEvents(makeEvents(1));
 
-    const cached = queryClient.getQueryData(TODAY);
+    const cached = queryClient.getQueryData<TodaySession>(TODAY);
     expect(cached).toStrictEqual(TodaySession.parse(makeSessionJson({ totalMinutes: 25 })));
     expect(cached).not.toHaveProperty('staleOnlyField');
   });
@@ -195,7 +198,7 @@ describe('submitEvents', () => {
     const { client, queryClient, calls } = makeClient();
     await expect(client.submitEvents([])).rejects.toThrow(/at least one event/i);
     expect(calls).toHaveLength(0);
-    expect(queryClient.getQueryData(TODAY)).toBeUndefined();
+    expect(queryClient.getQueryData<TodaySession>(TODAY)).toBeUndefined();
   });
 
   test('a failed request rethrows the very same ApiProblem and leaves the cache at its previous value', async () => {
@@ -211,7 +214,7 @@ describe('submitEvents', () => {
       (error: unknown) => error,
     );
     expect(outcome).toBe(problem);
-    expect(queryClient.getQueryData(TODAY)).toBe(previous);
+    expect(queryClient.getQueryData<TodaySession>(TODAY)).toBe(previous);
   });
 
   test('a failed request with nothing cached yet leaves the cache empty', async () => {
@@ -219,13 +222,13 @@ describe('submitEvents', () => {
       throw new ApiProblem({ kind: 'offline' });
     });
     await expect(client.submitEvents(makeEvents(1))).rejects.toBeInstanceOf(ApiProblem);
-    expect(queryClient.getQueryData(TODAY)).toBeUndefined();
+    expect(queryClient.getQueryData<TodaySession>(TODAY)).toBeUndefined();
   });
 
   test('a response that fails the contract schema is a rejection, not a cache write', async () => {
     const { client, queryClient } = makeClient(() => ({ session: { id: 'x' } }));
     await expect(client.submitEvents(makeEvents(1))).rejects.toBeDefined();
-    expect(queryClient.getQueryData(TODAY)).toBeUndefined();
+    expect(queryClient.getQueryData<TodaySession>(TODAY)).toBeUndefined();
   });
 
   test('resubmitting the same batch sends the same clientUuids and never mutates the events', async () => {
@@ -253,10 +256,10 @@ describe('submitEvents', () => {
     const second = client.submitEvents(makeEvents(1));
     releases[1]?.(); // second request answers first...
     await second;
-    expect((queryClient.getQueryData(TODAY) as { totalMinutes: number }).totalMinutes).toBe(11);
+    expect(queryClient.getQueryData<TodaySession>(TODAY)?.totalMinutes).toBe(11);
     releases[0]?.(); // ...the first answers last and wins
     await first;
-    expect((queryClient.getQueryData(TODAY) as { totalMinutes: number }).totalMinutes).toBe(10);
+    expect(queryClient.getQueryData<TodaySession>(TODAY)?.totalMinutes).toBe(10);
   });
 
   test('the QueryClient may be supplied lazily; it is read at submit time, and a missing one fails before any request', async () => {
@@ -276,7 +279,7 @@ describe('submitEvents', () => {
 
     queryClient = new QueryClient();
     await client.submitEvents([events]);
-    expect(queryClient.getQueryData(TODAY)).toBeDefined();
+    expect(queryClient.getQueryData<TodaySession>(TODAY)).toBeDefined();
   });
 });
 
