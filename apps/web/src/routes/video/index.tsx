@@ -70,6 +70,10 @@ import { detectOnVideo, load as loadPoseModel, PoseError, type PoseVideo } from 
  *    Call budget: rubric + analysis is 2 calls as the contract says; the gate adds the consents call (and /me when needed).
  *  - THE SETTING videoCoachEnabled has no public endpoint (contract gap): it shows as a 403 of the analysis whose title is not
  *    'consent required' (that title sends the player back to the gate). So a disabled feature is only learned at Send.
+ *  - UNAVAILABLE (fc-mol-8nt.13). That 403 and the 503 (`ai_unavailable`: no key / AI off) both show the calm block 'Video analysis is
+ *    unavailable right now' (one sentence: the rest of the app works, training is not affected; a link back to training inside it).
+ *    A 503 keeps the review (the pictures) and offers Try again; the 403 has no retry. Never the generic failure copy or a red alert.
+ *    502 / 504 / 413 / 422 keep the generic 'We could not get your feedback'.
  *  - DURATION. "10-30 s, both inclusive" is checked on the clip itself (its decoded duration, rounded to 0.1 s), for a chosen file
  *    and a recording alike. A recording cannot be stopped before 11 s and stops itself at 29 s, so MediaRecorder's timing error
  *    never lands outside the limits. The elapsed time is read from an injectable clock (default performance.now()).
@@ -412,6 +416,13 @@ function useFailure(query: UseQueryResult<unknown>): unknown {
 
 const hasNoPlan = (error: unknown): boolean => isApiProblem(error) && (error.kind === 'not_found' || error.kind === 'unauthorized');
 
+/**
+ * The analysis endpoint says the AI side is not there: 503 (no OPENAI_API_KEY / AI off answer it with the problem type `ai_unavailable`;
+ * player-video.routes.ts). Simplest reading: ANY 503 is this, whatever its `type`, because to a player a proxy's 503 means the
+ * same thing. A 502 or 504 (the provider failed or was slow on THIS clip) is a failure of this send and keeps the generic copy.
+ */
+const isAnalysisUnavailable = (error: unknown): boolean => isApiProblem(error) && error.status === 503;
+
 // --- shared styling -------------------------------------------------------------------------------------------------------
 
 // Anchors that look like the Button primitive (which renders a <button>): 44px tall, visible focus from app.css.
@@ -437,6 +448,35 @@ function Problem({ title, hint }: { title: ReactNode; hint?: ReactNode }) {
         {hint === undefined ? null : <p className="m-0 mt-1 text-muted">{hint}</p>}
       </div>
     </div>
+  );
+}
+
+/**
+ * "Video analysis is unavailable right now": the calm answer to a 503 (no key, AI off, provider down) and to the 403 'Video coach
+ * disabled'. It is NOT an error state: no red, no alert icon, no role="alert" (a status, read out politely), and it never shows
+ * the server's own words. ONE sentence says the rest of the app works and training is not affected, and the way back to training
+ * sits in the block itself. `onRetry` is given only where trying again can help (a 503); 'disabled' has nothing to retry.
+ */
+function AnalysisDown({ onRetry }: { onRetry?: () => void }) {
+  const { t } = useTranslation(['capture']);
+  return (
+    <EmptyState
+      role="status"
+      title={t('analysisDown.title')}
+      hint={t('analysisDown.hint')}
+      action={
+        <div className={ACTIONS}>
+          {onRetry === undefined ? null : (
+            <Button className="w-full sm:w-auto" onClick={onRetry}>
+              {t('review.error.retry')}
+            </Button>
+          )}
+          <a href="/train" className={`${onRetry === undefined ? LINK_PRIMARY : LINK_SECONDARY} w-full sm:w-auto`}>
+            {t('optional.back')}
+          </a>
+        </div>
+      }
+    />
   );
 }
 
@@ -821,7 +861,8 @@ function ReviewStep({ phase, canSend, onSend, onCancelSending, onDiscard }: Revi
           <p className={BODY}>{t('review.sending')}</p>
         </div>
       ) : null}
-      {phase.kind === 'send-failed' ? (
+      {phase.kind === 'send-failed' && isAnalysisUnavailable(phase.error) ? <AnalysisDown onRetry={onSend} /> : null}
+      {phase.kind === 'send-failed' && !isAnalysisUnavailable(phase.error) ? (
         <ErrorState
           title={t('review.error.title')}
           message={describeProblem(phase.error, (key) => t(key)).formMessage}
@@ -1217,6 +1258,8 @@ function VideoPage() {
   // --- what to show ---
 
   let content: ReactNode;
+  // The 'unavailable' block carries its own way back to training: the page's footer link would be a second one.
+  let wayBackInside = false;
   if (skill !== null && (!canDetect || phase.kind === 'unsupported')) {
     content = <EmptyState title={t('unsupported.title')} hint={t('unsupported.hint')} />;
   } else if (!online && (skill === null || phase.kind === 'capture')) {
@@ -1338,6 +1381,7 @@ function VideoPage() {
       case 'review':
       case 'sending':
       case 'send-failed':
+        wayBackInside = phase.kind === 'send-failed' && isAnalysisUnavailable(phase.error);
         content = (
           <ReviewStep
             phase={phase}
@@ -1353,7 +1397,8 @@ function VideoPage() {
         content = <Busy label={t('review.sending')} />;
         break;
       case 'disabled':
-        content = <EmptyState title={t('disabled.title')} hint={t('disabled.hint')} />;
+        wayBackInside = true;
+        content = <AnalysisDown />; // the 403 'Video coach disabled': nothing to retry
         break;
       case 'unsupported':
         content = null;
@@ -1367,14 +1412,16 @@ function VideoPage() {
       <h1 className="m-0 mt-3 text-[clamp(40px,6vw,74px)] leading-[.94] font-bold tracking-[-.065em] wrap-break-word text-ink">{t('title')}</h1>
       <p className="m-0 mt-5 text-lg leading-[1.45] wrap-break-word text-ink">{t('lead')}</p>
       <div className="mt-8 grid gap-4">{content}</div>
-      <div className="mt-10 grid gap-3 border-t border-line pt-6">
-        <p className={`${BODY} text-muted`}>{t('optional.text')}</p>
-        <div className={ACTIONS}>
-          <a href="/train" className={LINK_SECONDARY}>
-            {t('optional.back')}
-          </a>
+      {wayBackInside ? null : (
+        <div className="mt-10 grid gap-3 border-t border-line pt-6">
+          <p className={`${BODY} text-muted`}>{t('optional.text')}</p>
+          <div className={ACTIONS}>
+            <a href="/train" className={LINK_SECONDARY}>
+              {t('optional.back')}
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
