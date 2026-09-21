@@ -674,3 +674,136 @@ describe("POST decision: the body is strict", () => {
     expect(stateOf(id)).toBe("pending");
   });
 });
+
+// --- edits the service ignores are refused, per kind -----------------------------------------------------
+
+// The service locks sport and skill for an improvement (the drill's place in the graph does not change) and
+// keeps the drill's own goal, so an edit of those keys would be silently dropped. The route refuses it with
+// a 422 instead. Each value below is one the field WOULD accept, so only the route's kind-aware narrowing can
+// refuse it, never the value's type.
+describe("POST decision: edits the service ignores for an improvement are 422", () => {
+  test("the reviewer's repro: an unknown sport and skill on an improvement are refused with both pointers and nothing is written", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id, improvementPayload());
+    const before = snapshot(id);
+
+    const res = await decide(admin.cookie, id, { action: "approve", edits: { sport: "nonexistent-sport", skill: "zzz" } });
+    await expectProblem(res, 422);
+    const pointers = await pointersOf(res);
+    expect(pointers).toContain("/edits/sport");
+    expect(pointers).toContain("/edits/skill");
+    expect(snapshot(id)).toEqual(before);
+    expect(stateOf(id)).toBe("pending");
+  });
+
+  test.each([
+    ["sport", "football"],
+    ["skill", "alternating-touches"],
+    ["goal", "dribbling"],
+  ] as const)("edits.%s (a valid value) on an improvement is refused with 422 and nothing is written", async (key, value) => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id, improvementPayload());
+    const before = snapshot(id);
+
+    const res = await decide(admin.cookie, id, { action: "approve", edits: { [key]: value } });
+    await expectProblem(res, 422);
+    expect(await pointersOf(res)).toContain(`/edits/${key}`);
+    expect(snapshot(id)).toEqual(before);
+    expect(stateOf(id)).toBe("pending");
+  });
+
+  test("every offending key is reported in one answer, next to the ones the body schema refuses", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id, improvementPayload());
+    const before = snapshot(id);
+
+    const res = await decide(admin.cookie, id, {
+      action: "approve",
+      edits: { sport: "football", skill: "alternating-touches", goal: "dribbling", author: "Mallory" },
+    });
+    await expectProblem(res, 422);
+    const pointers = await pointersOf(res);
+    for (const key of ["sport", "skill", "goal", "author"]) expect(pointers).toContain(`/edits/${key}`);
+    expect(snapshot(id)).toEqual(before);
+  });
+
+  test("the refusal does not depend on the action: a reject carrying a locked edit is 422 too", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id, improvementPayload());
+    const before = snapshot(id);
+
+    const res = await decide(admin.cookie, id, { action: "reject", note: "No", edits: { sport: "football" } });
+    await expectProblem(res, 422);
+    expect(await pointersOf(res)).toContain("/edits/sport");
+    expect(snapshot(id)).toEqual(before);
+  });
+
+  test("the content fields an admin may correct still work on an improvement", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id, improvementPayload());
+
+    const res = await decide(admin.cookie, id, { action: "approve", edits: { safety: "Носи закрытую обувь", durationMin: 6 } });
+    expect(res.status).toBe(200);
+    const body = DecisionResponse.parse(await res.json());
+    expect(body.contribution.state).toBe("approved");
+    expect(body.contribution.payload.safety).toBe("Носи закрытую обувь");
+    expect(body.drill!.history.map((entry) => entry.semver)).toEqual(["1.1.0", "1.0.0"]);
+  });
+});
+
+describe("POST decision: a NEW contribution may still edit sport, skill and goal", () => {
+  test("sport, skill and goal edits are applied to a new drill", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id);
+
+    const res = await decide(admin.cookie, id, {
+      action: "approve",
+      edits: { sport: "football", skill: "alternating-touches", goal: "dribbling" },
+    });
+    expect(res.status).toBe(200);
+    const body = DecisionResponse.parse(await res.json());
+    expect(body.contribution.state).toBe("approved");
+    expect(body.contribution.payload.goal).toBe("dribbling");
+    expect(body.drill!.content.goal?.ru).toBe("Ведение мяча");
+  });
+
+  test("an unknown sport on a new contribution is still refused by the service with pointer /edits/sport, and nothing is written", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const admin = await signUpAdmin();
+    const id = submit(alice.id);
+    const before = snapshot(id);
+
+    const res = await decide(admin.cookie, id, { action: "approve", edits: { sport: "nonexistent-sport" } });
+    await expectProblem(res, 422);
+    expect(await pointersOf(res)).toContain("/edits/sport");
+    expect(snapshot(id)).toEqual(before);
+  });
+});
+
+describe("POST decision: ordering around the kind check", () => {
+  test("an unknown contribution is still 404, with or without a locked edit", async () => {
+    const admin = await signUpAdmin();
+    await expectProblem(await decide(admin.cookie, "no-such-contribution", { action: "approve", edits: { sport: "football" } }), 404);
+    await expectProblem(await decide(admin.cookie, "no-such-contribution", { action: "approve" }), 404);
+  });
+
+  test("a non-admin is 403 before anything is looked at, a locked edit or not, and nothing is written", async () => {
+    const alice = await signUpContributor("alice@example.com", "Alice");
+    const bob = await signUpContributor("bob@example.com", "Bob");
+    const id = submit(alice.id, improvementPayload());
+    const before = snapshot(id);
+    const player = await signInPlayer();
+
+    for (const actor of [alice, bob, player]) {
+      await expectProblem(await decide(actor.cookie, id, { action: "approve", edits: { sport: "nonexistent-sport", skill: "zzz" } }), 403);
+    }
+    await expectProblem(await decide(undefined, id, { action: "approve", edits: { sport: "football" } }), 401);
+    expect(snapshot(id)).toEqual(before);
+  });
+});
