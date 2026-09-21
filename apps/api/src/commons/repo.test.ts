@@ -574,7 +574,7 @@ describe('getDrill', () => {
     expect(tableCount('drills')).toBe(before);
   });
 
-  test('history lists every version newest-first by creation time, whatever the insertion or semver order', () => {
+  test('the current version supplies content and attribution even when it is not the newest; history lists every version, newest first', () => {
     catalog();
     // v3 is inserted before v2 but created later; current is v2 (an older version can be current)
     insertVersion({ id: 'v3', drillId: 'wall-passing', semver: '1.2.0', parent: 'wall-passing-v1', createdAt: '2026-03-01T00:00:00.000Z', changeSummary: 'third', content: contentOf({ slug: 'wall-passing', title: t('Third') }) });
@@ -591,6 +591,29 @@ describe('getDrill', () => {
     expect(detail.versionId).toBe('v2');
     expect(detail.content.title).toEqual(t('Second'));
     expect(detail.attribution.semver).toBe('1.1.0');
+  });
+
+  test('history is ordered by created_at DESC alone: not by semver (text or numeric), not by insertion order; equal created_at falls back to later-inserted first', () => {
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('h', 'ordered-history', 'sp1')`);
+    // Insertion order a, b, c, d, e. created_at order (oldest to newest): a, c, b, then d and e tied.
+    // Text semver order descending is 1.0.5, 1.0.4, 1.0.3, 1.0.2, 1.0.10 and insertion order
+    // descending is e, d, c, b, a: neither equals the expected order below, nor does their ascending twin.
+    const versions: [id: string, semver: string, createdAt: string][] = [
+      ['h-a', '1.0.2', '2026-01-10T00:00:00.000Z'],
+      ['h-b', '1.0.10', '2026-05-10T00:00:00.000Z'],
+      ['h-c', '1.0.3', '2026-03-10T00:00:00.000Z'],
+      ['h-d', '1.0.4', '2026-06-10T00:00:00.000Z'],
+      ['h-e', '1.0.5', '2026-06-10T00:00:00.000Z'],
+    ];
+    for (const [id, semver, createdAt] of versions) {
+      insertVersion({ id, drillId: 'h', semver, createdAt, content: contentOf({ slug: 'ordered-history' }) });
+    }
+    setCurrent('h', 'h-a'); // the oldest is current: the order must not depend on it either
+
+    const detail = DrillDetail.parse(getDrill(db, 'ordered-history', 'en'));
+    expect(detail.history.map((h) => h.versionId)).toEqual(['h-e', 'h-d', 'h-b', 'h-c', 'h-a']);
+    expect(detail.history.map((h) => h.semver)).toEqual(['1.0.5', '1.0.4', '1.0.10', '1.0.3', '1.0.2']);
+    expect(detail.versionId).toBe('h-a');
   });
 
   test('history never contains another drill\'s versions', () => {
