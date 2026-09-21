@@ -31,9 +31,8 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * Readings of the criteria (each pinned by mine.test.tsx):
  * - "Withdraw for undecided ones" = the states the API lets the owner withdraw from: pending and changes_requested (a withdraw
  *   from anything else is a 409). "Edit and resubmit" is only for changes_requested, as the criteria say.
- * - "Edit and resubmit" is a link to the contribute form with the contribution id: /contribute?edit=<id>. The form belongs to a
- *   sibling bead and is not in the route tree yet, so the target is cast like the admin sub-navigation does. Contract gap to
- *   report: nothing says where or how the form is opened for a resubmit.
+ * - "Edit and resubmit" is a link to the edit screen of that contribution, /contribute/<id>/edit (fc-mol-70i.10), as a TanStack
+ *   route with a param, not a search param on the form (fc-c9l).
  * - The approved item links to the published drill at /commons/<resultingDrillSlug>; without a slug there is no link, never a
  *   broken one.
  * - Anonymous players are not contributors. requireContributor answers 403 to them (401 with no session at all), and the screen
@@ -54,7 +53,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
 
 const MINE_KEY = ['contributions', 'mine'] as const;
 const RETURN_PATH = '/contribute/mine';
-/** Where the contribute form lives, and how it is told which contribution to edit. Owned by a sibling bead. */
+/** Where the contribute form (for a new contribution) lives. Owned by a sibling bead. */
 const FORM_PATH = '/contribute';
 
 /** The states in which the owner can still withdraw (the API answers 409 otherwise). */
@@ -159,8 +158,8 @@ function ContributionItem({
           <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {state === 'changes_requested' ? (
               <Link
-                to={FORM_PATH as never}
-                search={{ edit: id } as never}
+                to="/contribute/$id/edit"
+                params={{ id }}
                 aria-label={t('actions.editNamed', { name })}
                 className={clsx(LINK_PRIMARY, 'w-full sm:w-auto')}
               >

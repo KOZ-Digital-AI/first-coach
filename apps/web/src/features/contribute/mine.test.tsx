@@ -35,7 +35,8 @@ const { default: userEvent } = await import('@testing-library/user-event');
  *
  * Readings of the criteria that the tests pin (the simplest reading each time):
  * - "undecided ones" = the states the API lets the owner withdraw from: pending and changes_requested.
- * - "Edit and resubmit" is a link to the contribute form with the id: /contribute?edit=<id> (the form belongs to another bead).
+ * - "Edit and resubmit" is a link to the edit screen of that contribution: /contribute/<id>/edit (a route param, not a search param;
+ *   the screen is fc-mol-70i.10).
  * - The list keeps the order the API sends (newest first).
  * - "mutation buttons are disabled while a request is in flight": while a withdrawal runs, every Withdraw button, both dialog
  *   buttons and Refresh are disabled, and the dialog cannot be dismissed.
@@ -178,9 +179,14 @@ function renderMine(locale: Locale = 'en') {
     validateSearch: (search: Record<string, unknown>) => ({ edit: typeof search.edit === 'string' ? search.edit : undefined }),
     component: () => <p>contribute form</p>,
   });
+  const editRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/contribute/$id/edit',
+    component: () => <p>edit screen for {editRoute.useParams().id}</p>,
+  });
   const drillRoute = createRoute({ getParentRoute: () => rootRoute, path: '/commons/$slug', component: () => <p>drill page</p> });
   const router = createRouter({
-    routeTree: rootRoute.addChildren([mineRoute, signInRoute, formRoute, drillRoute]),
+    routeTree: rootRoute.addChildren([mineRoute, signInRoute, formRoute, editRoute, drillRoute]),
     history: createMemoryHistory({ initialEntries: ['/contribute/mine'] }),
   });
   const view = render(
@@ -311,15 +317,24 @@ describe('success: the contributions from the response', () => {
     }
   });
 
-  test('"Edit and resubmit" appears only on changes-requested items and leads to the form with that id', async () => {
+  test('"Edit and resubmit" appears only on changes-requested items and leads to the edit screen of that contribution', async () => {
     await renderLoaded();
     const link = editLink('Cone slalom');
     expect(link === null).toBe(false);
-    expect(link!.getAttribute('href')).toBe('/contribute?edit=c-changes');
+    expect(link!.getAttribute('href')).toBe('/contribute/c-changes/edit');
     for (const name of ['Wall passes', 'Two-touch turns', 'Sprint relay', 'Old idea']) {
       expect(editLink(name) === null).toBe(true);
     }
     expect(screen.getAllByRole('link', { name: /^Edit and resubmit/ })).toHaveLength(1);
+  });
+
+  test('following "Edit and resubmit" opens the edit screen route with the contribution id as its param', async () => {
+    const user = userEvent.setup();
+    const { router } = await renderLoaded();
+    await user.click(editLink('Cone slalom')!);
+    await screen.findByText('edit screen for c-changes');
+    expect(router.state.location.pathname).toBe('/contribute/c-changes/edit');
+    expect(router.state.location.searchStr).toBe('');
   });
 
   test('"Withdraw" appears only on undecided items (pending and changes requested)', async () => {
