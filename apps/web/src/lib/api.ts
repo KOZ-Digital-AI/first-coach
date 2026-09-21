@@ -38,9 +38,10 @@
  * - 401: `notifyUnauthorized(problem)` runs, then the problem is thrown. `skipUnauthorized: true` skips the notification for
  *   calls where 401 means "wrong password" (login, recover).
  *
- * This module imports no zod, no sonner and no runtime `@api-types` value, so it adds nothing to the entry bundle; api.test.ts
- * scans its source for that. Tests inject `fetch`, `online` and `language` through `createApi`; nothing global is patched.
+ * This module imports no zod, no sonner and no runtime `@api-types` value (the app-wide client's retrying fetch comes from
+ * features/account/session-expired.ts, which loads sonner lazily); api.test.ts scans this source for that. Tests inject `fetch`, `online` and `language` through `createApi`; nothing global is patched.
  */
+import { withSessionRetry } from '../features/account/session-expired';
 import { DEFAULT_LOCALE, i18n, toLocale } from './i18n';
 import { ApiProblem, classifyStatus, notifyUnauthorized, parseProblemBody } from './problem';
 
@@ -191,5 +192,10 @@ export function createApi(deps: ApiDeps = {}): Api {
   return { get: verb('GET'), post: verb('POST'), put: verb('PUT'), patch: verb('PATCH'), delete: verb('DELETE') };
 }
 
-/** The app-wide client: same origin, active locale, real fetch. */
-export const api: Api = createApi();
+/**
+ * The app-wide client: same origin, active locale, and the real fetch wrapped in `withSessionRetry` (a player-route 401
+ * silently re-establishes the anonymous session and is retried once; see features/account/session-expired.ts for its limits).
+ * The global fetch is looked up on every call, never captured at import, so a test's stub is honoured.
+ * The coach-area redirect needs `installSessionExpired()` too: bootstrap.ts installs it at start-up.
+ */
+export const api: Api = createApi({ fetch: withSessionRetry((input, init) => globalThis.fetch(input, init)) });
