@@ -1,0 +1,807 @@
+{
+  "sport": "football",
+  "track": "dribbling",
+  "drills": [
+    {
+      "slug": "dribbling-quick-feet-look-around",
+      "title": {
+        "kk": "Жылдам аяқ және айналаға көз салу",
+        "ru": "Быстрые ноги и взгляд по сторонам",
+        "en": "Quick feet and look-around"
+      },
+      "goal": {
+        "kk": "Орнында аяғыңды жеңіл әрі жылдам алмастырып, тепе-теңдікті жоғалтпай басыңды көтересің.",
+        "ru": "Ты легко и быстро переступаешь на месте и поднимаешь голову, не теряя равновесия.",
+        "en": "You keep your feet light and quick on the spot and look up without losing your balance."
+      },
+      "instructions": {
+        "kk": "1. 3×3 м алаңның ортасына түзу тұр, тізеңді сәл бүг.\n2. Аяқ ұштарыңмен жерді сол, оң, сол, оң деп 30 секунд бойы тез түртіп тұр.\n3. Бірнеше түртуден кейін көзіңді көтеріп, бөлмеде көрген бір затты ата.\n4. 20 секунд дем ал да, қайталап жаса, бұл жолы кішкентай шеңбермен қадам жасап.",
+        "ru": "1. Встань прямо в середине квадрата 3×3 м, колени чуть согнуты.\n2. Быстро постукивай носками по полу: левой, правой, левой, правой, в течение 30 секунд.\n3. Каждые несколько касаний поднимай глаза и называй один предмет, который видишь в комнате.\n4. Отдохни 20 секунд и повтори, теперь переступая маленьким кругом.",
+        "en": "1. Stand tall in the middle of your 3×3 m square with your knees slightly bent.\n2. Tap your toes on the floor quickly, left, right, left, right, for 30 seconds.\n3. Every few taps, lift your eyes and name one thing you can see in the room.\n4. Rest for 20 seconds, then repeat, this time stepping in a small circle."
+      },
+      "dose": {
+        "durationSec": 30,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Бүкіл уақыт аяғыңа қарап тұрасың.",
+          "ru": "Ты всё время смотришь на ноги.",
+          "en": "You stare at your feet the whole time."
+        },
+        {
+          "kk": "Өкшеңді еденге басып қоясың, сөйтіп қадамдарың ауырлап кетеді.",
+          "ru": "Ты опускаешь пятки на пол, и шаги становятся тяжёлыми.",
+          "en": "Your heels drop to the floor and your steps get heavy."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Алаңнан ойыншықтарды, орындықтарды және сымдарды алып таста, сонда қадам жасауға орын болады.",
+          "ru": "Убери с площадки игрушки, стулья и провода, чтобы было место переступать.",
+          "en": "Clear toys, chairs and cables out of your square so that you have room to step."
+        },
+        {
+          "kk": "Алдымен жылын: 30 секунд орнында жүріп, тобығыңды айналдыр.",
+          "ru": "Сначала разомнись: 30 секунд шагай на месте и покрути стопами.",
+          "en": "Warm up first: march on the spot for 30 seconds and roll your ankles."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-snail-circle"
+      ],
+      "minutes": 3,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "nothing",
+      "space": "home_3x3",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-snail-circle",
+      "title": {
+        "kk": "Ұлу шеңбері",
+        "ru": "Улитка по кругу",
+        "en": "Snail circle"
+      },
+      "goal": {
+        "kk": "Допты шағын шеңбермен баяу алып жүресің, доп сенен бір қадамнан ары кетпейді.",
+        "ru": "Ты медленно ведёшь мяч по маленькому кругу, и мяч остаётся не дальше одного шага от тебя.",
+        "en": "You dribble the ball slowly in a small circle and keep it within one step of you."
+      },
+      "instructions": {
+        "kk": "1. Допты 3×3 м алаңның ортасына еденге қой.\n2. Ортаның айналасымен баяу шеңбер жасап жүр, әр қадам сайын допқа аяғыңның ішкі жағымен жанас.\n3. Доп бүкіл уақыт сенен бір қадамнан алыс кетпесін.\n4. 40 секунд сағат тілімен жүр, дем ал, сосын 40 секунд қарсы бағытқа жүр; барлығы төрт айналым жаса.",
+        "ru": "1. Положи мяч на пол в середине квадрата 3×3 м.\n2. Иди медленным кругом вокруг центра и на каждом шаге касайся мяча внутренней стороной стопы.\n3. Всё время держи мяч не дальше одного шага от себя.\n4. 40 секунд иди по часовой стрелке, отдохни, потом 40 секунд в другую сторону; всего четыре подхода.",
+        "en": "1. Put the ball on the floor in the middle of your 3×3 m square.\n2. Walk in a slow circle around the middle and tap the ball with the inside of your foot on every step.\n3. Keep the ball within one step of you the whole time.\n4. Go 40 seconds clockwise, rest, then 40 seconds the other way; do four rounds in all."
+      },
+      "dose": {
+        "durationSec": 40,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Доп сенен бір қадамнан алысқа домалап кетеді.",
+          "ru": "Мяч откатывается от тебя дальше чем на шаг.",
+          "en": "The ball rolls more than one step away from you."
+        },
+        {
+          "kk": "Допқа тек бір аяғыңмен ғана жанасасың.",
+          "ru": "Ты касаешься мяча только одной ногой.",
+          "en": "You push the ball with only one foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Доп алаңнан шығып кетсе, тоқтап, жүріп барып ал; жиһазға соғылып, соңынан жүгірме.",
+          "ru": "Если мяч выкатился из квадрата, остановись, подойди и возьми его; не бросайся за ним, натыкаясь на мебель.",
+          "en": "If the ball leaves your square, stop, walk over and pick it up; never run after it into furniture."
+        },
+        {
+          "kk": "Алдымен жылын: орнында 20 баяу қадам жасап, тобығыңды бірнеше рет айналдыр.",
+          "ru": "Сначала разомнись: 20 медленных шагов на месте и несколько вращений стопой.",
+          "en": "Warm up first with 20 slow steps on the spot and a few ankle rolls."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-there-and-back"
+      ],
+      "regressionSlugs": [
+        "dribbling-quick-feet-look-around"
+      ],
+      "minutes": 4,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-there-and-back",
+      "title": {
+        "kk": "Барып қайту",
+        "ru": "Туда и обратно",
+        "en": "There and back"
+      },
+      "goal": {
+        "kk": "Допты түзу сызықпен алаңды кесіп өтіп, қайтып, екі аяқпен де ұсақ жанасулармен алып жүресің.",
+        "ru": "Ты ведёшь мяч по прямой через квадрат и обратно мелкими касаниями обеими ногами.",
+        "en": "You dribble in a straight line across your square and back with small touches from both feet."
+      },
+      "instructions": {
+        "kk": "1. 3×3 м алаңның бір шетінде доппен тұр, доп аяғыңның алдында болсын.\n2. Допты қарсы шетке ұсақ жанасумен жүргіз: алдымен оң аяғыңның ішкі жағымен, сосын сол аяғыңмен.\n3. Табаныңды допты үстіне қойып, оны тоқтат.\n4. Бұрылып, допты кері алып жүр де, қайта тоқтат. Бұл бір рет; алты рет жаса.",
+        "ru": "1. Встань у края квадрата 3×3 м, мяч у ног.\n2. Веди мяч к противоположному краю мелкими касаниями, сначала внутренней стороной правой стопы, потом левой.\n3. Останови мяч, поставив подошву сверху на мяч.\n4. Развернись, веди мяч обратно и снова останови. Это один проход; сделай шесть проходов.",
+        "en": "1. Stand at one edge of your 3×3 m square with the ball at your feet.\n2. Dribble to the opposite edge with small touches, first with the inside of your right foot, then your left.\n3. Stop the ball by resting the sole of your foot on top of it.\n4. Turn around, dribble back and stop it again. That is one trip; do six trips."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Допқа тым қатты жанасасың, доп алыстағы шеттен асып кетеді.",
+          "ru": "Ты бьёшь по мячу слишком сильно, и он укатывается за дальний край.",
+          "en": "You take a huge touch and the ball rolls off the far edge."
+        },
+        {
+          "kk": "Допты табаныңмен жайлап басудың орнына аяғыңды қатты тастап тоқтатасың.",
+          "ru": "Ты останавливаешь мяч, резко бросая на него ногу, а не мягко ставишь подошву.",
+          "en": "You stop the ball by stamping on it instead of resting your sole softly."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Орындықтар мен үстелдерді алаң шеттерінен кемінде бір метр алыс ал.",
+          "ru": "Отодвинь стулья и столы хотя бы на метр от краёв квадрата.",
+          "en": "Move any chairs or tables at least a metre away from the edges of your square."
+        },
+        {
+          "kk": "Табаныңды допқа жайлап қой, оны басып таптама: доп аяғыңның астынан шығып, тобығыңды бұрап алуы мүмкін.",
+          "ru": "Ставь подошву на мяч мягко и не топай по нему: он может уйти из-под ноги и подвернуть щиколотку.",
+          "en": "Rest your sole gently on the ball and never stamp on it, because it can roll out from under your foot and twist your ankle."
+        },
+        {
+          "kk": "Алдымен жылын: әр аяғыңмен он рет тізеңді жайлап көтер.",
+          "ru": "Сначала разомнись: по десять лёгких подъёмов колена на каждую ногу.",
+          "en": "Warm up with ten gentle knee lifts on each leg before the first trip."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-freeze-and-go"
+      ],
+      "regressionSlugs": [
+        "dribbling-snail-circle"
+      ],
+      "minutes": 4,
+      "level": 1,
+      "ageMin": 6,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-freeze-and-go",
+      "title": {
+        "kk": "Тоқта да, жүр",
+        "ru": "Замри и вперёд",
+        "en": "Freeze and go"
+      },
+      "goal": {
+        "kk": "Допты алаң ішінде алып жүріп, әр бес жанасудан кейін табаныңмен тоқтатасың да, дереу қайта бастайсың.",
+        "ru": "Ты ведёшь мяч по квадрату, каждые пять касаний останавливаешь его подошвой и сразу начинаешь снова.",
+        "en": "You dribble around your square, freeze the ball under your sole after every five touches and start again at once."
+      },
+      "instructions": {
+        "kk": "1. 3×3 м алаңның ортасында доппен тұр, доп аяғыңның алдында болсын.\n2. Кез келген бағытқа алып жүр де, жанасуларды дауыстап сана.\n3. Бесінші жанасуда допты табаныңмен тоқтатып, екі секунд қозғалмай тұр.\n4. Жаңа бағыт таңда да, қайта жүр; сегіз рет тоқта, дем ал, тағы сегіз рет жаса.",
+        "ru": "1. Встань в середину квадрата 3×3 м, мяч у ног.\n2. Веди мяч в любую сторону и считай касания вслух.\n3. На пятом касании останови мяч подошвой и замри на две секунды.\n4. Выбери новое направление и снова вперёд; сделай восемь остановок, отдохни и сделай ещё восемь.",
+        "en": "1. Start in the middle of your 3×3 m square with the ball at your feet.\n2. Dribble in any direction and count your touches out loud.\n3. On touch number five, stop the ball with the sole of your foot and freeze for two seconds.\n4. Choose a new direction and go again; do eight freezes, rest, then do eight more."
+      },
+      "dose": {
+        "reps": 8,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Санауды ұмытып, допты тым кеш тоқтатасың, сондықтан ол шетке кетіп қалады.",
+          "ru": "Ты забываешь считать и останавливаешь мяч слишком поздно, поэтому он уходит к краю.",
+          "en": "You forget to count and freeze the ball too late, so it drifts to the edge."
+        },
+        {
+          "kk": "Допты табаныңмен жаппай, аяқ ұшымен түртіп тоқтатасың.",
+          "ru": "Ты останавливаешь мяч ударом носка, а не накрываешь его подошвой.",
+          "en": "You stop the ball with a jab of your toes instead of covering it with your sole."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Жаңа бағыт таңдамас бұрын алаң шетіне көз салып ал, сонда жиһазға соғылмайсың.",
+          "ru": "Перед новым направлением бросай взгляд на край квадрата, чтобы не налететь на мебель.",
+          "en": "Glance at the edge of your square before you choose a new direction, so you never run into furniture."
+        },
+        {
+          "kk": "Допты тоқтатқанда оған жеңіл ғана басып тұр; ол домалай бастаса, аяғыңды ал, қатты баспа.",
+          "ru": "Когда останавливаешь мяч, нажимай на него слегка; если он покатился, убери ногу, а не дави.",
+          "en": "Put only a light weight on the ball when you freeze it; if it starts to roll, lift your foot instead of pressing down."
+        },
+        {
+          "kk": "Алдымен жылын: орнында 30 секунд жеңіл жүгір.",
+          "ru": "Сначала разомнись: 30 секунд лёгкого бега на месте.",
+          "en": "Warm up first with 30 seconds of gentle jogging on the spot."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-two-foot-zigzag",
+        "dribbling-five-cone-slalom"
+      ],
+      "regressionSlugs": [
+        "dribbling-there-and-back"
+      ],
+      "minutes": 5,
+      "level": 1,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-five-cone-slalom",
+      "title": {
+        "kk": "Бес конус арасымен слалом",
+        "ru": "Слалом между пятью конусами",
+        "en": "Five-cone slalom"
+      },
+      "goal": {
+        "kk": "Допты бес конустың арасынан екі аяқпен де ұсақ жанасумен өткізесің, конустарға тимейсің.",
+        "ru": "Ты проводишь мяч между пятью конусами мелкими касаниями обеих ног и не задеваешь конусы.",
+        "en": "You weave the ball between five cones with small touches from both feet and never hit a cone."
+      },
+      "instructions": {
+        "kk": "1. Тегіс жерге бес конусты түзу сызықпен, бір-бірінен шамамен екі үлкен қадам (2 м) қашықтықта қой.\n2. Бірінші конустың қасында доппен тұр, доп аяғыңның алдында болсын.\n3. Допты конустардың арасынан өткіз: әр аралықта допты алдымен оң аяғыңның, сосын сол аяғыңның ішкі жағымен итер.\n4. Көрші конустардың арасында кемінде екі ұсақ жанасу жаса.\n5. Соңғы конустан кейін бұрылып, слаломмен кері қайт; бұл бір өту. Алты рет жаса, әр жолдан кейін сәл дем ал.",
+        "ru": "1. Расставь пять конусов по прямой на ровной земле, примерно в двух больших шагах (2 м) друг от друга.\n2. Встань рядом с первым конусом, мяч у ног.\n3. Проведи мяч между конусами: в каждом промежутке толкай мяч внутренней стороной сначала правой, потом левой стопы.\n4. Между соседними конусами делай не меньше двух мелких касаний.\n5. У последнего конуса развернись и пройди слалом обратно; это один проход. Сделай шесть проходов, немного отдыхая после каждого.",
+        "en": "1. Set five cones in a straight line on flat ground, about two big steps (2 m) apart.\n2. Stand beside the first cone with the ball at your feet.\n3. Weave the ball between the cones: at each gap push it with the inside of your right foot, then the inside of your left.\n4. Take at least two small touches between one cone and the next.\n5. At the last cone turn around and weave back; that is one run. Do six runs, resting a little after each."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Конустар арасында бір үлкен жанасу жасайсың, сөйтіп доп келесі конустан асып кетеді.",
+          "ru": "Ты делаешь одно большое касание между конусами, и мяч пролетает мимо следующего конуса.",
+          "en": "You take one big touch between cones, and the ball runs past the next cone."
+        },
+        {
+          "kk": "Конустарды аяғыңмен құлатып кетесің.",
+          "ru": "Ты сбиваешь конусы ногой.",
+          "en": "You knock cones over with your foot."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Конус болмаса, орнына түйілген кофта немесе аяқ киім қой; тас, таяқ немесе шыны бөтелке қойма.",
+          "ru": "Если нет конусов, поставь вместо них скрученную кофту или ботинок, но никогда не камни, палки или стеклянные бутылки.",
+          "en": "If you have no cones, use a rolled-up jumper or a shoe instead, and never stones, sticks or glass bottles."
+        },
+        {
+          "kk": "Қатарды жолдан, қақпадан және қоршаудан алыс қой да, бастамас бұрын жерде шұңқыр бар-жоғын тексер.",
+          "ru": "Расставь ряд подальше от дороги, ворот и забора и проверь землю на ямки.",
+          "en": "Set the row well away from the road, the gate and the fence, and check the ground for holes before you start."
+        },
+        {
+          "kk": "Алдымен жылын: конустардың айналасында екі минут жеңіл жүгір.",
+          "ru": "Сначала разомнись: две минуты лёгкого бега вокруг конусов.",
+          "en": "Warm up first with two minutes of easy jogging around the cones."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-change-direction-box",
+        "dribbling-tight-cone-weave"
+      ],
+      "regressionSlugs": [
+        "dribbling-freeze-and-go"
+      ],
+      "minutes": 7,
+      "level": 1,
+      "ageMin": 7,
+      "equipment": "cones",
+      "space": "yard",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-two-foot-zigzag",
+      "title": {
+        "kk": "Екі аяқпен зигзаг",
+        "ru": "Зигзаг двумя ногами",
+        "en": "Two-foot zigzag"
+      },
+      "goal": {
+        "kk": "Допты алаң бойымен зигзагпен бір аяғыңнан екінші аяғыңа өткізіп жүресің.",
+        "ru": "Ты перекатываешь мяч с одной ноги на другую зигзагом по квадрату.",
+        "en": "You pass the ball from one foot to the other in a zigzag line across your square."
+      },
+      "instructions": {
+        "kk": "1. 3×3 м алаңның бір шетінде тұр, доп оң аяғыңның алдында болсын.\n2. Допты оң аяғыңның ішкі жағымен солға қарай қиғаш итер.\n3. Оны сол аяғыңның ішкі жағымен жұмсақ тоқтатып, оңға қарай қиғаш итер.\n4. Қарсы шетке дейін зигзагпен жүре бер, сосын екінші шеттен қайта баста. Алты өту бір жиынтық; екі жиынтық жаса.",
+        "ru": "1. Встань у края квадрата 3×3 м, мяч перед правой ногой.\n2. Толкни мяч по диагонали влево внутренней стороной правой стопы.\n3. Мягко останови его внутренней стороной левой стопы и толкни по диагонали вправо.\n4. Продолжай зигзагом до противоположного края, потом начни с другого края. Шесть проходов — один подход; сделай два подхода.",
+        "en": "1. Stand at one edge of your 3×3 m square with the ball in front of your right foot.\n2. Push the ball diagonally to the left with the inside of your right foot.\n3. Stop it softly with the inside of your left foot, then push it diagonally to the right.\n4. Keep zigzagging to the opposite edge, then start again from the other edge. Six lanes make one set; do two sets."
+      },
+      "dose": {
+        "reps": 6,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Допты қиғаш емес, тікелей алға итересің, сондықтан зигзаг шықпайды.",
+          "ru": "Ты толкаешь мяч прямо вперёд, а не по диагонали, и зигзага не получается.",
+          "en": "You push the ball straight ahead instead of across, so the line is not a zigzag."
+        },
+        {
+          "kk": "Допты қатты, сіресіп тұрған аяқпен тоқтатасың да, ол секіріп кетеді.",
+          "ru": "Ты останавливаешь мяч жёсткой ногой, и он отскакивает.",
+          "en": "You stop the ball with a hard, stiff foot and it bounces away."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Бұл жаттығуды тайғақ едендегі шұлықпен жасама; тірек аяғың тайып кетпес үшін жалпақ табанды аяқ киім киіп ал.",
+          "ru": "Не выполняй упражнение в носках на гладком полу: надень плоскую обувь, чтобы опорная нога не скользила.",
+          "en": "Do not do this drill in socks on a smooth floor; wear flat shoes so that your standing foot cannot slip."
+        },
+        {
+          "kk": "Алдымен жылын: әр аяғыңды алға-артқа жеңіл он реттен сермеп ал.",
+          "ru": "Сначала разомнись: по десять лёгких махов каждой ногой вперёд и назад.",
+          "en": "Warm up first by swinging each leg gently forwards and backwards ten times."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-sole-stop-turn"
+      ],
+      "regressionSlugs": [
+        "dribbling-freeze-and-go"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-sole-stop-turn",
+      "title": {
+        "kk": "Табанмен тоқтап, бұрылу",
+        "ru": "Остановка и разворот подошвой",
+        "en": "Sole stop and turn"
+      },
+      "goal": {
+        "kk": "Допты табаныңмен тоқтатып, өзіңе қарай тартасың да, қарсы бағытқа бұрыласың.",
+        "ru": "Ты останавливаешь мяч подошвой, тянешь его на себя и разворачиваешься в другую сторону.",
+        "en": "You stop the ball with your sole, pull it back and turn to go the other way."
+      },
+      "instructions": {
+        "kk": "1. 3×3 м алаңның бір шетінде доппен тұр, доп аяғыңның алдында болсын.\n2. Допты төрт-бес жанасумен баяу алға жүргіз.\n3. Табаныңды допты үстіне қойып, оны өзіңе қарай тарт.\n4. Тірек аяғыңда бұрылып, бүкіл денеңмен айналып, допты қарсы бағытқа алып жүр.\n5. Он рет бұрыл: бесеуін оң аяғыңмен, бесеуін сол аяғыңмен.",
+        "ru": "1. Встань у края квадрата 3×3 м, мяч у ног.\n2. Медленно веди мяч вперёд четыре-пять касаний.\n3. Поставь подошву сверху на мяч и потяни его назад к себе.\n4. Повернись на опорной ноге всем телом и веди мяч в обратную сторону.\n5. Сделай десять разворотов: пять правой ногой и пять левой.",
+        "en": "1. Start at one edge of your 3×3 m square with the ball at your feet.\n2. Dribble slowly forward for four or five touches.\n3. Place the sole of your foot on top of the ball and drag it back towards you.\n4. Pivot on your other foot, turn your whole body and dribble back the other way.\n5. Do ten turns: five with your right foot and five with your left."
+      },
+      "dose": {
+        "reps": 10
+      },
+      "mistakes": [
+        {
+          "kk": "Допты артқа тартасың, бірақ бұрылмайсың да, оған сүріне жаздайсың.",
+          "ru": "Ты тянешь мяч назад, но не разворачиваешься и чуть не спотыкаешься о него.",
+          "en": "You pull the ball back but forget to turn, and nearly trip over it."
+        },
+        {
+          "kk": "Тым жылдам бұрылғаның сонша, доп артта қалып қояды.",
+          "ru": "Ты разворачиваешься так быстро, что мяч остаётся позади.",
+          "en": "You turn so fast that the ball is left behind."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тірек аяғыңның алдыңғы бөлігінде бұрыл да, тізеңді сәл бүгіп ұста, сонда тобығың бұралмайды.",
+          "ru": "Разворачивайся на передней части опорной стопы и держи колено чуть согнутым, чтобы не подвернуть щиколотку.",
+          "en": "Pivot on the front of your standing foot and keep the knee slightly bent, so your ankle does not twist."
+        },
+        {
+          "kk": "Құрғақ, тегіс еденде жаса да, бұрылу үшін арқаңның артында бір метр бос орын қалдыр.",
+          "ru": "Делай на сухом ровном полу и оставь метр свободного места за спиной для разворота.",
+          "en": "Work on a dry, flat floor and leave a metre of free space behind you for the turn."
+        },
+        {
+          "kk": "Алдымен жылын: жамбасыңмен он баяу айналым жасап, әр тобығыңды он реттен айналдыр.",
+          "ru": "Сначала разомнись: десять медленных кругов тазом и по десять вращений каждой стопой.",
+          "en": "Warm up first with ten slow hip circles and ten ankle rolls on each foot."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-change-direction-box",
+        "dribbling-look-up-dribble"
+      ],
+      "regressionSlugs": [
+        "dribbling-two-foot-zigzag"
+      ],
+      "minutes": 5,
+      "level": 2,
+      "ageMin": 7,
+      "equipment": "ball",
+      "space": "home_3x3",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-change-direction-box",
+      "title": {
+        "kk": "Бағыт өзгертетін шаршы",
+        "ru": "Квадрат смены направления",
+        "en": "Change-of-direction box"
+      },
+      "goal": {
+        "kk": "Төрт конустан тұратын шаршының айналасымен допты алып жүріп, әр бұрышта әртүрлі бұрылыс жасайсың.",
+        "ru": "Ты ведёшь мяч по квадрату из четырёх конусов и на каждом углу делаешь другой поворот.",
+        "en": "You dribble around a square of four cones and use a different turn at each corner."
+      },
+      "instructions": {
+        "kk": "1. Төрт конусты шаршы етіп, бір-бірінен шамамен төрт үлкен қадам (4 м) қашықтықта қой.\n2. Допты бірінші конусқа дейін алып барып, аяғыңның ішкі жағымен оны айнала бұрыл.\n3. Екінші конуста аяғыңның сыртқы жағын, үшінші конуста допты табаныңмен тартуды, төртіншісінде өзің қалаған бұрылысты қолдан.\n4. Әр бұрылыстың алдында допты бақылауға ал да, әр конустан доппен аяғыңның алдында шық.\n5. Сағат тілімен төрт айналым жаса, дем ал, сосын қарсы бағытқа төрт айналым жаса.",
+        "ru": "1. Расставь четыре конуса квадратом, примерно в четырёх больших шагах (4 м) друг от друга.\n2. Веди мяч к первому конусу и поверни вокруг него внутренней стороной стопы.\n3. У второго конуса используй внешнюю сторону стопы, у третьего — оттягивание мяча подошвой, у четвёртого — любой поворот на выбор.\n4. Перед каждым поворотом возьми мяч под контроль и уходи от каждого конуса с мячом у ног.\n5. Пройди четыре круга по часовой стрелке, отдохни, потом четыре круга в другую сторону.",
+        "en": "1. Set four cones in a square, about four big steps (4 m) apart.\n2. Dribble to the first cone and turn round it with the inside of your foot.\n3. At the second cone use the outside of your foot, at the third drag the ball back with your sole, and at the fourth turn any way you like.\n4. Control the ball before each turn and leave every cone with the ball at your feet.\n5. Go four laps clockwise, rest, then go four laps the other way."
+      },
+      "dose": {
+        "reps": 4,
+        "sets": 2
+      },
+      "mistakes": [
+        {
+          "kk": "Доп әлі жылдам домалап бара жатқанда бұрыла бастайсың, ол конус жанынан кетіп қалады.",
+          "ru": "Ты начинаешь поворот, пока мяч ещё быстро катится, и он уходит от конуса.",
+          "en": "You start the turn while the ball is still rolling fast, and it slips away at the cone."
+        },
+        {
+          "kk": "Әр конуста бір ғана бұрылысты қайталайсың.",
+          "ru": "Ты используешь один и тот же поворот у каждого конуса.",
+          "en": "You use the same turn at every cone."
+        },
+        {
+          "kk": "Бұрыла бастамай тұрып, конустың жанынан өтіп кетесің.",
+          "ru": "Ты пробегаешь мимо конуса, не успев начать поворот.",
+          "en": "You run past a cone before you begin to turn."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Доппен жүргізбес бұрын төрт бұрылысты допсыз қадаммен өтіп шық; дымқыл шөп тайғақ, сондықтан онда баяу бұрыл.",
+          "ru": "Сначала пройди четыре поворота шагом без мяча; мокрая трава скользкая, поэтому на ней поворачивай медленно.",
+          "en": "Walk the four turns once without the ball before you dribble; wet grass is slippery, so turn slowly on it."
+        },
+        {
+          "kk": "Шаршы жолдан, қоршаудан және басқа адамдардан кемінде үш үлкен қадам қашық болсын.",
+          "ru": "Держи квадрат минимум в трёх больших шагах от дороги, забора и других людей.",
+          "en": "Keep the square at least three big steps away from the road, the fence and other people."
+        },
+        {
+          "kk": "Алдымен жылын: шаршыны айнала жеңіл жүгіріспен екі айналым жаса.",
+          "ru": "Сначала разомнись: два лёгких круга трусцой вокруг квадрата.",
+          "en": "Warm up first with two easy laps of the square at a jog."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-tight-cone-weave"
+      ],
+      "regressionSlugs": [
+        "dribbling-sole-stop-turn",
+        "dribbling-five-cone-slalom"
+      ],
+      "minutes": 6,
+      "level": 2,
+      "ageMin": 8,
+      "equipment": "cones",
+      "space": "yard",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-look-up-dribble",
+      "title": {
+        "kk": "Жоғары қарап алып жүру",
+        "ru": "Ведение с взглядом вверх",
+        "en": "Look-up dribble"
+      },
+      "goal": {
+        "kk": "Допты 4×4 м алаңда алып жүріп, әр үш-төрт жанасудан кейін жоғары қарап, көргеніңді атайсың.",
+        "ru": "Ты ведёшь мяч в квадрате 4×4 м и каждые три-четыре касания поднимаешь голову и называешь то, что видишь.",
+        "en": "You dribble inside a 4×4 m area and, every three or four touches, look up and name something you see."
+      },
+      "instructions": {
+        "kk": "1. Шамамен 4×4 м алаңды белгіле, мысалы, бұрыштарына төрт аяқ киім қой.\n2. Алаң ішінде допты жаныңда ұстап, баяу алып жүр.\n3. Әр үш-төрт жанасудан кейін көзіңді көтеріп, көргеніңді ата: түсті немесе затты.\n4. Дереу қайта төмен қарап, алып жүре бер.\n5. Бір минуттан төрт айналым жаса, арасында 20 секунд дем ал.",
+        "ru": "1. Обозначь площадку примерно 4×4 м, например четырьмя ботинками по углам.\n2. Медленно веди мяч внутри площадки, держа его рядом.\n3. Каждые три-четыре касания поднимай глаза и называй то, что видишь: цвет или предмет.\n4. Сразу опусти взгляд и продолжай вести мяч.\n5. Сделай четыре подхода по одной минуте, между ними отдыхай 20 секунд.",
+        "en": "1. Mark out an area of about 4×4 m, for example with four shoes at the corners.\n2. Dribble slowly inside the area and keep the ball close.\n3. Every three or four touches lift your eyes and name what you see: a colour or an object.\n4. Look down again at once and keep dribbling.\n5. Do four rounds of one minute, with 20 seconds of rest in between."
+      },
+      "dose": {
+        "durationSec": 60,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Басыңды көтерген сайын доп сенен қашып кетеді.",
+          "ru": "Каждый раз, когда ты поднимаешь голову, мяч убегает от тебя.",
+          "en": "The ball rolls away from you every time you lift your head."
+        },
+        {
+          "kk": "Жоғары бір секундтан аз қарайсың да, ештеңе көріп үлгермейсің.",
+          "ru": "Ты поднимаешь взгляд меньше чем на секунду и ничего не успеваешь увидеть.",
+          "en": "You look up for less than a second and do not see anything, so you cannot name it."
+        },
+        {
+          "kk": "Белгіленген алаңнан шығып кетесің.",
+          "ru": "Ты выходишь за границы площадки.",
+          "en": "You wander out of the marked area."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Белгіленген алаңның ішінде жүр де, шетіне жеткенде кері бұрыл, сонда жоғары қарағанда қоршауға, тұрған көлікке немесе адамға соғылмайсың.",
+          "ru": "Оставайся внутри площадки и у края разворачивайся, чтобы, глядя вверх, не налететь на забор, припаркованную машину или человека.",
+          "en": "Stay inside the marked area and turn back at its edge, so that you never walk into a fence, a parked car or a person while you look up."
+        },
+        {
+          "kk": "Шұңқырсыз тегіс жер таңда: жоғары қарағанда аяғыңды қайда басатыныңды көрмейсің.",
+          "ru": "Выбери ровную землю без ямок: ты смотришь вверх и не видишь, куда ставишь ногу.",
+          "en": "Choose flat ground without holes, because when you look up you cannot see where you put your foot."
+        },
+        {
+          "kk": "Алдымен жылын: бір минут баяу қадаммен допты алып жүр.",
+          "ru": "Сначала разомнись: минута медленного ведения шагом.",
+          "en": "Warm up first with a minute of slow dribbling at a walk."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-partner-finger-signal"
+      ],
+      "regressionSlugs": [
+        "dribbling-freeze-and-go",
+        "dribbling-quick-feet-look-around"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "ball",
+      "space": "yard",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-partner-finger-signal",
+      "title": {
+        "kk": "Саусақ белгісімен алып жүру",
+        "ru": "Ведение по сигналу пальцами",
+        "en": "Finger-signal dribble"
+      },
+      "goal": {
+        "kk": "Досың саусақ көрсетіп тұрғанда допты 4×4 м алаңда алып жүріп, көрген санды айтасың.",
+        "ru": "Ты ведёшь мяч в квадрате 4×4 м, пока друг показывает пальцы, и называешь число, которое видишь.",
+        "en": "You dribble inside a 4×4 m area while a friend holds up fingers, and you call out the number you see."
+      },
+      "instructions": {
+        "kk": "1. Бұрыштарына төрт аяқ киім қойып, шамамен 4×4 м алаң белгіле.\n2. Досың алаңның сыртында, шетінен шамамен үш үлкен қадам жерде, саған қарап қозғалмай тұрсын.\n3. Алаң ішінде допты жаныңда ұстап, баяу алып жүр.\n4. Досың анда-санда бірден бесеуге дейін саусақ көрсетеді; оларды көргенде санды дауыстап айт.\n5. Бір минуттан төрт айналым жаса, сосын рөлдеріңмен алмас: досың допты алып жүреді, сен саусақ көрсетесің.",
+        "ru": "1. Обозначь площадку примерно 4×4 м четырьмя ботинками по углам.\n2. Друг стоит на месте за пределами площадки, примерно в трёх больших шагах от края, лицом к тебе.\n3. Медленно веди мяч внутри площадки, держа его рядом.\n4. Время от времени друг показывает от одного до пяти пальцев; увидев их, громко назови число.\n5. Сделай четыре подхода по минуте, потом поменяйтесь: друг ведёт мяч, а ты показываешь пальцы.",
+        "en": "1. Mark out an area of about 4×4 m with four shoes at the corners.\n2. Your friend stands still outside the area, about three big steps from its edge, facing you.\n3. Dribble slowly inside the area and keep the ball close.\n4. Now and then your friend shows one to five fingers; as soon as you see them, call out the number loudly.\n5. Do four rounds of one minute, then swap: your friend dribbles and you show the fingers."
+      },
+      "dose": {
+        "durationSec": 60,
+        "sets": 4
+      },
+      "mistakes": [
+        {
+          "kk": "Белгіні көру үшін тоқтап қаласың.",
+          "ru": "Ты останавливаешься, чтобы посмотреть на сигнал.",
+          "en": "You stop dribbling to look at the signal."
+        },
+        {
+          "kk": "Санды шынымен қарамай, болжап айтасың.",
+          "ru": "Ты называешь число наугад, не посмотрев по-настоящему.",
+          "en": "You guess the number without really looking."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Досың бүкіл айналым бойы алаңның сыртында қозғалмай тұрады да, оның ішіне кірмейді.",
+          "ru": "Друг всё время стоит на месте за площадкой и не заходит в неё.",
+          "en": "Your friend stays still outside the area for the whole round and never steps into it."
+        },
+        {
+          "kk": "Доп досыңа қарай домалай бастаса, дереу тоқтат; досыңнан кемінде үш қадам алыста жүр.",
+          "ru": "Если мяч катится к другу, сразу останови его и держи не меньше трёх шагов расстояния до друга.",
+          "en": "Stop the ball at once if it rolls towards your friend, and keep at least three steps of distance from them."
+        },
+        {
+          "kk": "Екеуің алдымен жылыныңдар: бір минут орнында жеңіл жүгіріңдер.",
+          "ru": "Оба сначала разомнитесь: минута лёгкого бега на месте.",
+          "en": "Both of you warm up first with a minute of easy jogging on the spot."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-speed-dash-stop"
+      ],
+      "regressionSlugs": [
+        "dribbling-look-up-dribble"
+      ],
+      "partner": true,
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "ball",
+      "space": "yard",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-tight-cone-weave",
+      "title": {
+        "kk": "Тығыз слалом",
+        "ru": "Плотный слалом",
+        "en": "Tight cone weave"
+      },
+      "goal": {
+        "kk": "Бір-біріне жақын тұрған бес конустың арасынан жылдам ұсақ жанасумен өтесің, доп аяғыңнан алыстамайды.",
+        "ru": "Ты проводишь мяч между пятью тесно стоящими конусами быстрыми мелкими касаниями, и мяч не отходит от ног.",
+        "en": "You weave through five cones set close together with quick, tiny touches and keep the ball glued to your feet."
+      },
+      "instructions": {
+        "kk": "1. Тегіс жерге бес конусты бір қатарға, бір-бірінен бар болғаны бір үлкен қадам (шамамен 1 м) жерге қой.\n2. Бірінші конустан бастап, соңғысына дейін ұсақ жанасумен өт, әр аралықта аяғыңды ауыстыр.\n3. Тізеңді бүгіп, денеңді допқа төмен ұста.\n4. Соңғы конуста бұрылып, ешқайсысына тимей кері өт; бұл бір өту.\n5. Алты рет өт, әр жолдан кейін сәл дем ал, соңғысы біріншісінен таза болсын.",
+        "ru": "1. Поставь пять конусов в линию на ровной земле, всего в одном большом шаге (около 1 м) друг от друга.\n2. Начни у первого конуса и проведи мяч до последнего мелкими касаниями, на каждом промежутке меняя ногу.\n3. Держи колени согнутыми, а тело низко над мячом.\n4. У последнего конуса развернись и веди обратно, не задев ни одного конуса; это один проход.\n5. Сделай шесть проходов, немного отдыхая после каждого, и постарайся, чтобы последний был чище первого.",
+        "en": "1. Set five cones in a line on flat ground, only one big step (about 1 m) apart.\n2. Start at the first cone and weave to the last with tiny touches, changing feet at each gap.\n3. Keep your knees bent and your body low over the ball.\n4. Turn at the last cone and weave back without touching any cone; that is one run.\n5. Do six runs, resting a little after each, and try to make the last run cleaner than the first."
+      },
+      "dose": {
+        "reps": 6
+      },
+      "mistakes": [
+        {
+          "kk": "Үлкен жанасулар жасайсың, доп конусқа тиіп кетеді.",
+          "ru": "Ты делаешь большие касания, и мяч задевает конус.",
+          "en": "You take big touches and the ball bumps a cone."
+        },
+        {
+          "kk": "Түзу тұрып алып, доп аяғыңнан алыстап кетеді.",
+          "ru": "Ты выпрямляешься, и мяч уходит от ног.",
+          "en": "You stand up tall and the ball slips away from your feet."
+        },
+        {
+          "kk": "Әр аралықта бір ғана аяқты қолданасың.",
+          "ru": "На каждом промежутке ты работаешь только одной ногой.",
+          "en": "You use only one foot at every gap."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Конусқа баспа, айнала өт: аяғыңның астындағы конус тобығыңды бұрап жіберуі мүмкін.",
+          "ru": "Не наступай на конусы, а обходи их: конус под стопой может подвернуть щиколотку.",
+          "en": "Step around a cone and never onto it, because a cone under your foot can twist your ankle."
+        },
+        {
+          "kk": "Жолдан және басқа балалардан алыс, тегіс әрі құрғақ жерде жаттыққан дұрыс; жер тайғақ болса, тоқта.",
+          "ru": "Занимайся на ровном сухом месте, подальше от дороги и других детей; если земля стала скользкой, остановись.",
+          "en": "Train on a flat, dry patch away from the road and other children, and stop if the ground gets slippery."
+        },
+        {
+          "kk": "Алдымен жылын: допсыз конустардың арасынан алдымен қадаммен, сосын жеңіл жүгіріспен бір рет өтіп шық.",
+          "ru": "Сначала разомнись: пройди между конусами без мяча один раз шагом и один раз трусцой.",
+          "en": "Warm up first: walk the whole weave once and jog it once before you take the ball."
+        }
+      ],
+      "progressionSlugs": [
+        "dribbling-speed-dash-stop"
+      ],
+      "regressionSlugs": [
+        "dribbling-change-direction-box",
+        "dribbling-five-cone-slalom"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 9,
+      "equipment": "cones",
+      "space": "yard",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    },
+    {
+      "slug": "dribbling-speed-dash-stop",
+      "title": {
+        "kk": "Жылдам жүріп, тоқтау",
+        "ru": "Рывок и остановка",
+        "en": "Dash and stop"
+      },
+      "goal": {
+        "kk": "Допты жеңіл жүгіріспен он бес метр алып жүріп, фиништегі екі конустың арасында табаныңмен тоқтатасың.",
+        "ru": "Ты ведёшь мяч лёгкой пробежкой 15 метров и останавливаешь его подошвой между двумя финишными конусами.",
+        "en": "You dribble at a light jog over 15 metres and stop the ball with your sole between two finish cones."
+      },
+      "instructions": {
+        "kk": "1. Екі конусты старт, екі конусты финиш қақпасы етіп қой: аралығы 15 метр, қақпаның ені 2 метр.\n2. Финиш қақпасының артында кемінде 10 метр бос шөп бар екеніне көз жеткіз.\n3. Жеңіл жүгіріспен баста да, допты әр екінші-үшінші қадам сайын аяқтың сыртқы жағымен алға итер.\n4. Финишке екі қадам қалғанда баяула да, допты финиш конустарының арасында табаныңмен тоқтат.\n5. Доппен кері жүріп кел де, сегіз рет қайтала, әр жүгірістен кейін дем ал.",
+        "ru": "1. Поставь два конуса как старт и два конуса как финишные ворота: 15 метров друг от друга, ширина ворот 2 метра.\n2. Проверь, что за финишными воротами не менее 10 метров пустой травы.\n3. Начни лёгким бегом и толкай мяч вперёд внешней стороной стопы на каждый второй-третий шаг.\n4. За два шага до финиша замедлись и останови мяч подошвой между финишными конусами.\n5. Вернись шагом с мячом и повтори восемь раз, отдыхая после каждого забега.",
+        "en": "1. Set two cones as the start and two cones as the finish gate, 15 metres apart and 2 metres wide.\n2. Check that there are at least 10 metres of empty grass behind the finish gate.\n3. Start at a jog and push the ball forward with the outside of your foot every second or third step.\n4. Slow down two steps before the finish and stop the ball with your sole between the finish cones.\n5. Walk back with the ball and repeat eight times, resting after each run."
+      },
+      "dose": {
+        "reps": 8
+      },
+      "mistakes": [
+        {
+          "kk": "Допты тым алысқа итересің де, финишке дейін оған жете алмайсың.",
+          "ru": "Ты толкаешь мяч слишком далеко и не успеваешь за ним до финиша.",
+          "en": "You push the ball too far ahead and cannot catch it before the finish."
+        },
+        {
+          "kk": "Тек финиш конустарының жанында ғана баяулайсың, сондықтан доп олардан асып кетеді.",
+          "ru": "Ты начинаешь тормозить только у финишных конусов, и мяч укатывается за них.",
+          "en": "You start slowing down only at the finish cones, so the ball rolls past them."
+        }
+      ],
+      "safety": [
+        {
+          "kk": "Тек бос, тегіс шөпті алаңда жүгір, жолға, қоршауға немесе басқа балаларға қарай ешқашан жүгірме; финиш қақпасының артында он метр бос жер болуы керек.",
+          "ru": "Бегай только по пустому ровному участку травы и никогда в сторону дороги, забора или других детей; за финишными воротами должно быть десять свободных метров.",
+          "en": "Run only on an empty, flat stretch of grass and never towards a road, a fence or other children; the finish gate needs ten free metres behind it."
+        },
+        {
+          "kk": "Доп қашып кетсе, жіберіп жібер де, соңынан қадаммен бар; жол маңында оның соңынан жүгірме.",
+          "ru": "Если мяч убежал, дай ему уйти и иди за ним шагом; никогда не бросайся за ним бегом рядом с дорогой.",
+          "en": "If the ball gets away from you, let it go and walk after it; never sprint after it near a road."
+        },
+        {
+          "kk": "Алдымен жылын: бір минут жеңіл жүгіріп, аяқтарыңды бірнеше рет жайлап сермеп ал; суық бұлшық етпен шапшаң жүгірме.",
+          "ru": "Сначала разомнись: минута лёгкого бега и несколько плавных махов ногами; не делай рывков на холодные мышцы.",
+          "en": "Warm up first with a minute of easy jogging and a few gentle leg swings; never dash on cold muscles."
+        }
+      ],
+      "regressionSlugs": [
+        "dribbling-tight-cone-weave",
+        "dribbling-partner-finger-signal"
+      ],
+      "minutes": 6,
+      "level": 3,
+      "ageMin": 10,
+      "equipment": "cones",
+      "space": "field",
+      "ageMax": 99,
+      "license": "CC-BY-SA-4.0",
+      "author": "FIRST COACH Genesis",
+      "source": "FIRST COACH Community Draft",
+      "semver": "1.0.0"
+    }
+  ]
+}
