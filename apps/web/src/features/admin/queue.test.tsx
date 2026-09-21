@@ -14,7 +14,7 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
+const { cleanup, fireEvent, render, screen, waitFor, within } = await import('@testing-library/react');
 
 // NOTE: never `expect(element).toBeNull()` / `.toBe(element)`. When such an assertion FAILS, bun pretty-prints the happy-dom
 // element (a huge circular object graph): it can take a minute. Compare to null / with === and assert on the boolean instead.
@@ -834,6 +834,27 @@ describe('deciding: in flight', () => {
     held.release(json(approvedResponse(NEW_ITEM)));
     await screen.findByText('Approved. The method is now in the commons.');
     expect(backButton().disabled).toBe(false);
+  });
+});
+
+describe('deciding: double click', () => {
+  test('two clicks in the same instant (before the screen has had time to lock the buttons) send one request', async () => {
+    const user = userEvent.setup();
+    const held = deferred();
+    serve({ decide: [() => held.promise] });
+    await renderLoaded();
+    await openReview(user, 'Cone slalom');
+
+    const button = approveButton();
+    fireEvent.click(button);
+    fireEvent.click(button);
+    await waitFor(() => expect(decisionCalls()).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(decisionCalls()).toHaveLength(1);
+
+    held.release(json(approvedResponse(NEW_ITEM)));
+    await screen.findByText('Approved. The method is now in the commons.');
+    expect(decisionCalls()).toHaveLength(1);
   });
 });
 
