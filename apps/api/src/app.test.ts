@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { Hono } from "hono";
 import { PROBLEM_CONTENT_TYPE, ProblemDetails } from "./shared/primitives";
 import { createApp, mountRoutes, type AppDeps } from "./app";
+import { migrate } from "./db/migrate";
 
 // Temp route modules cannot resolve bare specifiers from os.tmpdir(), so they
 // import hono's HTTPException by absolute URL (keeps `instanceof` intact) and
@@ -175,7 +176,9 @@ describe("static web serving", () => {
   });
 
   test("/health from the default routes dir wins over static", async () => {
-    const app = await createApp(deps(), undefined, { webDist: makeDist() });
+    const migrated = deps();
+    migrate(migrated.db);
+    const app = await createApp(migrated, undefined, { webDist: makeDist() });
     const res = await app.request("/health");
 
     expect(res.status).toBe(200);
@@ -203,7 +206,9 @@ describe("static web serving", () => {
   });
 
   test("without options createApp still boots and keeps its API behaviour", async () => {
-    const app = await createApp(deps());
+    const migrated = deps();
+    migrate(migrated.db);
+    const app = await createApp(migrated);
 
     const health = await app.request("/health");
     expect(health.status).toBe(200);
