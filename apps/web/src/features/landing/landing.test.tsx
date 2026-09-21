@@ -434,6 +434,35 @@ describe('stat strip states', () => {
     });
   });
 
+  test('focus: a failed retry gives focus back to the retry button, a successful one moves it to the numbers', async () => {
+    const seen = stubFetch((n) => (n === 3 ? ok(STATS) : problem(500)));
+    const { container, findByRole, queryByRole } = renderLanding('en');
+    const name = { name: copy('en', 'stats.error.retry') };
+    const retry = await findByRole('button', name);
+    retry.focus();
+    fireEvent.click(retry);
+    // A natively disabled button drops focus in a real browser; do the same here, then let the request settle.
+    retry.blur();
+    await waitFor(() => expect(seen).toHaveLength(2));
+    await waitFor(async () => expect(((await findByRole('button', name)) as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() => expect(document.activeElement).toBe(retry));
+
+    fireEvent.click(retry);
+    retry.blur();
+    await waitFor(() => expect(statList(container)).not.toBeNull());
+    expect(queryByRole('button', name)).toBeNull();
+    const region = statList(container)!.closest<HTMLElement>('[aria-label]');
+    expect(region?.getAttribute('tabindex')).toBe('-1');
+    await waitFor(() => expect(document.activeElement).toBe(region));
+  });
+
+  test('a page load that fails does not steal focus', async () => {
+    stubFetch(() => problem(500));
+    const { findByRole } = renderLanding('en');
+    await findByRole('button', { name: copy('en', 'stats.error.retry') });
+    expect(document.activeElement === document.body || document.activeElement === null).toBe(true);
+  });
+
   test('coming back to the tab does not make a second call', async () => {
     const seen = stubFetch(() => ok(STATS));
     const { container } = renderLanding('en');
