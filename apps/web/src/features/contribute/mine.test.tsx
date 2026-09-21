@@ -292,6 +292,14 @@ describe('success: the contributions from the response', () => {
     expect(text(item('Cone slalom'))).toContain(`Updated ${date(UPDATED)}`);
   });
 
+  test('a contribution that has not changed since it was sent shows no "Updated" date', async () => {
+    serve({ list: [() => json([contribution('c-same', 'pending', 'Untouched', { updatedAt: SENT })])] });
+    renderMine();
+    await screen.findByRole('list', { name: 'Your contributions' });
+    expect(text(item('Untouched'))).toContain(`Sent ${date(SENT)}`);
+    expect(text(item('Untouched'))).not.toContain('Updated');
+  });
+
   test('the reviewer’s note is shown, word for word, on the items that have one, and nowhere else', async () => {
     await renderLoaded();
     expect(text(item('Cone slalom'))).toContain('Reviewer’s note');
@@ -647,6 +655,13 @@ describe('anonymous players are not contributors', () => {
     // Going to sign-in replaces this page, so Back does not bounce the visitor into the redirect again.
     router.history.back();
     await waitFor(() => expect(router.state.location.pathname).not.toBe('/contribute/mine'));
+  });
+
+  test('the redirect replaces this page in the history instead of stacking sign-in on top of it', async () => {
+    serve({ list: [() => problem(403, 'Forbidden')] });
+    const { router } = renderMine();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/account/sign-in'));
+    expect(router.history.length).toBe(1);
   });
 
   test('while the redirect happens the page says why and offers the sign-in link', async () => {
