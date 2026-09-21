@@ -213,22 +213,23 @@ describe('admin link', () => {
   });
 });
 
-describe('isAdminSession', () => {
-  test('true for a signed-in user whose role list contains admin', () => {
-    expect(isAdminSession({ user: { role: 'admin' } })).toBe(true);
-    expect(isAdminSession({ user: { role: 'contributor,admin' } })).toBe(true);
+describe('isAdminSession (same rule as the API guard requireAdmin)', () => {
+  test('true for a non-anonymous user whose role list contains admin', () => {
+    expect(isAdminSession({ user: { role: 'admin', isAnonymous: false } })).toBe(true);
+    expect(isAdminSession({ user: { role: 'contributor,admin', isAnonymous: false } })).toBe(true);
   });
 
   test('false for contributors, unknown roles and near-misses', () => {
-    expect(isAdminSession({ user: { role: 'contributor' } })).toBe(false);
-    expect(isAdminSession({ user: { role: 'superadmin' } })).toBe(false);
-    expect(isAdminSession({ user: { role: 'Admin' } })).toBe(false);
-    expect(isAdminSession({ user: { role: '' } })).toBe(false);
+    expect(isAdminSession({ user: { role: 'contributor', isAnonymous: false } })).toBe(false);
+    expect(isAdminSession({ user: { role: 'superadmin', isAnonymous: false } })).toBe(false);
+    expect(isAdminSession({ user: { role: 'Admin', isAnonymous: false } })).toBe(false);
+    expect(isAdminSession({ user: { role: '', isAnonymous: false } })).toBe(false);
   });
 
-  test('false for an anonymous player, even one that carries the admin role string', () => {
+  test('false unless the account is explicitly non-anonymous, even when it carries the admin role string', () => {
     expect(isAdminSession({ user: { role: 'admin', isAnonymous: true } })).toBe(false);
-    expect(isAdminSession({ user: { role: 'admin', isAnonymous: false } })).toBe(true);
+    expect(isAdminSession({ user: { role: 'admin', isAnonymous: null } })).toBe(false);
+    expect(isAdminSession({ user: { role: 'admin' } })).toBe(false);
   });
 
   test('false for no session and for unintelligible data', () => {
@@ -236,7 +237,7 @@ describe('isAdminSession', () => {
     expect(isAdminSession(undefined)).toBe(false);
     expect(isAdminSession({})).toBe(false);
     expect(isAdminSession({ user: null })).toBe(false);
-    expect(isAdminSession({ user: {} })).toBe(false);
+    expect(isAdminSession({ user: { isAnonymous: false } })).toBe(false);
     expect(isAdminSession('admin')).toBe(false);
   });
 });
