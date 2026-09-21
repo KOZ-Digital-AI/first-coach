@@ -589,6 +589,7 @@ describe('002_player: CHECK lists and bounds mirror the contract', () => {
     const db = migrated('all');
     addProfile(db, { player_id: 'yes', partner: 1 });
     addProfile(db, { player_id: 'no', partner: 0 });
+    addProfile(db); // p1 owns the results below
     for (const bad of [2, -1]) {
       expect(thrown(() => addProfile(db, { player_id: 'x', partner: bad })).message).toMatch(/CHECK constraint failed: partner IN/);
     }
@@ -763,7 +764,7 @@ describe('002_player: test_results replay key', () => {
     addResult(db, { client_uuid: '0190f1c2-7a3b-4c5d-8e9f-0a1b2c3d4e5f' });
 
     const bad = [
-      '', 'not-a-uuid', uuid(2).toUpperCase(), uuid(3).replace(/-/g, ''), `${uuid(4)} `, ` ${uuid(5)}`, `${uuid(6)}0`,
+      '', 'not-a-uuid', uuid(3).replace(/-/g, ''), `${uuid(4)} `, ` ${uuid(5)}`, `${uuid(6)}0`,
       '0190f1c2-7a3b-4c5d-8e9f-0a1b2c3d4e5g', '0190F1C2-7A3B-4C5D-8E9F-0A1B2C3D4E5F', '0190f1c27-a3b-4c5d-8e9f-0a1b2c3d4e5f',
     ];
     for (const client_uuid of bad) {
@@ -880,7 +881,7 @@ describe('002_player: timestamps are canonical UTC text so that text order is ti
   ];
   test('every timestamp column accepts the canonical form and rejects other spellings', () => {
     const db = migrated('all');
-    addProfile(db, { player_id: 'seed' });
+    addProfile(db); // p1 owns the result row below
     const cases: [string, (value: string, n: number) => void][] = [
       ['player_profiles.created_at', (value, n) => addProfile(db, { player_id: `c${n}`, created_at: value })],
       ['player_profiles.updated_at', (value, n) => addProfile(db, { player_id: `u${n}`, updated_at: value })],
@@ -920,7 +921,9 @@ describe('002_player: timestamps are canonical UTC text so that text order is ti
 
 describe('002_player: the progress queries the contracts imply are index lookups', () => {
   const plan = (db: Database, sql: string): string =>
-    rows<{ detail: string }>(db, `EXPLAIN QUERY PLAN ${sql}`, 'p1', 'juggling-30s').map((r) => r.detail).join('\n');
+    rows<{ detail: string }>(db, `EXPLAIN QUERY PLAN ${sql}`, ...['p1', 'juggling-30s'].slice(0, sql.split('?').length - 1))
+      .map((r) => r.detail)
+      .join('\n');
   const indexColumns = (db: Database, index: string): string[] =>
     rows<{ name: string }>(db, `SELECT name FROM pragma_index_info('${index}') ORDER BY seqno`).map((r) => r.name);
 
