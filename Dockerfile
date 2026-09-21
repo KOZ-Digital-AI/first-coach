@@ -16,6 +16,8 @@ RUN bun install --frozen-lockfile
 
 COPY tsconfig.base.json ./
 COPY apps ./apps
+# The web `prebuild` runs ../../scripts/fetch-pose-model.ts (self-hosted pose model), so the build stage needs scripts/.
+COPY scripts ./scripts
 RUN bun run typecheck
 RUN bun run --filter @first-coach/web build
 

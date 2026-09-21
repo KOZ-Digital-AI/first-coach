@@ -9,14 +9,18 @@
 //   names; they may reference them, e.g. `REFERENCES "user"(id)`.
 // - Anonymous plugin = players; email + password = contributors (no verification, no
 //   mail transport); admin plugin with roles `contributor` and `admin`.
+// - Guest to account: when an anonymous player signs up or signs in to an email account, the
+//   anonymous plugin's onLinkAccount (link-account.ts) re-keys the guest's player rows to the
+//   account before Better Auth deletes the anonymous user.
 // - Known caveat: Kysely shares the app's single synchronous bun:sqlite connection, so
-//   keep app writes out of async transaction gaps. Anonymous-user cleanup and the
-//   onLinkAccount recovery flow are later work.
+//   keep app writes out of async transaction gaps (the re-key is one synchronous transaction).
 import type { Database } from "bun:sqlite";
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins/admin";
 import { adminAc, defaultAc } from "better-auth/plugins/admin/access";
 import { anonymous } from "better-auth/plugins/anonymous";
+import { createLinkAccountHandler } from "./link-account";
+import { RATE_LIMITS } from "./rate-limit";
 
 export const ROLE_CONTRIBUTOR = "contributor";
 export const ROLE_ADMIN = "admin";
@@ -102,18 +106,27 @@ export function createAuth(config: AuthConfig) {
       // log a false "schema mismatch" error on every first boot (tables do not exist yet).
       database: { validateSchema: false },
     },
-    // In-memory limiter keyed by client IP. Anonymous sign-in gets a roomier rule so a
-    // classroom behind one NAT can start together; it is still capped per minute.
-    // Advisory: the limiter trusts X-Forwarded-For from the platform proxy, so a caller
-    // that rotates that header evades it and a header-less caller shares one bucket.
-    // Verify Railway's forwarding behaviour at deploy time.
+    // Better Auth's built-in limiter, counters in the app's SQLite database (its `rateLimit`
+    // table, created by ensureAuthSchema). It keys on client IP + path, so sign-in and
+    // sign-up are separate buckets. The numbers live in rate-limit.ts. Every other
+    // /sign-in* and /sign-up* path keeps Better Auth's strict default (3 per 10 s).
+    // TRUSTED-PROXY ASSUMPTION: the IP comes from X-Forwarded-For, which Better Auth trusts
+    // only as a single-value header (no `trustedProxies` set); a multi-value chain, an
+    // invalid value or no header shares one "no-trusted-ip" bucket, so rotating forged
+    // addresses cannot evade the limit. That is sound only while the app is reachable solely
+    // through the platform's edge proxy; see rate-limit.ts. Brute-force protection is these
+    // limits: there is no email, so no password reset (the admin CLI resets passwords).
     rateLimit: {
       enabled: config.production,
-      storage: "memory",
-      customRules: { "/sign-in/anonymous": { window: 60, max: 30 } },
+      storage: "database",
+      customRules: {
+        "/sign-in/email": RATE_LIMITS.signIn,
+        "/sign-up/email": RATE_LIMITS.signUp,
+        "/sign-in/anonymous": RATE_LIMITS.anonymousSignIn,
+      },
     },
     plugins: [
-      anonymous(),
+      anonymous({ onLinkAccount: createLinkAccountHandler(config.db) }),
       admin({ roles, defaultRole: ROLE_CONTRIBUTOR, adminRoles: [ROLE_ADMIN] }),
     ],
   });
