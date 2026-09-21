@@ -287,8 +287,8 @@ describe('the drill list', () => {
   test('done is a word and a check mark, never colour alone; the drills still to do say so in words', async () => {
     mountToday();
     const [first, second, third] = await rows();
-    expect(within(first!).getByText('Done')).toBeTruthy();
-    expect(first!.querySelector('svg')).not.toBeNull();
+    // The check mark sits with the word, so the two read as one signal (the row has other icons: badge, chevron).
+    expect(within(first!).getByText('Done').querySelector('svg')).not.toBeNull();
     expect(within(second!).queryByText('Done')).toBeNull();
     expect(within(second!).getByText('To do')).toBeTruthy();
     expect(within(third!).queryByText('Done')).toBeNull();
