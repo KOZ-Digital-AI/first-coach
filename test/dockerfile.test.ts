@@ -364,6 +364,27 @@ describe("Dockerfile build stage", () => {
     expect(webBuild?.at ?? -1).toBeGreaterThan(firstSourceCopyAt(build));
   });
 
+  // fc-mol-8nt.11: the web `prebuild` runs ../../scripts/fetch-pose-model.ts, so the web build needs scripts/ in the image.
+  test("copies the repo-root scripts/ to /app/scripts before the web build (the web prebuild runs a script from there)", () => {
+    const { build } = stagesOf();
+    const webBuild = runCommands(build).find(({ command }) =>
+      /^bun (?:run )?--filter[= ]["']?@first-coach\/web["']? (?:run )?build$|^bun (?:run )?build$/.test(command),
+    );
+    const scriptsCopyAt = build.instructions.findIndex(({ keyword, args }) => {
+      if (keyword !== "COPY" && keyword !== "ADD") return false;
+      const copy = parseCopy(args);
+      // From the build context (not another stage); the WORKDIR of the build stage is /app.
+      return (
+        copy.from === undefined &&
+        copy.sources.some((source) => trimSlash(posix.normalize(source)) === "scripts") &&
+        trimSlash(posix.resolve(workdirAtEnd(build), copy.dest)) === `${APP_DIR}/scripts`
+      );
+    });
+    expect(scriptsCopyAt).toBeGreaterThanOrEqual(0);
+    expect(webBuild).toBeDefined();
+    expect(webBuild?.at ?? -1).toBeGreaterThan(scriptsCopyAt);
+  });
+
   test("the WORKDIR is /app", () => {
     const { build } = stagesOf();
     expect(workdirAtEnd(build)).toBe(APP_DIR);
