@@ -935,8 +935,10 @@ describe('a clip the coach could not see', () => {
   });
 
   test('visibility exactly at the minimum is accepted (only below it is a rerecord)', async () => {
+    // 0.5 is exact in floating point, so the mean of many landmarks is exactly the rubric minimum (0.6 would not be).
+    stubNetwork({ rubric: () => json({ ...RUBRIC, minVisibility: 0.5 }) });
     const world = makeWorld();
-    world.pose.detectOnVideo.mockImplementation(async () => framesOf(0.6));
+    world.pose.detectOnVideo.mockImplementation(async () => framesOf(0.5));
     const view = renderVideo(world);
     await toCapture(view);
     await view.user.upload(fileInput(), clipOf(14));
