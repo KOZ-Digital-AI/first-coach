@@ -1,23 +1,13 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
-import { useSlot } from '../lib/slots';
+import { AppShell } from '../features/shell/Shell';
 
+// The header and root extension slots (lib/slots.ts) are rendered by the shell, so later beads still add UI
+// without editing this file.
 function RootLayout() {
-  const headerExtras = useSlot('header');
-  const rootExtras = useSlot('root');
   return (
-    <>
-      {headerExtras.length > 0 && (
-        <header data-slot="header">
-          {headerExtras.map((Extra, index) => (
-            <Extra key={index} />
-          ))}
-        </header>
-      )}
+    <AppShell>
       <Outlet />
-      {rootExtras.map((Extra, index) => (
-        <Extra key={index} />
-      ))}
-    </>
+    </AppShell>
   );
 }
 
