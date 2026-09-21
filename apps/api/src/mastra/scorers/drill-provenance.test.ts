@@ -102,7 +102,8 @@ describe("drillProvenance: fails closed", () => {
   test("an item with no drillVersionId cannot be traced", () => {
     const result = drillProvenance(plan({ minutes: 8, reason: "x", title: "Wall passes" }), KNOWN);
     expect(result.score).toBe(0);
-    expect(result.flagged.map((f) => f.kind)).toEqual(["item"]);
+    // A missing id is an id that is not known: "drill_id". ("item" is for an item that is not an object.)
+    expect(result.flagged.map((f) => f.kind)).toEqual(["drill_id"]);
   });
 
   test("a non-string id (number, null, object) cannot be traced", () => {
@@ -116,6 +117,7 @@ describe("drillProvenance: fails closed", () => {
       const result = drillProvenance(plan(bad), KNOWN);
       expect(result.score).toBe(0);
       expect(result.itemScores).toEqual([0]);
+      expect(result.flagged.map((f) => f.kind)).toEqual(["item"]);
     }
   });
 
