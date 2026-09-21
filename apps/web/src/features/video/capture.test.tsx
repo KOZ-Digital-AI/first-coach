@@ -62,6 +62,10 @@ const { Route, VideoDepsContext } = await import('../../routes/video');
  *  - a clip in which the player is not seen well enough (mean visibility below the rubric's minVisibility) is answered on the
  *    device with the 'rerecord' hint and NOTHING is sent;
  *  - the setting `videoCoachEnabled` has no public endpoint: it shows as a 403 from the analysis that is not 'consent required'.
+ *  - CHANGED by fc-mol-8nt.12: the answer is no longer rendered here. A finished analysis navigates to /video/result/<analysis.id>
+ *    and a rerecord answer (from the server or from the device) to /video/result/<id or 'rerecord'>?rerecord=<reason>&skill=<slug>.
+ *    The route takes the navigation through a seam (`navigate`, replaced by a mock here); capture-nav.test.tsx runs it through a
+ *    real router. Every place that used to wait for the inline result heading now waits for that navigation.
  * Kazakh and Russian copy needs a native review: for those locales the tests pin only that text exists, is Cyrillic and never
  * leaks 'undefined', 'NaN', a raw key or an unfilled {{placeholder}}.
  */
@@ -257,6 +261,7 @@ function makeWorld(over: Record<string, unknown> = {}) {
   };
   const sampleKeyframes = mock(async (_video: unknown, _frames: unknown, n: number, _deps?: unknown) => KEYFRAMES.slice(0, n));
   const analyse = mock(async (_request: CreateVideoAnalysisRequest, _signal: AbortSignal): Promise<CreateVideoAnalysisResponse> => ANALYSIS);
+  const navigate = mock((_target: ResultTarget) => {});
   const loadClip = mock(async (blob: Blob) => {
     const clip: FakeClip = {
       video: { duration: (blob as FakeBlob).fakeDurationSec, currentTime: 0, ...VIDEO_SIZE, addEventListener() {}, removeEventListener() {} },
@@ -283,6 +288,7 @@ function makeWorld(over: Record<string, unknown> = {}) {
     loadClip,
     sampleKeyframes,
     analyse,
+    navigate,
     camera,
     online: () => true,
     canDetectPose: () => true,
@@ -301,10 +307,17 @@ function makeWorld(over: Record<string, unknown> = {}) {
     detectGate,
     sampleKeyframes: deps.sampleKeyframes as typeof sampleKeyframes,
     analyse: deps.analyse as typeof analyse,
+    navigate: deps.navigate as typeof navigate,
     loadClip: deps.loadClip as typeof loadClip,
   };
 }
 type World = ReturnType<typeof makeWorld>;
+
+/** What the screen hands the router's navigate (the route's seam): the id of /video/result/$id and, for a rerecord answer, its search. */
+type ResultTarget = { id: string; search?: { rerecord: string; skill: string } };
+/** Waits until the screen has navigated to the result screen (it used to be the inline result heading). */
+const navigated = (world: World) => waitFor(() => expect(world.navigate).toHaveBeenCalled());
+const lastTarget = (world: World): ResultTarget | undefined => world.navigate.mock.calls.at(-1)?.[0];
 
 beforeEach(() => {
   t = 0;
@@ -671,7 +684,7 @@ describe('the consent is re-checked before anything is sent', () => {
     await heading('Before you start');
     expect((world.analyse.mock.calls[0]?.[1] as AbortSignal).aborted).toBe(true);
     expect(screen.queryByRole('alert') === null).toBe(true);
-    expect(hasRole('heading', 'Your feedback')).toBe(false);
+    expect(world.navigate).not.toHaveBeenCalled();
   });
 
   test('the consents are read fresh right before `analyse` (a cached "granted" does not authorise a send), and the send goes ahead once', async () => {
@@ -686,7 +699,7 @@ describe('the consent is re-checked before anything is sent', () => {
     await toReview(view);
     const readsBefore = callsTo('/api/player/consents').length;
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     expect(world.analyse).toHaveBeenCalledTimes(1);
     expect(readsWhenSent).toBeGreaterThan(readsBefore);
   });
@@ -702,7 +715,7 @@ describe('the consent is re-checked before anything is sent', () => {
     expect(text(await screen.findByRole('alert'))).toContain('We could not get your feedback');
     expect(world.analyse).not.toHaveBeenCalled();
     await view.user.click(button('Try again'));
-    await heading('Your feedback');
+    await navigated(world);
     expect(reads).toBe(3);
     expect(world.analyse).toHaveBeenCalledTimes(1);
   });
@@ -724,7 +737,7 @@ describe('the consent is re-checked before anything is sent', () => {
     const view = renderVideo(world);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     expect(world.analyse).toHaveBeenCalledTimes(1);
     expect(callsTo('/api/player/me')).toHaveLength(0);
   });
@@ -737,7 +750,7 @@ describe('the consent is re-checked before anything is sent', () => {
     await toReview(view);
     const agesBefore = callsTo('/api/player/me').length;
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     expect(world.analyse).toHaveBeenCalledTimes(1);
     expect(callsTo('/api/player/me').length).toBeGreaterThan(agesBefore);
   });
@@ -1085,29 +1098,33 @@ describe('processing on the device', () => {
 // --- the answer on the device: not enough of the player was seen ---------------------------------------------------------------------
 
 describe('a clip the coach could not see', () => {
-  test('below the rubric minimum visibility: the rerecord hint is shown on the device and NOTHING is sent', async () => {
+  // CHANGED by fc-mol-8nt.12: the hint used to be shown inline ("We could not see you well enough", "Nothing was sent.", a Film again
+  // button). The screen now navigates to the re-record variant of the result screen; every "nothing is sent / clip released"
+  // assertion is kept.
+  test('below the rubric minimum visibility: the screen navigates to the rerecord answer and NOTHING is sent', async () => {
     const world = makeWorld();
     world.pose.detectOnVideo.mockImplementation(async () => framesOf(0.3));
     const view = renderVideo(world);
     await toCapture(view);
     await view.user.upload(fileInput(), clipOf(14));
-    expect(await screen.findByText('We could not see you well enough')).toBeTruthy();
-    expect(pageText()).toContain('Nothing was sent.');
+    await navigated(world);
+    expect(lastTarget(world)).toEqual({ id: 'rerecord', search: { rerecord: 'low_visibility', skill: 'dribbling' } });
+    expect(pageText()).not.toContain('We could not see you well enough');
     expect(world.analyse).not.toHaveBeenCalled();
     expect(world.sampleKeyframes).not.toHaveBeenCalled();
     expect(callsTo('/api/player/video-analyses', 'POST')).toHaveLength(0);
     expect(world.clips[0]?.release).toHaveBeenCalled();
-    await view.user.click(button('Film again'));
-    expect(await findButton('Record with the camera')).toBeTruthy();
   });
 
-  test('a clip with nobody in it is the same hint, not a crash', async () => {
+  // CHANGED by fc-mol-8nt.12: same navigation expectation instead of the inline hint.
+  test('a clip with nobody in it is the same rerecord answer, not a crash', async () => {
     const world = makeWorld();
     world.pose.detectOnVideo.mockImplementation(async () => NOBODY);
     const view = renderVideo(world);
     await toCapture(view);
     await view.user.upload(fileInput(), clipOf(14));
-    expect(await screen.findByText('We could not see you well enough')).toBeTruthy();
+    await navigated(world);
+    expect(lastTarget(world)).toEqual({ id: 'rerecord', search: { rerecord: 'low_visibility', skill: 'dribbling' } });
     expect(world.analyse).not.toHaveBeenCalled();
   });
 
@@ -1155,7 +1172,7 @@ describe('what is sent', () => {
     const view = renderVideo(world);
     await toReview(view, 14.3);
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     expect(world.analyse).toHaveBeenCalledTimes(1);
     const [request, signal] = world.analyse.mock.calls[0] as [CreateVideoAnalysisRequest, AbortSignal];
     // strict schema: an unknown key (a `video`) would fail
@@ -1183,7 +1200,7 @@ describe('what is sent', () => {
     const view = renderVideo({ ...world, deps: withoutAnalyse } as World);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     const posts = callsTo('/api/player/video-analyses', 'POST');
     expect(posts).toHaveLength(1);
     expect(posts[0]?.headers.get('content-type')).toBe('application/json');
@@ -1222,7 +1239,7 @@ describe('what is sent', () => {
     expect(world.analyse).toHaveBeenCalledTimes(1);
     expect(hasRole('button', 'Cancel sending')).toBe(true);
     gate.resolve(ANALYSIS);
-    await heading('Your feedback');
+    await navigated(world);
   });
 
   test('two taps in the same tick (before the screen can disable the button) still send once', async () => {
@@ -1238,7 +1255,7 @@ describe('what is sent', () => {
     await screen.findByRole('status', { name: 'Sending and waiting for feedback' });
     expect(world.analyse).toHaveBeenCalledTimes(1);
     gate.resolve(ANALYSIS);
-    await heading('Your feedback');
+    await navigated(world);
   });
 
   test('Cancel sending aborts the request and goes back to the review with Send available again, without an error', async () => {
@@ -1275,7 +1292,7 @@ describe('what is sent', () => {
     expect(text(alert)).toContain('We could not get your feedback');
     fail = false;
     await view.user.click(button('Try again'));
-    await heading('Your feedback');
+    await navigated(world);
     expect(world.analyse).toHaveBeenCalledTimes(2);
     expect(world.analyse.mock.calls[1]?.[0]).toEqual(world.analyse.mock.calls[0]?.[0] as never);
   });
@@ -1316,60 +1333,44 @@ describe('what is sent', () => {
 
 // --- the result ----------------------------------------------------------------------------------------------------------------------
 
+// CHANGED by fc-mol-8nt.12. This block used to pin the INLINE result (scores, focus, drills, "Analyse another clip") and the INLINE
+// rerecord view ("Film again"): the answer now lives on /video/result/:id (features/video/result.test.tsx pins what it shows).
+// What is pinned here is the hand-over: where the screen goes, and that it renders none of the answer itself.
 describe('the result', () => {
   async function toResult(view: View) {
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(view.world);
   }
 
-  test('shows each score out of 10 with its note, the focus, the recommended drills and when to film again, and no overall number', async () => {
+  test('a finished analysis navigates to /video/result/<its id> and renders none of it inline', async () => {
     const view = renderVideo();
     await toResult(view);
+    expect(view.world.navigate).toHaveBeenCalledTimes(1);
+    expect(lastTarget(view.world)).toEqual({ id: ANALYSIS.id });
     const shown = pageText();
-    expect(shown).toContain('Beta');
-    expect(shown).toContain('How sure we are: Medium');
-    for (const score of ANALYSIS.scores) {
-      expect(shown).toContain(score.label);
-      expect(shown).toContain(score.note);
-    }
-    expect(shown.match(/\d+ \/ 10/g)).toEqual(['7 / 10', '4 / 10']);
-    expect(shown).not.toMatch(/\/ ?100|out of 100/);
-    expect(await heading('Focus next')).toBeTruthy();
-    expect(shown).toContain(ANALYSIS.focusNext);
-    expect(await heading('Drills to try')).toBeTruthy();
-    const drill = screen.getByRole('link', { name: 'First Touch Box' }) as HTMLAnchorElement;
-    expect(drill.getAttribute('href')).toBe('/commons/first-touch-box');
-    expect(shown).toContain('Trains even touches.');
-    expect(shown).toContain('Film again after 3 training sessions to see how you changed.');
-    expect(shown).toContain('One clip from one angle cannot show everything.');
-    // the score is a number AND a bar, never colour alone
-    expect(screen.getAllByRole('meter').length).toBe(2);
-  });
-
-  test('Analyse another clip returns to the capture step of the same skill', async () => {
-    const view = renderVideo();
-    await toResult(view);
-    await view.user.click(button('Analyse another clip'));
-    await heading('Record or choose a clip');
-    expect(hasRole('button', 'Record with the camera')).toBe(true);
-  });
-
-  test.each([
-    ['low_visibility', 'We could not see you well enough'],
-    ['too_dark', 'The clip was too dark'],
-    ['too_short', 'The clip was too short to judge'],
-  ] as const)('a rerecord answer (%s) shows its hint and no scores', async (reason, title) => {
-    const world = makeWorld({ analyse: mock(async () => ({ rerecord: true, reason })) });
-    const view = renderVideo(world);
-    await toReview(view);
-    await view.user.click(button('Send for analysis'));
-    expect(await screen.findByText(title)).toBeTruthy();
+    for (const inline of [ANALYSIS.focusNext, 'Focus next', 'Drills to try', 'Your feedback', 'Analyse another clip'])
+      expect(shown).not.toContain(inline);
+    for (const score of ANALYSIS.scores) expect(shown).not.toContain(score.note);
     expect(screen.queryAllByRole('meter').length).toBe(0);
-    expect(pageText()).not.toMatch(/\d+ \/ 10/);
-    await view.user.click(button('Film again'));
-    expect(await findButton('Record with the camera')).toBeTruthy();
+    expect(hasRole('link', 'First Touch Box')).toBe(false);
   });
+
+  test.each(['low_visibility', 'too_dark', 'too_short'] as const)(
+    'a rerecord answer (%s) navigates to the re-record variant of the result screen with the reason and the skill, and shows nothing inline',
+    async (reason) => {
+      const world = makeWorld({ analyse: mock(async () => ({ rerecord: true, reason })) });
+      const view = renderVideo(world);
+      await toReview(view);
+      await view.user.click(button('Send for analysis'));
+      await navigated(world);
+      expect(world.navigate).toHaveBeenCalledTimes(1);
+      expect(lastTarget(world)).toEqual({ id: 'rerecord', search: { rerecord: reason, skill: 'dribbling' } });
+      for (const inline of ['We could not see you well enough', 'The clip was too dark', 'The clip was too short to judge', 'Film again'])
+        expect(pageText()).not.toContain(inline);
+      expect(screen.queryAllByRole('meter').length).toBe(0);
+    },
+  );
 
   test('the clip is released once the result is in, and released only through release()', async () => {
     const world = makeWorld();
@@ -1401,7 +1402,7 @@ describe('nothing is persisted', () => {
     const view = renderVideo(world);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     for (const stored of everyStoredString()) expect(stored).not.toContain(KEYFRAME_MARKER);
     const cache = JSON.stringify(dehydrate(view.queryClient, { shouldDehydrateQuery: () => true }));
     expect(cache).not.toContain(KEYFRAME_MARKER);
@@ -1415,7 +1416,7 @@ describe('nothing is persisted', () => {
     const view = renderVideo(world);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    await heading('Your feedback');
+    await navigated(world);
     const isPersisted = (key: readonly unknown[]) => PERSISTED_QUERY_PREFIXES.some((prefix) => prefix.every((part, i) => key[i] === part));
     for (const query of view.queryClient.getQueryCache().getAll()) {
       if (query.queryKey[0] === 'video') expect(isPersisted(query.queryKey)).toBe(false);
@@ -1518,7 +1519,7 @@ describe.each(['kk', 'ru'] as const)('%s', (locale) => {
     expect((await screen.findByRole('link', { name: messages[locale].gate.open })).getAttribute('href')).toBe('/settings/privacy');
   });
 
-  test('capture and result in this language', async () => {
+  test('capture, review and the hand-over to the result screen in this language', async () => {
     const world = makeWorld();
     const view = renderVideo(world, locale);
     await view.user.click(await screen.findByRole('button', { name: messages[locale].skills.dribbling.option }));
@@ -1529,9 +1530,9 @@ describe.each(['kk', 'ru'] as const)('%s', (locale) => {
     await screen.findByRole('heading', { name: messages[locale].review.title });
     clean();
     await view.user.click(screen.getByRole('button', { name: messages[locale].review.send }));
-    await screen.findByRole('heading', { name: messages[locale].result.title });
+    await navigated(world);
     clean();
-    expect(within(document.body).getAllByRole('meter').length).toBe(2);
+    expect(within(document.body).queryAllByRole('meter').length).toBe(0);
   });
 
   test('the clip length message names the seconds in this language and gives guidance', async () => {
