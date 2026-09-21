@@ -18,7 +18,7 @@ variable is needed only to override them.
 | Path | Variable | What is in it |
 | --- | --- | --- |
 | `/data/app.db` | `APP_DB_PATH` | The application database (commons, players, sessions, contributions, settings, Better Auth tables). WAL mode, so `app.db-wal` and `app.db-shm` appear next to it. |
-| `/data/media` | `MEDIA_DIR` | Uploaded media. `/health` reports whether it is writable. |
+| `/data/media` | `MEDIA_DIR` | Uploaded contribution attachments, one flat directory of server-named files. `/health` reports whether it is writable; the `30-uploads` hook reconciles it at every start. |
 | `/data/backups` | `BACKUP_DIR` | Nightly database backups, `first-coach-YYYY-MM-DD.sqlite`. |
 | `/data/mastra.db` | `MASTRA_DB_PATH` | Reserved for the AI framework. Validated, but no code writes it at this revision. |
 
@@ -32,7 +32,9 @@ This needs a person with a Railway account. Nothing in the repo can do it.
 1. Create a Railway project and one service from this repository. Railway builds from the Dockerfile because
    `railway.json` sets `"builder": "DOCKERFILE"` with `"dockerfilePath": "Dockerfile"`.
 2. Add a volume to that service and mount it at `/data`. A service can have one volume. Volume size follows the
-   Railway plan.
+   Railway plan. Confirm the mount before the first deploy: without it the image's own `/data` is used, the data
+   is lost on every deploy, and the uploads sweep (see [What happens on restart](#what-happens-on-restart))
+   would treat every attachment as missing.
 3. Generate the service's public domain (Networking settings). You need it for `BETTER_AUTH_URL`.
 4. Set the variables from the next section **before the first deploy**. Without `BETTER_AUTH_SECRET` and
    `BETTER_AUTH_URL` the server refuses to start (see below), so the first deploy would fail its healthcheck.
@@ -52,7 +54,7 @@ elsewhere in the API. No value belongs in the repo: `.env.example` holds placeho
 | --- | --- | --- | --- |
 | `PORT` | Optional | `4111` | HTTP port. Railway injects it; leave it alone on Railway. Must be an integer from 1 to 65535. |
 | `APP_DB_PATH` | Optional | `./data/app.db` (image: `/data/app.db`) | SQLite database file. The parent directory is created if missing. |
-| `MEDIA_DIR` | Optional | unset (image: `/data/media`) | Upload directory. `/health` `mediaWritable` is true only when it is set, exists and is writable. |
+| `MEDIA_DIR` | Optional | `./data/media` (image: `/data/media`) | Upload directory. The `30-uploads` hook creates it if missing and sweeps it at boot. `/health` `mediaWritable` is true only when the variable is set, the directory exists and it is writable. |
 | `MASTRA_DB_PATH` | Optional | unset (image: `/data/mastra.db`) | Validated only; nothing writes it yet. |
 | `BACKUP_DIR` | Optional | `backups` next to the database file (image: `/data/backups`) | Where the nightly backup is written. |
 | `WEB_DIST` | Optional | `apps/web/dist` | Built web app served by the API. |
@@ -185,7 +187,9 @@ bun apps/api/src/cli/restore.ts /data/backups/first-coach-2026-09-20.sqlite
   live `-wal` and `-shm` files, and renames the checked copy into place. It prints `restored ... from ...;
   previous database kept at ...`. Exit codes: 0 restored, 1 refused or failed, 2 usage.
 - After a restore, start the server. Boot runs the migrations, so a backup from an older schema is brought up to
-  date, and then the seed loader runs.
+  date, and then the seed loader runs. The backup holds no media files, and the uploads sweep at start deletes
+  files in `/data/media` that the restored database no longer references (older than 10 minutes), so an
+  attachment added after the backup is lost with it.
 
 **Restore on Railway.** The server is the container's main process, so it has to be stopped without losing the
 container. The plan (never rehearsed, see [Not yet verified](#not-yet-verified)):
@@ -243,6 +247,15 @@ Every start (deploy, crash restart, redeploy) runs the same sequence, in this or
      the variable name in the error.
    - `20-seed` loads the commons seed from `SEED_DIR` or `config/commons`. An invalid seed aborts the start with
      the file and path. An unchanged seed writes nothing.
+   - `30-uploads` reconciles `MEDIA_DIR` (default `./data/media`, `/data/media` in the image) with the
+     `contribution_attachments` table, once per start. If the directory does not exist it is created and not
+     swept (logged as `uploads sweep skipped`): a mis-mounted volume must not be answered by deleting every
+     attachment row. Otherwise it deletes the regular files directly in the directory that no row references,
+     unless they were modified less than 10 minutes ago (an upload may still be inserting its row), and deletes
+     the rows whose file is missing; symlinks and subdirectories are left alone. The counts are logged as
+     `uploads sweep` (`removedFiles`, `removedRows`). A failure is logged as `uploads sweep failed` and the boot
+     continues. The image creates `/data/media` itself, so the "not swept" protection does not cover a volume
+     that is simply not mounted; see the mount check in the Railway setup.
    - `40-backup` registers the 03:00 UTC backup schedule.
 3. Mount the routes (`apps/api/src/http/routes`, alphabetical, request log first), create the Better Auth tables,
    mount the static web app after them, and listen on `PORT`.
@@ -250,8 +263,8 @@ Every start (deploy, crash restart, redeploy) runs the same sequence, in this or
 On SIGTERM or SIGINT the server stops the backup schedule, stops accepting requests, closes the database and
 exits; Railway sends SIGTERM when it replaces a deployment.
 
-There is no upload-sweep boot hook at this revision: no hook sits between `20-seed` and `40-backup`, and
-`MEDIA_DIR` is only checked for writability by `/health`. If an uploads hook is added, document it here.
+The upload store (`apps/api/src/contributions/uploads.ts`) exists, but no HTTP route calls it yet, so
+`/data/media` stays empty until an upload endpoint ships.
 
 ## Health endpoint
 
@@ -298,8 +311,9 @@ Someone asks for a drill to be removed (rights, safety, a child's image, a mista
 4. Take the content out of the source too. Remove or edit the drill under `config/commons` and ship it, or a
    restored database or a fresh volume would publish it again. The seed loader never deletes a drill, and it
    does not clear `unpublished_at`.
-5. Uploaded media lives under `/data/media`. No upload code writes there yet; when it does, delete the files
-   with the drill.
+5. Uploaded media lives under `/data/media`, and a file is kept only while a `contribution_attachments` row
+   references it. When uploads are in use, once the rows are gone the next start's `30-uploads` sweep deletes
+   the files (after the 10 minute grace). No route stores uploads yet, so today the directory is empty.
 6. Check that the drill is gone from the commons API and from `/api/commons/export.json`.
 
 ## Turning AI and video off
@@ -414,8 +428,9 @@ Everything above is derived from the repository. These things have not been done
   code path yet.
 - **Native Kazakh review.** The Kazakh (`kk`) text in the app and in the seed drills was drafted with AI and has
   not been read by a native Kazakh speaker. It carries the status `COMMUNITY` until real coaches review it.
-- **Not built yet.** The unpublish admin endpoint, an admin settings screen, an upload-sweep boot hook and a
-  command-line backup entry point do not exist at this revision.
+- **Not built yet.** The unpublish admin endpoint, an admin settings screen, an HTTP route that stores uploads
+  (the store and its startup sweep exist) and a command-line backup entry point do not exist at this revision.
+  The startup sweep itself has never run against a real Railway volume.
 - **Railway config format.** Railway's documentation marks config as code (`railway.json`) as deprecated in
   favour of Infrastructure as Code; existing files keep working until 2026-12-01. The keys used here were
   checked against Railway's JSON schema on 2026-09-21. Migrate before that date.
