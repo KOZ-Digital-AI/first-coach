@@ -12,7 +12,7 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
+const { cleanup, fireEvent, render, screen, waitFor, within } = await import('@testing-library/react');
 const { default: userEvent } = await import('@testing-library/user-event');
 // The panel pulls in Radix Dialog, which decides at import time whether a DOM exists: import it only after happy-dom is up.
 const panelModule = await import('./panels/data.panel');
@@ -356,7 +356,8 @@ describe('Delete my data: the confirm gate', () => {
   test('the safe button, "Keep my data", has the focus when the dialog opens', async () => {
     const { user } = await renderPanel();
     await openDialog(user);
-    await waitFor(() => expect(document.activeElement).toBe(cancelButton()));
+    // A boolean, not toBe(element): a failing toBe would try to print two whole DOM trees.
+    await waitFor(() => expect(document.activeElement === cancelButton()).toBe(true));
   });
 
   test('the confirm button is off until the word DELETE is typed, and the field is a labelled textbox', async () => {
@@ -377,6 +378,15 @@ describe('Delete my data: the confirm gate', () => {
     expect(confirmButton().disabled).toBe(true);
     await user.clear(wordBox());
     await user.type(wordBox(), 'DELET{Enter}');
+    expect(deletes()).toEqual([]);
+  });
+
+  test('a submit of the form with the wrong word sends nothing: the guard does not lean on the disabled button', async () => {
+    const { user } = await renderPanel();
+    const dialog = await openDialog(user);
+    await user.type(wordBox(), 'DELET');
+    fireEvent.submit(dialog.querySelector('form')!);
+    fireEvent.submit(dialog.querySelector('form')!);
     expect(deletes()).toEqual([]);
   });
 
@@ -650,7 +660,7 @@ describe('when the deletion fails, nothing is lost', () => {
     await openDialog(user);
     await typeWordAndConfirm(user);
     const alert = await screen.findByRole('alert');
-    await waitFor(() => expect(document.activeElement).toBe(alert));
+    await waitFor(() => expect(document.activeElement === alert).toBe(true));
     expect(confirmButton().disabled).toBe(false);
     expect(confirmButton().getAttribute('aria-busy')).toBeNull();
     expect(cancelButton().disabled).toBe(false);
