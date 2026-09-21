@@ -52,7 +52,7 @@ describe("submitEvents writes ['session-summary']", () => {
   test('to exactly { progress, nextSessionDate, sessionId } from the validated response', async () => {
     const { client, queryClient, finish } = make();
     await client.submitEvents(finish());
-    expect(queryClient.getQueryData(SUMMARY)).toStrictEqual({
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toStrictEqual({
       progress: { sessionsCompleted: 4, minutesTrained: 80, streakDays: 2 },
       nextSessionDate: '2026-09-23',
       sessionId: SESSION_ID,
@@ -62,7 +62,7 @@ describe("submitEvents writes ['session-summary']", () => {
   test("sessionId is the server's response.session.id, not the id the event named", async () => {
     const { client, queryClient, finish } = make(() => responseJson({ id: 'server-session' }));
     await client.submitEvents(finish('the-event-said-this'));
-    expect((queryClient.getQueryData(SUMMARY) as { sessionId: string }).sessionId).toBe('server-session');
+    expect((queryClient.getQueryData<unknown>(SUMMARY) as { sessionId: string }).sessionId).toBe('server-session');
   });
 
   test("after the ['today'] write, so a reader of the summary always finds the matching session already cached", async () => {
@@ -84,7 +84,7 @@ describe("submitEvents writes ['session-summary']", () => {
     );
     await client.submitEvents(finish());
     await client.submitEvents(finish('next-session'));
-    expect(queryClient.getQueryData(SUMMARY)).toStrictEqual({
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toStrictEqual({
       progress: { sessionsCompleted: 5, minutesTrained: 100, streakDays: 3 },
       nextSessionDate: '2026-09-25',
       sessionId: 'next-session',
@@ -94,7 +94,7 @@ describe("submitEvents writes ['session-summary']", () => {
   test('the summary holds no session: the drills stay in [today] only', async () => {
     const { client, queryClient, finish } = make();
     await client.submitEvents(finish());
-    expect(queryClient.getQueryData(SUMMARY)).not.toHaveProperty('session');
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).not.toHaveProperty('session');
   });
 });
 
@@ -111,7 +111,7 @@ describe("submitEvents leaves ['session-summary'] alone when nothing was accepte
       (error: unknown) => error,
     );
     expect(outcome).toBe(problem);
-    expect(queryClient.getQueryData(SUMMARY)).toBe(previous);
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toBe(previous);
   });
 
   test('a failed request with nothing cached leaves the key empty', async () => {
@@ -119,18 +119,18 @@ describe("submitEvents leaves ['session-summary'] alone when nothing was accepte
       throw new ApiProblem({ kind: 'offline' });
     });
     await expect(client.submitEvents(finish())).rejects.toBeInstanceOf(ApiProblem);
-    expect(queryClient.getQueryData(SUMMARY)).toBeUndefined();
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toBeUndefined();
   });
 
   test('a response that fails the contract schema is a rejection and writes nothing', async () => {
     const { client, queryClient, finish } = make(() => ({ ...responseJson(), progress: { sessionsCompleted: 'many' } }));
     await expect(client.submitEvents(finish())).rejects.toBeDefined();
-    expect(queryClient.getQueryData(SUMMARY)).toBeUndefined();
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toBeUndefined();
   });
 
   test('an empty batch rejects locally and writes nothing', async () => {
     const { client, queryClient } = make();
     await expect(client.submitEvents([])).rejects.toThrow(/at least one event/i);
-    expect(queryClient.getQueryData(SUMMARY)).toBeUndefined();
+    expect(queryClient.getQueryData<unknown>(SUMMARY)).toBeUndefined();
   });
 });
