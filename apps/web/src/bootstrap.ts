@@ -64,30 +64,12 @@ export function watchAuthSession(atom: SessionAtomLike, listener: (playerId: str
   });
 }
 
-/** The part of the Better Auth client that `readExistingSession` uses; the real client is assignable to it. */
-export interface SessionReader {
-  getSession(): Promise<{ data?: unknown; error?: unknown }>;
-}
-
-/**
- * The session that already exists, read-only: a `getSession` READ, which never creates a session (no sign-in of any kind, so a
- * visitor who has none stays without one). Resolves `{ user: { id } }`, or `null` when there is no session (or one without a
- * usable user id). Rejects when the read itself fails (offline, server down): the caller then simply waits for the session atom.
- */
-export async function readExistingSession(client: SessionReader): Promise<{ user: { id: string } } | null> {
-  const reply = await client.getSession();
-  if (reply.error !== null && reply.error !== undefined) throw new Error('could not read the current session', { cause: reply.error });
-  const id = (reply.data as { user?: { id?: unknown } } | null | undefined)?.user?.id;
-  return typeof id === 'string' && id.length > 0 ? { user: { id } } : null;
-}
-
 /** Everything `wireAppPlayerSession` touches. The defaults are the real modules; tests inject fakes. */
 export interface PlayerSessionWiringDeps {
-  /** Reads the EXISTING session (`null`: none). Never signs anybody in: a fresh visitor must stay without a session. */
-  readSession(): Promise<{ user: { id: string } } | null>;
   /**
-   * Reports the session's user id after every change (a screen's sign-in, sign-out, expiry) and undefined for "no session";
-   * returns the unsubscribe function.
+   * Reports the session's user id once the session is known and after every change (a screen's sign-in, sign-out, expiry), and
+   * undefined for "no session"; returns the unsubscribe function. It never signs anybody in: a fresh visitor must stay without a
+   * session. The real one is the shared Better Auth session atom, the ONLY session source (see `wireAppPlayerSession`).
    */
   watchSession(listener: (playerId: string | undefined) => void): () => void;
   configureEventsPlayer(playerId: string | undefined): void;
@@ -99,7 +81,6 @@ export interface PlayerSessionWiringDeps {
 }
 
 const realDeps = (): PlayerSessionWiringDeps => ({
-  readSession: () => readExistingSession(authClient),
   watchSession: (listener) => watchAuthSession(authClient.$store.atoms.session, listener),
   configureEventsPlayer,
   startEventsSync: () => startEventsSync(),
@@ -108,22 +89,23 @@ const realDeps = (): PlayerSessionWiringDeps => ({
 });
 
 /**
- * Wires the offline pieces to the player session (fc-mol-eay.9, fixed by fc-mol-eay.10: it only READS the existing session and
- * never signs anybody in, so a visitor who only opens the landing page or /legal/* gets no session and no cookie). Once a
- * session id is reported, for THAT id:
+ * Wires the offline pieces to the player session (fc-mol-eay.9, fixed by fc-mol-eay.10: it never signs anybody in, so a visitor
+ * who only opens the landing page or /legal/* gets no session and no cookie; and by fc-mol-eay.11: it makes no session read of
+ * its own). Once a session id is reported, for THAT id:
  *  1. `configureEventsPlayer(id)`: from now on `submitEvents` goes through the outbox (offline/outbox.ts);
  *  2. `persistAppQueryClient({ queryClient, playerId: id, buildVersion })`: the query cache is restored from and saved to the
  *     player's own record, busted by the build version;
  *  3. `startEventsSync()`: replays the outbox now, on `online` and on visibility change. Started exactly once per id, so an
  *     offline/online flip never has two listeners; two flushes that still overlap are single-flighted by the outbox itself.
- * The id comes from `readSession()` (a getSession read) and from the session-change signal, which is also how a session that a
- * screen creates LATER (train / roadmap / onboarding sign in on their own) reaches the wiring. The SAME id again does nothing. A DIFFERENT id (sign-in as a coach, another player) or no session (sign-out) first tears
- * the previous wiring down (sync stopped, persister unsubscribed, events player back to `undefined`), and empties the in-memory
+ * The id comes ONLY from the session-change signal: the shared Better Auth session atom. Subscribing to it makes the atom fetch
+ * get-session (once) and the app shell's `useSession` reads that same atom, so a page load costs exactly ONE get-session
+ * request; a separate session read here would be a second one. The signal is also how a session that a screen creates LATER
+ * (train / roadmap / onboarding sign in on their own) reaches the wiring. The SAME id again does nothing. A DIFFERENT id
+ * (sign-in as a coach, another player) or no session (sign-out) first tears the previous wiring down (sync stopped, persister unsubscribed, events player back to `undefined`), and empties the in-memory
  * query cache, because the persister would otherwise save the previous player's queries into the next player's record. The
  * FIRST wiring keeps the cache as it is (screens may already have fetched).
- * No session (a fresh visitor) wires nothing. A `readSession` that fails (offline at first load, server down) wires nothing and
- * throws nothing; the signal wires the player as soon as a session is reported. A read that resolves after the signal already
- * reported an id is ignored (it is older).
+ * No session (a fresh visitor) wires nothing. While the atom is still loading, or when its read failed (offline at first load,
+ * server down), nothing is reported and nothing is wired or thrown; the player is wired as soon as a session is reported.
  *
  * Returns the teardown (stops everything, ignores later signals). main.tsx calls this once, before the first render.
  */
@@ -132,7 +114,6 @@ export function wireAppPlayerSession(queryClient: QueryClient, deps: Partial<Pla
   let current: string | undefined;
   let wiring: { stopSync: () => void; unpersist: () => void } | undefined;
   let stopped = false;
-  let signalReportedId = false;
 
   function unwire(): void {
     if (wiring === undefined) return;
@@ -162,16 +143,7 @@ export function wireAppPlayerSession(queryClient: QueryClient, deps: Partial<Pla
     wiring = { unpersist, stopSync: d.startEventsSync() };
   }
 
-  const stopWatching = d.watchSession((playerId) => {
-    if (playerId !== undefined) signalReportedId = true;
-    apply(playerId);
-  });
-  d.readSession().then(
-    (session) => {
-      if (session !== null && !signalReportedId) apply(session.user.id);
-    },
-    () => {},
-  );
+  const stopWatching = d.watchSession(apply);
 
   return () => {
     if (stopped) return;
