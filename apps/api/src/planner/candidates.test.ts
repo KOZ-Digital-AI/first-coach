@@ -58,9 +58,12 @@ const settingsWith = (min: Partial<Settings['minStatusByAgeBand']>): Settings =>
 });
 const ALL_REVIEWED = settingsWith({ u10: 'REVIEWED', u14: 'REVIEWED', adult: 'REVIEWED' });
 
-/** A real version with some fields overridden. */
+let variantCount = 0;
+
+/** A real version with some fields overridden. Each variant is its own drill (unique drillId) unless it says otherwise. */
 function variant(over: Partial<PublishedVersion>, base: PublishedVersion = versions[0]!): PublishedVersion {
-  return { ...structuredClone(base), ...over };
+  variantCount += 1;
+  return { ...structuredClone(base), drillId: `variant-drill-${variantCount}`, ...over };
 }
 
 const slugs = (list: readonly PublishedVersion[]): string[] => list.map((v) => v.slug);
@@ -258,7 +261,7 @@ describe('the real seed', () => {
   });
 
   test('default settings apply no status filter to a COMMUNITY seed: same pool as the Genesis bands', () => {
-    const everyone = candidates(profile({ equipment: 'full_field', space: 'gym', age: 16, partner: true }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
+    const everyone = candidates(profile({ equipment: 'full_field', space: 'field', age: 16, partner: true }), { 'ball-mastery': 5, dribbling: 5, 'weak-foot': 5, 'passing-first-touch': 5, 'juggling-coordination': 5 }, DEFAULT_SETTINGS, versions, graph);
     const ageOk = versions.filter((v) => (v.ageMin ?? 0) <= 16 && (v.ageMax ?? 99) >= 16);
     expect(slugs(everyone).sort()).toEqual(slugs(ageOk).sort());
   });
@@ -488,7 +491,7 @@ describe('order', () => {
 describe('one version per drill', () => {
   const version = (versionId: string, semver: string, over: Partial<PublishedVersion> = {}) => {
     const base = versions[0]!;
-    return variant({ versionId, attribution: { ...base.attribution, semver }, level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3', ...over });
+    return variant({ drillId: 'x', versionId, attribution: { ...base.attribution, semver }, level: 'beginner', equipment: 'nothing', partner: false, ageMin: null, ageMax: null, spaces: ['home_3x3'], space: 'home_3x3', ...over });
   };
   const ids = (list: readonly PublishedVersion[]) => list.map((v) => v.versionId);
 
