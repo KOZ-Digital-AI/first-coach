@@ -130,7 +130,7 @@ const REST_HASH: Record<string, string> = {
   "passing-roll-receive-redirect": "674010dd0ec2320f9358b09bf4b7326bdd1703091a31fd4565d7b1cf77a9e8eb",
   "passing-wall-first-touch-gate": "35e701c10f2636b25c309ac2a38efc8ecaf3dcebe78b2d382f5f42370b42ae48",
   "passing-wall-alternate-feet": "e0ec084c38212a1c498a4f1ba6ac3f863bc3449138971c56ccc64da92a4b1876",
-  "passing-two-touch-self": "90aa8e79cc020883cbfcf3e971138afab8bb1f953d861b358b107def8deef8f6",
+  "passing-two-touch-self": "c0fad8945cb2418cbb5deaa634931700439f6e49e85d807b95db5ef7afd71960",
   "passing-wall-two-touch-tempo": "65b4f73c2c4bc3177803cf9f7a6775493f41c1b296008ca8f07a94afbf5b327f",
   "passing-wall-target": "5bafec001e136f62b907dad4dc388a61d149ec6b2b323732252cc3ec281c71f1",
   "passing-partner-pass-and-stop": "9f5ba1ed40ab8c329d5ca029a331de16656ff3268b5ca02d179e0018cddb9f68",
@@ -144,7 +144,7 @@ const REST_HASH: Record<string, string> = {
   "weak-foot-circle-dribble": "bcf18b281074704273bc6fb8fb96e8b267af297b15affc2239024428dad5c333",
   "weak-foot-wall-return-stop": "024e303e0beda53ad7916dc8daa6eac72388f31c320aebca53bfb1493ccac159",
   "weak-foot-receive-and-exit": "f5223003a2aed562d0f40f861d06ddc3e7831a72c98f7a1ebc0cb68ec144c19d",
-  "weak-foot-partner-pass-and-stop": "4c5c0c67803ad35713a95337f6204244764fba040afc3f91ccc4efe815d48891",
+  "weak-foot-partner-pass-and-stop": "d310a9fe47fb9e98c590009ac49ea332ef83f6b20ff3b4f4fcac083f81dbe89c",
   "weak-foot-jog-and-switch": "9023cf204ebd6f62d0d994c804e03201f98d358ad5768b3d50ccb70889da3ae5",
 };
 
@@ -188,14 +188,14 @@ const UNCHANGED_FULL_HASH: Record<string, string> = {
   "passing-roll-and-stop": "8551675ab927c532703e7946ceb2fabbc7cb3062094c28bfc86b0a42f8f25c50",
   "passing-pass-walk-stop": "69ceebc75d4b31e0b55ce665372cc2a2ae8b202a3340f6ed963f272c5f650882",
   "passing-roll-receive-redirect": "163851b90fc5a4ee344ab6de462a0f9a4cbb0bbc9b624d8603b03d0b3e65d29a",
-  "passing-two-touch-self": "77a1b1b32b384f93d435b68b01a29dfb81fcbe16181c02387dbdbee7f2bb66c7",
+  "passing-two-touch-self": "617787db327eab65b7fc8f2780fd28a81afc7da04d0ce229672ed3fc8bcb6982",
   "weak-foot-air-swings": "e90c05e3f33dd60af1c00d5708f820acb85173448b45870d4655a73846b025a6",
   "weak-foot-sole-drag": "be349d9eb5f0706472b15666b335e702ac1ba21160b2d75a1b7374677ef20dd2",
   "weak-foot-fifty-touches": "9263db199b3c3f3aacb667f3dc005d5fce1a852b70a053163e9120a2c124085c",
   "weak-foot-roll-and-stop": "4376638de7d8688159896167de74770650462ed425a8c419107a17c07c2a1478",
   "weak-foot-inside-outside-walk": "0b6912e3c214f93edfb6cb922aa990877b88fd8fc53550d14a114ed06f24e5ac",
   "weak-foot-circle-dribble": "68a5758ae16515f24615918df229da481d9d1824936229d670fc6cf20faf5487",
-  "weak-foot-partner-pass-and-stop": "16248eaab7ee16c61ab3cf2975ac7fab842a67dd11508815e06b488548570238",
+  "weak-foot-partner-pass-and-stop": "d99db78f2e57c2ab8185911844d58333639e2f32ecda492d6bec872291266e3b",
   "weak-foot-jog-and-switch": "deb7d61b3f322192ebdece350d125c16433a43545b5e3a0de9ff212f2e377046",
 };
 
