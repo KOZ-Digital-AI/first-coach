@@ -1,12 +1,14 @@
 import type { Database } from 'bun:sqlite';
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Hono } from 'hono';
 import type { AppDeps } from '../../app';
+import { DEFAULT_SEED_DIR } from '../../boot/20-seed.boot';
+import { loadSeed } from '../../commons/seed-loader';
 import { openDatabase } from '../../db/database';
-import { migrate } from '../../db/migrate';
+import { MIGRATIONS_DIR, migrate } from '../../db/migrate';
 import { HealthResponse } from '../../shared/primitives';
 import { register } from './health.routes';
 
@@ -139,6 +141,243 @@ describe('GET /health', () => {
       expect(body).toMatchObject({ ok: false, version: 'build-on-failure', database: 'error' });
     } finally {
       logged.mockRestore();
+    }
+  });
+});
+
+// --- health details on the real seed ---------------------------------------------------------
+// A migrated :memory: database loaded with the real config/commons seed (the same one boot hook
+// 20-seed loads). The body keys are pinned: ok, version, database (unchanged) plus publishedDrills
+// (number), migration (name of the latest applied schema_migrations row, e.g. "003_settings"),
+// aiAvailable (boolean only) and mediaWritable (boolean; unset MEDIA_DIR = false).
+
+const DETAIL_KEYS = ['aiAvailable', 'database', 'mediaWritable', 'migration', 'ok', 'publishedDrills', 'version'];
+
+const latestMigrationName = (): string => {
+  const files = readdirSync(MIGRATIONS_DIR)
+    .filter((f) => /^\d{3,}_[a-z0-9_]+\.sql$/.test(f))
+    .sort();
+  return (files.at(-1) as string).slice(0, -'.sql'.length);
+};
+
+describe('GET /health details on the real seed', () => {
+  let seeded: Database;
+  let mediaDir: string;
+  let savedKey: string | undefined;
+  let savedMedia: string | undefined;
+
+  const appOn = (database: Database): Hono => {
+    const a = new Hono();
+    register(a, { db: database, version: DEPS_VERSION });
+    return a;
+  };
+  const get = async (a: Hono): Promise<{ status: number; text: string; body: Record<string, unknown> }> => {
+    const res = await a.request('/health');
+    const text = await res.text();
+    return { status: res.status, text, body: JSON.parse(text) };
+  };
+
+  beforeAll(() => {
+    seeded = openDatabase(':memory:');
+    migrate(seeded, MIGRATIONS_DIR);
+    loadSeed(seeded, DEFAULT_SEED_DIR);
+  });
+  afterAll(() => seeded.close());
+
+  beforeEach(() => {
+    savedKey = process.env.OPENAI_API_KEY;
+    savedMedia = process.env.MEDIA_DIR;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.MEDIA_DIR;
+    mediaDir = mkdtempSync(join(tmpdir(), 'health-media-'));
+  });
+  afterEach(() => {
+    rmSync(mediaDir, { recursive: true, force: true });
+    if (savedKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = savedKey;
+    if (savedMedia === undefined) delete process.env.MEDIA_DIR;
+    else process.env.MEDIA_DIR = savedMedia;
+  });
+
+  test('reports the 60 published drills of the real seed', async () => {
+    const { status, body } = await get(appOn(seeded));
+
+    expect(status).toBe(200);
+    expect(body.publishedDrills).toBe(60);
+  });
+
+  test('reports the latest applied migration, derived from the migrations directory', async () => {
+    const { body } = await get(appOn(seeded));
+
+    expect(body.migration).toBe(latestMigrationName());
+  });
+
+  test('keeps ok, version and database unchanged and adds exactly the documented keys', async () => {
+    const { body } = await get(appOn(seeded));
+
+    expect(body).toMatchObject({ ok: true, version: DEPS_VERSION, database: 'ok' });
+    expect(Object.keys(body).sort()).toEqual(DETAIL_KEYS);
+    expect(HealthResponse.safeParse(body).success).toBe(true);
+  });
+
+  test('aiAvailable is false when OPENAI_API_KEY is unset or blank, true when set, read per request', async () => {
+    const a = appOn(seeded);
+
+    expect((await get(a)).body.aiAvailable).toBe(false);
+    process.env.OPENAI_API_KEY = '   ';
+    expect((await get(a)).body.aiAvailable).toBe(false);
+    process.env.OPENAI_API_KEY = 'sk-marker-123';
+    expect((await get(a)).body.aiAvailable).toBe(true);
+    delete process.env.OPENAI_API_KEY;
+    expect((await get(a)).body.aiAvailable).toBe(false);
+  });
+
+  test('mediaWritable is true for an existing writable MEDIA_DIR', async () => {
+    process.env.MEDIA_DIR = mediaDir;
+
+    expect((await get(appOn(seeded))).body.mediaWritable).toBe(true);
+  });
+
+  test('mediaWritable is false for a MEDIA_DIR that does not exist', async () => {
+    process.env.MEDIA_DIR = join(mediaDir, 'missing');
+
+    expect((await get(appOn(seeded))).body.mediaWritable).toBe(false);
+  });
+
+  test('mediaWritable is false when MEDIA_DIR is unset or blank', async () => {
+    const a = appOn(seeded);
+
+    expect((await get(a)).body.mediaWritable).toBe(false);
+    process.env.MEDIA_DIR = '  ';
+    expect((await get(a)).body.mediaWritable).toBe(false);
+  });
+
+  test('the media check creates nothing in MEDIA_DIR', async () => {
+    process.env.MEDIA_DIR = mediaDir;
+
+    await get(appOn(seeded));
+
+    expect(readdirSync(mediaDir)).toEqual([]);
+  });
+
+  test('leaks neither the API key nor the media path, on 200 and on 503', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      process.env.OPENAI_API_KEY = 'sk-marker-123';
+      process.env.MEDIA_DIR = mediaDir;
+      const ok = await get(appOn(seeded));
+      expect(ok.status).toBe(200);
+      expect(ok.text).not.toContain('sk-marker-123');
+      expect(ok.text).not.toContain(mediaDir);
+      expect(ok.text).not.toContain('health-media-');
+
+      const broken = openDatabase(':memory:');
+      broken.close();
+      const failed = await get(appOn(broken));
+      expect(failed.status).toBe(503);
+      expect(failed.text).not.toContain('sk-marker-123');
+      expect(failed.text).not.toContain(mediaDir);
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
+  test('answers each of 20 sequential requests in under 100 ms', async () => {
+    const a = appOn(seeded);
+    await get(a);
+    const durations: number[] = [];
+
+    for (let i = 0; i < 20; i++) {
+      const start = performance.now();
+      const res = await a.request('/health');
+      await res.text();
+      durations.push(performance.now() - start);
+      expect(res.status).toBe(200);
+    }
+
+    expect(Math.max(...durations)).toBeLessThan(100);
+  });
+
+  test('a closed database answers 503 with only ok, version and database', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      process.env.OPENAI_API_KEY = 'sk-marker-123';
+      process.env.MEDIA_DIR = mediaDir;
+      const closed = openDatabase(':memory:');
+      migrate(closed, MIGRATIONS_DIR);
+      closed.close();
+
+      const { status, body } = await get(appOn(closed));
+
+      expect(status).toBe(503);
+      expect(body).toEqual({ ok: false, version: DEPS_VERSION, database: 'error' });
+    } finally {
+      logged.mockRestore();
+    }
+  });
+
+  test('publishedDrills follows the database: 0 on a migrated database with no seed', async () => {
+    const empty = openDatabase(':memory:');
+    try {
+      migrate(empty, MIGRATIONS_DIR);
+
+      const { status, body } = await get(appOn(empty));
+
+      expect(status).toBe(200);
+      expect(body.publishedDrills).toBe(0);
+    } finally {
+      empty.close();
+    }
+  });
+
+  test('a migrated database whose schema_migrations table is dropped answers 503 (drill tables intact)', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    const broken = openDatabase(':memory:');
+    try {
+      migrate(broken, MIGRATIONS_DIR);
+      broken.run('DROP TABLE schema_migrations');
+
+      const { status, body } = await get(appOn(broken));
+
+      expect(status).toBe(503);
+      expect(body).toEqual({ ok: false, version: DEPS_VERSION, database: 'error' });
+    } finally {
+      logged.mockRestore();
+      broken.close();
+    }
+  });
+
+  test('a database with an empty schema_migrations table answers 503', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    const broken = openDatabase(':memory:');
+    try {
+      migrate(broken, MIGRATIONS_DIR);
+      broken.run('DELETE FROM schema_migrations');
+
+      const { status, body } = await get(appOn(broken));
+
+      expect(status).toBe(503);
+      expect(body).toEqual({ ok: false, version: DEPS_VERSION, database: 'error' });
+    } finally {
+      logged.mockRestore();
+      broken.close();
+    }
+  });
+
+  test('a database without schema_migrations is unhealthy: 503, no error text, logged once as JSON', async () => {
+    const logged = spyOn(console, 'error').mockImplementation(() => {});
+    const unmigrated = openDatabase(':memory:');
+    try {
+      const { status, text, body } = await get(appOn(unmigrated));
+
+      expect(status).toBe(503);
+      expect(body).toEqual({ ok: false, version: DEPS_VERSION, database: 'error' });
+      expect(text).not.toMatch(/schema_migrations|no such table|sqlite/i);
+      expect(logged).toHaveBeenCalledTimes(1);
+      expect(() => JSON.parse((logged.mock.calls[0] as [string])[0])).not.toThrow();
+    } finally {
+      logged.mockRestore();
+      unmigrated.close();
     }
   });
 });
