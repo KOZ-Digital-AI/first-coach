@@ -237,6 +237,12 @@ describe('a session that is not finished redirects to /train', () => {
     expectSentToTrain(page);
   });
 
+  test('when the session has no drills at all (nothing was done, so nothing is finished)', async () => {
+    const page = mountSummary({ today: todaySession({ items: [] }) });
+    await waitFor(() => expect(page.navigations).toHaveLength(1));
+    expectSentToTrain(page);
+  });
+
   test('the empty state link is a plain click through the router seam', async () => {
     const page = mountSummary({ summary: null });
     await waitFor(() => expect(page.navigations).toHaveLength(1));
