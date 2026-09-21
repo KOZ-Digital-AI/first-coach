@@ -240,6 +240,50 @@ describe("TodaySession items", () => {
   });
 });
 
+// fc-mol-urn.11: an item carries the drill's primary skill (track) and level. Both are OPTIONAL on the client-facing
+// schema: a cached PWA session, or an older server, has neither and must still parse (fc-r99).
+describe("TodaySession items: track and level (fc-mol-urn.11)", () => {
+  const withItem = (item: Record<string, unknown>) => makeSession({ items: [item] });
+
+  test("an item without track and level (a cached session, an older server) still parses, with both undefined", () => {
+    const parsed = TodaySession.parse(withItem(makeItem()));
+    expect(parsed.items[0]?.track).toBeUndefined();
+    expect(parsed.items[0]?.level).toBeUndefined();
+  });
+
+  test("an item's track and level are kept when present", () => {
+    const parsed = TodaySession.parse(withItem(makeItem({ track: "weak-foot", level: "beginner" })));
+    expect(parsed.items[0]?.track).toBe("weak-foot");
+    expect(parsed.items[0]?.level).toBe("beginner");
+  });
+
+  test.each(["beginner", "basic", "intermediate"])("accepts the ExperienceLevel %s", (level) => {
+    expect(ok(TodaySession, withItem(makeItem({ track: "dribbling", level })))).toBe(true);
+  });
+
+  test("track alone or level alone parses (each is optional on its own)", () => {
+    expect(ok(TodaySession, withItem(makeItem({ track: "dribbling" })))).toBe(true);
+    expect(ok(TodaySession, withItem(makeItem({ level: "basic" })))).toBe(true);
+  });
+
+  test("rejects a level that is not an ExperienceLevel", () => {
+    expect(ok(TodaySession, withItem(makeItem({ level: "expert" })))).toBe(false);
+    expect(ok(TodaySession, withItem(makeItem({ level: 2 })))).toBe(false);
+  });
+
+  test("rejects a track that is not a slug (empty, with a space, not a string)", () => {
+    expect(ok(TodaySession, withItem(makeItem({ track: "" })))).toBe(false);
+    expect(ok(TodaySession, withItem(makeItem({ track: "weak foot" })))).toBe(false);
+    expect(ok(TodaySession, withItem(makeItem({ track: 7 })))).toBe(false);
+  });
+
+  test("the session inside a SessionEventsResponse carries them too", () => {
+    const response = SessionEventsResponse.parse(makeEventsResponse({ session: withItem(makeItem({ track: "dribbling", level: "basic" })) }));
+    expect(response.session.items[0]?.track).toBe("dribbling");
+    expect(response.session.items[0]?.level).toBe("basic");
+  });
+});
+
 describe("roadmapSummary", () => {
   test("the summary keys are pinned to what the session screen needs", () => {
     expect(Object.keys(RoadmapSummary.shape).sort()).toEqual([
