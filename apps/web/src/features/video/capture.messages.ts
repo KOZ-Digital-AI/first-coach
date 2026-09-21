@@ -46,9 +46,9 @@ export default {
       title: 'Бұл құрылғы талдауды іске қоса алмайды',
       hint: 'Бейне бапкерге жаңарақ браузер немесе телефон керек. Жаттығуың бұрынғыдай жұмыс істейді.',
     },
-    disabled: {
-      title: 'Бейне бапкер өшірулі',
-      hint: 'Қазір ол қолжетімсіз. Жаттығуың бұрынғыдай жұмыс істейді.',
+    analysisDown: {
+      title: 'Бейне талдау қазір қолжетімсіз',
+      hint: 'Қолданбаның қалған бөлігі жұмыс істейді, жаттығуыңа әсер етпейді.',
     },
     gate: {
       title: 'Бастамас бұрын',
@@ -199,9 +199,9 @@ export default {
       title: 'Это устройство не может запустить разбор',
       hint: 'Видео-тренеру нужен более новый браузер или телефон. Тренировки работают как обычно.',
     },
-    disabled: {
-      title: 'Видео-тренер выключен',
-      hint: 'Сейчас он недоступен. Тренировки работают как обычно.',
+    analysisDown: {
+      title: 'Анализ видео сейчас недоступен',
+      hint: 'Остальное приложение работает, твои тренировки не затронуты.',
     },
     gate: {
       title: 'Прежде чем начать',
@@ -352,9 +352,9 @@ export default {
       title: 'This device cannot run the analysis',
       hint: 'Video Coach needs a newer browser or phone. Your training works as always.',
     },
-    disabled: {
-      title: 'Video Coach is switched off',
-      hint: 'It is not available right now. Your training works as always.',
+    analysisDown: {
+      title: 'Video analysis is unavailable right now',
+      hint: 'The rest of the app works and your training is not affected.',
     },
     gate: {
       title: 'Before you start',
