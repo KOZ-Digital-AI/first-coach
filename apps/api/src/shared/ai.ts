@@ -15,11 +15,18 @@
 //
 // Call budget: 1 call each (one ai-plan call, one explain call).
 //
-// Gate-tested / server-side, NOT parse-tested (a schema parse cannot prove them): the hard
-// 20 s server timeout (the call is synchronous: no async job, nothing to poll); "never an
-// error status for AI failures"; that every AiPlan drillVersionId is a member of the SERVER's
-// candidate set of approved drills (only the server knows the set; a schema can only prove
-// the id is well formed); the call budget.
+// The hard server timeout is exported as AI_PLAN_TIMEOUT_MS (the web needs it for its client
+// abort); the call is synchronous: no async job, nothing to poll. "Ids must come from the
+// server candidate set" has an executable form, aiPlanUnknownIds(plan, candidateIds): only
+// the server knows the set, so a schema cannot check membership; the server calls the helper
+// and treats a non-empty result as invalid_output.
+//
+// Gate-tested / server-side, NOT parse-tested (a schema parse cannot prove them): that the
+// server really aborts at the timeout; "never an error status for AI failures"; the call
+// budget.
+//
+// Follow-up bead: the API's problem() helper hardcodes type "about:blank" and cannot emit an
+// `ai_unavailable` problem yet.
 //
 // Requests are strict: an unknown key fails. Responses stay loose (unknown server keys are
 // stripped).
@@ -37,8 +44,14 @@ export const AI_UNAVAILABLE = "ai_unavailable";
 
 // --- POST /api/player/today/ai-plan ---------------------------------------------------
 
-/** The optional free-text note is the criteria's own rule: at most 200 characters (empty allowed, not pinned). */
-export const AiPlanRequest = z.strictObject({ note: z.string().max(200).optional() });
+/** Hard server timeout of the ai-plan call (criteria: 20 s). The web aborts its request with it. */
+export const AI_PLAN_TIMEOUT_MS = 20_000;
+
+/** The optional note is limited by the criteria's own rule: at most 200 characters. */
+export const AI_NOTE_MAX_CHARS = 200;
+
+/** Empty note allowed (the criteria say nothing about it, so it is not pinned). */
+export const AiPlanRequest = z.strictObject({ note: z.string().max(AI_NOTE_MAX_CHARS).optional() });
 export type AiPlanRequest = z.infer<typeof AiPlanRequest>;
 
 /** Why the server answered with the deterministic session instead of an AI plan. */
@@ -46,8 +59,11 @@ export const AI_FALLBACK_CODES = ["no_key", "disabled", "timeout", "invalid_outp
 export const AiFallbackCode = z.enum(AI_FALLBACK_CODES);
 export type AiFallbackCode = z.infer<typeof AiFallbackCode>;
 
-/** A session item planned by the AI: derived from TodayItem with the reason made REQUIRED and non-blank. */
-export const AiTodayItem = TodayItem.extend({ reason: z.string().min(1) });
+/**
+ * A session item planned by the AI: derived from TodayItem with the reason made REQUIRED and
+ * non-blank (trimmed first, so a whitespace-only reason fails, as primitives' blank rule does).
+ */
+export const AiTodayItem = TodayItem.extend({ reason: z.string().trim().min(1) });
 export type AiTodayItem = z.infer<typeof AiTodayItem>;
 
 /**
@@ -87,6 +103,19 @@ export type AiPlanItem = z.infer<typeof AiPlanItem>;
 
 export const AiPlan = z.strictObject({ items: z.array(AiPlanItem).min(1) });
 export type AiPlan = z.infer<typeof AiPlan>;
+
+/**
+ * The drillVersionIds of `plan` that are NOT in `candidateIds` (the server's set of approved
+ * drills), in plan order and deduplicated. Empty means every id came from the candidate set.
+ */
+export function aiPlanUnknownIds(plan: AiPlan, candidateIds: Iterable<string>): string[] {
+  const candidates = new Set(candidateIds);
+  const unknown = new Set<string>();
+  for (const { drillVersionId } of plan.items) {
+    if (!candidates.has(drillVersionId)) unknown.add(drillVersionId);
+  }
+  return [...unknown];
+}
 
 // --- POST /api/player/drills/:versionId/explain ---------------------------------------
 
