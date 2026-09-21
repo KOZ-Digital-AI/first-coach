@@ -270,9 +270,10 @@ export function OfflineDownload({
 
 /**
  * The slot component: the auth session supplies the player (else the last player of this device, read at every render: the
- * key is cleared on sign-out), everything else is the device's own store and outbox.
+ * key is cleared on sign-out), everything else is the device's own store and outbox. `||`, not `??`, on purpose: an empty
+ * live id is no id (the device store refuses to build a key from it).
  */
 export default function TodayExtra() {
   const session = authClient.useSession();
-  return <OfflineDownload playerId={session.data?.user.id ?? readLastPlayerId()} playerPending={session.isPending} />;
+  return <OfflineDownload playerId={session.data?.user.id || readLastPlayerId()} playerPending={session.isPending} />;
 }
