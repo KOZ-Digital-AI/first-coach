@@ -383,6 +383,28 @@ describe('saving', () => {
     expect(patches()[1]!.body).toEqual({ minutesPerSession: 20 });
   });
 
+  test('the saved answers stay on screen while the plan is being read again (no flash back to the old ones)', async () => {
+    const gate = deferred<Response>();
+    let reread = false;
+    stubNetwork({
+      me: () => (reread ? gate.promise : json(ME)),
+      patch: () => {
+        reread = true;
+        return json(saved({ minutesPerSession: 30 }));
+      },
+    });
+    const { user } = await renderForm();
+    await user.click(radio(MINUTES, '30 min'));
+    await user.click(saveButton());
+    await screen.findByRole('heading', { name: 'Plan updated' });
+    await waitFor(() => expect(meGets().length).toBeGreaterThanOrEqual(2));
+    // the re-read has not answered yet: the form already shows what was saved and has nothing left to save
+    expect(radio(MINUTES, '30 min').checked).toBe(true);
+    expect(radio(MINUTES, '20 min').checked).toBe(false);
+    expect(saveButton().disabled).toBe(true);
+    gate.resolve(json(StartResponse.parse({ profile: { ...PROFILE, minutesPerSession: 30 }, roadmap: REBUILT })));
+  });
+
   test('focus moves to the success heading, because the button that had it is disabled again', async () => {
     const { user } = await renderForm();
     await user.click(radio(DAYS, '4'));
