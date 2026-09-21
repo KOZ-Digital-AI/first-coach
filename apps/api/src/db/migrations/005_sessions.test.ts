@@ -465,6 +465,17 @@ describe('005_sessions: migration', () => {
     expect(header).toMatch(/z\.uuid/);
   });
 
+  test('the header documents the recovery and idempotency hazards: UPDATE OR REPLACE, session id immutability, FK errors not swallowed', () => {
+    const header = readFileSync(join(MIGRATIONS_DIR, SQL_FILE), 'utf8')
+      .split('\n')
+      .filter((line) => line.startsWith('--'))
+      .join('\n');
+    expect(header).toMatch(/UPDATE OR REPLACE player_profiles/);
+    expect(header).toMatch(/ON CONFLICT \(player_id, ?date\) DO UPDATE SET id/);
+    expect(header).toMatch(/immutable/i);
+    expect(header).toMatch(/DO NOTHING[\s\S]*(does not|doesn't|not) swallow/i);
+  });
+
   test('re-running is a no-op and the recorded checksum is the sha256 of the file bytes, unchanged', () => {
     const db = migrated('all');
     const before = one<{ checksum: string }>(db, 'SELECT checksum FROM schema_migrations WHERE version = 5').checksum;
@@ -553,6 +564,19 @@ describe('005_sessions: exact shape of the two new tables (001-005 alone)', () =
     const leading = allIndexes(db, 'session_events').map((cols) => cols[0]);
     expect(leading).toContain('session_id');
     expect(leading).toContain('player_id');
+  });
+
+  test('the index column order serves the ordered lookups: no temp b-tree sort for ORDER BY at, id (by player and by session)', () => {
+    const db = migrated('five');
+    const plan = (sql: string): string => rows<{ detail: string }>(db, `EXPLAIN QUERY PLAN ${sql}`, 'p1').map((r) => r.detail).join(' | ');
+
+    const byPlayer = plan('SELECT id, type, at FROM session_events WHERE player_id = ? ORDER BY at, id');
+    expect(byPlayer).toContain('session_events_by_player');
+    expect(byPlayer).not.toMatch(/TEMP B-TREE/i);
+
+    const bySession = plan('SELECT id, type, at FROM session_events WHERE session_id = ? ORDER BY at, id');
+    expect(bySession).toContain('session_events_by_session');
+    expect(bySession).not.toMatch(/TEMP B-TREE/i);
   });
 
   test('session_events carries exactly one trigger (BEFORE UPDATE); no DELETE trigger anywhere, so cascades and erasure work', () => {
@@ -743,6 +767,35 @@ describe('005_sessions: session_events', () => {
     expect(defaulted.value).toBeNull();
     expect(Timestamp.safeParse(defaulted.received_at).success).toBe(true);
     expect(defaulted.received_at).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
+  });
+
+  test('received_at defaults to the server\'s current time (UTC): within 5 s of now, not a constant and not local time', () => {
+    const db = withSession();
+    const before = Date.now();
+    db.query('INSERT INTO session_events (player_id, session_id, client_uuid, type, at) VALUES (?, ?, ?, ?, ?)').run('p1', 's1', uuid(1), 'drill_done', T0);
+    const after = Date.now();
+    const { received_at } = one<{ received_at: string }>(db, 'SELECT received_at FROM session_events');
+    const stamped = Date.parse(received_at);
+    expect(Math.abs(stamped - Date.now())).toBeLessThan(5000);
+    expect(stamped).toBeGreaterThanOrEqual(before - 1000); // strftime('now') has millisecond resolution
+    expect(stamped).toBeLessThanOrEqual(after + 1000);
+  });
+
+  test('received_at is UTC on a machine in another time zone too (a child process with TZ=Asia/Almaty, UTC+5: a localtime default would be 5 h ahead)', () => {
+    const script = `
+      const { openDatabase } = await import(${JSON.stringify(join(import.meta.dir, '..', 'database'))});
+      const { migrate } = await import(${JSON.stringify(join(import.meta.dir, '..', 'migrate'))});
+      const db = openDatabase(':memory:');
+      migrate(db);
+      db.run("INSERT INTO player_profiles VALUES ('p1', 12, 'basic', 'dribbling', 'cones', 'yard', 1, 3, 20, 'ru', '${T0}', '${T0}')");
+      db.run("INSERT INTO sessions (id, player_id, date, planner, graph_version, items) VALUES ('s1', 'p1', '2026-01-05', 'rules', '1', '[]')");
+      db.run("INSERT INTO session_events (player_id, session_id, client_uuid, type, at) VALUES ('p1', 's1', '${uuid(1)}', 'drill_done', '${T0}')");
+      console.log(db.query('SELECT received_at FROM session_events').get().received_at, Date.now());
+    `;
+    const out = Bun.spawnSync([process.execPath, '-e', script], { env: { ...process.env, TZ: 'Asia/Almaty' } });
+    expect(out.stderr.toString()).toBe('');
+    const [receivedAt, now] = out.stdout.toString().trim().split(' ');
+    expect(Math.abs(Date.parse(receivedAt as string) - Number(now))).toBeLessThan(5000);
   });
 
   test('ids are assigned in insertion order and never reused (AUTOINCREMENT)', () => {
@@ -984,6 +1037,41 @@ describe('005_sessions: session_events is an append-only log', () => {
     expect(one<{ player_id: string }>(db, 'SELECT player_id FROM session_events WHERE client_uuid = ?', uuid(1)).player_id).toBe('p-other');
   });
 
+  test('a session id is effectively immutable once it has events: UPDATE sessions SET id is refused (ON UPDATE CASCADE would rewrite the events); with no events it succeeds', () => {
+    const db = seeded();
+    addEvent(db, { client_uuid: uuid(2) });
+
+    expect(thrown(() => db.run("UPDATE sessions SET id = 'x' WHERE id = 's1'")).message).toMatch(/session_events is append-only/);
+    // The upsert a writer must NOT use: it renames the session through the conflict branch.
+    const upsert = thrown(() =>
+      db.run(
+        `INSERT INTO sessions (id, player_id, date, planner, graph_version, items) VALUES ('s-new', 'p1', '2026-01-05', 'rules', '1.0.0', '[]')
+         ON CONFLICT (player_id, date) DO UPDATE SET id = excluded.id`,
+      ),
+    );
+    expect(upsert.message).toMatch(/session_events is append-only/);
+    expect(rows<{ id: string }>(db, "SELECT id FROM sessions WHERE date = '2026-01-05'")).toEqual([{ id: 's1' }]);
+    expect(rows<{ session_id: string }>(db, 'SELECT DISTINCT session_id FROM session_events')).toEqual([{ session_id: 's1' }]);
+
+    // s1b has no events: renaming it is fine.
+    db.run("UPDATE sessions SET id = 's1b-renamed' WHERE id = 's1b'");
+    expect(count(db, 'sessions', "id = 's1b-renamed'")).toBe(1);
+    expect(count(db, 'sessions', "id = 's1b'")).toBe(0);
+  });
+
+  test('ON CONFLICT (client_uuid) DO NOTHING does not swallow a missing-session foreign key error: the writer checks the session first', () => {
+    const db = seeded();
+    const replay = (sessionId: string, u: string) =>
+      db.run(
+        `INSERT INTO session_events (player_id, session_id, client_uuid, type, at) VALUES ('p1', ?, ?, 'drill_done', ?)
+         ON CONFLICT (client_uuid) DO NOTHING`,
+        [sessionId, u, T0],
+      );
+    expect(thrown(() => replay('ghost', uuid(9))).message).toMatch(/FOREIGN KEY constraint failed/);
+    replay('s1', uuid(1)); // an already stored client_uuid IS swallowed
+    expect(count(db, 'session_events')).toBe(1);
+  });
+
   test('INSERT stays possible, and a direct DELETE is not blocked (erasure and cascade must work; only UPDATE is guarded)', () => {
     const db = seeded();
     addEvent(db, { client_uuid: uuid(2) });
@@ -1066,6 +1154,23 @@ describe('005_sessions: cascade on profile delete (privacy erasure)', () => {
 
     expect(count(db, 'sessions', "player_id = 'p1'")).toBe(1); // orphaned: nothing cascaded
     expect(count(db, 'session_events', "player_id = 'p1'")).toBe(2);
+  });
+
+  test('UPDATE OR REPLACE player_profiles SET player_id = <an existing profile\'s id> deletes THAT profile with its sessions and events (recover onto an existing profile)', () => {
+    // Documented hazard, pinned so it stays visible: a re-key is an UPDATE, but with OR REPLACE the conflicting
+    // profile row is DELETEd first, and that delete cascades to its sessions and events. Never re-key onto an
+    // id that already has a profile; POST /api/player/recover must check that first.
+    const db = migrated();
+    seedTwoPlayers(db);
+    expect(count(db, 'session_events', "player_id = 'p2'")).toBe(2);
+
+    db.run("UPDATE OR REPLACE player_profiles SET player_id = 'p2' WHERE player_id = 'p1'");
+
+    expect(rows<{ player_id: string }>(db, 'SELECT player_id FROM player_profiles')).toEqual([{ player_id: 'p2' }]);
+    expect(rows<{ id: string; player_id: string }>(db, 'SELECT id, player_id FROM sessions')).toEqual([{ id: 's1', player_id: 'p2' }]); // s2 (the old p2's) is gone
+    expect(count(db, 'session_events', "session_id = 's2'")).toBe(0); // and so are its events
+    expect(count(db, 'session_events', "session_id = 's1' AND player_id = 'p2'")).toBe(2); // p1's data now belongs to p2
+    expect(rows(db, 'PRAGMA foreign_key_check')).toEqual([]);
   });
 
   test('INSERT OR REPLACE on a session deletes the old row first and so wipes its events; ON CONFLICT DO UPDATE keeps them', () => {
