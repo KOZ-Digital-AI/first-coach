@@ -7,13 +7,13 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router';
-import type { ComponentType } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, type LOCALES } from '../../lib/i18n';
 import i18nMessages from '../i18n/i18n.messages';
 import { NotFoundPage, RootErrorPage, Route as AppRootRoute } from '../../routes/__root';
 import errorPagesMessages from './error-pages.messages';
-import { Shell } from './Shell';
+import { AppShell, Shell } from './Shell';
 import shellMessages from './shell.messages';
 
 // The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the
@@ -64,7 +64,7 @@ interface Options {
   path: string;
   locale?: Locale;
   /** Child routes under the real root. */
-  pages?: Record<string, ComponentType>;
+  pages?: Record<string, () => ReactNode>;
 }
 
 async function renderApp({ path, locale = 'en', pages = {} }: Options) {
@@ -303,15 +303,18 @@ describe('routes/__root.tsx', () => {
     expect(AppRootRoute.options.errorComponent).toBe(RootErrorPage);
   });
 
-  test('still renders the shell around the routed page (the component is set)', () => {
-    expect(typeof AppRootRoute.options.component).toBe('function');
+  test('keeps its layout: the app shell around the routed page (the Outlet)', () => {
+    const layout = AppRootRoute.options.component as unknown as () => ReactElement<{ children: ReactElement }>;
+    const element = layout();
+    expect(element.type).toBe(AppShell);
+    expect(element.props.children.type).toBe(Outlet);
   });
 });
 
 // --- copy tone --------------------------------------------------------------------------------
 
 describe('copy', () => {
-  test('never scolds: no "error", "wrong page", "forbidden", "denied" or "illegal" wording in English', () => {
+  test('never scolds: no "forbidden", "denied", "illegal", "failed" or "you must" wording in English', () => {
     const copy = JSON.stringify(errorPagesMessages.en);
     for (const word of [/\bforbidden\b/i, /\bdenied\b/i, /\billegal\b/i, /\bfailed\b/i, /\byou (must|should|need to)\b/i]) {
       expect(copy).not.toMatch(word);
