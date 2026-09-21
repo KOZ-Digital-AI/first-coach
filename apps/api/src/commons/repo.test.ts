@@ -193,6 +193,10 @@ describe('listDrills: rows and unpublished exclusion', () => {
       space: 'yard',
       status: 'COMMUNITY',
       versionId: 'five-gate-slalom-v1',
+      // additive fields (fc-mol-hum.6): attribution is always present; this fixture defines no
+      // age range and its status is COMMUNITY, so ageMin, ageMax and orgLabel stay absent.
+      source: 'FIRST COACH Genesis',
+      license: 'CC-BY-SA-4.0',
     });
   });
 
