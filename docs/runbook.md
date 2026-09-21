@@ -278,6 +278,7 @@ The upload store (`apps/api/src/contributions/uploads.ts`) exists, but no HTTP r
 | `publishedDrills` | Number of published drills. Greater than 0 once the seed has loaded. |
 | `migration` | Name of the latest applied migration, for example `006_contributions`. |
 | `aiAvailable` | `true` when `OPENAI_API_KEY` is set and not blank. |
+| `aiPlannerEnabled` | `true` unless an admin switched the AI planner off in admin settings. Read per request. Not a secret. |
 | `mediaWritable` | `true` when `MEDIA_DIR` is set, exists and is writable. Expect `true` on Railway. |
 
 When the database probe or any database read fails, the answer is HTTP 503 with only `ok: false`, `version` and
