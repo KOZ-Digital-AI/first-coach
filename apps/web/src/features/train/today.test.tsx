@@ -367,6 +367,20 @@ describe('finishing the session', () => {
     await waitFor(() => expect(page.navigate).toHaveBeenCalledTimes(1));
   });
 
+  test('two taps in the same tick (before the screen re-renders) still send one event', async () => {
+    const pending = deferred<Response>();
+    const page = mountToday({ server: { today: () => json(allDone()), events: () => pending.promise } });
+    await drillList();
+    const button = finishButton();
+    await act(async () => {
+      button.click();
+      button.click();
+    });
+    expect(page.eventCalls()).toHaveLength(1);
+    await act(async () => pending.resolve(json(EVENTS_RESPONSE)));
+    await waitFor(() => expect(page.navigate).toHaveBeenCalledTimes(1));
+  });
+
   test('a failure is worded in the player\'s language, stays on the screen, and Try again resends the SAME event', async () => {
     let attempts = 0;
     const page = mountToday({ server: { today: () => json(allDone()), events: () => (++attempts === 1 ? problem(500) : json(EVENTS_RESPONSE)) } });
