@@ -287,6 +287,9 @@ describe('sampleTimestampsMs', () => {
     }
     expect(pose.sampleTimestampsMs(10.5, 5)).toHaveLength(53);
     expect(pose.sampleTimestampsMs(1.1, 10)).toHaveLength(11); // 1.1 * 10 = 11.000000000000002 must not add a 12th sample
+    // Float noise in the duration itself: 0.1 * 3 = 0.30000000000000004 s (x 10 fps = 3.0000000000000004) is a 0.3 s clip.
+    expect(pose.sampleTimestampsMs(0.1 * 3, 10)).toHaveLength(3);
+    expect(pose.sampleTimestampsMs(0.2 * 3, 5)).toHaveLength(3);
   });
 
   test('fps is clamped to 5..10, and a missing or non-finite fps means 5', () => {
