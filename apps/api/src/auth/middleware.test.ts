@@ -12,6 +12,7 @@ import {
   requireContributor,
   requirePlayer,
   type AuthVariables,
+  type SessionLike,
   type SessionResolver,
 } from "./middleware";
 
@@ -321,6 +322,24 @@ describe("requireAdmin", () => {
     expect(no.status).toBe(403);
   });
 
+  test("role matching is exact like Better Auth's: padded roles do not satisfy admin, 'admin,' still does", async () => {
+    const roles: [string, number][] = [
+      [" admin", 403],
+      ["admin ", 403],
+      ["contributor, admin", 403],
+      ["contributor,admin", 200],
+      ["admin,", 200],
+    ];
+    const seen: [string, number][] = [];
+    for (const [i, [role]] of roles.entries()) {
+      const user = await signUpContributor(`role${i}@example.com`);
+      db.run("UPDATE user SET role = ? WHERE id = ?", [role, user.id]);
+      seen.push([role, (await get("/probe/admin", user.cookie)).status]);
+    }
+
+    expect(seen).toEqual(roles);
+  });
+
   test("a promotion is picked up on the next request (role comes from the DB, not the cookie)", async () => {
     const user = await signUpContributor();
     const before = await get("/probe/admin", user.cookie);
@@ -526,5 +545,56 @@ describe("a failing session lookup fails closed", () => {
     expect(contributor.status).toBe(403);
     expect(admin.status).toBe(403);
     expect(player.status).toBe(200);
+  });
+});
+
+describe("fail-closed defaults for absent or unreadable session fields", () => {
+  const appWith = async (user: SessionLike["user"]): Promise<Hono> => {
+    const custom = await createApp(deps, undefined, { webDist: join(dir, "no-dist") });
+    mountProbes(custom, { resolveSession: async () => ({ user }) });
+    return custom;
+  };
+
+  for (const [label, user] of [
+    ["null", { id: "u-null", isAnonymous: false, role: null }],
+    ["undefined", { id: "u-undef", isAnonymous: false, role: undefined }],
+  ] as const) {
+    test(`a non-anonymous user with a ${label} role is a contributor, never an admin`, async () => {
+      const custom = await appWith(user);
+
+      const admin = await call("/probe/admin", {}, custom);
+      const contributor = await call("/probe/contributor", {}, custom);
+
+      expect(admin.status).toBe(403);
+      expect(contributor.status).toBe(200);
+      const body = (await contributor.json()) as { user: { role: string } };
+      expect(body.user.role).toBe("contributor");
+      expect(reached).toEqual(["contributor"]);
+    });
+  }
+
+  test("a ban with an unreadable expiry (garbage string or invalid Date) still applies", async () => {
+    const garbage = await appWith({ id: "u-g", isAnonymous: false, banned: true, banExpires: "garbage" });
+    const invalid = await appWith({
+      id: "u-i",
+      isAnonymous: false,
+      banned: true,
+      banExpires: new Date("garbage"),
+    });
+
+    for (const custom of [garbage, invalid]) {
+      for (const path of ROUTES) {
+        expect((await call(path, {}, custom)).status).toBe(403);
+      }
+    }
+    expect(reached).toEqual([]);
+  });
+
+  test("a ban whose expiry is in the past no longer applies (Date, ISO string and epoch ms)", async () => {
+    const past = Date.now() - 60_000;
+    for (const banExpires of [new Date(past), new Date(past).toISOString(), past]) {
+      const custom = await appWith({ id: "u-p", isAnonymous: false, banned: true, banExpires });
+      expect((await call("/probe/contributor", {}, custom)).status).toBe(200);
+    }
   });
 });
