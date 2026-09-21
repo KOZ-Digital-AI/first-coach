@@ -131,7 +131,19 @@ const football = (): SportSeed => ({
       drills: [drill("cushion-touch", { level: 2, equipment: "nothing", ageMin: 8, ageMax: 14 })],
     },
   },
-  rubrics: { sport: "football", rubrics: [{ skill: "first-touch", level: 1, criteria: t("controls the ball in one touch") }] },
+  rubrics: {
+    sport: "football",
+    rubrics: [
+      {
+        skill: "first-touch",
+        version: 1,
+        status: "COMMUNITY",
+        criteria: [{ key: "body-position", label: t("Body position"), description: t("The body is steady"), lookFor: [t("Knees slightly bent")] }],
+        recordingTips: [t("Prop the phone on the ground")],
+        minVisibility: 0.6,
+      },
+    ],
+  },
 });
 
 const futsal = (): SportSeed => ({
@@ -1357,10 +1369,10 @@ const INVALID: InvalidCase[] = [
     path: "tests.0.metric",
   },
   {
-    name: "an invalid rubric level",
-    arrange: (s) => void (s.football!.rubrics!.rubrics[0]!.level = 9),
+    name: "an invalid rubric minVisibility",
+    arrange: (s) => void (s.football!.rubrics!.rubrics[0]!.minVisibility = 1.5),
     file: "football/rubrics.json",
-    path: "rubrics.0.level",
+    path: "rubrics.0.minVisibility",
   },
   {
     name: "a duplicate slug inside a file",

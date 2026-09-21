@@ -16,7 +16,7 @@
 // so the unrefined `*Base` objects are exported next to the refined ones.
 import { z } from "zod";
 import { AGE_MAX, AGE_MIN, SKILL_LEVEL_MAX, SKILL_LEVEL_MIN, Semver, TestDirection } from "../shared/domain";
-import { DrillDose, Equipment, LICENSE_IDS, Space } from "../shared/primitives";
+import { DrillDose, Equipment, LICENSE_IDS, Space, TrustStatus } from "../shared/primitives";
 
 // --- Shared building blocks ------------------------------------------------------------------
 
@@ -198,15 +198,65 @@ export type SeedDrillTrackFile = z.infer<typeof SeedDrillTrackFile>;
 // --- rubrics.json -----------------------------------------------------------------------------
 
 /**
- * Derived (the criteria name the file but give no shape): what a coach checks to award one
- * skill level, on the same 1-5 scale as SkillNode levels.
+ * The video-coach rubric of one skill (fc-mol-8nt.2): what the AI Video Coach judges from body
+ * pose, how to film, and how visible the body must be. It maps 1:1 onto the `Rubric` wire contract
+ * in ../shared/video (skill, version, criteria[key, label, description, lookFor[]], recordingTips[],
+ * minVisibility) once every text is localised to one locale; the server does that when serving.
+ * `status` is the trust status of the wording: a rubric starts as COMMUNITY (a draft that still
+ * needs a native-speaker review). It is seed-only: the wire Rubric carries no status.
  */
-export const SeedRubric = z.strictObject({
-  skill: Slug,
-  level: z.int().min(SKILL_LEVEL_MIN).max(SKILL_LEVEL_MAX),
-  criteria: SeedText,
+export const SeedRubricCriterion = z.strictObject({
+  key: Slug,
+  label: SeedText,
+  description: SeedText,
+  lookFor: z.array(SeedText).min(1),
 });
+export type SeedRubricCriterion = z.infer<typeof SeedRubricCriterion>;
+
+/** Reports every repeat of a criterion key inside one rubric (never its first use) at `criteria.<i>.key`. */
+const uniqueCriterionKeys = (ctx: z.core.ParsePayload<{ criteria: readonly { key: string }[] }>): void => {
+  const seen = new Set<string>();
+  ctx.value.criteria.forEach((criterion, index) => {
+    if (seen.has(criterion.key)) {
+      ctx.issues.push({
+        code: "custom",
+        input: criterion.key,
+        path: ["criteria", index, "key"],
+        message: `Duplicate criterion key "${criterion.key}"`,
+      });
+    }
+    seen.add(criterion.key);
+  });
+};
+
+export const SeedRubric = z
+  .strictObject({
+    skill: Slug,
+    version: z.int().positive(),
+    status: TrustStatus,
+    criteria: z.array(SeedRubricCriterion).min(1),
+    recordingTips: z.array(SeedText).min(1),
+    /** A 0..1 ratio: below this mean landmark visibility the clip is refused (`low_visibility`). */
+    minVisibility: z.number().min(0).max(1),
+  })
+  .check(uniqueCriterionKeys);
 export type SeedRubric = z.infer<typeof SeedRubric>;
 
-export const SeedRubricsFile = z.strictObject({ sport: Slug, rubrics: z.array(SeedRubric) });
+/** One rubric per skill: a repeated skill is reported at the repeat (`rubrics.<i>.skill`). */
+const uniqueRubricSkills = (ctx: z.core.ParsePayload<{ rubrics: readonly { skill: string }[] }>): void => {
+  const seen = new Set<string>();
+  ctx.value.rubrics.forEach((rubric, index) => {
+    if (seen.has(rubric.skill)) {
+      ctx.issues.push({
+        code: "custom",
+        input: rubric.skill,
+        path: ["rubrics", index, "skill"],
+        message: `Duplicate rubric for skill "${rubric.skill}"`,
+      });
+    }
+    seen.add(rubric.skill);
+  });
+};
+
+export const SeedRubricsFile = z.strictObject({ sport: Slug, rubrics: z.array(SeedRubric) }).check(uniqueRubricSkills);
 export type SeedRubricsFile = z.infer<typeof SeedRubricsFile>;
