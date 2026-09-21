@@ -21,6 +21,10 @@ const SEED_DIR = resolve(import.meta.dir, "../../../../config/commons");
 
 const ALICE = "user-alice";
 const ADMIN = { id: "admin-1", name: "Admin Aidar" };
+// The seed is stamped with the clock the loader is given (default: the real now). It is pinned BEFORE
+// every test time below, so the seed's versions are always the oldest and "history, newest first" does
+// not depend on the day the suite runs.
+const T_SEED = new Date("2026-01-01T00:00:00.000Z");
 const T_CREATED = new Date("2026-03-01T10:00:00.000Z");
 const T_DECIDE = new Date("2026-04-01T09:00:00.000Z");
 const opts = { now: () => T_DECIDE };
@@ -33,7 +37,7 @@ let db: Database;
 beforeEach(() => {
   db = openDatabase(":memory:");
   migrate(db, MIGRATIONS_DIR);
-  loadSeed(db, SEED_DIR);
+  loadSeed(db, SEED_DIR, { now: () => T_SEED });
 });
 
 afterEach(() => {
