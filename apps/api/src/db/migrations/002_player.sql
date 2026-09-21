@@ -7,17 +7,26 @@
 -- Conventions (as 001)
 --   * STRICT tables. Timestamps are TEXT, canonical ISO 8601 UTC with milliseconds
 --     ("2026-01-01T00:00:00.000Z"): a CHECK refuses any other spelling (offsets, no
---     milliseconds, invalid dates), so text order IS time order and ORDER BY created_at is safe.
---     Writers must normalise a client `at` with an offset to UTC (new Date(at).toISOString()).
+--     milliseconds, invalid dates, and hour 24: strftime would round-trip "T24:00:00.000Z", which
+--     Zod refuses and which spells the next day's midnight twice), so text order IS time order
+--     and ORDER BY created_at is safe. Writers must normalise a client `at` with an offset to UTC
+--     (new Date(at).toISOString()).
 --   * JSON is CHECKed json_valid plus its top-level type; the wire contract (shared/domain.ts) is
 --     validated by Zod at the write boundary, not here.
 --   * CHECK lists and bounds exist ONLY where the contract fixes them and a stored value can
 --     never be "new": locale (LOCALES), minutes_per_session (MINUTES_PER_SESSION), days_per_week
 --     (DAYS_PER_WEEK), age (AGE_MIN..AGE_MAX). 002_player.test.ts parses each back out of
 --     sqlite_master and compares it with the contract. level, goal, equipment and space are
---     free TEXT (non-blank) on purpose, like their twins in 001: the vocabulary is per sport and
+--     free TEXT (never blank: nothing but whitespace is refused, whitespace being space, tab,
+--     newline and carriage return) on purpose, like their twins in 001: the vocabulary is per sport and
 --     grows with the commons, and Zod is its write boundary. See "Rebuilding player_profiles"
 --     below for why a CHECK on the parent table is expensive to grow.
+--
+--   * client_uuid mirrors z.uuid() as ClientUuid uses it (zod 4.6.5), on lower-case input:
+--     version nibble 1-8, variant nibble 8/9/a/b, or the nil / max UUID. Upper case is refused
+--     here because ClientUuid lower-cases first and replay identity is a plain string compare.
+--     If zod's rule changes, this CHECK is only defence in depth; 002_player.test.ts compares
+--     both on a fixed candidate list and fails when they drift.
 --
 -- Personal data
 --   * NO name, email or birth date, and no other identifier of a person, in any column. The
@@ -56,20 +65,20 @@
 --     table rebuild. ALTER TABLE ... ADD COLUMN is fine for new nullable columns.
 
 CREATE TABLE player_profiles (
-  player_id           TEXT NOT NULL PRIMARY KEY CHECK (player_id <> ''),   -- the auth user id, no FK (see header)
+  player_id           TEXT NOT NULL PRIMARY KEY CHECK (trim(player_id, ' ' || char(9) || char(10) || char(13)) <> ''),   -- the auth user id, no FK (see header)
   age                 INTEGER NOT NULL CHECK (age BETWEEN 5 AND 99),       -- AGE_MIN..AGE_MAX
-  level               TEXT NOT NULL CHECK (level <> ''),                   -- ExperienceLevel
-  goal                TEXT NOT NULL CHECK (goal <> ''),                    -- Goal
-  equipment           TEXT NOT NULL CHECK (equipment <> ''),               -- Equipment
-  space               TEXT NOT NULL CHECK (space <> ''),                   -- Space
+  level               TEXT NOT NULL CHECK (trim(level, ' ' || char(9) || char(10) || char(13)) <> ''),                   -- ExperienceLevel
+  goal                TEXT NOT NULL CHECK (trim(goal, ' ' || char(9) || char(10) || char(13)) <> ''),                    -- Goal
+  equipment           TEXT NOT NULL CHECK (trim(equipment, ' ' || char(9) || char(10) || char(13)) <> ''),               -- Equipment
+  space               TEXT NOT NULL CHECK (trim(space, ' ' || char(9) || char(10) || char(13)) <> ''),                   -- Space
   partner             INTEGER NOT NULL CHECK (partner IN (0, 1)),          -- boolean
   days_per_week       INTEGER NOT NULL CHECK (days_per_week BETWEEN 2 AND 6),   -- DAYS_PER_WEEK
   minutes_per_session INTEGER NOT NULL CHECK (minutes_per_session IN (10, 15, 20, 30, 45)),  -- MINUTES_PER_SESSION
   locale              TEXT NOT NULL CHECK (locale IN ('kk', 'ru', 'en')),  -- LOCALES
   created_at          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-                      CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', created_at) IS created_at),
+                      CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', created_at) IS created_at AND substr(created_at, 12, 2) < '24'),
   updated_at          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-                      CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', updated_at) IS updated_at)
+                      CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', updated_at) IS updated_at AND substr(updated_at, 12, 2) < '24')
 ) STRICT;
 
 -- One row per measured (or skipped) baseline / retest result. client_uuid is the offline
@@ -85,11 +94,11 @@ CREATE TABLE test_results (
   errors      INTEGER CHECK (errors IS NULL OR errors >= 0),            -- Count.optional(): NULL = not recorded
   skipped     INTEGER NOT NULL DEFAULT 0 CHECK (skipped IN (0, 1)),     -- 1: nothing measured, value is 0
   recorded_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-              CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', recorded_at) IS recorded_at),
-  client_uuid TEXT NOT NULL UNIQUE
-              CHECK (length(client_uuid) = 36
-                     AND client_uuid NOT GLOB '*[^0-9a-f-]*'
-                     AND client_uuid GLOB '????????-????-????-????-????????????')
+              CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', recorded_at) IS recorded_at AND substr(recorded_at, 12, 2) < '24'),
+  client_uuid TEXT NOT NULL UNIQUE                                       -- lower-case, mirrors z.uuid() (see header)
+              CHECK (client_uuid GLOB '[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f]-[1-8][0-9a-f][0-9a-f][0-9a-f]-[89ab][0-9a-f][0-9a-f][0-9a-f]-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
+                     OR client_uuid IN ('00000000-0000-0000-0000-000000000000',
+                                        'ffffffff-ffff-ffff-ffff-ffffffffffff'))
 ) STRICT;
 -- Latest / previous / personal best of one test for one player.
 CREATE INDEX test_results_by_player_test ON test_results (player_id, test_slug, recorded_at, id);
@@ -103,6 +112,6 @@ CREATE TABLE roadmaps (
   json          TEXT NOT NULL CHECK (json_valid(json) AND json_type(json) = 'object'),   -- Roadmap
   graph_version TEXT NOT NULL CHECK (graph_version <> ''),                                -- as sports.graph_version
   created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-                CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', created_at) IS created_at)
+                CHECK (strftime('%Y-%m-%dT%H:%M:%fZ', created_at) IS created_at AND substr(created_at, 12, 2) < '24')
 ) STRICT;
 CREATE INDEX roadmaps_by_player ON roadmaps (player_id, created_at, id);
