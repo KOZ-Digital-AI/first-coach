@@ -7,6 +7,9 @@ import type { MessageBundle } from '../../lib/i18n';
  * plural forms on purpose ("Sessions per week: 3"), so one phrase per language is enough.
  * `reasons` is keyed by the planner's item reason keys (warmup | focus | fill), `focus.reasons` by the roadmap's focus reason
  * keys (goal | weakest) and `focus.levels` by the roadmap's level labels; a value the client does not know is shown as sent.
+ * `tracks` names the five root tracks of the skill graph (the wording of the roadmap screen), keyed by the slug a drill row
+ * carries; any other slug is shown humanised by the screen. `drill.levels` is keyed by the contract's ExperienceLevel
+ * (beginner | basic | intermediate) and read after the label `drill.level` ("Level: Beginner").
  * Kazakh text still needs a native review.
  */
 export default {
@@ -21,6 +24,19 @@ export default {
       minutes: '{{minutes}} мин',
       done: 'Орындалды',
       todo: 'Әлі орындалмады',
+      level: 'Деңгей: {{level}}',
+      levels: {
+        beginner: 'Бастаушы',
+        basic: 'Негізгі',
+        intermediate: 'Орта',
+      },
+    },
+    tracks: {
+      'ball-mastery': 'Допты меңгеру',
+      dribbling: 'Дриблинг',
+      'passing-first-touch': 'Пас және допты алғаш қабылдау',
+      'weak-foot': 'Әлсіз аяқ',
+      'juggling-coordination': 'Жонглёрлау және үйлесімділік',
     },
     reasons: {
       warmup: 'Жылыну',
@@ -74,6 +90,19 @@ export default {
       minutes: '{{minutes}} мин',
       done: 'Готово',
       todo: 'Ещё не сделано',
+      level: 'Уровень: {{level}}',
+      levels: {
+        beginner: 'Начальный',
+        basic: 'Базовый',
+        intermediate: 'Средний',
+      },
+    },
+    tracks: {
+      'ball-mastery': 'Владение мячом',
+      dribbling: 'Дриблинг',
+      'passing-first-touch': 'Пас и первый приём',
+      'weak-foot': 'Слабая нога',
+      'juggling-coordination': 'Жонглирование и координация',
     },
     reasons: {
       warmup: 'Разминка',
@@ -127,6 +156,19 @@ export default {
       minutes: '{{minutes}} min',
       done: 'Done',
       todo: 'To do',
+      level: 'Level: {{level}}',
+      levels: {
+        beginner: 'Beginner',
+        basic: 'Basic',
+        intermediate: 'Intermediate',
+      },
+    },
+    tracks: {
+      'ball-mastery': 'Ball mastery',
+      dribbling: 'Dribbling',
+      'passing-first-touch': 'Passing and first touch',
+      'weak-foot': 'Weaker foot',
+      'juggling-coordination': 'Juggling and coordination',
     },
     reasons: {
       warmup: 'Warm-up',
