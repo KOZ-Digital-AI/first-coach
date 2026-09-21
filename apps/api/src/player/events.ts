@@ -13,17 +13,21 @@
 //   * Idempotency is `INSERT ... ON CONFLICT (client_uuid) DO NOTHING`, never OR IGNORE (which would also drop
 //     a row that breaks a CHECK: an invalid event would vanish). Only a duplicate client_uuid is ignored, the
 //     first write wins, whoever sends it; any other violation throws and rolls the whole batch back.
-//   * The window: an event older than OFFLINE_EVENT_MAX_AGE_DAYS, or more than EVENT_MAX_FUTURE_MS ahead of
-//     the injected clock, or with an `at` that is not an ISO 8601 timestamp with an offset, rejects the batch
-//     (EventTimeError). Replays are held to it too.
+//   * `at` must satisfy the shared contract's Timestamp (ISO 8601 with an offset, a real calendar day, hour
+//     0-23), else EventTimeError('invalid'). The window: a NEW event older than OFFLINE_EVENT_MAX_AGE_DAYS, or
+//     more than EVENT_MAX_FUTURE_MS ahead of the injected clock, rejects the batch (EventTimeError). An event
+//     whose client_uuid is already stored for the caller's own session is a replay: it skips the window check
+//     (a retry after the window must not fail), never the format check, and changes nothing.
 //   * Done state IS stored: TodayItem.done lives in sessions.items (the contract has it), so it is rewritten.
 //     Replaying the session's whole event log ordered by (at, id) derives each item's flag: drill_done sets,
-//     drill_undone clears, the last one wins; an item with no drill event is not done. Events for an itemId
+//     drill_undone clears, the last one wins; an item with no drill event is not done. Only the `done` flag of
+//     an item whose derived value differs from the stored one is written (json_set on that path), so every
+//     other byte of the items JSON (key order, number text, whitespace) survives. Events for an itemId
 //     that is not in the session (a swapped-out drill), or with no itemId, stay in the log and change no flag,
 //     so one stale outbox event cannot block a batch. `result` events are logged only.
 //   * finished_at = the `at` of the EARLIEST session_finished event (the contract has no un-finish), else
 //     NULL. The earliest, not the first to arrive, so the outcome does not depend on delivery order.
-//   * Only sessions.items and sessions.finished_at are ever updated (never id: see 005's header). The events
+//   * Only sessions.items (the done flags) and sessions.finished_at are ever updated (never id: see 005's header). The events
 //     table is only inserted into.
 //   * The player's time zone is NOT in the data model (no column in 002, none in shared/): the caller passes
 //     an IANA name as `opts.timeZone`; missing or invalid means UTC. The zone is applied to every finished_at
@@ -34,6 +38,7 @@
 import type { Database } from 'bun:sqlite';
 import { OFFLINE_EVENT_MAX_AGE_DAYS } from '../shared/session';
 import type { SessionEvent, SessionProgress } from '../shared/session';
+import { Timestamp } from '../shared/domain';
 
 /** An event may carry an `at` at most this far ahead of the server clock (device clock skew). */
 export const EVENT_MAX_FUTURE_MS = 86_400_000;
@@ -51,7 +56,7 @@ export class SessionNotFoundError extends Error {
   readonly sessionId: string;
 
   constructor(sessionId: string) {
-    super(`Session not found: ${sessionId}`);
+    super('Session not found'); // never the raw id: it is client input of any length
     this.name = 'SessionNotFoundError';
     this.sessionId = sessionId;
   }
@@ -75,28 +80,26 @@ export class EventTimeError extends Error {
 
 // --- time zone helpers -----------------------------------------------------------------------
 
-const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
-
-/** The instant an event's `at` names, as canonical ISO UTC; throws EventTimeError('invalid') otherwise. */
+/** The instant an event's `at` names, as canonical ISO UTC; throws EventTimeError('invalid') if the contract's Timestamp refuses it. */
 function normaliseAt(at: string, clientUuid: string): string {
-  const ms = typeof at === 'string' && TIMESTAMP.test(at) ? Date.parse(at) : Number.NaN;
+  const ms = Timestamp.safeParse(at).success ? Date.parse(at) : Number.NaN;
   if (Number.isNaN(ms)) throw new EventTimeError('invalid', clientUuid);
   return new Date(ms).toISOString();
 }
 
-function resolveTimeZone(timeZone: string | undefined): string {
-  if (timeZone === undefined) return 'UTC';
+/** One calendar-day formatter for the zone (built once per call, not per row); an unknown zone name means UTC. */
+function dayFormatter(timeZone: string | undefined): Intl.DateTimeFormat {
+  const options = { year: 'numeric', month: '2-digit', day: '2-digit' } as const;
   try {
-    new Intl.DateTimeFormat('en-CA', { timeZone });
-    return timeZone;
+    return new Intl.DateTimeFormat('en-CA', { ...options, timeZone: timeZone ?? 'UTC' });
   } catch {
-    return 'UTC';
+    return new Intl.DateTimeFormat('en-CA', { ...options, timeZone: 'UTC' });
   }
 }
 
-/** The calendar day (YYYY-MM-DD) an instant falls on in the zone. */
-function localDate(instant: Date, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(instant);
+/** The calendar day (YYYY-MM-DD) an instant falls on in the formatter's zone. */
+function localDate(format: Intl.DateTimeFormat, instant: Date): string {
+  const parts = format.formatToParts(instant);
   const part = (type: string): string => parts.find((p) => p.type === type)?.value ?? '';
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
@@ -111,7 +114,7 @@ function previousDay(date: string): string {
 /** The player's progress: finished sessions, minutes of the items done now, and the training streak. */
 export function progressSummary(db: Database, playerId: string, opts: EventsOptions = {}): SessionProgress {
   const now = (opts.now ?? (() => new Date()))();
-  const timeZone = resolveTimeZone(opts.timeZone);
+  const format = dayFormatter(opts.timeZone);
 
   const completed = db.query('SELECT count(*) AS n FROM sessions WHERE player_id = ?1 AND finished_at IS NOT NULL').get(playerId) as { n: number };
   const minutes = db
@@ -125,8 +128,8 @@ export function progressSummary(db: Database, playerId: string, opts: EventsOpti
     .get(playerId) as { n: number };
 
   const finished = db.query('SELECT finished_at FROM sessions WHERE player_id = ?1 AND finished_at IS NOT NULL').all(playerId) as Array<{ finished_at: string }>;
-  const days = new Set(finished.map((r) => localDate(new Date(r.finished_at), timeZone)));
-  const today = localDate(now, timeZone);
+  const days = new Set(finished.map((r) => localDate(format, new Date(r.finished_at))));
+  const today = localDate(format, now);
   let day = days.has(today) ? today : previousDay(today);
   let streak = 0;
   while (days.has(day)) {
@@ -140,8 +143,17 @@ export function progressSummary(db: Database, playerId: string, opts: EventsOpti
 // --- ingestion -------------------------------------------------------------------------------
 
 /**
- * Derives the session's done flags and finished_at from its event log and stores them. Events are read
- * ordered by (at, id): `at` is canonical ISO UTC text, so text order is time order.
+ * A session's whole log, in time order. `at` is canonical ISO UTC text, so text order is time order, and
+ * (at, id) is exactly the order of session_events_by_session (session_id, at, id): the plan is one index
+ * range scan with no sorter. No player_id here: session ids are unique, and the composite FK plus the
+ * ownership pre-check already tie every event of a session to its player.
+ */
+export const SESSION_LOG_SQL = 'SELECT type, item_id, at FROM session_events WHERE session_id = ?1 ORDER BY at, id';
+
+/**
+ * Derives the session's done flags and finished_at from its event log and stores them, writing only what
+ * changed: the `done` flag of each item whose derived value differs (json_set on that path, so no other byte
+ * of items moves) and finished_at.
  */
 function recompute(db: Database, playerId: string, sessionId: string): void {
   const session = db.query('SELECT items, finished_at FROM sessions WHERE id = ?1 AND player_id = ?2').get(sessionId, playerId) as
@@ -149,9 +161,7 @@ function recompute(db: Database, playerId: string, sessionId: string): void {
     | null;
   if (session === null) throw new SessionNotFoundError(sessionId);
 
-  const log = db
-    .query('SELECT type, item_id, at FROM session_events WHERE session_id = ?1 AND player_id = ?2 ORDER BY at, id')
-    .all(sessionId, playerId) as Array<{ type: string; item_id: string | null; at: string }>;
+  const log = db.query(SESSION_LOG_SQL).all(sessionId) as Array<{ type: string; item_id: string | null; at: string }>;
 
   const done = new Map<string, boolean>();
   let finishedAt: string | null = null;
@@ -161,17 +171,23 @@ function recompute(db: Database, playerId: string, sessionId: string): void {
     else if (e.type === 'session_finished' && finishedAt === null) finishedAt = e.at;
   }
 
+  // The parse is only a read of (itemId, done); nothing is written back from it.
   const items: unknown = JSON.parse(session.items);
+  const flips: string[] = [];
   if (Array.isArray(items)) {
-    for (const item of items) {
-      if (typeof item === 'object' && item !== null && typeof (item as { itemId?: unknown }).itemId === 'string') {
-        (item as { done: boolean }).done = done.get((item as { itemId: string }).itemId) === true;
-      }
-    }
+    items.forEach((item: unknown, index) => {
+      if (typeof item !== 'object' || item === null) return;
+      const { itemId, done: stored } = item as { itemId?: unknown; done?: unknown };
+      if (typeof itemId !== 'string') return;
+      const derived = done.get(itemId) === true;
+      if ((stored === true) !== derived) flips.push(`'$[${index}].done', json('${derived}')`);
+    });
   }
-  const nextItems = JSON.stringify(items);
-  if (nextItems !== session.items || finishedAt !== session.finished_at) {
-    db.query('UPDATE sessions SET items = ?1, finished_at = ?2 WHERE id = ?3 AND player_id = ?4').run(nextItems, finishedAt, sessionId, playerId);
+  if (flips.length > 0) {
+    db.query(`UPDATE sessions SET items = json_set(items, ${flips.join(', ')}) WHERE id = ?1 AND player_id = ?2`).run(sessionId, playerId);
+  }
+  if (finishedAt !== session.finished_at) {
+    db.query('UPDATE sessions SET finished_at = ?1 WHERE id = ?2 AND player_id = ?3').run(finishedAt, sessionId, playerId);
   }
 }
 
@@ -189,6 +205,7 @@ export function ingestEvents(db: Database, playerId: string, events: readonly Se
   const newest = now.getTime() + EVENT_MAX_FUTURE_MS;
 
   const owns = db.query('SELECT 1 AS ok FROM sessions WHERE id = ?1 AND player_id = ?2');
+  const stored = db.query('SELECT 1 AS ok FROM session_events WHERE client_uuid = ?1 AND session_id = ?2 AND player_id = ?3');
   const insert = db.query(
     `INSERT INTO session_events (player_id, session_id, client_uuid, type, item_id, value, at, received_at)
      VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
@@ -201,9 +218,12 @@ export function ingestEvents(db: Database, playerId: string, events: readonly Se
     }
     const stamped = events.map((e) => {
       const at = normaliseAt(e.at, e.clientUuid);
-      const ms = Date.parse(at);
-      if (ms < oldest) throw new EventTimeError('too_old', e.clientUuid);
-      if (ms > newest) throw new EventTimeError('in_future', e.clientUuid);
+      // A replay (already stored for this player's own session) is exempt from the window, not from the format.
+      if (stored.get(e.clientUuid, e.sessionId, playerId) === null) {
+        const ms = Date.parse(at);
+        if (ms < oldest) throw new EventTimeError('too_old', e.clientUuid);
+        if (ms > newest) throw new EventTimeError('in_future', e.clientUuid);
+      }
       return { event: e, at };
     });
 
