@@ -388,17 +388,19 @@ describe("POST /api/player/today/ai-plan: a valid plan", () => {
 
 describe("POST /api/player/today/ai-plan: the note", () => {
   test("reaches the agent only inside a data block, and is stored and logged nowhere", async () => {
+    // a marker no seed drill text contains (the seed says "ankle" in its safety notes, so the bead's own example would not do)
+    const note = "my zqx7-marker leg is tired";
     const agent = fakeAgent(validPlan);
     await boot({ createAgent: agent.createAgent, env: KEY_ENV });
     const player = await onboardedPlayer();
     const session = await todayOk(player);
-    const res = await post(player, { note: "my ankle is tired" });
+    const res = await post(player, { note });
     expect(res.status).toBe(200);
 
-    expect(agent.calls[0]!.prompt).toContain('<data field="player_note">my ankle is tired</data>');
-    expect(JSON.stringify(callRows())).not.toContain("ankle");
-    expect(rawItemsColumn(session.id)).not.toContain("ankle");
-    expect(JSON.stringify(await res.json())).not.toContain("ankle");
+    expect(agent.calls[0]!.prompt).toContain(`<data field="player_note">${note}</data>`);
+    expect(JSON.stringify(callRows())).not.toContain("zqx7");
+    expect(rawItemsColumn(session.id)).not.toContain("zqx7");
+    expect(JSON.stringify(await res.json())).not.toContain("zqx7");
   });
 
   test("a note of exactly 200 characters is accepted", async () => {
