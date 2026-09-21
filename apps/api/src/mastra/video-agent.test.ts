@@ -49,7 +49,7 @@ const KEYFRAMES: Keyframe[] = ["AAAAAAAA", "BBBBBBBB", "CCCCCCCC"].map((tail) =>
 const REQUEST = { rubric: RUBRIC, features: FEATURES, durationSec: 14.2, keyframes: KEYFRAMES, locale: "en" as const };
 
 const VALID_OUTPUT = {
-  confidence: "medium",
+  confidence: "medium" as const,
   scores: [
     { key: "body-shape", score: 6, note: "Your hips open up nicely, keep going." },
     { key: "cushion", score: 4, note: "The foot could give way a little more." },
