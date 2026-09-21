@@ -26,6 +26,9 @@ const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@test
  * The app's QueryClient keeps a query for 14 days (bootstrap.ts gcTime), so the meta is still in the cache on that remount, but a
  * query with the default staleTime 0 is stale the moment it lands and is fetched again on mount. The same default makes a
  * reconnect (and a focus) refetch it. The meta is static reference data (sports, skill tree, limits), so it is fresh for a long time.
+ * A second way to the same double read: the session re-read can hit while the FIRST read is still in flight. The query passed its
+ * AbortSignal to the client, so leaving the screen cancelled the request (react-query cancels a fetch that used the signal when its
+ * last observer goes), and the remount had no data and sent a new one. The server saw both.
  *
  * Readings the tests pin (the simplest reading each time):
  * - "per visit": while the cache holds it. Signing out clears the whole QueryClient (features/account/header-extra.tsx), so the next
@@ -89,14 +92,18 @@ const json = (body: unknown, init: ResponseInit = {}, type = 'application/json')
 const realFetch = globalThis.fetch;
 let calls: URL[] = [];
 let failNext = 0;
+/** While set, every GET /api/contribute/meta waits for it: the request is in flight and the test releases it by hand. */
+let heldMeta: Promise<void> | null = null;
 
 function stubNetwork(): void {
   calls = [];
   failNext = 0;
+  heldMeta = null;
   globalThis.fetch = mock(async (input: RequestInfo | URL) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://localhost/');
     calls.push(url);
     if (url.pathname !== '/api/contribute/meta') return json({ type: 'about:blank', title: 'Not Found', status: 404 }, { status: 404 });
+    if (heldMeta !== null) await heldMeta;
     if (failNext > 0) {
       failNext -= 1;
       return json({ type: 'about:blank', title: 'Boom', status: 500 }, { status: 500 }, 'application/problem+json');
@@ -105,6 +112,12 @@ function stubNetwork(): void {
   }) as unknown as typeof fetch;
 }
 const metaCalls = () => calls.filter((url) => url.pathname === '/api/contribute/meta');
+/** Holds the meta answers back; returns the function that lets them through. */
+function holdMeta(): () => void {
+  let release: () => void = () => {};
+  heldMeta = new Promise<void>((resolve) => (release = resolve));
+  return release;
+}
 
 /** The upload: a fake XMLHttpRequest the test answers by hand. */
 class FakeXhr implements XhrLike {
@@ -168,6 +181,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  heldMeta = null;
   for (const client of clients.splice(0)) client.clear();
   globalThis.fetch = realFetch;
   setSystemTime(); // the clock the tests moved
@@ -266,6 +280,21 @@ describe('GET /api/contribute/meta happens once per visit', () => {
     await waitFor(() => expect(formIsShown()).toBe(false));
     view.show(ready());
     await formButton();
+    await tick();
+    expect(metaCalls()).toHaveLength(1);
+  });
+
+  test('a session re-read while the first read is still in flight does not cancel it and send a second one', async () => {
+    const release = holdMeta();
+    const view = mount();
+    await waitFor(() => expect(metaCalls()).toHaveLength(1));
+    view.show(rereading()); // the form unmounts with its request on the wire
+    await tick();
+    view.show(ready()); // and mounts again before the answer came
+    await tick();
+    expect(metaCalls()).toHaveLength(1);
+    release();
+    await formButton(); // the answer of the first (only) request fills the form
     await tick();
     expect(metaCalls()).toHaveLength(1);
   });
