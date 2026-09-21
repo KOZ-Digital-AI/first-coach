@@ -543,12 +543,14 @@ const SECRETS = {
   reviewerName: 'Reviewer Nameson',
 };
 
-function seedEverything(): void {
+/** Rows recent relative to `now`: the route reads the real clock, computeImpact the injected NOW. */
+function seedEverything(now: Date = NOW): void {
+  const recent = iso(now.getTime() - DAY);
   addTests();
   addPair(SECRETS.players[0]!, 'juggles', 10, 15);
   addPair(SECRETS.players[1]!, 'slalom', 20, 10);
-  addSession(SECRETS.players[0]!, ago(DAY), [[30, true]]);
-  addContribution(SECRETS.submitter, ago(DAY));
+  addSession(SECRETS.players[0]!, recent, [[30, true]]);
+  addContribution(SECRETS.submitter, recent);
   const v = addDrill();
   addReview(v, SECRETS.reviewer, SECRETS.reviewerName, 'COMMUNITY', 'REVIEWED');
 }
@@ -726,10 +728,10 @@ describe('GET /api/admin/impact', () => {
   });
 
   test('the response body carries no player id, user id or reviewer name', async () => {
-    seedEverything();
+    seedEverything(new Date());
     const admin = await signUpAdmin();
     const contributor = await signUp('contrib2@example.com');
-    addContribution(contributor.id, ago(DAY));
+    addContribution(contributor.id, new Date(Date.now() - DAY).toISOString());
     const res = await get(admin.cookie);
     expect(res.status).toBe(200);
     const text = await res.text();
