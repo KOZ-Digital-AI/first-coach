@@ -431,14 +431,14 @@ describe("the drill list response items carry optional attribution fields (fc-mo
     const parsed = listed();
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
-    expect(parsed.data.items[0]).toEqual(item());
+    expect(parsed.data.items[0] as unknown).toEqual(item());
   });
 
   test("the NEW shape parses and keeps every new value", () => {
     const parsed = listed(NEW_SHAPE);
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
-    expect(parsed.data.items[0]).toEqual(item(NEW_SHAPE));
+    expect(parsed.data.items[0] as unknown).toEqual(item(NEW_SHAPE));
   });
 
   test.each(Object.keys(NEW_SHAPE))("%s alone is enough: each new key is independently optional and kept", (key) => {
@@ -446,7 +446,7 @@ describe("the drill list response items carry optional attribution fields (fc-mo
     const parsed = listed(only);
     expect(parsed.success).toBe(true);
     if (!parsed.success) return;
-    expect(parsed.data.items[0]).toEqual(item(only));
+    expect(parsed.data.items[0] as unknown).toEqual(item(only));
   });
 
   test("ageMin 0 is a valid value", () => {
@@ -456,7 +456,7 @@ describe("the drill list response items carry optional attribution fields (fc-mo
     expect(parsed.data.items[0]).toMatchObject({ ageMin: 0, ageMax: 5 });
   });
 
-  test.each(LICENSE_IDS)("license %s is accepted", (license) => {
+  test.each([...LICENSE_IDS])("license %s is accepted", (license) => {
     expect(listed({ license }).success).toBe(true);
   });
 
