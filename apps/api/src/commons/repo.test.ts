@@ -734,6 +734,7 @@ describe('getSkillTests', () => {
   // The row contract is built here, not imported from the repo, so a repo that returns unparsed
   // strings or loose objects fails against an independent definition.
   const Boundaries = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+  const Bands = z.strictObject({ upTo9: Boundaries, from10to13: Boundaries, from14: Boundaries });
   const Row = z.strictObject({
     slug: z.string(),
     skill: z.string(),
@@ -742,11 +743,12 @@ describe('getSkillTests', () => {
     direction: z.enum(['higher', 'lower']),
     equipment: z.string(),
     protocol: z.record(z.string(), z.string()),
-    thresholds: z.strictObject({ upTo9: Boundaries, from10to13: Boundaries, from14: Boundaries }).nullable(),
+    thresholds: Bands.nullable(),
   });
 
-  const HIGHER = { upTo9: [3, 8, 15, 30], from10to13: [5, 12, 25, 50], from14: [8, 20, 40, 80] };
-  const LOWER = { upTo9: [9, 7, 5, 4], from10to13: [8, 6, 4, 3], from14: [7, 5, 3, 2] };
+
+  const HIGHER: z.infer<typeof Bands> = { upTo9: [3, 8, 15, 30], from10to13: [5, 12, 25, 50], from14: [8, 20, 40, 80] };
+  const LOWER: z.infer<typeof Bands> = { upTo9: [9, 7, 5, 4], from10to13: [8, 6, 4, 3], from14: [7, 5, 3, 2] };
 
   interface TestSpec {
     slug: string;
