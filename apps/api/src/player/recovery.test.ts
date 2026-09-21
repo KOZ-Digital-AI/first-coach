@@ -168,6 +168,7 @@ async function trainedPlayer(over: Partial<PlayerProfile> = {}): Promise<Player 
     T0,
   ]);
   db.run("INSERT INTO consents (player_id, kind, granted) VALUES (?, 'modelImprovement', 1)", [player.id]);
+  db.run("INSERT INTO ai_calls (player_id, kind, model, candidate_ids, chosen_ids, latency_ms) VALUES (?, 'plan', 'test-model', '[\"dv-1\"]', '[\"dv-1\"]', 1)", [player.id]);
   return { ...player, start: StartResponse.parse(await res.json()) };
 }
 
