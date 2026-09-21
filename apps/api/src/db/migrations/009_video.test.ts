@@ -102,11 +102,12 @@ function scratchDir(name: string, eighth: 'real' | 'stand-in', with009: boolean)
 }
 
 /** A migrated in-memory database opened like production (foreign_keys ON). */
-function migrated(which: 'all' | 'eight' | 'after-007' = 'all'): Database {
+function migrated(which: 'all' | 'eight' | 'nine' | 'after-007' = 'all'): Database {
   const db = openDatabase(':memory:');
   opened.push(db);
   if (which === 'all') migrate(db);
   else if (which === 'eight') migrate(db, scratchDir('eight', 'real', false));
+  else if (which === 'nine') migrate(db, scratchDir('nine', 'real', true));
   else migrate(db, scratchDir('after-007', 'stand-in', true));
   return db;
 }
@@ -260,8 +261,9 @@ describe('009_video: applying', () => {
   });
 
   test('creates video_analyses and leaves every table of 001-008 exactly as it was', () => {
+    // 001-008 against 001-009 (not against "every migration"): a later migration must not break this test.
     const before = migrated('eight');
-    const after = migrated('all');
+    const after = migrated('nine');
     const added = tableNames(after).filter((t) => !tableNames(before).includes(t));
     expect(added).toEqual(['video_analyses']);
     for (const table of tableNames(before)) expect(createSql(after, table), table).toBe(createSql(before, table));
