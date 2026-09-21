@@ -402,6 +402,24 @@ describe("Better Auth rateLimit (production)", () => {
     expect(rows.some((r) => r.key.includes("203.0.113.5") && r.count === 1)).toBe(true);
   });
 
+  test("outside production the limiter is off: 11 wrong-password sign-ins are all 401", async () => {
+    const handle = open();
+    const auth = createAuth(resolveAuthConfig(handle, { NODE_ENV: "test" }));
+    await ensureAuthSchema(auth, handle);
+
+    const statuses = await statusesOf(11, () =>
+      auth.handler(
+        new Request(`${DEV_ORIGIN}/api/auth/sign-in/email`, {
+          method: "POST",
+          headers: { "content-type": "application/json", origin: DEV_ORIGIN, "x-forwarded-for": "203.0.113.5" },
+          body: JSON.stringify({ email: "no@one.io", password: "wrong-password-1" }),
+        }),
+      ),
+    );
+
+    expect(statuses).toEqual(Array(11).fill(401));
+  }, 30_000);
+
   test("rotating the left side of a forwarded chain does not evade the limit", async () => {
     const { call } = await productionAuth();
 
