@@ -133,12 +133,11 @@ type Handler = (url: URL, init: RequestInit | undefined) => Response | Promise<R
 const realFetch = globalThis.fetch;
 let calls: Array<{ url: URL; init: RequestInit | undefined }> = [];
 
-/** Answers the anonymous-session handshake itself, so `handler` only ever sees the journey call. */
+/** Every request the screen makes lands in `calls` and is answered by `handler`. */
 function stubNetwork(handler: Handler): void {
   calls = [];
   globalThis.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://localhost/');
-    if (url.pathname.startsWith('/api/auth/')) return json({ session: { id: 's1' }, user: { id: 'p1', isAnonymous: true } });
     calls.push({ url, init });
     return handler(url, init);
   }) as unknown as typeof fetch;
@@ -198,6 +197,13 @@ function metric(label: string): HTMLElement {
 
 const text = (element: Element): string => (element.textContent ?? '').replace(/\s+/g, ' ');
 
+/** What sits beside a label inside a card: the label's own block ("Last time" + "14 touches"). A value can also appear in the history and the personal best, so it is read by its label. */
+function beside(card: HTMLElement, label: string): string {
+  const block = within(card).getByText(label).parentElement;
+  if (block === null) throw new Error(`"${label}" has no block around it`);
+  return text(block);
+}
+
 // --- the request --------------------------------------------------------------------------------
 
 describe('the request', () => {
@@ -254,18 +260,20 @@ describe('success: metric cards', () => {
 describe('success: assessment history', () => {
   test('a higher-is-better test reads previous -> latest with its unit and a signed percentage', async () => {
     await renderLoaded();
-    const card = within(testCard('Juggling'));
-    expect(card.getByText('14 touches')).toBeTruthy();
-    expect(card.getByText('21 touches')).toBeTruthy();
+    const element = testCard('Juggling');
+    const card = within(element);
+    expect(beside(element, 'Last time')).toContain('14 touches');
+    expect(beside(element, 'Now')).toContain('21 touches');
     expect(card.getByText('+50%')).toBeTruthy();
     expect(card.getByText(/better than last time/i)).toBeTruthy();
   });
 
   test('a lower-is-better test keeps its unit, says that less is better, and shows its improvement as positive', async () => {
     await renderLoaded();
-    const card = within(testCard('Dribbling'));
-    expect(card.getByText('30 s')).toBeTruthy();
-    expect(card.getByText('24 s')).toBeTruthy();
+    const element = testCard('Dribbling');
+    const card = within(element);
+    expect(beside(element, 'Last time')).toContain('30 s');
+    expect(beside(element, 'Now')).toContain('24 s');
     expect(card.getByText('+20%')).toBeTruthy();
     expect(card.getByText(/less is better/i)).toBeTruthy();
     expect(within(testCard('Juggling')).getByText(/more is better/i)).toBeTruthy();
@@ -298,8 +306,7 @@ describe('success: assessment history', () => {
   test('a single result shows as the first result, with no previous value and no percentage', async () => {
     await renderLoaded();
     const card = testCard('Weak foot');
-    expect(text(card)).toMatch(/first result/i);
-    expect(within(card).getByText('8 of 10')).toBeTruthy();
+    expect(beside(card, 'First result')).toContain('8 of 10');
     expect(text(card)).not.toMatch(/%/);
     expect(text(card)).not.toMatch(/last time/i);
   });
@@ -438,6 +445,15 @@ describe('empty', () => {
     expect(screen.queryByRole('list', { name: /skill tracks/i })).toBeNull();
     // Warm, not blaming: and no server text is shown.
     expect(document.body.textContent).not.toMatch(/not onboarded/i);
+  });
+
+  test('a visitor with no session yet (401) has no journey either: the same empty state, not an error', async () => {
+    stubNetwork(() => problem(401, 'Unauthorized', 'Sign in required.'));
+    renderJourney();
+    const start = await screen.findByRole('link', { name: /start training/i });
+    expect(start.getAttribute('href')).toBe('/train');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/expired|sign in/i);
   });
 
   test('a journey with no sessions, no tests and no milestones is empty too', async () => {
