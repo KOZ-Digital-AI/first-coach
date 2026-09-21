@@ -487,7 +487,7 @@ describe("Dockerfile runtime configuration", () => {
     expect(parsed).not.toBeNull();
     const command = parsed?.[1] ?? "";
     expect(command).toMatch(/^bun\s/);
-    expect(command).toContain("/health");
+    expect(command).toMatch(/\/health(?![\w/-])/); // the /health path itself, not /healthz or /health/x
     expect(command).toContain("fetch(");
     expect(command).toContain("process.exit(");
     expect(command).not.toMatch(/\b(curl|wget)\b/);
