@@ -595,6 +595,132 @@ describe("POST /api/contributions", () => {
   });
 });
 
+// --- bounded work: the number of parts, the size of the payload and the size of the answer -----------------
+//
+// A registered contributor can send any body under the total limit, e.g. millions of empty parts with
+// distinct unknown names, each of which used to become one parsed entry and one `errors[]` item. The
+// pinned limits (the criteria say "a small fixed number"): at most MAX_PARTS = 16 parts in a request
+// (the 5 the contract allows - payload, video, 3 files - plus room for a browser's empty file inputs),
+// a `payload` part of at most 256 KiB, and at most MAX_ISSUES = 20 items in `errors[]`.
+
+const MAX_PARTS = 16;
+const MAX_ISSUES = 20;
+const BOUNDARY = "----bounded-test";
+
+/** A hand-built multipart body of empty parts with the given names, plus the `payload` part when `withPayload`. */
+function rawMultipart(names: string[], opts: { withPayload?: boolean; boundaryParam?: string } = {}) {
+  const { withPayload = true, boundaryParam = `boundary=${BOUNDARY}` } = opts;
+  let body = "";
+  if (withPayload) body += `--${BOUNDARY}\r\nContent-Disposition: form-data; name="payload"\r\n\r\n${JSON.stringify(validPayload())}\r\n`;
+  for (const name of names) {
+    // `files` is what a browser's empty file input sends (an empty filename); any other name is a text part.
+    const disposition = name === "files" ? `name="files"; filename=""\r\nContent-Type: application/octet-stream` : `name="${name}"`;
+    body += `--${BOUNDARY}\r\nContent-Disposition: form-data; ${disposition}\r\n\r\n\r\n`;
+  }
+  body += `--${BOUNDARY}--\r\n`;
+  return { headers: { "content-type": `multipart/form-data; ${boundaryParam}` }, body };
+}
+
+const postRaw = (actor: Actor, raw: { headers: Record<string, string>; body: string }) =>
+  app.request(COLLECTION, { method: "POST", headers: { ...authHeaders(actor), ...raw.headers }, body: raw.body });
+
+/** `count` names of an empty file input: parts that are legitimate and are not attachments. */
+const emptyFileInputs = (count: number): string[] => Array.from({ length: count }, () => "files");
+
+describe("bounded work per request", () => {
+  test("thousands of empty parts with distinct unknown names are refused with a small 4xx and nothing is stored", async () => {
+    const alice = await signUpContributor();
+    const names = Array.from({ length: 5000 }, (_, i) => `a${i}`);
+    const res = await postRaw(alice, rawMultipart(names));
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBeLessThan(500);
+    const text = await res.text();
+    expect(text.length).toBeLessThan(2048); // the answer does not grow with the request
+    expectNothingStored();
+  });
+
+  test("more than 16 parts is a 400 problem before anything is stored, even when the extra parts are harmless", async () => {
+    const alice = await signUpContributor();
+    // payload + 16 empty file inputs = 17 parts
+    await expectProblem(await postRaw(alice, rawMultipart(emptyFileInputs(MAX_PARTS))), 400, "Bad Request");
+    expectNothingStored();
+  });
+
+  test("a real upload with files and 17 parts is refused and none of its files is stored", async () => {
+    const alice = await signUpContributor();
+    const fd = form(validPayload(), { video: mp4File(), files: [pngFile(), pdfFile()] });
+    for (let i = fd.getAll("payload").length + 3; i < MAX_PARTS + 1; i += 1) fd.append("files", new File([], "", { type: "application/octet-stream" }));
+    await expectProblem(await create(alice, fd), 400, "Bad Request");
+    expectNothingStored();
+  });
+
+  test("exactly 16 parts (the maximum) is accepted: payload, a video, 3 files and 11 empty file inputs", async () => {
+    const alice = await signUpContributor();
+    const fd = form(validPayload(), { video: mp4File(), files: [pngFile("1.png"), pngFile("2.png"), pdfFile("3.pdf")] });
+    for (let i = 5; i < MAX_PARTS; i += 1) fd.append("files", new File([], "", { type: "application/octet-stream" }));
+    const res = await create(alice, fd);
+    expect(res.status).toBe(201);
+    expect(Contribution.parse(await res.json()).attachments).toHaveLength(4);
+    expect(mediaFiles()).toHaveLength(4);
+  });
+
+  test("the part limit does not depend on how the boundary is written: 16 parts with a quoted boundary pass, 17 fail", async () => {
+    const alice = await signUpContributor();
+    const quoted = { boundaryParam: `boundary="${BOUNDARY}"` };
+    const ok = await postRaw(alice, rawMultipart(emptyFileInputs(MAX_PARTS - 1), quoted));
+    expect(ok.status).toBe(201);
+    await expectProblem(await postRaw(alice, rawMultipart(emptyFileInputs(MAX_PARTS), quoted)), 400, "Bad Request");
+    expect(count("contributions")).toBe(1);
+  });
+
+  test("a multipart Content-Type without a boundary is a 400", async () => {
+    const alice = await signUpContributor();
+    const res = await postRaw(alice, rawMultipart([], { boundaryParam: "charset=utf-8" }));
+    await expectProblem(res, 400, "Bad Request");
+    expectNothingStored();
+  });
+
+  test("the errors[] of a 422 is bounded: a payload with 300 unknown keys reports at most 20 items, the first ones included", async () => {
+    const alice = await signUpContributor();
+    const unknown = Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`extra${i}`, i]));
+    const res = await create(alice, form(validPayload(unknown)));
+    const body = await expectProblem(res, 422);
+    expect(body.errors?.length).toBeGreaterThan(0);
+    expect(body.errors!.length).toBeLessThanOrEqual(MAX_ISSUES);
+    expect(body.errors!.map((e) => e.pointer)).toContain("/extra0");
+    expectNothingStored();
+  });
+
+  test("a bound on errors[] never hides a real problem: an invalid field plus 300 unknown keys still reports the field", async () => {
+    const alice = await signUpContributor();
+    const unknown = Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`extra${i}`, i]));
+    const body = await expectProblem(await create(alice, form(validPayload({ ...unknown, name: "" }))), 422);
+    expect(body.errors!.length).toBeLessThanOrEqual(MAX_ISSUES);
+    expect(body.errors!.map((e) => e.pointer)).toContain("/name");
+  });
+
+  test("a `payload` part over 256 KiB is a 413 and nothing is stored; one just under it is accepted", async () => {
+    const alice = await signUpContributor();
+    const big = await create(alice, form(validPayload({ instructions: "x".repeat(300 * 1024) }), { files: [pngFile()] }));
+    await expectProblem(big, 413, "Payload Too Large");
+    expectNothingStored();
+
+    const fine = await create(alice, form(validPayload({ instructions: "x".repeat(200 * 1024) })));
+    expect(fine.status).toBe(201);
+  });
+
+  test("PUT is bounded the same way: 17 parts is a 400 and the stored contribution and its files are untouched", async () => {
+    const alice = await signUpContributor();
+    const created = await createOk(alice, validPayload(), { files: [pngFile()] });
+    const filesBefore = mediaFiles();
+    const raw = rawMultipart(emptyFileInputs(MAX_PARTS));
+    const res = await app.request(`${COLLECTION}/${created.id}`, { method: "PUT", headers: { ...authHeaders(alice), ...raw.headers }, body: raw.body });
+    await expectProblem(res, 400, "Bad Request");
+    expect(mediaFiles()).toEqual(filesBefore);
+    expect(stateOf(created.id)).toBe("pending");
+  });
+});
+
 // --- GET /mine ----------------------------------------------------------------------------------------
 
 describe("GET /api/contributions/mine", () => {
