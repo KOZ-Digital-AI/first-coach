@@ -674,7 +674,7 @@ describe('accessibility and keyboard', () => {
     renderStep({ tests: SEEDED });
     for (const test of SEEDED) {
       const region = regionOf(test);
-      for (const input of within(region).getAllByRole('textbox')) {
+      for (const input of within(region).getAllByRole<HTMLInputElement>('textbox')) {
         const labelled = input.labels?.[0];
         expect(labelled?.textContent?.trim()).toBeTruthy();
         expect(labelled?.classList.contains('sr-only')).toBe(false);
@@ -696,7 +696,7 @@ describe('accessibility and keyboard', () => {
     const order: string[] = [];
     for (let index = 0; index < 6; index += 1) {
       await user.tab();
-      const active = document.activeElement as HTMLElement;
+      const active = document.activeElement as HTMLInputElement;
       order.push(active.tagName === 'BUTTON' ? `button:${active.textContent?.trim()}` : (active.labels?.[0]?.textContent?.trim() ?? active.tagName));
     }
     expect(order).toEqual([
