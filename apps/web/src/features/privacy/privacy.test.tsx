@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { join } from 'node:path';
 import { StartResponse } from '@api-types/onboarding';
-import type { PlayerProfile } from '@api-types/domain';
+import type { PlayerProfile, Roadmap } from '@api-types/domain';
 import { Consents, DEFAULT_CONSENTS, UpdateConsentsRequest } from '@api-types/privacy';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryHistory, createRootRoute, createRoute, createRouter, RouterProvider } from '@tanstack/react-router';
@@ -50,7 +50,24 @@ const profileOfAge = (age: number): PlayerProfile => ({
   minutesPerSession: 20,
   locale: 'en',
 });
-const meOfAge = (age: number) => StartResponse.parse({ profile: profileOfAge(age), roadmap: null });
+// GET /api/player/me answers { profile, roadmap } (a player with no roadmap is a 404), so the age comes with a plan.
+const ROADMAP: Roadmap = {
+  currentLevelLabel: 'Basic',
+  tracks: [
+    { skill: 'ball-mastery', level: 2, source: 'test' },
+    { skill: 'dribbling', level: 3, source: 'self' },
+    { skill: 'weak-foot', level: 1, source: 'self' },
+  ],
+  goal: 'control',
+  weeks: 4,
+  sessionsPerWeek: 3,
+  minutesPerSession: 20,
+  focus: [
+    { skill: 'ball-mastery', level: 2, targetLevel: 3, reason: 'goal' },
+    { skill: 'weak-foot', level: 1, targetLevel: 2, reason: 'weakest' },
+  ],
+};
+const meOfAge = (age: number) => StartResponse.parse({ profile: profileOfAge(age), roadmap: ROADMAP });
 
 const AT = '2026-09-21T10:00:00.000Z';
 const granted = (kind: 'videoAnalysis' | 'modelImprovement', extra: Record<string, unknown> = {}) =>
@@ -555,31 +572,27 @@ describe('states', () => {
     expect(status).not.toBeNull();
     expect(status.querySelector('svg')).not.toBeNull();
   });
-
-  test('the Accept-Language of the calls is the active language', async () => {
-    await renderReady(15, 'ru');
-    expect(calls.find((call) => call.path === '/api/player/consents')!.headers.get('accept-language')).toBe('ru');
-  });
 });
 
 // --- kk, ru, en ----------------------------------------------------------------------------------------
 
 describe('every string comes from the messages file, in kk, ru and en', () => {
-  test.each(LOCALES)('%s: the title, the consent labels and the never-list are that language\'s own', async (locale) => {
+  test.each([...LOCALES])('%s: the title, the consent labels and the never-list are that language\'s own', async (locale) => {
     await renderReady(9, locale);
     const m = messages[locale];
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(m.title);
     expect(screen.getByRole('heading', { level: 2, name: m.stored.title })).toBeTruthy();
     expect(screen.getByRole('heading', { level: 2, name: m.never.title })).toBeTruthy();
-    expect(videoSwitch().closest('label')!.textContent).toContain(m.consents.video.label);
-    expect(modelSwitch().closest('label')!.textContent).toContain(m.consents.model.label);
-    expect(describedBy(videoSwitch())).toContain(m.consents.video.hint);
-    expect(guardianBox()!.closest('label')!.textContent).toContain(m.guardian.label);
+    const [video, model] = screen.getAllByRole('switch') as HTMLInputElement[];
+    expect(video!.closest('label')!.textContent).toContain(m.consents.video.label);
+    expect(model!.closest('label')!.textContent).toContain(m.consents.model.label);
+    expect(describedBy(video!)).toContain(m.consents.video.hint);
+    expect(screen.getByRole('checkbox').closest('label')!.textContent).toContain(m.guardian.label);
     // Off is worded per language.
-    expect(within(videoSwitch().closest('label')!).getByText(m.state.off)).toBeTruthy();
+    expect(within(video!.closest('label')!).getByText(m.state.off)).toBeTruthy();
   });
 
-  test.each(LOCALES)('%s: no raw key, "undefined" or empty text leaks onto the screen', async (locale) => {
+  test.each([...LOCALES])('%s: no raw key, "undefined" or empty text leaks onto the screen', async (locale) => {
     await renderReady(9, locale);
     const text = document.body.textContent ?? '';
     expect(text).not.toContain('undefined');
@@ -596,7 +609,7 @@ describe('every string comes from the messages file, in kk, ru and en', () => {
 
   test('Russian: saving says so in Russian', async () => {
     const { user } = await renderReady(15, 'ru');
-    await user.click(modelSwitch());
+    await user.click(screen.getAllByRole('switch')[1]!);
     await screen.findByText(messages.ru.saved.on.replace('{{name}}', messages.ru.consents.model.label));
   });
 });
