@@ -165,6 +165,47 @@ function seedDrill(db: Database, slug = 'five-gate-slalom', id = 'd1', versionId
   db.query(`UPDATE drills SET current_version_id = ? WHERE id = ?`).run(versionId, id);
 }
 
+type Cell = string | number | null;
+
+/** A complete, contract-consistent drill_versions row (column -> value); override single columns to break it. */
+function versionRow(over: Record<string, Cell> = {}): Record<string, Cell> {
+  const c = CONTENT.conditions;
+  return {
+    id: 'x1',
+    drill_id: 'd1',
+    semver: '1.0.0',
+    parent_version_id: null,
+    status: 'COMMUNITY',
+    content: JSON.stringify(CONTENT),
+    equipment: c.equipment,
+    space: c.spaces[0] as string,
+    partner: c.partner ? 1 : 0,
+    age_min: c.ageMin ?? null,
+    age_max: c.ageMax ?? null,
+    level: 'basic',
+    minutes: 7,
+    license: 'CC-BY-SA-4.0',
+    author_name: 'Coach A',
+    author_user_id: null,
+    source: 'FIRST COACH Genesis',
+    source_url: null,
+    origin: 'seed',
+    change_summary: null,
+    created_at: '2026-01-01T00:00:00.000Z',
+    ...over,
+  };
+}
+
+function insertRow(db: Database, table: string, row: Record<string, Cell>): void {
+  const columns = Object.keys(row);
+  db.query(`INSERT INTO ${table} (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`).run(
+    ...Object.values(row),
+  );
+}
+
+/** DrillContent JSON whose `conditions` is exactly what is passed (so tests can omit or mistype keys). */
+const contentWith = (conditions: unknown): string => JSON.stringify({ ...CONTENT, conditions });
+
 // --- the migration ---------------------------------------------------------------------------
 
 describe('001_commons: migration', () => {
@@ -428,39 +469,130 @@ describe('001_commons: constraints', () => {
     db.run(`UPDATE drills SET current_version_id = 'child' WHERE id = 'd1'`);
   });
 
-  test('the filter columns cannot disagree with the content JSON, and the JSON must be a valid object', () => {
+  test('the content JSON must be a valid object', () => {
     const db = migrated('all');
     seedGraph(db);
     db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
-    const json = JSON.stringify(CONTENT);
-    let n = 0;
-    const fixed = (content: string, over: Partial<{ equipment: string; space: string; partner: number; ageMin: number | null; ageMax: number | null }> = {}) => {
-      n += 1;
-      db.query(
-        `INSERT INTO drill_versions (id, drill_id, semver, status, content, equipment, space, partner, age_min, age_max,
-           level, minutes, license, author_name, source, origin)
-         VALUES (?, 'd1', ?, 'COMMUNITY', ?, ?, ?, ?, ?, ?, 'basic', 5, 'CC0-1.0', 'A', 'S', 'seed')`,
-      ).run(
-        `f${n}`,
-        `1.0.${n}`,
-        content,
-        over.equipment ?? 'cones',
-        over.space ?? 'yard',
-        over.partner ?? 1,
-        over.ageMin === undefined ? 7 : over.ageMin,
-        over.ageMax === undefined ? 12 : over.ageMax,
-      );
-    };
 
-    fixed(json);
-    expect(thrown(() => fixed(json, { equipment: 'ball' })).message).toMatch(/CHECK constraint failed: equipment = /);
-    expect(thrown(() => fixed(json, { space: 'field' })).message).toMatch(/CHECK constraint failed: space = /);
-    expect(thrown(() => fixed(json, { partner: 0 })).message).toMatch(/CHECK constraint failed: partner = /);
-    expect(thrown(() => fixed(json, { ageMin: 8 })).message).toMatch(/CHECK constraint failed: age_min IS /);
-    expect(thrown(() => fixed(json, { ageMax: null })).message).toMatch(/CHECK constraint failed: age_max IS /);
-    expect(thrown(() => fixed('not json')).message).toMatch(/CHECK constraint failed: json_valid\(content\)/);
-    expect(thrown(() => fixed('[]')).message).toMatch(/CHECK constraint failed: json_valid\(content\)/);
-    expect(thrown(() => fixed('{"a":1}')).message).toMatch(/CHECK constraint failed/);
+    expect(thrown(() => insertRow(db, 'drill_versions', versionRow({ content: 'not json' }))).message).toMatch(
+      /CHECK constraint failed: json_valid\(content\)/,
+    );
+    expect(thrown(() => insertRow(db, 'drill_versions', versionRow({ content: '[]' }))).message).toMatch(
+      /CHECK constraint failed: json_valid\(content\)/,
+    );
+    expect(thrown(() => insertRow(db, 'drill_versions', versionRow({ content: '"text"' }))).message).toMatch(
+      /CHECK constraint failed: json_valid\(content\)/,
+    );
+  });
+
+  test('a fully consistent row is accepted, with or without partner and ages in the content, and with several spaces', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+
+    insertRow(db, 'drill_versions', versionRow());
+    insertRow(
+      db,
+      'drill_versions',
+      versionRow({
+        id: 'x2',
+        semver: '1.0.1',
+        content: contentWith({ equipment: 'ball', spaces: ['gym', 'yard'] }),
+        equipment: 'ball',
+        space: 'gym',
+        partner: 0,
+        age_min: null,
+        age_max: null,
+      }),
+    );
+    insertRow(
+      db,
+      'drill_versions',
+      versionRow({
+        id: 'x3',
+        semver: '1.0.2',
+        content: contentWith({ equipment: 'nothing', spaces: ['home_3x3'], partner: false, ageMin: 5 }),
+        equipment: 'nothing',
+        space: 'home_3x3',
+        partner: 0,
+        age_min: 5,
+        age_max: null,
+      }),
+    );
+    expect(one<{ n: number }>(db, 'SELECT count(*) AS n FROM drill_versions').n).toBe(3);
+  });
+
+  test('equipment must be present in the content, be text, and equal the column (an absent key is NOT a pass)', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    const insert = (over: Record<string, Cell>) => thrown(() => insertRow(db, 'drill_versions', versionRow(over))).message;
+    const eq = /CHECK constraint failed: equipment IS /;
+
+    expect(insert({ equipment: 'ball' })).toMatch(eq); // disagrees with content 'cones'
+    expect(insert({ content: '{}', equipment: 'anything' })).toMatch(eq); // no conditions at all
+    expect(insert({ content: '{"a":1}' })).toMatch(eq);
+    expect(insert({ content: contentWith({}), equipment: 'anything' })).toMatch(eq); // conditions without equipment
+    expect(insert({ content: contentWith({ spaces: ['yard'] }), equipment: 'cones' })).toMatch(eq);
+    expect(insert({ content: contentWith({ equipment: 5, spaces: ['yard'] }), equipment: '5' })).toMatch(eq); // number, not text
+    expect(insert({ content: contentWith({ equipment: null, spaces: ['yard'] }), equipment: 'cones' })).toMatch(eq);
+  });
+
+  test('space must be the first entry of a non-empty spaces list in the content, be text, and equal the column', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    const insert = (over: Record<string, Cell>) => thrown(() => insertRow(db, 'drill_versions', versionRow(over))).message;
+    const sp = /CHECK constraint failed: space IS /;
+
+    expect(insert({ space: 'field' })).toMatch(sp); // content says spaces[0] = 'yard'
+    expect(insert({ content: contentWith({ equipment: 'cones' }), space: 'nowhere' })).toMatch(sp); // no spaces key
+    expect(insert({ content: contentWith({ equipment: 'cones', spaces: [] }), space: 'y' })).toMatch(sp); // empty list
+    expect(insert({ content: contentWith({ equipment: 'cones', spaces: [5] }), space: '5' })).toMatch(sp); // number, not text
+    expect(insert({ content: contentWith({ equipment: 'cones', spaces: 'yard' }), space: 'yard' })).toMatch(sp); // not a list
+  });
+
+  test('partner must equal the content boolean (absent means false); a non-boolean in the content is rejected', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    const insert = (over: Record<string, Cell>) => thrown(() => insertRow(db, 'drill_versions', versionRow(over))).message;
+    const pt = /CHECK constraint failed: partner IS /;
+    const cond = (extra: Record<string, unknown>) => contentWith({ equipment: 'cones', spaces: ['yard'], ...extra });
+
+    expect(insert({ partner: 0 })).toMatch(pt); // content partner is true
+    expect(insert({ content: cond({ partner: false }), partner: 1 })).toMatch(pt);
+    expect(insert({ content: cond({}), partner: 1 })).toMatch(pt); // absent = false
+    expect(insert({ content: cond({ partner: 1 }), partner: 1 })).toMatch(pt); // integer, not boolean
+    expect(insert({ content: cond({ partner: 'yes' }), partner: 1 })).toMatch(pt);
+    expect(insert({ content: cond({ partner: null }), partner: 0 })).toMatch(pt);
+    insertRow(db, 'drill_versions', versionRow({ content: cond({}), partner: 0, age_min: null, age_max: null })); // absent = 0 is fine
+  });
+
+  test('ageMin and ageMax are checked separately: NULL agrees with an absent key, a value must equal the content integer', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    const insert = (over: Record<string, Cell>) => thrown(() => insertRow(db, 'drill_versions', versionRow(over))).message;
+    const base = { equipment: 'cones', spaces: ['yard'], partner: true };
+    const withAges = (ages: Record<string, unknown>) => contentWith({ ...base, ...ages });
+
+    // age_min
+    expect(insert({ age_min: 8 })).toMatch(/CHECK constraint failed: age_min IS /); // content ageMin = 7
+    expect(insert({ content: withAges({ ageMax: 12 }), age_min: 7 })).toMatch(/CHECK constraint failed: age_min IS /); // key absent
+    expect(insert({ content: withAges({ ageMin: 7, ageMax: 12 }), age_min: null })).toMatch(/CHECK constraint failed: age_min IS /);
+    expect(insert({ content: withAges({ ageMin: '7', ageMax: 12 }), age_min: 7 })).toMatch(/CHECK constraint failed: age_min IS /); // string
+    expect(insert({ content: withAges({ ageMin: null, ageMax: 12 }), age_min: null })).toMatch(/CHECK constraint failed: age_min IS /);
+    // age_max
+    expect(insert({ age_max: 13 })).toMatch(/CHECK constraint failed: age_max IS /); // content ageMax = 12
+    expect(insert({ content: withAges({ ageMin: 7 }), age_max: 12 })).toMatch(/CHECK constraint failed: age_max IS /); // key absent
+    expect(insert({ age_max: null })).toMatch(/CHECK constraint failed: age_max IS /);
+    expect(insert({ content: withAges({ ageMin: 7, ageMax: '12' }), age_max: 12 })).toMatch(/CHECK constraint failed: age_max IS /);
+    expect(insert({ content: withAges({ ageMin: 7, ageMax: null }), age_max: null })).toMatch(/CHECK constraint failed: age_max IS /);
+
+    // one bound alone is fine when both sides agree
+    insertRow(db, 'drill_versions', versionRow({ id: 'only-max', semver: '1.0.1', content: withAges({ ageMax: 12 }), age_min: null }));
+    insertRow(db, 'drill_versions', versionRow({ id: 'only-min', semver: '1.0.2', content: withAges({ ageMin: 7 }), age_max: null }));
   });
 
   test('numeric bounds: minutes > 0, ages ordered, source_url http(s), audit text not blank', () => {
@@ -508,6 +640,128 @@ describe('001_commons: constraints', () => {
     db.run(`INSERT INTO drill_skills (drill_id, skill_id, is_primary) VALUES ('d1', 'k-touch', 1)`);
     db.run(`INSERT INTO drill_skills (drill_id, skill_id, is_primary) VALUES ('d1', 'k-juggle', 0)`);
     expect(thrown(() => db.run(`INSERT INTO drill_skills (drill_id, skill_id, is_primary) VALUES ('d1', 'k-adv', 1)`)).message).toMatch(/UNIQUE/);
+  });
+});
+
+// --- types, nullability, semver shape ------------------------------------------------------------
+
+describe('001_commons: STRICT typing', () => {
+  test('every table this migration creates is STRICT (enumerated from PRAGMA table_list, not hard-coded)', () => {
+    const db = migrated('001');
+    const tables = rows<{ name: string; strict: number }>(
+      db,
+      "SELECT name, strict FROM pragma_table_list WHERE schema = 'main' AND type = 'table' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name <> 'schema_migrations'",
+    );
+
+    expect(tables.map((t) => t.name).sort()).toEqual([...TABLES].sort());
+    for (const table of tables) expect(table.strict, `${table.name} must be STRICT`).toBe(1);
+  });
+
+  test('text and fractions are rejected in INTEGER columns, and a blob in a TEXT column', () => {
+    const db = migrated('001');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    const datatype = /cannot store .* value in .* column|datatype mismatch/i;
+
+    // drill_versions
+    for (const bad of ['abc', 5.5]) {
+      expect(thrown(() => insertRow(db, 'drill_versions', versionRow({ minutes: bad }))).message).toMatch(datatype);
+    }
+    expect(thrown(() => insertRow(db, 'drill_versions', versionRow({ age_min: 'abc', content: contentWith({ equipment: 'cones', spaces: ['yard'], partner: true, ageMin: 'abc', ageMax: 12 }) }))).message).toMatch(datatype);
+    expect(thrown(() => insertRow(db, 'drill_versions', versionRow({ author_name: new Uint8Array([1, 2]) as unknown as string }))).message).toMatch(datatype);
+
+    // skills
+    const skill = (over: Record<string, Cell>) =>
+      insertRow(db, 'skills', {
+        id: 'k-new', slug: 'new-skill', sport_id: 'sp1', parent_id: null, sort_order: 0, names: '{"en":"n"}',
+        age_min: 5, age_max: 9, equipment: 'ball', ...over,
+      });
+    expect(thrown(() => skill({ sort_order: 'abc' })).message).toMatch(datatype);
+    expect(thrown(() => skill({ age_min: 5.5 })).message).toMatch(datatype);
+    expect(thrown(() => skill({ age_max: 'abc' })).message).toMatch(datatype);
+
+    // skill_prerequisites
+    expect(
+      thrown(() => db.query(`INSERT INTO skill_prerequisites (skill_id, prerequisite_id, min_level) VALUES ('k-touch', 'k-juggle', ?)`).run(3.5)).message,
+    ).toMatch(datatype);
+
+    // reviews: id is INTEGER PRIMARY KEY; note is TEXT
+    insertRow(db, 'drill_versions', versionRow());
+    expect(
+      thrown(() => db.query(`INSERT INTO reviews (drill_version_id, reviewer, from_status, to_status, note) VALUES ('x1', 'R', 'COMMUNITY', 'REVIEWED', ?)`).run(new Uint8Array([1]))).message,
+    ).toMatch(datatype);
+
+    // sports, drills, skill_tests: TEXT columns
+    expect(thrown(() => db.query(`INSERT INTO sports (id, slug, name, graph_version) VALUES ('sp9', 'nine', '{}', ?)`).run(new Uint8Array([1]))).message).toMatch(datatype);
+    expect(thrown(() => db.query(`INSERT INTO drills (id, slug, sport_id, unpublished_at) VALUES ('d9', 'nine', 'sp1', ?)`).run(new Uint8Array([1]))).message).toMatch(datatype);
+    expect(
+      thrown(() => db.query(`INSERT INTO skill_tests (id, slug, skill_id, metric, unit, direction, protocol, equipment) VALUES ('t9', 'nine', 'k-ball', ?, 'count', 'higher', '{"en":"p"}', 'ball')`).run(new Uint8Array([1]))).message,
+    ).toMatch(datatype);
+  });
+});
+
+describe('001_commons: required columns are NOT NULL', () => {
+  /** Columns the contract REQUIRES on a version; dropping NOT NULL on any of them must turn this red. */
+  const REQUIRED_VERSION_COLUMNS = [
+    'id', 'drill_id', 'semver', 'status', 'content', 'equipment', 'space', 'partner', 'level', 'minutes',
+    'license', 'author_name', 'source', 'origin', 'created_at',
+  ];
+  const REQUIRED_REVIEW_COLUMNS = ['drill_version_id', 'reviewer', 'org_label', 'from_status', 'to_status', 'note', 'reviewed_at'];
+
+  const notNullColumns = (db: Database, table: string): string[] =>
+    rows<{ name: string }>(db, `SELECT name FROM pragma_table_info('${table}') WHERE "notnull" = 1`).map((r) => r.name);
+
+  test('PRAGMA table_info marks every required drill_versions and reviews column NOT NULL', () => {
+    const db = migrated('all');
+    const versions = notNullColumns(db, 'drill_versions');
+    for (const column of REQUIRED_VERSION_COLUMNS) expect(versions, `drill_versions.${column}`).toContain(column);
+    const reviews = notNullColumns(db, 'reviews');
+    for (const column of REQUIRED_REVIEW_COLUMNS) expect(reviews, `reviews.${column}`).toContain(column);
+  });
+
+  test('inserting NULL into any required drill_versions column is rejected as NOT NULL', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+
+    for (const column of REQUIRED_VERSION_COLUMNS) {
+      const err = thrown(() => insertRow(db, 'drill_versions', versionRow({ [column]: null })));
+      expect(err.message, `drill_versions.${column}`).toMatch(new RegExp(`NOT NULL constraint failed: drill_versions\\.${column}\\b`));
+    }
+    expect(one<{ n: number }>(db, 'SELECT count(*) AS n FROM drill_versions').n).toBe(0);
+  });
+
+  test('inserting NULL into any required reviews column (both statuses included) is rejected as NOT NULL', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    insertRow(db, 'drill_versions', versionRow());
+    const review = (over: Record<string, Cell>): Record<string, Cell> => ({
+      drill_version_id: 'x1', reviewer: 'R', reviewer_user_id: null, org_label: '', from_status: 'COMMUNITY',
+      to_status: 'REVIEWED', note: '', reviewed_at: '2026-02-02T09:30:00.000Z', ...over,
+    });
+
+    insertRow(db, 'reviews', review({}));
+    for (const column of REQUIRED_REVIEW_COLUMNS) {
+      const err = thrown(() => insertRow(db, 'reviews', review({ [column]: null })));
+      expect(err.message, `reviews.${column}`).toMatch(new RegExp(`NOT NULL constraint failed: reviews\\.${column}\\b`));
+    }
+  });
+});
+
+describe('001_commons: semver shape', () => {
+  test('a semver is three digit-only segments plus an optional non-empty pre-release suffix', () => {
+    const db = migrated('all');
+    seedGraph(db);
+    db.run(`INSERT INTO drills (id, slug, sport_id) VALUES ('d1', 'drill-one', 'sp1')`);
+    const insert = (semver: string) => insertRow(db, 'drill_versions', versionRow({ id: `s-${semver}`, semver }));
+
+    for (const good of ['1.0.0', '10.20.30', '0.0.1', '2.0.0-beta.1', '1.0.0-rc-1', '1.2.3-x']) {
+      expect(() => insert(good), good).not.toThrow();
+    }
+    for (const bad of ['1a.0.0', '1.x.0', '1.0.x', 'a.b.c', '1.0', '1', '1.0.0.0', '1..0', '.1.0.0', '1.0.', '1.0.0-', '-1.0.0', '1.0.0 ', ' 1.0.0', '1.0.0+build', '1,0,0', '1.0.0-b!', '']) {
+      expect(thrown(() => insert(bad)).message, `"${bad}"`).toMatch(/CHECK constraint failed/);
+    }
   });
 });
 
