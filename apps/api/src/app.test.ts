@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Hono } from "hono";
@@ -56,7 +56,7 @@ describe("not found handling", () => {
   });
 
   test("an unknown non-/api path returns a 404 problem+json", async () => {
-    const app = await createApp(deps(), dir);
+    const app = await createApp(deps(), dir, { webDist: join(dir, "no-such-dist") });
     const res = await app.request("/somewhere/else");
 
     expect(res.status).toBe(404);
@@ -73,7 +73,7 @@ describe("not found handling", () => {
   });
 
   test("a catch-all mounted after createApp never serves an unknown /api path", async () => {
-    const app = await createApp(deps(), dir);
+    const app = await createApp(deps(), dir, { webDist: join(dir, "no-such-dist") });
     app.get("*", (c) => c.html("<html>spa</html>"));
 
     const apiRes = await app.request("/api/nope");
@@ -86,6 +86,145 @@ describe("not found handling", () => {
       const res = await app.request(path);
       expect(res.status).toBe(200);
       expect(await res.text()).toContain("spa");
+    }
+  });
+});
+
+describe("static web serving", () => {
+  const SPA_SHELL = "<!doctype html><title>SPA-SHELL</title><div id=root></div>";
+  const HASHED_JS = "console.log('hashed');";
+  const IMMUTABLE = "public, max-age=31536000, immutable";
+
+  let made: string[] = [];
+
+  afterEach(() => {
+    for (const path of made) rmSync(path, { recursive: true, force: true });
+    made = [];
+  });
+
+  /** A temp dist dir: index.html, assets/app-abc123.js and sw.js. */
+  function makeDist(): string {
+    const root = mkdtempSync(join(tmpdir(), "app-dist-"));
+    made.push(root);
+    mkdirSync(join(root, "assets"));
+    writeFileSync(join(root, "index.html"), SPA_SHELL);
+    writeFileSync(join(root, "assets", "app-abc123.js"), HASHED_JS);
+    writeFileSync(join(root, "sw.js"), "self.skipWaiting();");
+    return root;
+  }
+
+  test("serves a hashed asset from the given dist as immutable", async () => {
+    const app = await createApp(deps(), dir, { webDist: makeDist() });
+    const res = await app.request("/assets/app-abc123.js");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe(IMMUTABLE);
+    expect(await res.text()).toBe(HASHED_JS);
+  });
+
+  test("a client-side deep link returns index.html as no-cache html", async () => {
+    const app = await createApp(deps(), dir, { webDist: makeDist() });
+    const res = await app.request("/train/today");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+    expect(res.headers.get("cache-control")).toBe("no-cache");
+    expect(await res.text()).toBe(SPA_SHELL);
+  });
+
+  test("an unknown /api path stays a problem+json 404 even with a dist present", async () => {
+    const app = await createApp(deps(), dir, { webDist: makeDist() });
+    const res = await app.request("/api/unknown");
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
+    expect(res.headers.get("content-type")).not.toContain("text/html");
+    expect((await readProblem(res)).status).toBe(404);
+  });
+
+  test("a discovered /api route wins over static", async () => {
+    writeRoute(
+      "ping.routes.ts",
+      `export function register(app) {
+         app.get("/api/ping", (c) => c.json({ pong: true }));
+       }\n`,
+    );
+    const app = await createApp(deps(), dir, { webDist: makeDist() });
+    const res = await app.request("/api/ping");
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ pong: true });
+  });
+
+  test("a discovered route on a client-shaped path wins over the index.html fallback", async () => {
+    writeRoute(
+      "share.routes.ts",
+      `export function register(app) {
+         app.get("/share/abc", (c) => c.json({ shared: "abc" }));
+       }\n`,
+    );
+    const app = await createApp(deps(), dir, { webDist: makeDist() });
+
+    const route = await app.request("/share/abc");
+    expect(route.status).toBe(200);
+    expect(route.headers.get("content-type")).toContain("application/json");
+    expect(await route.json()).toEqual({ shared: "abc" });
+
+    // A sibling path no route claims still gets the SPA shell.
+    expect(await (await app.request("/share/other")).text()).toBe(SPA_SHELL);
+  });
+
+  test("/health from the default routes dir wins over static", async () => {
+    const app = await createApp(deps(), undefined, { webDist: makeDist() });
+    const res = await app.request("/health");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    expect(await res.json()).toMatchObject({ ok: true, database: "ok" });
+  });
+
+  test("a missing dist dir leaves API-only behaviour: unknown GETs are problem+json 404s", async () => {
+    const app = await createApp(deps(), dir, { webDist: join(dir, "no-such-dist") });
+
+    for (const path of ["/train/today", "/", "/api/unknown"]) {
+      const res = await app.request(path);
+      expect(res.status).toBe(404);
+      expect((await readProblem(res)).title).toBe("Not Found");
+    }
+  });
+
+  test("a non-GET on a client path is not answered with the SPA shell", async () => {
+    const app = await createApp(deps(), dir, { webDist: makeDist() });
+    const res = await app.request("/train/today", { method: "POST" });
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get("content-type")).not.toContain("text/html");
+    expect((await readProblem(res)).status).toBe(404);
+  });
+
+  test("without options createApp still boots and keeps its API behaviour", async () => {
+    const app = await createApp(deps());
+
+    const health = await app.request("/health");
+    expect(health.status).toBe(200);
+
+    const unknown = await app.request("/api/nope");
+    expect(unknown.status).toBe(404);
+    expect((await readProblem(unknown)).status).toBe(404);
+  });
+
+  test("without options the dist comes from WEB_DIST", async () => {
+    const before = process.env.WEB_DIST;
+    process.env.WEB_DIST = makeDist();
+    try {
+      const app = await createApp(deps(), dir);
+      const res = await app.request("/train/today");
+
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe(SPA_SHELL);
+    } finally {
+      if (before === undefined) delete process.env.WEB_DIST;
+      else process.env.WEB_DIST = before;
     }
   });
 });
