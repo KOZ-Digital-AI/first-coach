@@ -81,8 +81,9 @@ function isBanned(user: SessionLike["user"]): boolean {
   return Number.isNaN(until) || until > Date.now();
 }
 
-const hasRole = (role: string, wanted: string): boolean =>
-  role.split(",").some((part) => part.trim() === wanted);
+// Exact match, no trimming: identical to Better Auth's admin plugin (`role.split(",")` and a
+// lookup per part), so this guard never admits a role string the plugin would not.
+const hasRole = (role: string, wanted: string): boolean => role.split(",").includes(wanted);
 
 function guard(level: Level): Guard {
   return (deps, options = {}) => {
