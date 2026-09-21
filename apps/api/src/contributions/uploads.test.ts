@@ -47,7 +47,7 @@ import {
 const KIB = 1024;
 
 /** `head` then zero padding up to `size` bytes. */
-function fileBytes(head: number[], size = 64): Uint8Array {
+function fileBytes(head: ArrayLike<number>, size = 64): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(Math.max(size, head.length));
   out.set(head, 0);
   return out;
