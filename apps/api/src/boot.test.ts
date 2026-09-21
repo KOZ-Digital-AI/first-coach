@@ -368,10 +368,14 @@ describe("index.ts as a process", () => {
   const INDEX = join(import.meta.dir, "index.ts");
   const READY_DEADLINE_MS = 10_000;
 
-  /** Only what the boot needs: nothing ambient (BUILD_VERSION, PORT, APP_DB_PATH...) leaks in. */
+  /**
+   * Only what the boot needs: nothing ambient (BUILD_VERSION, PORT, APP_DB_PATH...) leaks in.
+   * NODE_ENV is stated explicitly: auth config fails closed (production) when it is unset.
+   */
   const childEnv = (extra: Record<string, string>): Record<string, string> => ({
     PATH: process.env.PATH ?? "",
     HOME: process.env.HOME ?? root,
+    NODE_ENV: "test",
     ...extra,
   });
 
