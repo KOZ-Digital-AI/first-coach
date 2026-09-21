@@ -248,8 +248,9 @@ describe("POST /api/player/start, first call", () => {
   test("the age band decides the levels: the same results give different tracks at 8, 12 and 16", async () => {
     const [young, middle, old] = [await signInPlayer(), await signInPlayer(), await signInPlayer()];
     const at8 = await startOk(young, request({ age: 8 }));
-    const at12 = await startOk(middle, request({ age: 12 }));
-    const at16 = await startOk(old, request({ age: 16 }));
+    // clientUuid is unique across ALL players, so each player sends their own uuids.
+    const at12 = await startOk(middle, request({ age: 12 }, baseline(101)));
+    const at16 = await startOk(old, request({ age: 16 }, baseline(201)));
     expect(levelsOf(at8.roadmap)).toEqual({
       "ball-mastery": 5,
       "juggling-coordination": 5,
