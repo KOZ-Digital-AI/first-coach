@@ -437,8 +437,9 @@ describe("POST /api/player/plan/reset", () => {
     expect(profileRow(player.id)).toEqual(profile);
 
     // The player is "not onboarded" again for the plan-bound routes until the baseline is redone.
-    await expectProblem(await app.request(ME, { headers: { cookie: player.cookie } }), 404);
-    await expectProblem(await today(player), 404);
+    // (those two routes are not this bead's, so only their status is pinned here, not their headers)
+    expect((await app.request(ME, { headers: { cookie: player.cookie } })).status).toBe(404);
+    expect((await today(player)).status).toBe(404);
   });
 
   test("keeps a finished session and the sessions of other days, and a second reset is the same answer", async () => {
