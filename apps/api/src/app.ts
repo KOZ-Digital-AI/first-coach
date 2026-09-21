@@ -17,7 +17,7 @@
 // - A discovery failure (import error, syntax error, missing `register`, a
 //   rejecting register) aborts startup with an error that names the file.
 // - Mounts that must come after every discovered route (e.g. the static SPA
-//   `app.get("*")`) go at the SEAM marker in createApp().
+//   `app.use("*", serveWeb(...))`) go at the SEAM marker in createApp().
 import type { Database } from "bun:sqlite";
 import { existsSync, statSync } from "node:fs";
 import { STATUS_CODES } from "node:http";
@@ -25,9 +25,13 @@ import { resolve } from "node:path";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { problem } from "./http/problem";
+import { resolveWebDist, serveWeb } from "./http/static";
 
 /** Everything route modules may need; later beads add fields. */
 export type AppDeps = { db: Database; version: string };
+
+/** `webDist`: the built web app to serve; defaults to `resolveWebDist()` (WEB_DIST or apps/web/dist). */
+export type AppOptions = { webDist?: string };
 
 export type RouteModule = {
   register(app: Hono, deps: AppDeps): void | Promise<void>;
@@ -79,16 +83,21 @@ export async function mountRoutes(
   return files;
 }
 
-export async function createApp(deps: AppDeps, routesDir?: string): Promise<Hono> {
+export async function createApp(
+  deps: AppDeps,
+  routesDir?: string,
+  options: AppOptions = {},
+): Promise<Hono> {
   const app = new Hono();
 
   await mountRoutes(app, deps, routesDir);
 
-  // Unknown /api paths must 404 here so a later static `app.get("*")` catch-all
-  // cannot answer them with HTML.
+  // Unknown /api paths must 404 here so the static SPA mount below cannot
+  // answer them with HTML.
   app.all("/api/*", (c) => c.notFound());
 
-  // --- SEAM: mounts that must come after every discovered route (e.g. the static SPA app.get('*')) go here ---
+  // --- SEAM: mounts that must come after every discovered route go here ---
+  app.use("*", serveWeb(options.webDist ?? resolveWebDist()));
 
   app.notFound((c) => problem(404, "Not Found", `No route matches ${c.req.method} ${c.req.path}`));
 
