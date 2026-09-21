@@ -407,7 +407,10 @@ describe('success: milestones', () => {
     await renderLoaded();
     expect(document.body.textContent).not.toContain('SOMETHING_NEW');
     const badges = within(screen.getByRole('list', { name: /milestones/i })).getAllByRole('listitem');
-    expect(badges.filter((badge) => /achieved/i.test(text(badge)))).toHaveLength(1);
+    const achieved = badges.filter((badge) => /achieved/i.test(text(badge)));
+    expect(achieved).toHaveLength(1);
+    // A name, not a blank: an unknown key falls back to the generic "Another milestone".
+    expect(text(achieved[0]!)).toMatch(/another milestone/i);
   });
 });
 
