@@ -1,7 +1,7 @@
 import { Wifi, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { flush as flushOutbox } from '../../offline/outbox';
+import { flushEventsOutbox } from '../train/events-client';
 // Side-effect import: registers the i18n instance before the first render (see the convention in lib/i18n.ts).
 import '../../lib/i18n';
 
@@ -17,8 +17,10 @@ import '../../lib/i18n';
  *   soon as the browser reports the connection (an "offline" banner while online would be untrue), the flush starts at that
  *   moment, and the confirmation is removed `dismissAfterMs` (default 4 s) AFTER the flush settles, success or failure. While
  *   the flush is still running the text stays: it is still syncing.
- * - The flush is the outbox's own `flush()`, which is single-flight (a second call while one runs returns that run's result),
- *   so this does not double-send next to `start()`'s own `online` handler. Its result is not read, and a rejection (no player
+ * - The flush is the EVENTS CLIENT's outbox `flush()` (features/train/events-client.ts `flushEventsOutbox`, the same instance
+ *   `startEventsSync()` replays), which is single-flight (a second call while one runs returns that run's result), so this does
+ *   not double-send next to `start()`'s own `online` handler (fc-mol-eay.13: a second outbox instance did, two POSTs), and a
+ *   delivered batch still writes the ['today'] / ['session-summary'] caches. Its result is not read, and a rejection (no player
  *   yet, storage failure) only ends the confirmation: the outbox keeps the entries and retries by itself.
  * - An `online` event with no `offline` before it (a spurious event) shows nothing and flushes nothing: `start()` already
  *   flushes on every `online`.
@@ -38,13 +40,13 @@ const CONTAINER = 'mx-auto w-[calc(100%-24px)] max-w-295 sm:w-[calc(100%-40px)]'
 type Phase = 'online' | 'offline' | 'restored';
 
 export interface ConnectivityBannerProps {
-  /** Delivers the queued results. Default: the outbox's `flush`. Tests inject their own. */
+  /** Delivers the queued results. Default: the events client's outbox `flush` (the one `startEventsSync()` uses). Tests inject their own. */
   flush?: () => Promise<unknown>;
   /** Milliseconds the confirmation stays after the flush settles. Default 4000. */
   dismissAfterMs?: number;
 }
 
-const defaultFlush = () => flushOutbox();
+const defaultFlush = () => flushEventsOutbox();
 
 export function ConnectivityBanner({ flush = defaultFlush, dismissAfterMs = DISMISS_AFTER_MS }: ConnectivityBannerProps) {
   const { t } = useTranslation('banner');
