@@ -353,6 +353,26 @@ describe('the roadmap screen and the ["me"] cache', () => {
     expect(net.calls).toEqual([]);
   });
 
+  test('an entry written 20 s ago is still fresh: shown without a request', async () => {
+    const net = network({ cookie: true, onboarded: true });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(['me'], START_RESPONSE, { updatedAt: Date.now() - 20_000 });
+    const api = createApi({ fetch: net.fetch as never, language: () => 'en', online: () => true });
+    const Roadmap = RoadmapRoute.options.component as () => ReactNode;
+    render(
+      <QueryClientProvider client={queryClient}>
+        <I18nextProvider i18n={newI18n()}>
+          <RoadmapDepsContext.Provider value={{ api, ensureSession: async () => ({ user: { id: 'player-1' } }), navigate: () => {} }}>
+            <Roadmap />
+          </RoadmapDepsContext.Provider>
+        </I18nextProvider>
+      </QueryClientProvider>,
+    );
+    await roadmapHeading();
+    await settle();
+    expect(net.calls).toEqual([]);
+  });
+
   test('an entry older than 30 s is shown and refreshed with GET /api/player/me', async () => {
     const net = network({ cookie: true, onboarded: true });
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
