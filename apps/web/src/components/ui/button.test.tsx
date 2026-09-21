@@ -2,9 +2,10 @@ import { describe, expect, mock, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
-import { Button } from './button';
+import { Button, type ButtonProps } from './button';
 
-const VARIANTS = ['primary', 'secondary', 'danger', 'ghost'] as const;
+// A mutable array (not `as const`): bun's test.each types reject readonly tuples.
+const VARIANTS: NonNullable<ButtonProps['variant']>[] = ['primary', 'secondary', 'danger', 'ghost'];
 
 /*
  * Class assertions are anchored to DESIGN.md (Components > Buttons and the token
@@ -50,7 +51,7 @@ describe('Button element', () => {
   test('React 19 ref is a normal prop and points at the button', () => {
     const ref = createRef<HTMLButtonElement>();
     render(<Button ref={ref}>Save</Button>);
-    expect(ref.current).toBe(screen.getByRole('button', { name: 'Save' }));
+    expect(ref.current).toBe(screen.getByRole<HTMLButtonElement>('button', { name: 'Save' }));
   });
 
   test('spreads native props onto the button and puts the caller className last', () => {
