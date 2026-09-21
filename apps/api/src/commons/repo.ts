@@ -23,6 +23,11 @@
 //   - Drills are ordered by resolved title (lower-cased), then slug; the cursor is keyset based
 //     (the last item's title key and slug), so rows inserted between pages neither repeat nor
 //     skip items.
+//   - DrillSummary's optional fields (fc-mol-hum.6) come from the SAME list query, so its statement
+//     budget does not depend on the page size: ageMin/ageMax from the current version's
+//     content.conditions, source/license from its attribution columns, orgLabel = org_label of the
+//     newest review (reviewed_at, then id) OF THE CURRENT VERSION whose to_status equals its
+//     current status. A missing value, and a blank org_label, omit the key.
 //   - A drill without a primary skill has no `track`, which DrillSummary requires: it is not
 //     listed until the loader links one.
 //   - DrillDetail.history lists EVERY version of the drill (the current one included), newest
@@ -118,6 +123,11 @@ interface ListRow {
   title: string | null;
   goal: string;
   track: string;
+  ageMin: number | null;
+  ageMax: number | null;
+  source: string;
+  license: string;
+  orgLabel: string | null;
 }
 
 interface Entry {
@@ -172,7 +182,13 @@ export function listDrills(db: Database, filters: DrillListFilters, locale: Loca
       `SELECT d.id AS drillId, d.slug AS slug, v.id AS versionId, v.status AS status, v.level AS level,
               v.minutes AS minutes, v.equipment AS equipment, v.space AS space,
               json_extract(v.content, '$.title') AS title, json_extract(v.content, '$.goal') AS goal,
-              pk.slug AS track
+              pk.slug AS track,
+              json_extract(v.content, '$.conditions.ageMin') AS ageMin,
+              json_extract(v.content, '$.conditions.ageMax') AS ageMax,
+              v.source AS source, v.license AS license,
+              (SELECT r.org_label FROM reviews r
+                WHERE r.drill_version_id = v.id AND r.to_status = v.status
+                ORDER BY r.reviewed_at DESC, r.id DESC LIMIT 1) AS orgLabel
          FROM drills d
          JOIN drill_versions v ON v.id = d.current_version_id
          JOIN drill_skills ps ON ps.drill_id = d.id AND ps.is_primary = 1
@@ -208,6 +224,11 @@ export function listDrills(db: Database, filters: DrillListFilters, locale: Loca
         space: row.space as Space,
         status: row.status as TrustStatus,
         versionId: row.versionId,
+        ...(row.ageMin === null ? {} : { ageMin: row.ageMin }),
+        ...(row.ageMax === null ? {} : { ageMax: row.ageMax }),
+        source: row.source,
+        license: row.license as NonNullable<DrillSummary['license']>,
+        ...(row.orgLabel === null || row.orgLabel === '' ? {} : { orgLabel: row.orgLabel }),
       },
     });
   }

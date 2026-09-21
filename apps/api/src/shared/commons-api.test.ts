@@ -13,7 +13,7 @@ import {
   CommonsSkillGraphParams,
   ENDPOINTS,
 } from "./commons-api";
-import { EQUIPMENT, EXPERIENCE_LEVELS, LOCALES, TRUST_STATUSES } from "./primitives";
+import { EQUIPMENT, EXPERIENCE_LEVELS, LICENSE_IDS, LOCALES, TRUST_STATUSES } from "./primitives";
 
 const ok = (schema: z.ZodType, value: unknown): boolean => schema.safeParse(value).success;
 
@@ -402,6 +402,95 @@ describe("ENDPOINTS", () => {
       expect(pathParams(ENDPOINTS[name].path)).toEqual([]);
       expect("params" in ENDPOINTS[name]).toBe(false);
     }
+  });
+});
+
+describe("the drill list response items carry optional attribution fields (fc-mol-hum.6)", () => {
+  // The list endpoint answers commons.ts's DrillListResponse (asserted under ENDPOINTS); a library
+  // card needs age range, source, license and the review org label without a detail call per card.
+  const item = (extra: Record<string, unknown> = {}) => ({
+    slug: "five-gate-slalom",
+    title: { en: "Five-Gate Slalom" },
+    track: "dribbling",
+    level: "beginner",
+    minutes: 7,
+    equipment: "cones",
+    space: "yard",
+    status: "REVIEWED",
+    versionId: "five-gate-slalom-v1",
+    ...extra,
+  });
+
+  const facets = () => ({ skills: [], statuses: [], equipment: [], levels: [] });
+  const responseOf = (items: unknown[]) => ({ items, nextCursor: null, total: items.length, facets: facets() });
+  const listed = (extra: Record<string, unknown> = {}) => ENDPOINTS.listDrills.response.safeParse(responseOf([item(extra)]));
+
+  const NEW_SHAPE = { ageMin: 6, ageMax: 12, source: "FIRST COACH Community Draft", license: "CC-BY-SA-4.0", orgLabel: "Astana Football Academy" };
+
+  test("the OLD shape, without any of the new keys, still parses and stays exactly as it was", () => {
+    const parsed = listed();
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.items[0] as unknown).toEqual(item());
+  });
+
+  test("the NEW shape parses and keeps every new value", () => {
+    const parsed = listed(NEW_SHAPE);
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.items[0] as unknown).toEqual(item(NEW_SHAPE));
+  });
+
+  test.each(Object.keys(NEW_SHAPE))("%s alone is enough: each new key is independently optional and kept", (key) => {
+    const only = { [key]: (NEW_SHAPE as Record<string, unknown>)[key] };
+    const parsed = listed(only);
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.items[0] as unknown).toEqual(item(only));
+  });
+
+  test("ageMin 0 is a valid value", () => {
+    const parsed = listed({ ageMin: 0, ageMax: 5 });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.items[0]).toMatchObject({ ageMin: 0, ageMax: 5 });
+  });
+
+  test.each([...LICENSE_IDS])("license %s is accepted", (license) => {
+    expect(listed({ license }).success).toBe(true);
+  });
+
+  test.each([
+    ["a negative ageMin", { ageMin: -1 }],
+    ["a fractional ageMin", { ageMin: 6.5 }],
+    ["a string ageMin", { ageMin: "6" }],
+    ["a negative ageMax", { ageMax: -1 }],
+    ["a fractional ageMax", { ageMax: 12.5 }],
+    ["a string ageMax", { ageMax: "12" }],
+    ["a numeric source", { source: 5 }],
+    ["a license outside the known ids", { license: "MIT" }],
+    ["a numeric orgLabel", { orgLabel: 5 }],
+  ])("rejects %s", (_label, extra) => {
+    expect(listed(extra).success).toBe(false);
+  });
+
+  test("DrillDetail is unchanged: exactly its six keys, none of the summary additions", () => {
+    expect(Object.keys(DrillDetail.shape).sort()).toEqual(["attribution", "content", "history", "reviews", "slug", "versionId"]);
+  });
+});
+
+describe("requests stay strict after the response extension (fc-mol-hum.6)", () => {
+  test.each(["ageMin", "ageMax", "source", "license", "orgLabel"])("the list query rejects the response-only key %s", (key) => {
+    expect(ok(CommonsDrillQuery, { [key]: "x" })).toBe(false);
+    expect(issuePaths(CommonsDrillQuery, { [key]: "x" })).toEqual([[]]);
+  });
+
+  test("the drill params still reject an extra key", () => {
+    expect(ok(CommonsDrillParams, { slug: "five-gate-slalom", license: "CC0-1.0" })).toBe(false);
+  });
+
+  test("the list query still accepts the full filter set unchanged", () => {
+    expect(CommonsDrillQuery.parse(fullQuery())).toEqual(fullQuery());
   });
 });
 

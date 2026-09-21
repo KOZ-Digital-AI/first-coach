@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { z } from 'zod';
 import type { Database } from 'bun:sqlite';
 import { aiPlanUnknownIds } from '../shared/ai';
@@ -8,6 +10,8 @@ import { DrillContent } from '../shared/primitives';
 import type { LocalizedText } from '../shared/primitives';
 import { openDatabase } from '../db/database';
 import { MIGRATIONS_DIR, migrate } from '../db/migrate';
+import { SeedDrillTrackFile } from './seed-schema';
+import { loadSeed } from './seed-loader';
 import { DEFAULT_LIMIT, InvalidCursorError, MAX_LIMIT, getDrill, getSkillGraph, getSkillTests, getStats, listDrills, listPublishedVersions } from './repo';
 
 // Every test runs on a fresh in-memory database migrated with the real migrations, so the
@@ -116,6 +120,9 @@ interface VersionSpec {
   createdAt?: string;
   changeSummary?: string | null;
   sourceUrl?: string | null;
+  /** Attribution overrides (fc-mol-hum.6): default 'FIRST COACH Genesis' / 'CC-BY-SA-4.0'. */
+  source?: string;
+  license?: string;
   content: DrillContent;
 }
 
@@ -125,11 +132,12 @@ function insertVersion(v: VersionSpec): void {
     `INSERT INTO drill_versions (id, drill_id, semver, parent_version_id, status, content, equipment, space,
        partner, age_min, age_max, level, minutes, license, author_name, author_user_id, source, source_url,
        origin, change_summary, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CC-BY-SA-4.0', 'Coach A', NULL, 'FIRST COACH Genesis', ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Coach A', NULL, ?, ?, ?, ?, ?)`,
   ).run(
     v.id, v.drillId, v.semver ?? '1.0.0', v.parent ?? null, v.status ?? 'COMMUNITY', JSON.stringify(v.content),
     c.equipment, c.spaces[0] as string, c.partner ? 1 : 0, c.ageMin ?? null, c.ageMax ?? null,
-    v.level ?? 'basic', v.minutes ?? 10, v.sourceUrl === undefined ? 'https://example.org/source' : v.sourceUrl,
+    v.level ?? 'basic', v.minutes ?? 10, v.license ?? 'CC-BY-SA-4.0', v.source ?? 'FIRST COACH Genesis',
+    v.sourceUrl === undefined ? 'https://example.org/source' : v.sourceUrl,
     v.origin ?? 'seed', v.changeSummary ?? null, v.createdAt ?? '2026-01-01T00:00:00.000Z',
   );
 }
@@ -193,6 +201,10 @@ describe('listDrills: rows and unpublished exclusion', () => {
       space: 'yard',
       status: 'COMMUNITY',
       versionId: 'five-gate-slalom-v1',
+      // additive fields (fc-mol-hum.6): attribution is always present; this fixture defines no
+      // age range and its status is COMMUNITY, so ageMin, ageMax and orgLabel stay absent.
+      source: 'FIRST COACH Genesis',
+      license: 'CC-BY-SA-4.0',
     });
   });
 
@@ -517,6 +529,291 @@ describe('listDrills: pagination', () => {
     expect(listDrills(db, {}, 'en').items).toHaveLength(5); // default limit covers a small list
     expect(listDrills(db, { limit: 1_000_000 }, 'en').items).toHaveLength(5); // capped, not an error
     expect(listDrills(db, { limit: 0 }, 'en').items).toHaveLength(1);
+  });
+});
+
+// --- listDrills: attribution, age range and review label (fc-mol-hum.6) ---------------------------
+//
+// DrillSummary carries OPTIONAL ageMin, ageMax (the current version's content.conditions), source
+// and license (its attribution) and orgLabel (the org of the most recent review of the current
+// version that set its current status), so a library card needs no per-drill detail call.
+// READINGS pinned here where the criteria are open:
+//   - orgLabel looks at the reviews of the CURRENT version only, keeps those whose to_status equals
+//     the current status, and takes the newest by reviewed_at then id (the order getDrill uses).
+//   - A blank org_label (the column default) is no label: orgLabel is omitted, like "no review".
+//   - Absent values are omitted keys, never null or undefined values.
+
+const SEED_ROOT = join(import.meta.dir, '..', '..', '..', '..', 'config', 'commons');
+
+/**
+ * Wraps a database so every statement EXECUTION (all, get, run, values, iterate on a prepared
+ * statement, plus Database.run / exec) is counted: the budget of a read is the number of trips
+ * to SQLite, whatever the page size.
+ */
+function counting(real: Database): { db: Database; count: () => number } {
+  let n = 0;
+  const executes = new Set<PropertyKey>(['all', 'get', 'run', 'values', 'iterate']);
+  const wrapStatement = (statement: object): object =>
+    new Proxy(statement, {
+      get(target, prop) {
+        const value = Reflect.get(target, prop, target) as unknown;
+        if (typeof value !== 'function') return value;
+        return (...args: unknown[]) => {
+          if (executes.has(prop)) n += 1;
+          return (value as (...a: unknown[]) => unknown).apply(target, args);
+        };
+      },
+    });
+  const db = new Proxy(real, {
+    get(target, prop) {
+      const value = Reflect.get(target, prop, target) as unknown;
+      if (typeof value !== 'function') return value;
+      const fn = value as (...a: unknown[]) => unknown;
+      if (prop === 'query' || prop === 'prepare') return (...args: unknown[]) => wrapStatement(fn.apply(target, args) as object);
+      if (prop === 'run' || prop === 'exec') {
+        return (...args: unknown[]) => {
+          n += 1;
+          return fn.apply(target, args);
+        };
+      }
+      return fn.bind(target);
+    },
+  }) as Database;
+  return { db, count: () => n };
+}
+
+const itemOf = (drill: string) => {
+  const item = listDrills(db, {}, 'en').items.find((i) => i.slug === drill);
+  if (item === undefined) throw new Error(`${drill} is not listed`);
+  return item as Record<string, unknown>;
+};
+
+describe('listDrills: age range from the current version (ageMin, ageMax)', () => {
+  test('both come from content.conditions and are numbers', () => {
+    catalog();
+    expect(itemOf('wall-passing')).toMatchObject({ ageMin: 8, ageMax: 14 });
+  });
+
+  test('a drill whose conditions define neither has NO ageMin and NO ageMax key', () => {
+    catalog();
+    const item = itemOf('five-gate-slalom');
+    expect('ageMin' in item).toBe(false);
+    expect('ageMax' in item).toBe(false);
+  });
+
+  test('a drill with only ageMin has that and no ageMax key; ageMin 0 is a real value, not "absent"', () => {
+    addDrill({ slug: 'from-six', ageMin: 6 });
+    addDrill({ slug: 'from-zero', ageMin: 0, ageMax: 5 });
+    expect(itemOf('from-six')).toMatchObject({ ageMin: 6 });
+    expect('ageMax' in itemOf('from-six')).toBe(false);
+    expect(itemOf('from-zero')).toMatchObject({ ageMin: 0, ageMax: 5 });
+  });
+
+  test('a drill with only ageMax has that and no ageMin key', () => {
+    addDrill({ slug: 'up-to-ten', ageMax: 10 });
+    expect(itemOf('up-to-ten')).toMatchObject({ ageMax: 10 });
+    expect('ageMin' in itemOf('up-to-ten')).toBe(false);
+  });
+
+  test('the CURRENT version decides, not an older one', () => {
+    catalog(); // wall-passing v1: 8..14
+    insertVersion({
+      id: 'wall-passing-v2', drillId: 'wall-passing', semver: '1.1.0', parent: 'wall-passing-v1', createdAt: '2026-02-01T00:00:00.000Z',
+      content: contentOf({ slug: 'wall-passing', equipment: 'ball_wall', ageMin: 10, ageMax: 12 }),
+    });
+    setCurrent('wall-passing', 'wall-passing-v2');
+    expect(itemOf('wall-passing')).toMatchObject({ ageMin: 10, ageMax: 12 });
+  });
+});
+
+describe('listDrills: source and license from the current version attribution', () => {
+  test('every item carries the source and the license of its version', () => {
+    catalog();
+    for (const item of listDrills(db, {}, 'en').items as Record<string, unknown>[]) {
+      expect(item).toMatchObject({ source: 'FIRST COACH Genesis', license: 'CC-BY-SA-4.0' });
+    }
+  });
+
+  test('the CURRENT version decides, not an older one', () => {
+    catalog();
+    insertVersion({
+      id: 'wall-passing-v2', drillId: 'wall-passing', semver: '1.1.0', parent: 'wall-passing-v1', createdAt: '2026-02-01T00:00:00.000Z',
+      source: 'Academy Handbook 2026', license: 'CC0-1.0', content: contentOf({ slug: 'wall-passing', equipment: 'ball_wall' }),
+    });
+    setCurrent('wall-passing', 'wall-passing-v2');
+    expect(itemOf('wall-passing')).toMatchObject({ source: 'Academy Handbook 2026', license: 'CC0-1.0' });
+    expect(itemOf('juggling-ladder')).toMatchObject({ source: 'FIRST COACH Genesis', license: 'CC-BY-SA-4.0' });
+  });
+
+  test('the summary agrees with the detail attribution of the same drill', () => {
+    catalog();
+    for (const item of listDrills(db, {}, 'en').items as Record<string, unknown>[]) {
+      const detail = getDrill(db, item.slug as string, 'en');
+      expect(item.source).toBe(detail?.attribution.source);
+      expect(item.license).toBe(detail?.attribution.license);
+    }
+  });
+});
+
+describe('listDrills: orgLabel (the org of the review that set the current status)', () => {
+  test('is the most recent review that set the current status, whatever order the rows were inserted in', () => {
+    addDrill({ slug: 'demoted', status: 'REVIEWED' });
+    // inserted newest first, so neither insertion order nor id order is the answer
+    addReview('demoted-v1', { org: 'Club C', from: 'EXPERT_VERIFIED', to: 'REVIEWED', at: '2026-03-03T00:00:00.000Z' });
+    addReview('demoted-v1', { org: 'Academy B', from: 'REVIEWED', to: 'EXPERT_VERIFIED', at: '2026-03-02T00:00:00.000Z' });
+    addReview('demoted-v1', { org: 'Club A', from: 'COMMUNITY', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    addDrill({ slug: 'promoted', status: 'EXPERT_VERIFIED' });
+    addReview('promoted-v1', { org: 'Club A', from: 'COMMUNITY', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    addReview('promoted-v1', { org: 'Academy B', from: 'REVIEWED', to: 'EXPERT_VERIFIED', at: '2026-03-02T00:00:00.000Z' });
+
+    expect(itemOf('demoted')).toMatchObject({ status: 'REVIEWED', orgLabel: 'Club C' });
+    expect(itemOf('promoted')).toMatchObject({ status: 'EXPERT_VERIFIED', orgLabel: 'Academy B' });
+  });
+
+  test('a review that set a DIFFERENT status than the current one is not the label', () => {
+    addDrill({ slug: 'mismatch', status: 'REVIEWED' });
+    addReview('mismatch-v1', { org: 'Club A', from: 'COMMUNITY', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    // newer, but it set EXPERT_VERIFIED, not the status the drill shows
+    addReview('mismatch-v1', { org: 'Academy B', from: 'REVIEWED', to: 'EXPERT_VERIFIED', at: '2026-03-05T00:00:00.000Z' });
+    expect(itemOf('mismatch')).toMatchObject({ orgLabel: 'Club A' });
+  });
+
+  test('two reviews at the same instant: the later row wins (the order getDrill uses)', () => {
+    addDrill({ slug: 'tie', status: 'REVIEWED' });
+    addReview('tie-v1', { org: 'First', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    addReview('tie-v1', { org: 'Second', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    expect(itemOf('tie')).toMatchObject({ orgLabel: 'Second' });
+  });
+
+  test('a drill with no review has NO orgLabel key, even when its status is above COMMUNITY', () => {
+    catalog(); // juggling-ladder is EXPERT_VERIFIED with no review row; five-gate-slalom is COMMUNITY
+    for (const slug of ['five-gate-slalom', 'juggling-ladder', 'wall-passing', 'home-footwork']) {
+      expect('orgLabel' in itemOf(slug)).toBe(false);
+    }
+  });
+
+  test('a blank org label is no label: the key is omitted', () => {
+    addDrill({ slug: 'blank', status: 'REVIEWED' });
+    addReview('blank-v1', { org: '', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    expect('orgLabel' in itemOf('blank')).toBe(false);
+  });
+
+  test('only reviews of the CURRENT version count', () => {
+    addDrill({ slug: 'reissued', status: 'REVIEWED' });
+    addReview('reissued-v1', { org: 'Old Org', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    insertVersion({
+      id: 'reissued-v2', drillId: 'reissued', semver: '1.1.0', parent: 'reissued-v1', status: 'REVIEWED', createdAt: '2026-04-01T00:00:00.000Z',
+      content: contentOf({ slug: 'reissued' }),
+    });
+    setCurrent('reissued', 'reissued-v2');
+    expect('orgLabel' in itemOf('reissued')).toBe(false); // v2 has no review of its own
+
+    addReview('reissued-v2', { org: 'New Org', to: 'REVIEWED', at: '2026-04-02T00:00:00.000Z' });
+    expect(itemOf('reissued')).toMatchObject({ orgLabel: 'New Org' });
+  });
+});
+
+describe('listDrills: the new fields are part of the contract response', () => {
+  test('DrillListResponse keeps every new field on every item (nothing is stripped)', () => {
+    catalog();
+    addReview('wall-passing-v1', { org: 'Club A', to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    const res = listDrills(db, {}, 'en');
+    const parsed = DrillListResponse.parse(res);
+    expect(parsed.items).toEqual(res.items);
+    const wall = parsed.items.find((i) => i.slug === 'wall-passing') as Record<string, unknown>;
+    expect(wall).toMatchObject({ ageMin: 8, ageMax: 14, source: 'FIRST COACH Genesis', license: 'CC-BY-SA-4.0', orgLabel: 'Club A' });
+  });
+
+  test('getDrill is unchanged: its detail has no summary-only keys', () => {
+    catalog();
+    const detail = getDrill(db, 'wall-passing', 'en') as Record<string, unknown>;
+    expect(Object.keys(detail).sort()).toEqual(['attribution', 'content', 'history', 'reviews', 'slug', 'versionId']);
+  });
+});
+
+describe('listDrills: query budget is independent of page size and catalogue size', () => {
+  const statementsFor = (limit: number | undefined): number => {
+    const { db: spy, count } = counting(db);
+    const res = listDrills(spy, limit === undefined ? {} : { limit }, 'en');
+    expect(res.items.length).toBeGreaterThan(0);
+    return count();
+  };
+
+  const reviewedDrills = (slugsToAdd: string[]): void => {
+    for (const slug of slugsToAdd) {
+      addDrill({ slug, status: 'REVIEWED', ageMin: 6, ageMax: 12 });
+      addReview(`${slug}-v1`, { org: `Org of ${slug}`, to: 'REVIEWED', at: '2026-03-01T00:00:00.000Z' });
+    }
+  };
+
+  test('the same number of statements for a page of 1, 3 and the whole list, with reviews and ages present', () => {
+    catalog();
+    reviewedDrills(['r-one', 'r-two', 'r-three', 'r-four']);
+    const whole = statementsFor(undefined);
+    expect(whole).toBeGreaterThan(0);
+    expect(statementsFor(1)).toBe(whole);
+    expect(statementsFor(3)).toBe(whole);
+    expect(statementsFor(100)).toBe(whole);
+  });
+
+  test('the same number of statements when the catalogue grows: no query per drill', () => {
+    catalog();
+    reviewedDrills(['r-one', 'r-two']);
+    const before = statementsFor(undefined);
+    reviewedDrills(['r-three', 'r-four', 'r-five', 'r-six', 'r-seven']);
+    expect(statementsFor(undefined)).toBe(before);
+    // and the items really do carry the review labels the extra statements would have fetched
+    const items = listDrills(db, {}, 'en').items as Record<string, unknown>[];
+    expect(items.filter((i) => typeof i.orgLabel === 'string')).toHaveLength(7);
+  });
+});
+
+describe('listDrills: the real seed (config/commons)', () => {
+  let seeded: Database;
+
+  beforeEach(() => {
+    seeded = openDatabase(':memory:');
+    migrate(seeded, MIGRATIONS_DIR);
+    loadSeed(seeded, SEED_ROOT, { now: () => new Date('2026-09-01T00:00:00.000Z') });
+  });
+
+  afterEach(() => {
+    seeded.close();
+  });
+
+  const seedDrills = () =>
+    readdirSync(join(SEED_ROOT, 'football', 'drills'))
+      .filter((file) => file.endsWith('.json'))
+      .flatMap((file) => SeedDrillTrackFile.parse(JSON.parse(readFileSync(join(SEED_ROOT, 'football', 'drills', file), 'utf8'))).drills);
+
+  test("all 60 items show source 'FIRST COACH Community Draft' and license 'CC-BY-SA-4.0'", () => {
+    const res = listDrills(seeded, { limit: MAX_LIMIT }, 'en');
+    expect(res.total).toBe(60);
+    expect(res.items).toHaveLength(60);
+    for (const item of res.items as Record<string, unknown>[]) {
+      expect(item.source).toBe('FIRST COACH Community Draft');
+      expect(item.license).toBe('CC-BY-SA-4.0');
+    }
+  });
+
+  test('every item has ageMin and ageMax, equal to the seed drill file', () => {
+    const bySlug = new Map(seedDrills().map((drill) => [drill.slug, drill]));
+    expect(bySlug.size).toBe(60);
+    const res = listDrills(seeded, { limit: MAX_LIMIT }, 'en');
+    for (const item of res.items as Record<string, unknown>[]) {
+      const drill = bySlug.get(item.slug as string);
+      expect(drill).toBeDefined();
+      expect(Number.isInteger(item.ageMin)).toBe(true);
+      expect(Number.isInteger(item.ageMax)).toBe(true);
+      expect(item.ageMin).toBe(drill?.ageMin);
+      expect(item.ageMax).toBe(drill?.ageMax);
+    }
+  });
+
+  test('no seeded drill has been reviewed yet, so no item carries an orgLabel; the list still parses with the contract', () => {
+    const res = listDrills(seeded, { limit: MAX_LIMIT }, 'en');
+    expect((res.items as Record<string, unknown>[]).some((item) => 'orgLabel' in item)).toBe(false);
+    expect(DrillListResponse.parse(res).items).toEqual(res.items);
   });
 });
 
