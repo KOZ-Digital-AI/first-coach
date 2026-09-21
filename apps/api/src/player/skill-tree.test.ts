@@ -323,7 +323,8 @@ describe('focus', () => {
 });
 
 describe('input the graph does not know is ignored', () => {
-  const fresh = deriveTree(seed, levels(), {}, []);
+  // built inside each test: `seed` is only loaded in beforeAll
+  const fresh = () => deriveTree(seed, levels(), {}, []);
 
   test('unknown tracks, nodes and focus entries change nothing and never appear in the output', () => {
     const noisy = deriveTree(
@@ -332,14 +333,14 @@ describe('input the graph does not know is ignored', () => {
       { ghost: 9, 'chess-opening': 9 },
       focusOf('ghost', 'chess'),
     );
-    expect(noisy).toEqual(fresh);
+    expect(noisy).toEqual(fresh());
     const slugs = noisy.flatMap((each) => [each.track, ...each.nodes.map((n) => n.slug)]);
     expect(slugs).not.toContain('chess');
     expect(slugs).not.toContain('ghost');
   });
 
   test('a level given for a sub-skill (levels are per track) does not count', () => {
-    expect(deriveTree(seed, [{ skill: 'basic-touches', level: 5, source: 'test' }], { 'basic-touches': 9 }, [])).toEqual(fresh);
+    expect(deriveTree(seed, [{ skill: 'basic-touches', level: 5, source: 'test' }], { 'basic-touches': 9 }, [])).toEqual(fresh());
   });
 
   test('a level applies to its own track only', () => {
