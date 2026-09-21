@@ -1015,7 +1015,8 @@ describe('failures', () => {
     expect(text(screen.getByRole('main'))).toContain('Someone else has already dealt with this contribution');
     for (const name of ['Approve', 'Request changes', 'Reject']) expect(absent(screen.queryByRole('button', { name }))).toBe(true);
     expect(absent(maybeBox('Name'))).toBe(true);
-    expect(listedStates().slice(2)).toEqual(['pending', 'changes_requested', 'approved']);
+    // the first list request found it; the look-up after the 409 starts again from pending and stops at the state that holds it
+    expect(listedStates().slice(1)).toEqual(['pending', 'changes_requested', 'approved']);
   });
 
   test('a 404 on the decision is handled like a 409: nothing saved, looked up again, and when it is in no state it says it is not waiting for review', async () => {
