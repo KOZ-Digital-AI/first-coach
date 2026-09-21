@@ -50,7 +50,7 @@ const ready = (data: unknown, refetch: () => unknown = () => {}): SessionState =
 const CHILD_TEXT = 'Drills page content';
 const NAV_LABEL = 'Admin sections';
 const NAV = [
-  { name: 'Review queue', href: '/admin/queue' },
+  { name: 'Review queue', href: '/admin' },
   { name: 'Drills', href: '/admin/drills' },
   { name: 'Impact', href: '/admin/impact' },
   { name: 'Settings', href: '/admin/settings' },
