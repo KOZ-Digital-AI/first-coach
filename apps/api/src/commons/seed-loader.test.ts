@@ -7,14 +7,19 @@ import type { AppDeps } from "../app";
 import { DEFAULT_SEED_DIR, onBoot, resolveSeedDir } from "../boot/20-seed.boot";
 import { openDatabase } from "../db/database";
 import { MIGRATIONS_DIR, migrate } from "../db/migrate";
+import { DrillDetail, DrillListResponse, SkillGraph, graphProblems } from "../shared/commons";
 import { Semver } from "../shared/domain";
-import { getDrill, getSkillGraph, listDrills } from "./repo";
+import { EntityId } from "../shared/primitives";
+import { CommonsStats } from "../shared/stats";
+import { validateGraph } from "./graph";
+import { getDrill, getSkillGraph, getStats, listDrills, listPublishedVersions } from "./repo";
 import type {
   SeedDrill,
   SeedDrillTrackFile,
   SeedRubricsFile,
   SeedSkillGraphFile,
   SeedSkillNode,
+  SeedTest,
   SeedTestsFile,
 } from "./seed-schema";
 import { SeedError, loadSeed } from "./seed-loader";
@@ -719,19 +724,38 @@ describe("loadSeed: trust status belongs to moderation, not to the loader", () =
     expect(currentOf("wall-pass").status).toBe("EXPERT_VERIFIED");
   });
 
-  test("a seed edit carries the previous version's status over: it neither upgrades nor downgrades trust", () => {
+  test("a seed edit starts the new version at COMMUNITY: reviewed content is not inherited, the old version and its review stay", () => {
     writeSeed({ football: football() });
     loadSeed(db, dir, { now: T0 });
-    db.run(`UPDATE drill_versions SET status = 'REVIEWED' WHERE drill_id = (SELECT id FROM drills WHERE slug = 'wall-pass')`);
+    const first = versionsOf("wall-pass")[0]!;
+    db.run(`UPDATE drill_versions SET status = 'EXPERT_VERIFIED' WHERE id = ?`, [first.id]);
+    db.run(
+      `INSERT INTO reviews (drill_version_id, reviewer, from_status, to_status) VALUES (?, 'Ana', 'COMMUNITY', 'EXPERT_VERIFIED')`,
+      [first.id],
+    );
+    const reviews = JSON.stringify(db.query("SELECT * FROM reviews").all());
 
-    const seed = football();
-    seed.tracks["ball-control"]!.drills[0]!.title.en = "Edited";
-    writeSeed({ football: seed });
+    // An unchanged reload keeps the verification.
+    const settled = fingerprint(db);
+    const changesBefore = changes(db);
     loadSeed(db, dir, { now: T1 });
+    expect(changes(db)).toBe(changesBefore);
+    expect(fingerprint(db)).toEqual(settled);
+
+    // Content nobody reviewed cannot keep the status.
+    const seed = football();
+    seed.tracks["ball-control"]!.drills[0]!.goal.en = "A different goal";
+    writeSeed({ football: seed });
+    loadSeed(db, dir, { now: T2 });
 
     const [oldVersion, newVersion] = versionsOf("wall-pass");
-    expect(oldVersion!.status).toBe("REVIEWED");
-    expect(newVersion!.status).toBe("REVIEWED");
+    expect(newVersion!.semver).toBe("1.0.1");
+    expect(newVersion!.status).toBe("COMMUNITY");
+    expect(oldVersion!.status).toBe("EXPERT_VERIFIED");
+    expect(currentOf("wall-pass").id).toBe(newVersion!.id);
+    expect(JSON.stringify(db.query("SELECT * FROM reviews").all())).toBe(reviews);
+    expect(listDrills(db, {}, "en").items.find((item) => item.slug === "wall-pass")!.status).toBe("COMMUNITY");
+    expect(getDrill(db, "wall-pass", "en")!.reviews).toHaveLength(1);
   });
 });
 
@@ -810,6 +834,8 @@ describe("loadSeed: nothing is ever deleted", () => {
     const untouched = JSON.stringify([versionsOf("wall-pass-hard"), versionsOf("cushion-touch"), versionsOf("futsal-pass")]);
 
     // Drop a drill, a skill, a prerequisite, a test, the whole rubric file, a track file and a whole sport.
+    // (skill_prerequisites is a link table, reconciled to the seed like drill_skills: the one edge
+    // first-touch had is the one the seed no longer lists, so it goes; nothing else does.)
     const seed = football();
     seed.tracks["ball-control"]!.drills.pop();
     delete seed.tracks["first-touch"];
@@ -826,7 +852,7 @@ describe("loadSeed: nothing is ever deleted", () => {
     expect(summary.drills).toEqual({ inserted: 0, updated: 1, unchanged: 0 });
     expect(count(db, "sports")).toBe(2);
     expect(count(db, "skills")).toBe(4);
-    expect(count(db, "skill_prerequisites")).toBe(1);
+    expect(count(db, "skill_prerequisites")).toBe(0);
     expect(count(db, "skill_tests")).toBe(1);
     expect(count(db, "drills")).toBe(4);
     expect(count(db, "drill_versions")).toBe(5);
@@ -850,7 +876,279 @@ describe("loadSeed: nothing is ever deleted", () => {
     const source = readFileSync(resolve(import.meta.dir, "seed-loader.ts"), "utf8");
     expect(source).not.toMatch(/\bOR\s+REPLACE\b/i);
     expect(source).not.toMatch(/\bREPLACE\s+INTO\b/i);
-    expect(source).not.toMatch(/\bDELETE\s+FROM\s+(?!drill_skills\b)/i);
+    // The only deletes are the two link tables (mapping and prerequisite edges), never history.
+    expect(source).not.toMatch(/\bDELETE\s+FROM\s+(?!(?:drill_skills|skill_prerequisites)\b)/i);
+  });
+});
+
+// --- the wire contracts ---------------------------------------------------------------------
+
+describe("loadSeed: what it writes satisfies the shared contracts when read back", () => {
+  test("repository output parses with DrillDetail (history included), DrillListResponse, SkillGraph and CommonsStats", () => {
+    writeSeed({ football: football(), futsal: futsal() });
+    loadSeed(db, dir, { now: T0 });
+    const seed = football();
+    seed.tracks["first-touch"]!.drills[0]!.goal.en = "A different goal";
+    writeSeed({ football: seed, futsal: futsal() });
+    loadSeed(db, dir, { now: T1 }); // cushion-touch now has two versions
+
+    for (const slug of ["wall-pass", "wall-pass-hard", "cushion-touch", "futsal-pass"]) {
+      for (const locale of ["kk", "ru", "en"] as const) {
+        const parsed = DrillDetail.safeParse(getDrill(db, slug, locale));
+        expect({ slug, locale, error: parsed.error?.message }).toEqual({ slug, locale, error: undefined });
+      }
+    }
+    expect(getDrill(db, "cushion-touch", "en")!.history).toHaveLength(2);
+
+    for (const locale of ["kk", "ru", "en"] as const) {
+      const parsed = DrillListResponse.safeParse(listDrills(db, {}, locale));
+      expect({ locale, error: parsed.error?.message }).toEqual({ locale, error: undefined });
+    }
+    for (const sport of ["football", "futsal"]) {
+      const graph = getSkillGraph(db, sport, "en");
+      const parsed = SkillGraph.safeParse(graph);
+      expect({ sport, error: parsed.error?.message }).toEqual({ sport, error: undefined });
+      expect(graphProblems(graph!)).toEqual([]);
+    }
+    expect(CommonsStats.safeParse(getStats(db)).error).toBeUndefined();
+  });
+
+  test("every version id is an EntityId, is stable across a no-op reload, and the planner rows carry the same ids", () => {
+    writeSeed({ football: football(), futsal: futsal() });
+    loadSeed(db, dir, { now: T0 });
+    const idsOf = () =>
+      db.query<{ id: string }, []>(`SELECT id FROM drill_versions ORDER BY id`).all().map((row) => row.id);
+    const ids = idsOf();
+
+    expect(ids).toHaveLength(4);
+    for (const id of ids) expect({ id, ok: EntityId.safeParse(id).success }).toEqual({ id, ok: true });
+    for (const row of listPublishedVersions(db)) {
+      expect(EntityId.safeParse(row.versionId).success).toBe(true);
+      expect(EntityId.safeParse(row.drillId).success).toBe(true);
+      expect(row.versionId).toBe(currentOf(row.slug).id);
+    }
+
+    loadSeed(db, dir, { now: T1 });
+    expect(idsOf()).toEqual(ids);
+  });
+
+  test("a version created by an edit has an EntityId too, and is distinct from the one it replaces", () => {
+    writeSeed({ football: football() });
+    loadSeed(db, dir, { now: T0 });
+    const seed = football();
+    seed.tracks["first-touch"]!.drills[0]!.goal.en = "A different goal";
+    writeSeed({ football: seed });
+    loadSeed(db, dir, { now: T1 });
+
+    const [first, second] = versionsOf("cushion-touch");
+    expect(first!.id).not.toBe(second!.id);
+    expect(EntityId.safeParse(second!.id).success).toBe(true);
+    expect(DrillDetail.safeParse(getDrill(db, "cushion-touch", "en")).success).toBe(true);
+  });
+});
+
+// --- every mutable column is guarded ----------------------------------------------------------
+
+describe("loadSeed: each mutable column of a skill and of a test is updated in place, and only that one", () => {
+  const columnsOf = (table: string): string[] =>
+    db.query<{ name: string }, []>(`PRAGMA table_info(${table})`).all().map((column) => column.name);
+  /** Not seed-mutable: identity, provenance, and the sport link (a slug never moves between sports). */
+  const FIXED = new Set(["id", "slug", "created_at", "sport_id"]);
+  const rows = (table: string): Record<string, Record<string, unknown>> =>
+    Object.fromEntries(
+      db.query<Record<string, unknown>, []>(`SELECT * FROM ${table}`).all().map((row) => [String(row.slug ?? row.id), row]),
+    );
+  const differing = (a: Record<string, unknown>, b: Record<string, unknown>): string[] =>
+    Object.keys(a).filter((key) => JSON.stringify(a[key]) !== JSON.stringify(b[key]));
+  const others = (skipTable: string[]): Record<string, string> => {
+    const all = fingerprint(db);
+    for (const table of skipTable) delete all[table];
+    return all;
+  };
+
+  const SKILL_EDITS: Record<string, (node: SeedSkillNode) => void> = {
+    parent_id: (n) => void (n.parent = null),
+    sort_order: (n) => void (n.order = 7),
+    names: (n) => void (n.names.kk = "Өзгерген атау"),
+    levels: (n) => void (n.levels = [t("Level one")]),
+    age_min: (n) => void (n.ageMin = 6),
+    age_max: (n) => void (n.ageMax = 98),
+    equipment: (n) => void (n.equipment = "cones"),
+    safety: (n) => void (n.safety = [t("Mind the wall")]),
+    outcomes: (n) => void (n.outcomes = [t("Keeps the ball close")]),
+    mistakes: (n) => void (n.mistakes = [t("Looks at the ball")]),
+  };
+  const TEST_EDITS: Record<string, (test: SeedTest) => void> = {
+    skill_id: (x) => void (x.skill = "juggling"),
+    metric: (x) => void (x.metric = "hits"),
+    unit: (x) => void (x.unit = "seconds"),
+    direction: (x) => void (x.direction = "lower"),
+    protocol: (x) => void (x.protocol.ru = "Другой протокол"),
+    equipment: (x) => void (x.equipment = "ball"),
+  };
+
+  test("the edit tables cover every column the tables have (a new column needs an edit and a WHERE guard)", () => {
+    expect(Object.keys(SKILL_EDITS).sort()).toEqual(columnsOf("skills").filter((c) => !FIXED.has(c)).sort());
+    expect(Object.keys(TEST_EDITS).sort()).toEqual(columnsOf("skill_tests").filter((c) => !FIXED.has(c)).sort());
+  });
+
+  for (const [column, edit] of Object.entries(SKILL_EDITS)) {
+    test(`skills.${column}`, () => {
+      writeSeed({ football: football() });
+      loadSeed(db, dir, { now: T0 });
+      const before = rows("skills");
+      const rest = others(["skills", "sports"]);
+
+      const seed = football();
+      edit(seed.graph.nodes[2]!); // juggling
+      writeSeed({ football: seed });
+      const summary = loadSeed(db, dir, { now: T1 });
+
+      const after = rows("skills");
+      expect(summary).toMatchObject({ skills: 1, tests: 0, drills: { inserted: 0, updated: 0, unchanged: 3 } });
+      for (const slug of Object.keys(before)) {
+        expect({ slug, changed: differing(before[slug]!, after[slug]!) }).toEqual({
+          slug,
+          changed: slug === "juggling" ? [column] : [],
+        });
+      }
+      expect(others(["skills", "sports"])).toEqual(rest);
+
+      const settled = changes(db);
+      expect(loadSeed(db, dir, { now: T2 })).toEqual({ ...ZERO, drills: { inserted: 0, updated: 0, unchanged: 3 } });
+      expect(changes(db)).toBe(settled);
+    });
+  }
+
+  for (const [column, edit] of Object.entries(TEST_EDITS)) {
+    test(`skill_tests.${column}`, () => {
+      writeSeed({ football: football() });
+      loadSeed(db, dir, { now: T0 });
+      const before = rows("skill_tests");
+      const rest = others(["skill_tests"]);
+      const changesBefore = changes(db);
+
+      const seed = football();
+      edit(seed.tests!.tests[0]!);
+      writeSeed({ football: seed });
+      const summary = loadSeed(db, dir, { now: T1 });
+
+      const after = rows("skill_tests");
+      expect(summary).toMatchObject({ sports: 0, skills: 0, tests: 1 });
+      expect(differing(before["wall-pass-30s"]!, after["wall-pass-30s"]!)).toEqual([column]);
+      expect(others(["skill_tests"])).toEqual(rest);
+      expect(changes(db) - changesBefore).toBe(1);
+
+      const settled = changes(db);
+      expect(loadSeed(db, dir, { now: T2 }).tests).toBe(0);
+      expect(changes(db)).toBe(settled);
+    });
+  }
+});
+
+// --- prerequisite edges follow the seed --------------------------------------------------------
+
+describe("loadSeed: prerequisite edges are a link table, reconciled to the seed", () => {
+  const edges = (): { skill: string; requires: string; minLevel: number }[] =>
+    db
+      .query<{ skill: string; requires: string; minLevel: number }, []>(
+        `SELECT s.slug AS skill, p.slug AS requires, e.min_level AS minLevel
+           FROM skill_prerequisites e JOIN skills s ON s.id = e.skill_id JOIN skills p ON p.id = e.prerequisite_id
+          ORDER BY s.slug, p.slug`,
+      )
+      .all();
+
+  test("reversing a prerequisite in the seed leaves the reversed edge only, so the stored graph stays acyclic", () => {
+    writeSeed({ football: football() });
+    loadSeed(db, dir, { now: T0 });
+    expect(edges()).toEqual([{ skill: "first-touch", requires: "juggling", minLevel: 2 }]);
+    const version = graphVersion("football");
+
+    const seed = football();
+    seed.graph.nodes[1]!.prerequisites = [];
+    seed.graph.nodes[2]!.prerequisites = [{ skill: "first-touch", minLevel: 1 }];
+    writeSeed({ football: seed });
+    const summary = loadSeed(db, dir, { now: T1 });
+
+    expect(edges()).toEqual([{ skill: "juggling", requires: "first-touch", minLevel: 1 }]);
+    expect(summary.skills).toBe(2);
+    const graph = getSkillGraph(db, "football", "en")!;
+    expect(validateGraph(graph.nodes, []).problems).toEqual([]);
+    expect(graph.version).not.toBe(version);
+    expect(graph.version).toBe(graphVersion("football"));
+  });
+
+  test("dropping one of several prerequisites of a skill removes exactly that edge", () => {
+    const base = football();
+    base.graph.nodes[1]!.prerequisites = [
+      { skill: "juggling", minLevel: 2 },
+      { skill: "ball-control", minLevel: 1 },
+    ];
+    writeSeed({ football: base });
+    loadSeed(db, dir, { now: T0 });
+    expect(edges()).toHaveLength(2);
+
+    const seed = football();
+    writeSeed({ football: seed });
+    loadSeed(db, dir, { now: T1 });
+
+    expect(edges()).toEqual([{ skill: "first-touch", requires: "juggling", minLevel: 2 }]);
+  });
+
+  test("a skill the seed no longer lists keeps its edges, and the seed's skills keep theirs", () => {
+    writeSeed({ football: football() });
+    loadSeed(db, dir, { now: T0 });
+
+    // first-touch leaves the seed (with its tests, rubric and drills); its edge to juggling stays.
+    const seed = football();
+    seed.graph.nodes = seed.graph.nodes.filter((n) => n.slug !== "first-touch");
+    seed.tests!.tests = [];
+    delete seed.rubrics;
+    delete seed.tracks["first-touch"];
+    writeSeed({ football: seed });
+    loadSeed(db, dir, { now: T1 });
+
+    expect(edges()).toEqual([{ skill: "first-touch", requires: "juggling", minLevel: 2 }]);
+    expect(count(db, "skills")).toBe(3);
+  });
+
+  test("the seed merged with the skills already in the database must be acyclic: a stored cycle aborts the load untouched", () => {
+    writeSeed({ football: football() });
+    loadSeed(db, dir, { now: T0 });
+    const sportId = `(SELECT id FROM sports WHERE slug = 'football')`;
+    for (const slug of ["legacy-a", "legacy-b"]) {
+      db.run(
+        `INSERT INTO skills (id, slug, sport_id, age_min, age_max, equipment, names) VALUES ('${slug}', '${slug}', ${sportId}, 5, 99, 'ball', '{"en":"${slug}"}')`,
+      );
+    }
+    db.run(`INSERT INTO skill_prerequisites (skill_id, prerequisite_id, min_level) VALUES ('legacy-a', 'legacy-b', 1), ('legacy-b', 'legacy-a', 1)`);
+    const before = fingerprint(db);
+
+    const seed = football();
+    seed.tracks["first-touch"]!.drills[0]!.goal.en = "A different goal"; // a real edit that must not land
+    writeSeed({ football: seed });
+    const error = seedError(() => loadSeed(db, dir, { now: T1 }));
+
+    expect(error.message).toContain("football/skill-graph.json");
+    expect(error.message).toContain("legacy-a");
+    expect(fingerprint(db)).toEqual(before);
+  });
+
+  test("a skill outside the seed that points at a skill nobody has aborts the load, naming the sport's graph file", () => {
+    writeSeed({ football: football(), futsal: futsal() });
+    loadSeed(db, dir, { now: T0 });
+    db.run(
+      `INSERT INTO skills (id, slug, sport_id, age_min, age_max, equipment, names)
+       VALUES ('legacy-x', 'legacy-x', (SELECT id FROM sports WHERE slug = 'football'), 5, 99, 'ball', '{"en":"x"}')`,
+    );
+    db.run(`INSERT INTO skill_prerequisites (skill_id, prerequisite_id, min_level) VALUES ('legacy-x', 'futsal-control', 1)`);
+    const before = fingerprint(db);
+
+    const error = seedError(() => loadSeed(db, dir, { now: T1 }));
+
+    expect(error.message).toContain("football/skill-graph.json");
+    expect(error.message).toContain("legacy-x");
+    expect(fingerprint(db)).toEqual(before);
   });
 });
 
@@ -1236,11 +1534,45 @@ describe("20-seed boot hook", () => {
     }
   });
 
-  test("a directory that does not exist is skipped with one info line, not an error", async () => {
-    await onBoot(deps(), { dir: join(root, "nope"), log });
+  test("an explicit SEED_DIR that does not exist aborts the boot with a SeedError naming SEED_DIR and the path", async () => {
+    const missing = join(root, "nope");
+    process.env.SEED_DIR = missing;
+
+    const error = await onBoot(deps(), { log }).then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(SeedError);
+    expect((error as Error).message).toContain("SEED_DIR");
+    expect((error as Error).message).toContain(missing);
+    expect(lines).toEqual([]);
     expect(count(db, "drills")).toBe(0);
-    expect(logged()).toHaveLength(1);
-    expect(logged()[0]).toMatchObject({ level: "info", msg: "seed skipped" });
+  });
+
+  test("an explicit SEED_DIR that is a file aborts the boot too", async () => {
+    const file = join(root, "a-file");
+    writeFileSync(file, "not a directory\n");
+    process.env.SEED_DIR = file;
+
+    const error = await onBoot(deps(), { log }).then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(SeedError);
+    expect((error as Error).message).toContain("SEED_DIR");
+    expect((error as Error).message).toContain(file);
+    expect(lines).toEqual([]);
+  });
+
+  test("an explicit dir option that does not exist is refused as well, never skipped", async () => {
+    const error = await onBoot(deps(), { dir: join(root, "nope"), log }).then(
+      () => undefined,
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(SeedError);
+    expect(lines).toEqual([]);
   });
 
   test("without any override the hook reads config/commons: skipped while it does not exist, loaded once it does", async () => {
@@ -1255,11 +1587,12 @@ describe("20-seed boot hook", () => {
   });
 
   test("logs to the console by default", async () => {
+    writeSeed({ football: football() });
     const spy = spyOn(console, "log").mockImplementation(() => {});
     try {
-      await onBoot(deps(), { dir: join(root, "nope") });
+      await onBoot(deps(), { dir });
       expect(spy).toHaveBeenCalledTimes(1);
-      expect(JSON.parse(String(spy.mock.calls[0]![0]))).toMatchObject({ msg: "seed skipped" });
+      expect(JSON.parse(String(spy.mock.calls[0]![0]))).toMatchObject({ level: "info", msg: "seed loaded" });
     } finally {
       spy.mockRestore();
     }
