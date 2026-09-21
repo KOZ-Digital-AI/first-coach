@@ -1,0 +1,855 @@
+{
+  "sport": "football",
+  "rubrics": [
+    {
+      "skill": "ball-mastery",
+      "version": 1,
+      "status": "COMMUNITY",
+      "minVisibility": 0.6,
+      "criteria": [
+        {
+          "key": "body-position",
+          "label": {
+            "kk": "Дене қалпы",
+            "ru": "Положение тела",
+            "en": "Body position"
+          },
+          "description": {
+            "kk": "Сен допқа босаң тұрып, кез келген жаққа қозғалуға дайынсың.",
+            "ru": "Ты стоишь над мячом расслабленно и готов двинуться в любую сторону.",
+            "en": "You stand relaxed over the ball, ready to move in any direction."
+          },
+          "lookFor": [
+            {
+              "kk": "Тізелерің сәл бүгілген.",
+              "ru": "Колени слегка согнуты.",
+              "en": "Knees are slightly bent."
+            },
+            {
+              "kk": "Кеудең көтеріңкі, иықтарың босаң.",
+              "ru": "Грудь приподнята, плечи расслаблены.",
+              "en": "Chest is up and shoulders are relaxed."
+            }
+          ]
+        },
+        {
+          "key": "touch-rhythm",
+          "label": {
+            "kk": "Жанасу ырғағы",
+            "ru": "Ритм касаний",
+            "en": "Touch rhythm"
+          },
+          "description": {
+            "kk": "Аяқтарың допқа тегіс, қайталанатын ырғақпен жанасады.",
+            "ru": "Твои ноги касаются мяча ровным повторяющимся ритмом.",
+            "en": "Your feet tap in an even, repeating rhythm."
+          },
+          "lookFor": [
+            {
+              "kk": "Аяқ қозғалыстары бірдей аралықпен қайталанады.",
+              "ru": "Движения стоп повторяются через похожие промежутки.",
+              "en": "Foot movements come at similar intervals."
+            },
+            {
+              "kk": "Жанасулардың арасында ұзақ тоқтау жоқ.",
+              "ru": "Между касаниями нет долгих остановок.",
+              "en": "There are no long freezes between touches."
+            }
+          ]
+        },
+        {
+          "key": "both-feet",
+          "label": {
+            "kk": "Екі аяқ",
+            "ru": "Обе ноги",
+            "en": "Both feet"
+          },
+          "description": {
+            "kk": "Сен сол аяғыңмен де, оң аяғыңмен де жұмыс істейсің.",
+            "ru": "Ты работаешь и левой, и правой ногой.",
+            "en": "You use the left foot and the right foot."
+          },
+          "lookFor": [
+            {
+              "kk": "Бейнеде екі аяғың да қозғалады.",
+              "ru": "В ролике двигаются обе ноги.",
+              "en": "Both feet move in the clip."
+            },
+            {
+              "kk": "Екі аяққа да шамамен бірдей жұмыс тиеді.",
+              "ru": "Каждая нога получает примерно поровну работы.",
+              "en": "Each foot gets a similar share of the work."
+            }
+          ]
+        },
+        {
+          "key": "balance",
+          "label": {
+            "kk": "Тепе-теңдік",
+            "ru": "Равновесие",
+            "en": "Balance"
+          },
+          "description": {
+            "kk": "Аяқтарың жұмыс істеп жатқанда сен тұрақты боласың.",
+            "ru": "Ты остаёшься устойчивым, пока ноги работают.",
+            "en": "You stay steady while your feet are busy."
+          },
+          "lookFor": [
+            {
+              "kk": "Тірек аяғың берік тұрады.",
+              "ru": "Опорная нога остаётся твёрдой.",
+              "en": "The standing leg stays firm."
+            },
+            {
+              "kk": "Қолдарың сәл жайылып, тепе-теңдікті сақтауға көмектеседі.",
+              "ru": "Руки немного разведены и помогают держать равновесие.",
+              "en": "Arms are out a little and help you stay steady."
+            }
+          ]
+        },
+        {
+          "key": "head-up",
+          "label": {
+            "kk": "Басты көтеру",
+            "ru": "Голова поднята",
+            "en": "Head up"
+          },
+          "description": {
+            "kk": "Кейде көзіңді доптан көтересің.",
+            "ru": "Время от времени ты поднимаешь взгляд от мяча.",
+            "en": "You lift your eyes from the ball now and then."
+          },
+          "lookFor": [
+            {
+              "kk": "Жанасулардың арасында басың көтеріледі.",
+              "ru": "Между касаниями голова приподнимается.",
+              "en": "The head tilts up between touches."
+            },
+            {
+              "kk": "Басың бейне бойы төмен болмайды.",
+              "ru": "Голова опущена не весь ролик.",
+              "en": "Your head is not down for the whole clip."
+            }
+          ]
+        }
+      ],
+      "recordingTips": [
+        {
+          "kk": "Телефонды қабырғаға немесе бөтелкеге сүйеп, шамамен бел деңгейінде қой да, қозғалтпа.",
+          "ru": "Прислони телефон к стене или бутылке примерно на высоте пояса и не двигай его.",
+          "en": "Lean your phone against a wall or a bottle at about waist height and keep it still."
+        },
+        {
+          "kk": "Телефоннан шамамен 3 метр жерде тұр, сонда бүкіл денең басынан аяғына дейін кадрға сыяды.",
+          "ru": "Встань примерно в 3 метрах от телефона, чтобы всё тело было в кадре, от головы до ног.",
+          "en": "Stand about 3 metres from the phone so your whole body fits in the picture, from head to feet."
+        },
+        {
+          "kk": "Күндізгі жарықта немесе жарық бөлмеде түсір: жарық алдыңда болсын, артыңда болмасын.",
+          "ru": "Снимай при дневном свете или в светлой комнате: свет должен быть спереди, а не сзади.",
+          "en": "Film in daylight or a bright room, with the light in front of you and not behind you."
+        },
+        {
+          "kk": "Үлкен адамнан кадрда басқа ешкім жоқ екенін тексертіп ал.",
+          "ru": "Попроси взрослого проверить, что в кадре больше никого нет.",
+          "en": "Ask a grown-up to check that nobody else is in the picture."
+        },
+        {
+          "kk": "10 секундтан 30 секундқа дейін тоқтамай түсір.",
+          "ru": "Снимай от 10 до 30 секунд без остановки.",
+          "en": "Film for 10 to 30 seconds without stopping."
+        },
+        {
+          "kk": "Кадрдың ортасында тұр, жанасуларды кішкентай әрі өз жаныңда жаса.",
+          "ru": "Стой в середине кадра, касания делай маленькие и рядом с собой.",
+          "en": "Stay in the middle of the picture and keep your touches small and close."
+        }
+      ]
+    },
+    {
+      "skill": "dribbling",
+      "version": 1,
+      "status": "COMMUNITY",
+      "minVisibility": 0.55,
+      "criteria": [
+        {
+          "key": "body-position",
+          "label": {
+            "kk": "Дене қалпы",
+            "ru": "Положение тела",
+            "en": "Body position"
+          },
+          "description": {
+            "kk": "Сен сәл алға еңкейіп, тізеңді бүгіп жүгіресің әрі бұрыласың.",
+            "ru": "Ты бежишь и поворачиваешь с лёгким наклоном вперёд и согнутыми коленями.",
+            "en": "You run and turn with a slight forward lean and bent knees."
+          },
+          "lookFor": [
+            {
+              "kk": "Қозғалғанда тізелерің бүгулі тұрады.",
+              "ru": "Пока ты двигаешься, колени остаются согнутыми.",
+              "en": "Knees stay bent while you move."
+            },
+            {
+              "kk": "Кеудең сәл алға еңкейеді, артқа емес.",
+              "ru": "Грудь слегка наклонена вперёд, а не назад.",
+              "en": "The chest leans slightly forward, not backwards."
+            }
+          ]
+        },
+        {
+          "key": "touch-rhythm",
+          "label": {
+            "kk": "Жанасу ырғағы",
+            "ru": "Ритм касаний",
+            "en": "Touch rhythm"
+          },
+          "description": {
+            "kk": "Қадамдарың мен жанасуларың тегіс, қайталанатын ырғақпен жүреді.",
+            "ru": "Твои шаги и касания идут ровным повторяющимся ритмом.",
+            "en": "Your steps and touches follow a steady, repeating rhythm."
+          },
+          "lookFor": [
+            {
+              "kk": "Қадамдар бірдей аралықпен жүреді.",
+              "ru": "Шаги следуют через похожие промежутки.",
+              "en": "Steps come at similar intervals."
+            },
+            {
+              "kk": "Ырғақ үзілмейді, тоқтап қалмайды.",
+              "ru": "Ритм не рвётся и не замирает.",
+              "en": "The rhythm does not stop and start."
+            }
+          ]
+        },
+        {
+          "key": "both-feet",
+          "label": {
+            "kk": "Екі аяқ",
+            "ru": "Обе ноги",
+            "en": "Both feet"
+          },
+          "description": {
+            "kk": "Допты сол аяғыңмен де, оң аяғыңмен де жүргізесің.",
+            "ru": "Ты ведёшь мяч и левой, и правой ногой.",
+            "en": "You use both feet to guide the ball."
+          },
+          "lookFor": [
+            {
+              "kk": "Қозғалысқа екі аяқ та қатысады.",
+              "ru": "В движении участвуют обе ноги.",
+              "en": "Both feet take part in the movement."
+            },
+            {
+              "kk": "Сол және оң аяқ шамамен бірдей рет қолданылады.",
+              "ru": "Левая и правая ноги задействованы примерно одинаково часто.",
+              "en": "Left and right feet are used a similar number of times."
+            }
+          ]
+        },
+        {
+          "key": "direction-change",
+          "label": {
+            "kk": "Бағытты өзгерту",
+            "ru": "Смена направления",
+            "en": "Change of direction"
+          },
+          "description": {
+            "kk": "Сен қатты баяулатпай бағытыңды өзгертесің.",
+            "ru": "Ты меняешь направление, не сильно замедляясь.",
+            "en": "You turn or swerve without slowing down too much."
+          },
+          "lookFor": [
+            {
+              "kk": "Жамбас пен иықтар жаңа бағытқа бұрылады.",
+              "ru": "Бёдра и плечи поворачиваются в новую сторону.",
+              "en": "Hips and shoulders turn towards the new direction."
+            },
+            {
+              "kk": "Бұрылыс кішкене қадаммен немесе сыртқы аяқпен итерілуден басталады.",
+              "ru": "Поворот начинается с небольшого шага или толчка внешней ногой.",
+              "en": "A small step or a push off the outside foot starts the turn."
+            }
+          ]
+        },
+        {
+          "key": "balance",
+          "label": {
+            "kk": "Тепе-теңдік",
+            "ru": "Равновесие",
+            "en": "Balance"
+          },
+          "description": {
+            "kk": "Жылдамдағанда, баяулағанда және бұрылғанда сен тұрақты боласың.",
+            "ru": "Ты остаёшься устойчивым, когда ускоряешься, замедляешься и поворачиваешь.",
+            "en": "You stay steady when you speed up, slow down and turn."
+          },
+          "lookFor": [
+            {
+              "kk": "Бұрылғаннан кейін денең қатты шайқалмайды.",
+              "ru": "После поворота тело сильно не раскачивается.",
+              "en": "The body does not sway wildly after a turn."
+            },
+            {
+              "kk": "Қолдарың сәл жайылып, тепе-теңдікті сақтауға көмектеседі.",
+              "ru": "Руки немного разведены и помогают держать равновесие.",
+              "en": "Arms are out a little and help you stay steady."
+            }
+          ]
+        },
+        {
+          "key": "consistency",
+          "label": {
+            "kk": "Тұрақтылық",
+            "ru": "Стабильность",
+            "en": "Consistency"
+          },
+          "description": {
+            "kk": "Қозғалысың бейненің басынан аяғына дейін шамамен бірдей көрінеді.",
+            "ru": "Твои движения выглядят примерно одинаково от начала ролика до конца.",
+            "en": "Your movement looks about the same from the start of the clip to the end."
+          },
+          "lookFor": [
+            {
+              "kk": "Соңындағы ырғақ басындағы ырғаққа ұқсас.",
+              "ru": "Ритм в конце похож на ритм в начале.",
+              "en": "The rhythm at the end is like the rhythm at the start."
+            },
+            {
+              "kk": "Дене қалпы бастан-аяқ ұқсас болып қалады.",
+              "ru": "Положение тела остаётся похожим на всём протяжении.",
+              "en": "The body position stays similar all the way through."
+            }
+          ]
+        }
+      ],
+      "recordingTips": [
+        {
+          "kk": "Телефонды қабырғаға немесе бөтелкеге сүйеп, шамамен бел деңгейінде қой да, қозғалтпа.",
+          "ru": "Прислони телефон к стене или бутылке примерно на высоте пояса и не двигай его.",
+          "en": "Lean your phone against a wall or a bottle at about waist height and keep it still."
+        },
+        {
+          "kk": "Телефоннан шамамен 3 метр жерде тұр, сонда бүкіл денең басынан аяғына дейін кадрға сыяды.",
+          "ru": "Встань примерно в 3 метрах от телефона, чтобы всё тело было в кадре, от головы до ног.",
+          "en": "Stand about 3 metres from the phone so your whole body fits in the picture, from head to feet."
+        },
+        {
+          "kk": "Күндізгі жарықта немесе жарық бөлмеде түсір: жарық алдыңда болсын, артыңда болмасын.",
+          "ru": "Снимай при дневном свете или в светлой комнате: свет должен быть спереди, а не сзади.",
+          "en": "Film in daylight or a bright room, with the light in front of you and not behind you."
+        },
+        {
+          "kk": "Үлкен адамнан кадрда басқа ешкім жоқ екенін тексертіп ал.",
+          "ru": "Попроси взрослого проверить, что в кадре больше никого нет.",
+          "en": "Ask a grown-up to check that nobody else is in the picture."
+        },
+        {
+          "kk": "10 секундтан 30 секундқа дейін тоқтамай түсір.",
+          "ru": "Снимай от 10 до 30 секунд без остановки.",
+          "en": "Film for 10 to 30 seconds without stopping."
+        },
+        {
+          "kk": "Допты кадрдың көлденеңінен, бір жақтан екінші жаққа жүргіз, телефонға қарай емес.",
+          "ru": "Веди мяч поперёк кадра, из стороны в сторону, а не в сторону телефона.",
+          "en": "Dribble across the picture from side to side, not towards the phone."
+        }
+      ]
+    },
+    {
+      "skill": "passing-first-touch",
+      "version": 1,
+      "status": "COMMUNITY",
+      "minVisibility": 0.55,
+      "criteria": [
+        {
+          "key": "ready-stance",
+          "label": {
+            "kk": "Дайын тұру",
+            "ru": "Готовая стойка",
+            "en": "Ready stance"
+          },
+          "description": {
+            "kk": "Сен допты аяқ ұшыңда тұрып, тізеңді жұмсартып, қолыңды сәл жайып күтесің.",
+            "ru": "Ты ждёшь мяч на носках с мягкими коленями и чуть разведёнными руками.",
+            "en": "You wait for the ball on your toes with soft knees and your arms out a little."
+          },
+          "lookFor": [
+            {
+              "kk": "Тізелерің сәл бүгілген.",
+              "ru": "Колени слегка согнуты.",
+              "en": "Knees are slightly bent."
+            },
+            {
+              "kk": "Денең пас келетін жаққа қараған.",
+              "ru": "Тело развёрнуто туда, откуда приходит передача.",
+              "en": "Your body is turned towards where the pass comes from."
+            }
+          ]
+        },
+        {
+          "key": "standing-foot",
+          "label": {
+            "kk": "Тірек аяқ",
+            "ru": "Опорная нога",
+            "en": "Standing foot"
+          },
+          "description": {
+            "kk": "Тірек аяғың доптың қасында тұрып, серіктесіңе немесе қабырғаға қарайды.",
+            "ru": "Опорная нога стоит рядом с мячом и смотрит на партнёра или на стену.",
+            "en": "Your standing foot is planted beside the ball and points at your partner or the wall."
+          },
+          "lookFor": [
+            {
+              "kk": "Тірек табаның пас бергің келетін жаққа қарайды.",
+              "ru": "Опорная стопа смотрит туда, куда ты хочешь отдать передачу.",
+              "en": "The standing foot points the way you want to pass."
+            },
+            {
+              "kk": "Екінші аяғың сермегенде тірек аяғың берік тұрады.",
+              "ru": "Опорная нога остаётся твёрдой, пока другая нога делает замах.",
+              "en": "The standing leg stays firm while the other leg swings."
+            }
+          ]
+        },
+        {
+          "key": "passing-swing",
+          "label": {
+            "kk": "Пас беру қимылы",
+            "ru": "Замах для передачи",
+            "en": "Passing swing"
+          },
+          "description": {
+            "kk": "Пас беретін аяғың жайлап сермеліп, қозғалысты соңына дейін жеткізеді.",
+            "ru": "Ты плавно замахиваешься ногой для передачи и доводишь движение до конца.",
+            "en": "Your passing leg swings smoothly and follows through."
+          },
+          "lookFor": [
+            {
+              "kk": "Пас беру сәтінде табаның тығыз, тобығың тұрақты.",
+              "ru": "В момент передачи стопа твёрдая, голеностоп устойчив.",
+              "en": "At the moment of the pass the foot is firm and the ankle stays steady."
+            },
+            {
+              "kk": "Пастан кейін аяқ алға қарай қозғалысын жалғастырады.",
+              "ru": "Нога продолжает движение вперёд после передачи.",
+              "en": "The leg keeps moving forward after the pass."
+            }
+          ]
+        },
+        {
+          "key": "soft-first-touch",
+          "label": {
+            "kk": "Жұмсақ алғашқы жанасу",
+            "ru": "Мягкий первый приём",
+            "en": "Soft first touch"
+          },
+          "description": {
+            "kk": "Келген допты жұмсарту үшін аяғыңды сәл артқа тартасың.",
+            "ru": "Ты чуть отводишь ногу назад, чтобы смягчить приём мяча.",
+            "en": "You give a little with your leg to cushion the incoming ball."
+          },
+          "lookFor": [
+            {
+              "kk": "Доп келгенде қабылдайтын аяғың сәл артқа жылжиды.",
+              "ru": "Принимающая стопа чуть отходит назад, когда мяч приходит.",
+              "en": "The receiving foot moves back a little as the ball arrives."
+            },
+            {
+              "kk": "Қабылдайтын аяқтың тізесі жұмсақ, қатты емес.",
+              "ru": "Колено принимающей ноги мягкое, не жёсткое.",
+              "en": "The knee of the receiving leg gives instead of staying stiff."
+            }
+          ]
+        },
+        {
+          "key": "balance-after",
+          "label": {
+            "kk": "Пастан кейінгі тепе-теңдік",
+            "ru": "Равновесие после передачи",
+            "en": "Balance after the pass"
+          },
+          "description": {
+            "kk": "Пас бергеннен немесе қабылдағаннан кейін сен тұрақты боласың, келесісіне дайынсың.",
+            "ru": "После передачи или приёма ты остаёшься устойчивым и готов к следующей.",
+            "en": "You stay steady after you pass or receive, ready for the next one."
+          },
+          "lookFor": [
+            {
+              "kk": "Денең тік тұрады, бүйірге құламайды.",
+              "ru": "Тело остаётся прямым и не падает в сторону.",
+              "en": "The body stays upright and does not fall to the side."
+            },
+            {
+              "kk": "Сен бастапқы қалыпқа тез қайтасың.",
+              "ru": "Ты быстро возвращаешься в исходную стойку.",
+              "en": "You return to the ready stance quickly."
+            }
+          ]
+        }
+      ],
+      "recordingTips": [
+        {
+          "kk": "Телефонды қабырғаға немесе бөтелкеге сүйеп, шамамен бел деңгейінде қой да, қозғалтпа.",
+          "ru": "Прислони телефон к стене или бутылке примерно на высоте пояса и не двигай его.",
+          "en": "Lean your phone against a wall or a bottle at about waist height and keep it still."
+        },
+        {
+          "kk": "Телефоннан шамамен 3 метр жерде тұр, сонда бүкіл денең басынан аяғына дейін кадрға сыяды.",
+          "ru": "Встань примерно в 3 метрах от телефона, чтобы всё тело было в кадре, от головы до ног.",
+          "en": "Stand about 3 metres from the phone so your whole body fits in the picture, from head to feet."
+        },
+        {
+          "kk": "Күндізгі жарықта немесе жарық бөлмеде түсір: жарық алдыңда болсын, артыңда болмасын.",
+          "ru": "Снимай при дневном свете или в светлой комнате: свет должен быть спереди, а не сзади.",
+          "en": "Film in daylight or a bright room, with the light in front of you and not behind you."
+        },
+        {
+          "kk": "Үлкен адамнан кадрда басқа ешкім жоқ екенін тексертіп ал.",
+          "ru": "Попроси взрослого проверить, что в кадре больше никого нет.",
+          "en": "Ask a grown-up to check that nobody else is in the picture."
+        },
+        {
+          "kk": "10 секундтан 30 секундқа дейін тоқтамай түсір.",
+          "ru": "Снимай от 10 до 30 секунд без остановки.",
+          "en": "Film for 10 to 30 seconds without stopping."
+        },
+        {
+          "kk": "Телефонға қырынан тұр, сонда ол тебетін аяғыңды да, тірек аяғыңды да көреді.",
+          "ru": "Встань боком к телефону, чтобы он видел и ногу, которой бьёшь, и опорную ногу.",
+          "en": "Stand side-on to the phone so it can see both your kicking leg and your standing leg."
+        }
+      ]
+    },
+    {
+      "skill": "weak-foot",
+      "version": 1,
+      "status": "COMMUNITY",
+      "minVisibility": 0.6,
+      "criteria": [
+        {
+          "key": "less-used-foot",
+          "label": {
+            "kk": "Аз пайдаланатын аяқ",
+            "ru": "Нога, которой ты пользуешься реже",
+            "en": "The foot you use less"
+          },
+          "description": {
+            "kk": "Негізгі жұмысты аз пайдаланатын аяғың істейді.",
+            "ru": "Основную работу делает нога, которой ты пользуешься реже.",
+            "en": "The foot you use less does most of the work."
+          },
+          "lookFor": [
+            {
+              "kk": "Аз пайдаланатын аяғың екіншісінен көп қозғалады.",
+              "ru": "Нога, которой ты пользуешься реже, двигается больше другой.",
+              "en": "The foot you use less moves more than the other one."
+            },
+            {
+              "kk": "Қиындай бастағанда екінші аяққа ауыспайсың.",
+              "ru": "Ты не переходишь на другую ногу, когда становится сложно.",
+              "en": "You do not switch to the other foot when it gets tricky."
+            }
+          ]
+        },
+        {
+          "key": "standing-leg",
+          "label": {
+            "kk": "Тірек аяқ",
+            "ru": "Опорная нога",
+            "en": "Standing leg"
+          },
+          "description": {
+            "kk": "Тірек аяғың тұрақты әрі сәл бүгілген күйде тұрады.",
+            "ru": "Опорная нога остаётся устойчивой и слегка согнутой.",
+            "en": "Your standing leg stays steady and slightly bent."
+          },
+          "lookFor": [
+            {
+              "kk": "Тірек тізең жұмсақ, түгел түзу емес.",
+              "ru": "Опорное колено мягкое, не выпрямлено до упора.",
+              "en": "The standing knee is soft, not locked straight."
+            },
+            {
+              "kk": "Екінші аяқ жұмыс істегенде тірек табаның орнында тұрады.",
+              "ru": "Опорная стопа остаётся на месте, пока работает другая.",
+              "en": "The standing foot stays planted while the other foot works."
+            }
+          ]
+        },
+        {
+          "key": "foot-shape",
+          "label": {
+            "kk": "Табанның қалпы",
+            "ru": "Положение стопы",
+            "en": "Foot shape"
+          },
+          "description": {
+            "kk": "Жұмыс істейтін табаның әр жанасу кезінде берік әрі тұрақты болады.",
+            "ru": "Работающая стопа при каждом касании остаётся твёрдой и устойчивой.",
+            "en": "Your working foot keeps a firm, steady shape at each touch."
+          },
+          "lookFor": [
+            {
+              "kk": "Тобығың теңселмей, тұрақты тұрады.",
+              "ru": "Голеностоп устойчив и не шатается.",
+              "en": "The ankle stays steady instead of wobbling."
+            },
+            {
+              "kk": "Әр жанасуда аяқ ұшың бір бағытқа қарайды.",
+              "ru": "Носок смотрит в одну и ту же сторону при каждом касании.",
+              "en": "The toes point in the same direction on each touch."
+            }
+          ]
+        },
+        {
+          "key": "touch-rhythm",
+          "label": {
+            "kk": "Жанасу ырғағы",
+            "ru": "Ритм касаний",
+            "en": "Touch rhythm"
+          },
+          "description": {
+            "kk": "Аз пайдаланатын аяғың тегіс ырғақпен қозғалады.",
+            "ru": "Нога, которой ты пользуешься реже, двигается ровным ритмом.",
+            "en": "The foot you use less moves in an even rhythm."
+          },
+          "lookFor": [
+            {
+              "kk": "Қозғалыстар бірдей аралықпен қайталанады.",
+              "ru": "Движения повторяются через похожие промежутки.",
+              "en": "Movements come at similar intervals."
+            },
+            {
+              "kk": "Ұзақ үзілістер жоқ.",
+              "ru": "Долгих пауз нет.",
+              "en": "There are no long pauses."
+            }
+          ]
+        },
+        {
+          "key": "balance",
+          "label": {
+            "kk": "Тепе-теңдік",
+            "ru": "Равновесие",
+            "en": "Balance"
+          },
+          "description": {
+            "kk": "Аз пайдаланатын аяғың жұмыс істегенде сен тұрақты боласың.",
+            "ru": "Ты остаёшься устойчивым, пока работает нога, которой ты пользуешься реже.",
+            "en": "You stay steady while the foot you use less is working."
+          },
+          "lookFor": [
+            {
+              "kk": "Денең тік тұрады, бүйірге қатты еңкеймейді.",
+              "ru": "Тело остаётся прямым и сильно не наклоняется в сторону.",
+              "en": "The body stays upright and does not lean far to the side."
+            },
+            {
+              "kk": "Қолдарың сәл жайылып, тепе-теңдікті сақтауға көмектеседі.",
+              "ru": "Руки немного разведены и помогают держать равновесие.",
+              "en": "Arms are out a little and help you stay steady."
+            }
+          ]
+        }
+      ],
+      "recordingTips": [
+        {
+          "kk": "Телефонды қабырғаға немесе бөтелкеге сүйеп, шамамен бел деңгейінде қой да, қозғалтпа.",
+          "ru": "Прислони телефон к стене или бутылке примерно на высоте пояса и не двигай его.",
+          "en": "Lean your phone against a wall or a bottle at about waist height and keep it still."
+        },
+        {
+          "kk": "Телефоннан шамамен 3 метр жерде тұр, сонда бүкіл денең басынан аяғына дейін кадрға сыяды.",
+          "ru": "Встань примерно в 3 метрах от телефона, чтобы всё тело было в кадре, от головы до ног.",
+          "en": "Stand about 3 metres from the phone so your whole body fits in the picture, from head to feet."
+        },
+        {
+          "kk": "Күндізгі жарықта немесе жарық бөлмеде түсір: жарық алдыңда болсын, артыңда болмасын.",
+          "ru": "Снимай при дневном свете или в светлой комнате: свет должен быть спереди, а не сзади.",
+          "en": "Film in daylight or a bright room, with the light in front of you and not behind you."
+        },
+        {
+          "kk": "Үлкен адамнан кадрда басқа ешкім жоқ екенін тексертіп ал.",
+          "ru": "Попроси взрослого проверить, что в кадре больше никого нет.",
+          "en": "Ask a grown-up to check that nobody else is in the picture."
+        },
+        {
+          "kk": "10 секундтан 30 секундқа дейін тоқтамай түсір.",
+          "ru": "Снимай от 10 до 30 секунд без остановки.",
+          "en": "Film for 10 to 30 seconds without stopping."
+        },
+        {
+          "kk": "Бейнеде негізгі жұмысты аз пайдаланатын аяғың істесін, екі аяғың да кадрда болсын.",
+          "ru": "Пусть в этом ролике основную работу делает нога, которой ты пользуешься реже, а обе ноги остаются в кадре.",
+          "en": "Let the foot you use less do most of the work in this clip, and keep both feet in the picture."
+        }
+      ]
+    },
+    {
+      "skill": "juggling-coordination",
+      "version": 1,
+      "status": "COMMUNITY",
+      "minVisibility": 0.6,
+      "criteria": [
+        {
+          "key": "body-position",
+          "label": {
+            "kk": "Дене қалпы",
+            "ru": "Положение тела",
+            "en": "Body position"
+          },
+          "description": {
+            "kk": "Сен тік әрі босаң тұрып, доптың астына қозғалуға дайынсың.",
+            "ru": "Ты стоишь прямо и расслабленно, готовый двигаться под мяч.",
+            "en": "You stand upright and relaxed, ready to move under the ball."
+          },
+          "lookFor": [
+            {
+              "kk": "Тізелерің сәл бүгілген.",
+              "ru": "Колени слегка согнуты.",
+              "en": "Knees are slightly bent."
+            },
+            {
+              "kk": "Кеудең көтеріңкі, иықтарың босаң.",
+              "ru": "Грудь приподнята, плечи расслаблены.",
+              "en": "Chest is up and shoulders are relaxed."
+            }
+          ]
+        },
+        {
+          "key": "small-swing",
+          "label": {
+            "kk": "Кішкентай бақыланатын қимыл",
+            "ru": "Небольшой контролируемый мах",
+            "en": "Small controlled swing"
+          },
+          "description": {
+            "kk": "Тебетін аяғың кішкентай, бақыланатын қозғалыстар жасайды.",
+            "ru": "Твоя бьющая нога делает небольшие контролируемые движения.",
+            "en": "Your kicking leg makes small, controlled movements."
+          },
+          "lookFor": [
+            {
+              "kk": "Аяғың әр жолы аздап қана көтеріледі.",
+              "ru": "Стопа каждый раз поднимается лишь немного.",
+              "en": "The foot lifts only a little each time."
+            },
+            {
+              "kk": "Аяқты тізе көтереді, жамбастан үлкен сермеу жоқ.",
+              "ru": "Поднимает ногу колено, а не большой мах от бедра.",
+              "en": "The knee does the lifting, not a big swing from the hip."
+            }
+          ]
+        },
+        {
+          "key": "steady-rhythm",
+          "label": {
+            "kk": "Тегіс ырғақ",
+            "ru": "Ровный ритм",
+            "en": "Steady rhythm"
+          },
+          "description": {
+            "kk": "Жанасуларың бірінен соң бірі тегіс ырғақпен келеді.",
+            "ru": "Твои касания идут одно за другим ровным ритмом.",
+            "en": "Your touches come one after another in an even rhythm."
+          },
+          "lookFor": [
+            {
+              "kk": "Аяқ бірдей аралықпен көтеріледі.",
+              "ru": "Стопа поднимается через похожие промежутки.",
+              "en": "The foot lifts at similar intervals."
+            },
+            {
+              "kk": "Ырғақ асығып кетпейді, тоқтап қалмайды.",
+              "ru": "Ритм не ускоряется рывком и не замирает.",
+              "en": "The rhythm does not rush or stop."
+            }
+          ]
+        },
+        {
+          "key": "both-feet",
+          "label": {
+            "kk": "Екі аяқ",
+            "ru": "Обе ноги",
+            "en": "Both feet"
+          },
+          "description": {
+            "kk": "Сен сол аяғыңды да, оң аяғыңды да қолданып көресің.",
+            "ru": "Ты пробуешь и левую, и правую ногу.",
+            "en": "You try the left foot and the right foot."
+          },
+          "lookFor": [
+            {
+              "kk": "Бейнеде екі аяқ та көтеріледі.",
+              "ru": "В ролике поднимаются обе ноги.",
+              "en": "Both feet lift in the clip."
+            },
+            {
+              "kk": "Аяқты тоқтамай, жайлап ауыстырасың.",
+              "ru": "Ты плавно меняешь ногу, не останавливаясь.",
+              "en": "You switch feet smoothly, without stopping."
+            }
+          ]
+        },
+        {
+          "key": "balance",
+          "label": {
+            "kk": "Тепе-теңдік",
+            "ru": "Равновесие",
+            "en": "Balance"
+          },
+          "description": {
+            "kk": "Жалғастырып жатқанда сен орныңда тұрақты боласың.",
+            "ru": "Ты остаёшься устойчивым на месте, пока продолжаешь.",
+            "en": "You stay steady on the spot while you keep going."
+          },
+          "lookFor": [
+            {
+              "kk": "Сен шамамен бір орында қаласың.",
+              "ru": "Ты остаёшься примерно на одном месте.",
+              "en": "You stay in about the same spot."
+            },
+            {
+              "kk": "Тірек аяғың берік, қолдарың бос.",
+              "ru": "Опорная нога твёрдая, а руки свободны.",
+              "en": "The standing leg stays firm and the arms stay loose."
+            }
+          ]
+        }
+      ],
+      "recordingTips": [
+        {
+          "kk": "Телефонды қабырғаға немесе бөтелкеге сүйеп, шамамен бел деңгейінде қой да, қозғалтпа.",
+          "ru": "Прислони телефон к стене или бутылке примерно на высоте пояса и не двигай его.",
+          "en": "Lean your phone against a wall or a bottle at about waist height and keep it still."
+        },
+        {
+          "kk": "Телефоннан шамамен 3 метр жерде тұр, сонда бүкіл денең басынан аяғына дейін кадрға сыяды.",
+          "ru": "Встань примерно в 3 метрах от телефона, чтобы всё тело было в кадре, от головы до ног.",
+          "en": "Stand about 3 metres from the phone so your whole body fits in the picture, from head to feet."
+        },
+        {
+          "kk": "Күндізгі жарықта немесе жарық бөлмеде түсір: жарық алдыңда болсын, артыңда болмасын.",
+          "ru": "Снимай при дневном свете или в светлой комнате: свет должен быть спереди, а не сзади.",
+          "en": "Film in daylight or a bright room, with the light in front of you and not behind you."
+        },
+        {
+          "kk": "Үлкен адамнан кадрда басқа ешкім жоқ екенін тексертіп ал.",
+          "ru": "Попроси взрослого проверить, что в кадре больше никого нет.",
+          "en": "Ask a grown-up to check that nobody else is in the picture."
+        },
+        {
+          "kk": "10 секундтан 30 секундқа дейін тоқтамай түсір.",
+          "ru": "Снимай от 10 до 30 секунд без остановки.",
+          "en": "Film for 10 to 30 seconds without stopping."
+        },
+        {
+          "kk": "Бір орында тұр да, телефон басыңды да, аяғыңды да көретіндей етіп допты ұста.",
+          "ru": "Стой на одном месте и держи мяч так, чтобы телефон видел и голову, и ноги.",
+          "en": "Stay on one spot and keep the ball low enough for the phone to see your head and your feet."
+        }
+      ]
+    }
+  ]
+}
