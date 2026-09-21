@@ -95,7 +95,7 @@ const CLAIMS: Record<
     title: 'Құпиялылық саясаты',
     pending: /заңгерлік тексеру/i,
     aiProvider: /жасанды интеллект \(ЖИ\) провайдеріне/,
-    videoStaysOnDevice: /телефоннан шықпайды/i,
+    videoStaysOnDevice: /телефоннан ешқашан шықпайды/i,
     stillFramesOnly: /кадр/i,
     noAds: /жарнама/i,
     noThirdPartyAnalytics: /аналитика/i,
