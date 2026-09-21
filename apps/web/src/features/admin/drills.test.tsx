@@ -560,6 +560,8 @@ describe('changing the status: what the row does with the answer', () => {
 
   test('the list is asked for again, and every cached commons page is marked stale', async () => {
     const { user, queryClient } = await renderLoaded();
+    // No observer holds this page, and the client's gcTime of 0 would drop it at once: keep it so its state can be read.
+    queryClient.setQueryDefaults(['commons'], { gcTime: Number.POSITIVE_INFINITY });
     queryClient.setQueryData(['commons', 'detail', 'ghost-ball', 'en'], { placeholder: true });
     await markAcademy(user);
     await waitFor(() => expect(listCalls().length).toBeGreaterThanOrEqual(2));
@@ -736,6 +738,8 @@ describe('unpublish: confirming', () => {
 
   test('the list is asked for again (the server no longer lists the drill) and every cached commons page is marked stale', async () => {
     const { user, queryClient } = await renderLoaded();
+    // No observer holds this page, and the client's gcTime of 0 would drop it at once: keep it so its state can be read.
+    queryClient.setQueryDefaults(['commons'], { gcTime: Number.POSITIVE_INFINITY });
     queryClient.setQueryData(['commons', 'detail', 'ghost-ball', 'en'], { placeholder: true });
     await confirmUnpublish(user);
     await waitFor(() => expect(listCalls().length).toBeGreaterThanOrEqual(2));
@@ -803,8 +807,9 @@ describe.each(['kk', 'ru'] as const)('in %s', (locale) => {
     await user.click(change);
     const form = within(rowOf(WALL.title[locale])).getByRole('form');
     await user.click(within(form).getByRole('button', { name: messages[locale].status.save }));
-    const alert = await within(form).findByRole('alert');
-    expect(text(alert)).toContain(messages[locale].status.errors.choose);
+    // Nothing is filled in, so the missing choice AND the missing note are both named.
+    const alerts = await within(form).findAllByRole('alert');
+    expect(alerts.map(text).join(' ')).toContain(messages[locale].status.errors.choose);
     for (const leak of LEAKS) expect(text(rowOf(WALL.title[locale]))).not.toContain(leak);
     expect(CYRILLIC.test(text(form))).toBe(true);
     expect(actionCalls()).toHaveLength(0);
