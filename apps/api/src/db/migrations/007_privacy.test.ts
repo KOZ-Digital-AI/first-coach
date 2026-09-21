@@ -472,10 +472,16 @@ describe('007_privacy: migration', () => {
   test('the header documents the consent history rules: rows are appended, the latest per (player, kind) wins, only a re-key may UPDATE', () => {
     const header = headerOf();
     expect(header).toMatch(/latest/i);
-    expect(header).toMatch(/changed_at, id/);
+    expect(header).toMatch(/highest id/i);
+    expect(header).toMatch(/clock/i);
+    expect(header).toMatch(/display|audit/i);
     expect(header).toMatch(/consents_append_only/);
     expect(header).toMatch(/under-13|isConsentUpdateAllowed/);
     expect(header).toMatch(/immutable|never edited|never updated/i);
+    expect(header).toMatch(/guardian confirmation applies only to videoAnalysis/i);
+    expect(header).toMatch(/no such table: main\.player_profiles/);
+    expect(header).toMatch(/drop and recreate consents_append_only|recreate consents_append_only/i);
+    expect(header).toMatch(/reads player_profiles/i);
   });
 
   test('re-running is a no-op and the recorded checksum is the sha256 of the file bytes, unchanged', () => {
@@ -563,21 +569,21 @@ describe('007_privacy: exact shape of the two new tables (001-007 alone)', () =>
     expect(consents).not.toContainEqual(['player_id', 'kind', 'changed_at']);
   });
 
-  test('consents has the index (player_id, kind, changed_at, id): the latest consent per (player, kind), and the erasure cascade', () => {
+  test('consents has the index (player_id, kind, id): the latest consent per (player, kind) is the highest id, and the erasure cascade', () => {
     const db = migrated('seven');
-    expect(namedIndexes(db, 'consents')).toEqual({ consents_by_player_kind: ['player_id', 'kind', 'changed_at', 'id'] });
+    expect(namedIndexes(db, 'consents')).toEqual({ consents_by_player_kind: ['player_id', 'kind', 'id'] });
   });
 
   test('EXPLAIN QUERY PLAN: the latest consent per (player, kind) is one index seek with no sort; a player\'s consents and a code lookup by hash never scan', () => {
     const db = migrated('seven');
 
-    const latest = plan(db, 'SELECT granted, guardian_confirmed, changed_at FROM consents WHERE player_id = ? AND kind = ? ORDER BY changed_at DESC, id DESC LIMIT 1', 'p1', 'videoAnalysis');
+    const latest = plan(db, 'SELECT granted, guardian_confirmed, changed_at FROM consents WHERE player_id = ? AND kind = ? ORDER BY id DESC LIMIT 1', 'p1', 'videoAnalysis');
     expect(latest).toContain('consents_by_player_kind');
     expect(latest).toMatch(/player_id=\? AND kind=\?/);
     expect(latest).not.toMatch(/SCAN/);
     expect(latest).not.toMatch(/TEMP B-TREE/i);
 
-    const history = plan(db, 'SELECT id, kind, granted, changed_at FROM consents WHERE player_id = ? AND kind = ? ORDER BY changed_at, id', 'p1', 'videoAnalysis');
+    const history = plan(db, 'SELECT id, kind, granted, changed_at FROM consents WHERE player_id = ? AND kind = ? ORDER BY id', 'p1', 'videoAnalysis');
     expect(history).toContain('consents_by_player_kind');
     expect(history).not.toMatch(/TEMP B-TREE/i);
 
@@ -723,7 +729,7 @@ describe('007_privacy: consents', () => {
     expect(Math.abs(Date.parse(createdAt as string) - Number(now))).toBeLessThan(5000);
   });
 
-  test('history is kept as rows: the same (player, kind) many times; the latest by (changed_at, id) is the current consent', () => {
+  test('history is kept as rows: the same (player, kind) many times; the row with the highest id is the current consent', () => {
     const db = withProfile();
     addProfile(db, 'p2');
     addConsent(db, { kind: 'videoAnalysis', granted: 1, changed_at: T0 });
@@ -734,7 +740,7 @@ describe('007_privacy: consents', () => {
     expect(count(db, 'consents', "player_id = 'p1' AND kind = 'videoAnalysis'")).toBe(3);
 
     const latest = (player: string, kind: string) =>
-      one<{ granted: number }>(db, 'SELECT granted FROM consents WHERE player_id = ? AND kind = ? ORDER BY changed_at DESC, id DESC LIMIT 1', player, kind).granted;
+      one<{ granted: number }>(db, 'SELECT granted FROM consents WHERE player_id = ? AND kind = ? ORDER BY id DESC LIMIT 1', player, kind).granted;
     expect(latest('p1', 'videoAnalysis')).toBe(1);
     expect(latest('p1', 'modelImprovement')).toBe(1);
     expect(latest('p2', 'videoAnalysis')).toBe(0);
@@ -745,11 +751,30 @@ describe('007_privacy: consents', () => {
     expect(count(db, 'consents', "player_id = 'p1' AND kind = 'videoAnalysis'")).toBe(4);
   });
 
-  test('two rows with the same changed_at are ordered by id (the later insert wins): a same-millisecond grant then revoke reads as revoked', () => {
+  test('the current consent is the highest id, not the latest changed_at: a grant, then a revoke stamped EARLIER (the host clock stepped back) still reads as revoked', () => {
     const db = withProfile();
-    addConsent(db, { granted: 1, changed_at: T0 });
-    addConsent(db, { granted: 0, changed_at: T0 });
-    expect(one<{ granted: number }>(db, "SELECT granted FROM consents WHERE kind = 'videoAnalysis' ORDER BY changed_at DESC, id DESC LIMIT 1").granted).toBe(0);
+    addConsent(db, { granted: 1, changed_at: '2026-01-01T00:00:01.000Z' });
+    addConsent(db, { granted: 0, changed_at: '2026-01-01T00:00:00.500Z' });
+    const latest = "SELECT granted, changed_at FROM consents WHERE player_id = 'p1' AND kind = 'videoAnalysis' ORDER BY id DESC LIMIT 1";
+    expect(one<{ granted: number; changed_at: string }>(db, latest)).toEqual({ granted: 0, changed_at: '2026-01-01T00:00:00.500Z' });
+    // The same millisecond is ordered too: the later insert wins.
+    addConsent(db, { granted: 1, changed_at: '2026-01-01T00:00:00.500Z' });
+    expect(one<{ granted: number }>(db, latest).granted).toBe(1);
+    // changed_at stays a canonical timestamp for display and audit (older than a previous row is allowed).
+    expect(count(db, 'consents')).toBe(3);
+  });
+
+  test('guardian_confirmed applies to videoAnalysis only: a modelImprovement row must have 0, on any insert; videoAnalysis may carry either value', () => {
+    const db = withProfile();
+    addConsent(db, { kind: 'videoAnalysis', guardian_confirmed: 1 });
+    addConsent(db, { kind: 'videoAnalysis', guardian_confirmed: 0 });
+    addConsent(db, { kind: 'modelImprovement', guardian_confirmed: 0 });
+    for (const granted of [0, 1]) {
+      expect(thrown(() => addConsent(db, { kind: 'modelImprovement', granted, guardian_confirmed: 1 })).message, `granted ${granted}`).toMatch(/CHECK constraint failed/);
+    }
+    expect(thrown(() => db.run("INSERT INTO consents (player_id, kind, granted, guardian_confirmed) VALUES ('p1', 'modelImprovement', 1, 1)")).message).toMatch(/CHECK constraint failed/);
+    db.run("INSERT INTO consents (player_id, kind, granted) VALUES ('p1', 'modelImprovement', 1)"); // the default 0 is fine
+    expect(count(db, 'consents')).toBe(4);
   });
 
   test('STRICT refuses a wrong storage class (BLOB kind, integer kind)', () => {
@@ -852,6 +877,58 @@ describe('007_privacy: consents is an append-only history', () => {
     // The one allowed shape, for contrast: player_id alone, from a key that no longer has a profile.
     db.run("UPDATE consents SET player_id = 'p-new'");
     expect(one<{ player_id: string }>(db, 'SELECT player_id FROM consents').player_id).toBe('p-new');
+  });
+
+  test('a no-op UPDATE is refused on an ORPHANED row (foreign keys OFF, profile re-keyed) and with the profile present: the exemption needs player_id to CHANGE', () => {
+    const db = new Database(':memory:');
+    opened.push(db);
+    copy007(seven);
+    migrate(db, seven);
+    addProfile(db);
+    addConsent(db, { kind: 'videoAnalysis', granted: 0 });
+    addConsent(db, { kind: 'modelImprovement', granted: 1 });
+
+    // The profile is still there: nothing may be updated, not even to the stored value.
+    expect(thrown(() => db.run("UPDATE consents SET granted = 0 WHERE kind = 'videoAnalysis'")).message).toMatch(/append-only/);
+    expect(thrown(() => db.run('UPDATE consents SET granted = granted')).message).toMatch(/append-only/);
+
+    // The profile is re-keyed (no cascade with foreign keys OFF): the rows are orphaned, and still frozen.
+    db.run("UPDATE player_profiles SET player_id = 'p-new'");
+    expect(thrown(() => db.run("UPDATE consents SET granted = 0 WHERE kind = 'videoAnalysis'")).message).toMatch(/append-only/);
+    expect(thrown(() => db.run('UPDATE consents SET granted = granted')).message).toMatch(/append-only/);
+    expect(thrown(() => db.run("UPDATE consents SET changed_at = changed_at, kind = kind")).message).toMatch(/append-only/);
+    expect(rows(db, 'SELECT player_id, kind, granted FROM consents ORDER BY id')).toEqual([
+      { player_id: 'p1', kind: 'videoAnalysis', granted: 0 },
+      { player_id: 'p1', kind: 'modelImprovement', granted: 1 },
+    ]);
+  });
+
+  test('the trigger READS player_profiles, so a drop-and-rename rebuild of player_profiles fails loudly ("no such table: main.player_profiles"); dropping and recreating the trigger around it works', () => {
+    const rebuild = (db: Database) => {
+      db.run('CREATE TABLE player_profiles_new AS SELECT * FROM player_profiles');
+      db.run('DROP TABLE player_profiles');
+      db.run('ALTER TABLE player_profiles_new RENAME TO player_profiles');
+    };
+    const fresh = (): Database => {
+      const db = new Database(':memory:'); // foreign keys OFF: the recipe cannot toggle them inside the runner either
+      opened.push(db);
+      copy007(seven);
+      migrate(db, seven);
+      addProfile(db);
+      addConsent(db);
+      return db;
+    };
+
+    const failing = fresh();
+    expect(thrown(() => rebuild(failing)).message).toMatch(/no such table: main\.player_profiles/);
+
+    const recipe = fresh();
+    const trigger = one<{ sql: string }>(recipe, "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'consents_append_only'").sql;
+    recipe.run('DROP TRIGGER consents_append_only');
+    rebuild(recipe);
+    recipe.run(trigger);
+    expect(count(recipe, 'player_profiles')).toBe(1);
+    expect(thrown(() => recipe.run('UPDATE consents SET granted = 0')).message).toMatch(/append-only/);
   });
 
   test('INSERT stays possible, and a direct DELETE is not blocked (erasure and cascade must work; only UPDATE is guarded)', () => {
