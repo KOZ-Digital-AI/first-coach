@@ -50,7 +50,8 @@ const CAREER = {
 const APPEARANCE = {
   en: /\b(fat|skinny|overweight|slim|chubby|weight|heavy|beautiful|handsome|ugly)\b/i,
   ru: /толст|худой|худая|худые|(^|[^а-яё])вес([^а-яё]|$)|красив|некрасив|стройн/i,
-  kk: /семіз|арық|әдемі|сұлу|келбет/i,
+  // "арық" (thin) must not match inside "жарық" (light): the word has to start at a word edge.
+  kk: /семіз|(^|[^а-яәғқңөұүһі])арық|әдемі|сұлу|келбет/i,
 };
 const HARSH = {
   en: /\b(bad|terrible|awful|poor|lazy|failure|stupid|hopeless|worst|clumsy)\b/i,
