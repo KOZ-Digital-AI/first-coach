@@ -216,16 +216,17 @@ export type Settings = z.infer<typeof Settings>;
 // --- Allowed transitions, exported as data so the UI renders only legal actions ---------------------------
 
 /**
- * Derived from the moderation flow: which decision actions a contribution in each state
- * accepts. A pending contribution can be approved, rejected or sent back. One in
- * `changes_requested` awaits the contributor's changes, so it is not approvable and cannot
- * be sent back again: it can only be rejected (after the contributor's PUT it returns to
- * `pending`). Approved, rejected and withdrawn are terminal. The server enforces it; the UI
- * hides the buttons.
+ * The ADMIN actions a contribution in each state accepts. Derived from the moderation state
+ * machine (fc-mol-0v3.1): pending -> changes_requested | approved | rejected | withdrawn (by
+ * the contributor); changes_requested -> pending (the contributor resubmits) | withdrawn;
+ * approved, rejected and withdrawn are final. An admin therefore acts only on a pending
+ * contribution (approve, reject or send back); a `changes_requested` one waits for the
+ * contributor to resubmit, so it offers no admin action. The server enforces the machine; the
+ * UI hides the buttons.
  */
 export const CONTRIBUTION_TRANSITIONS: Readonly<Record<ContributionState, readonly DecisionAction[]>> = {
   pending: ["approve", "reject", "request_changes"],
-  changes_requested: ["reject"],
+  changes_requested: [],
   approved: [],
   rejected: [],
   withdrawn: [],
