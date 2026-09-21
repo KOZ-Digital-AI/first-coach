@@ -592,7 +592,7 @@ describe('the admin setting that disables the AI (/health aiPlannerEnabled)', ()
   // fc-mol-zo6.12 (gate j8 U5): only an aiPlannerEnabled that is EXACTLY false hides the control; absent means enabled.
   test('aiPlannerEnabled false hides the control entirely: no button, no note field, no heading', async () => {
     const { calls } = mount({ health: () => health({ aiPlannerEnabled: false }) });
-    await waitFor(() => expect(control()).toBeNull());
+    await waitFor(() => expect(control() === null).toBe(true));
     expect(noteField()).toBeNull();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(calls.some((call) => call.url.startsWith('/health'))).toBe(true);
@@ -601,7 +601,7 @@ describe('the admin setting that disables the AI (/health aiPlannerEnabled)', ()
   test('aiPlannerEnabled false hides it whatever aiAvailable says (a key set, or none)', async () => {
     for (const aiAvailable of [true, false]) {
       mount({ health: () => health({ aiAvailable, aiPlannerEnabled: false }) });
-      await waitFor(() => expect(control()).toBeNull());
+      await waitFor(() => expect(control() === null).toBe(true));
       expect(noteField()).toBeNull();
       cleanup();
     }
