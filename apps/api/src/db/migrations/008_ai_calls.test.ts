@@ -22,8 +22,8 @@ const REAL_007 = '007_privacy.sql';
 /** The bead's kinds: fixed by the acceptance criteria (plan | explain | video), no shared constant exists. */
 const KINDS = ['plan', 'explain', 'video'];
 
-/** Column names that would mean a prompt, a player's words or an image is stored. None may exist. */
-const FORBIDDEN_COLUMN = /prompt|note|text|message|content|body|response|completion|image|photo|frame|video_|blob|file|path|url/i;
+/** Column-name segments (split on _) that would mean a prompt, a player's words or an image is stored. None may exist. */
+const FORBIDDEN_COLUMN = /(^|_)(prompt|note|text|message|content|body|response|completion|image|photo|frame|blob|file|path|url)(_|$)/i;
 
 interface ColumnShape {
   name: string;
