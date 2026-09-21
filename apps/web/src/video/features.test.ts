@@ -144,6 +144,23 @@ describe('cadencePerMin', () => {
     expect(Math.abs((features?.cadencePerMin ?? 0) - 120) / 120).toBeLessThanOrEqual(0.1);
   });
 
+  test('does not count a small ripple riding on a big step as extra touches (relative prominence)', () => {
+    // Ripples of 0.012 amplitude are above the absolute floor but far below a quarter of the 0.12 step range.
+    const features = extractFeatures(
+      sequence(12, 30, (t) => {
+        const ripple = 0.012 * Math.sin(2 * Math.PI * 5 * t);
+        const feet = steppingAnkles(1)(t);
+        return {
+          edits: {
+            [L_ANKLE]: [0.53, (feet[L_ANKLE]?.[1] ?? 0.9) + ripple],
+            [R_ANKLE]: [0.47, (feet[R_ANKLE]?.[1] ?? 0.9) + ripple],
+          },
+        };
+      }),
+    );
+    expect(Math.abs((features?.cadencePerMin ?? 0) - 120) / 120).toBeLessThanOrEqual(0.1);
+  });
+
   test('uses the frame timestamps, not the frame count (a clip at half speed is half the cadence)', () => {
     const fast = sequence(12, 30, (t) => ({ edits: steppingAnkles(1)(t) }));
     const slowed = fast.map((frame) => ({ ...frame, timeMs: frame.timeMs * 2 }));
@@ -309,6 +326,21 @@ describe('trunkLeanStats', () => {
     const features = extractFeatures(sequence(12, 30, () => ({ edits: torsoEdits(20, 0) })));
     expect(features).not.toBeNull();
     expect('trunkLeanStats' in (features ?? {})).toBe(false);
+  });
+
+  test('a lean beyond 90 degrees counts as 90, per frame: folded and upright frames average to 45', () => {
+    const folded: Edits = {
+      [L_SHOULDER]: [0.6, 0.55],
+      [R_SHOULDER]: [0.6, 0.55],
+      [L_HIP]: [0.5, 0.5],
+      [R_HIP]: [0.5, 0.5],
+      [NOSE]: [0.7, 0.6],
+    };
+    const stats = extractFeatures(
+      sequence(12, 30, (_t, index) => ({ edits: index % 2 === 0 ? folded : torsoEdits(0, 0.06) })),
+    )?.trunkLeanStats;
+    expect(stats?.max).toBeCloseTo(90, 6);
+    expect(stats?.mean).toBeCloseTo(45, 1);
   });
 
   test('stays inside the contract range for a torso folded past horizontal', () => {
@@ -488,11 +520,13 @@ describe('output contract', () => {
     expect(Object.keys(features ?? {}).sort()).toEqual(['framesAnalysed', 'meanVisibility']);
   });
 
-  test('visibility above 1 or below 0 in the input cannot push meanVisibility out of 0..1', () => {
-    const wild = extractFeatures(sequence(12, 30, (_t, index) => ({ visibility: index % 2 === 0 ? 3 : -2 })));
-    expect(wild?.meanVisibility).toBeGreaterThanOrEqual(0);
-    expect(wild?.meanVisibility).toBeLessThanOrEqual(1);
-    expect(PoseFeatures.safeParse(wild).success).toBe(true);
+  test('visibility above 1 counts as 1 and below 0 as 0 when averaging, so meanVisibility stays within 0..1', () => {
+    const high = extractFeatures(sequence(12, 30, (_t, index) => ({ visibility: index % 2 === 0 ? 3 : 0.5 })));
+    expect(high?.meanVisibility).toBeCloseTo(0.75, 6);
+    const low = extractFeatures(sequence(12, 30, (_t, index) => ({ visibility: index % 2 === 0 ? -2 : 0.6 })));
+    expect(low?.meanVisibility).toBeCloseTo(0.3, 6);
+    expect(PoseFeatures.safeParse(high).success).toBe(true);
+    expect(PoseFeatures.safeParse(low).success).toBe(true);
   });
 
   test('is pure: frozen input is neither mutated nor reordered, and the same input gives the same output', () => {
