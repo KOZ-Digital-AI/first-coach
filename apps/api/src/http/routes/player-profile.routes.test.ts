@@ -311,9 +311,18 @@ describe("PATCH /api/player/profile: the change", () => {
 
   test("an equipment change removes the wall drills from the next session", async () => {
     const player = await onboardedPlayer({ equipment: "ball_wall", goal: "passing" });
+    await todayOk(player);
+    // The picker's choice among a track's drills is seeded by the (random) player id, so a session with a wall
+    // drill is not guaranteed: store one that has two, as a wall player's session may (the technique of
+    // player-today.routes.test.ts, which rewrites the stored items).
+    const wall = db.query("SELECT id FROM drill_versions WHERE equipment = 'ball_wall' ORDER BY id LIMIT 2").all() as Array<{ id: string }>;
+    expect(wall).toHaveLength(2);
+    db.query("UPDATE sessions SET items = ?2 WHERE player_id = ?1").run(
+      player.id,
+      JSON.stringify(wall.map((row, index) => ({ itemId: `item-${index + 1}`, drillVersionId: row.id, minutes: 5, done: false }))),
+    );
     const before = await todayOk(player);
-    // Precondition: with a wall, the passing player's session does use wall drills.
-    expect(before.items.some((item) => equipmentOf(item.drillVersionId) === "ball_wall")).toBe(true);
+    expect(before.items.map((item) => equipmentOf(item.drillVersionId))).toEqual(["ball_wall", "ball_wall"]);
 
     const answer = await patchOk(player, { equipment: "ball" });
     expect(answer.profile.equipment).toBe("ball");
