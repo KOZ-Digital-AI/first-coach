@@ -30,10 +30,15 @@ describe("web test setup", () => {
  */
 const CACHE_NAMES = ["affectsCache", "affectsComputedStyleCache", "querySelectorCache"];
 
+// Taken once, up front: reading `document.body` / `.documentElement` is itself a query that happy-dom records in this very bookkeeping
+// (one entry per read after a reset), so the counter must not read them again or it would count its own look.
+const html = document.documentElement;
+const body = document.body;
+
 /** The number of entries happy-dom's query bookkeeping holds right now (0 when this happy-dom version has none of it). */
 function happyDomCacheEntries(): number {
   let total = 0;
-  for (const target of [document, document.documentElement, document.body, window] as object[]) {
+  for (const target of [document, html, body, window] as object[]) {
     for (const symbol of Object.getOwnPropertySymbols(target)) {
       if (!CACHE_NAMES.includes(symbol.description ?? "")) continue;
       const value: unknown = (target as Record<symbol, unknown>)[symbol];
