@@ -374,15 +374,27 @@ describe("POST /api/player/test-results, invalid requests", () => {
     await expectProblem(await retest(player.cookie, batch(result("juggling-max-touches", -0.001))), 422);
   });
 
-  test("every invalid entry is listed, each with its own pointer", async () => {
+  test("every domain-invalid entry (negative value, unknown test) is listed together, each with its own pointer", async () => {
     const { player } = await onboarded();
     await untouched(player, async () => {
       const problem = await expectProblem(
-        await retest(player.cookie, batch(result("wall-passing-60s", -5), result("no-such-test", 5), result("weak-foot-passes", 6, { clientUuid: "not-a-uuid" }))),
+        await retest(player.cookie, batch(result("wall-passing-60s", -5), result("no-such-test", 5), result("weak-foot-passes", 6), result("also-missing", -1))),
         422,
       );
-      const pointers = problem.errors?.map((error) => error.pointer) ?? [];
-      expect(pointers).toEqual(expect.arrayContaining(["/results/0/value", "/results/1/testSlug", "/results/2/clientUuid"]));
+      expect((problem.errors ?? []).map((error) => error.pointer).sort()).toEqual(
+        ["/results/0/value", "/results/1/testSlug", "/results/3/testSlug", "/results/3/value"].sort(),
+      );
+    });
+  });
+
+  test("every contract-invalid field is listed together, each with its own pointer", async () => {
+    const { player } = await onboarded();
+    await untouched(player, async () => {
+      const problem = await expectProblem(
+        await retest(player.cookie, batch(result("wall-passing-60s", 5, { clientUuid: "not-a-uuid" }), result("weak-foot-passes", 6, { attempts: -2 }))),
+        422,
+      );
+      expect((problem.errors ?? []).map((error) => error.pointer).sort()).toEqual(["/results/0/clientUuid", "/results/1/attempts"]);
     });
   });
 
