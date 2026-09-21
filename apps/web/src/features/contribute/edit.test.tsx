@@ -644,6 +644,27 @@ describe('saving: PUT /api/contributions/:id', () => {
     expect(new Headers(putCalls()[0]!.init?.headers).get('accept-language')).toBe('kk');
   });
 
+  test('the same age in both fields is allowed (only a maximum BELOW the minimum is refused)', async () => {
+    serve({ put: [() => json(RESAVED())] });
+    await renderForm();
+    type(/^Age from/, '9');
+    type(/^Age to/, '9');
+    attestBoth();
+    await save();
+    await waitFor(() => expect(putCalls()).toHaveLength(1));
+    expect(payloadOf(putCalls()[0]!)).toMatchObject({ ageMin: 9, ageMax: 9 });
+  });
+
+  test('the honeypot is sent as typed (empty for a person; a bot’s text is for the server to refuse)', async () => {
+    serve({ put: [() => invalid('/website')] });
+    await renderForm();
+    fireEvent.change(honeypot(), { target: { value: 'https://spam.example' } });
+    attestBoth();
+    await save();
+    await waitFor(() => expect(putCalls()).toHaveLength(1));
+    expect(payloadOf(putCalls()[0]!).website).toBe('https://spam.example');
+  });
+
   test('a new video goes as the `video` part, in the same one request', async () => {
     serve({ put: [() => json(RESAVED())] });
     await renderForm();
@@ -880,6 +901,21 @@ describe('a refused or failed save keeps the answers and the form editable', () 
     expect(document.querySelector('form') === null).toBe(true);
     expect(screen.getByText('Approved after all.')).toBeTruthy();
     expect(putCalls()).toHaveLength(1);
+  });
+
+  test('a 409 whose `instance` names THIS contribution is not a duplicate: no link to itself, the list is read again', async () => {
+    const decided = contribution('c-changes', 'rejected', 'Cone slalom', { reviewerNote: 'Not this time.' });
+    serve({
+      list: [() => json(ITEMS), () => json([decided])],
+      put: [() => problem(409, 'Conflict', { instance: '/api/contributions/c-changes' })],
+    });
+    await renderForm();
+    attestBoth();
+    await save();
+    await screen.findByText('Rejected', { selector: 'span' });
+    expect(listCalls()).toHaveLength(2);
+    expect(screen.queryByRole('link', { name: 'Edit that method' }) === null).toBe(true);
+    expect(document.querySelector('form') === null).toBe(true);
   });
 
   test('a 409 duplicate (its `instance` names another contribution of yours) says so and links to editing that one', async () => {
