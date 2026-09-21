@@ -495,7 +495,8 @@ describe("runbook content matches the repo", () => {
 
   test("health section documents the path and every field of the 200 body", () => {
     const body = /const body: HealthResponse = \{([\s\S]*?)\};/.exec(healthSource)?.[1] ?? "";
-    const keys = [...body.matchAll(/^\s*(\w+):/gm)].map((m) => m[1] as string);
+    // `version,` and `publishedDrills,` are shorthand properties: a key ends at a colon or a comma.
+    const keys = [...body.matchAll(/^\s*(\w+)\s*[:,]/gm)].map((m) => m[1] as string);
     expect(keys).toEqual(expect.arrayContaining(["ok", "version", "database", "publishedDrills", "migration", "aiAvailable", "mediaWritable"]));
     const health = section(runbook, /health/i);
     expect(health).toContain("/health");
