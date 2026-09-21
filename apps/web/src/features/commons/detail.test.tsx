@@ -474,7 +474,7 @@ describe('the version history', () => {
     const panel = heading('Version 1.1.0').closest('section') as HTMLElement;
     expect(document.activeElement).toBe(heading('Version 1.1.0'));
     expect(within(panel).getByText('You are reading an earlier version. It is read-only.')).toBeTruthy();
-    expect(within(panel).getByText('Mar 2, 2026', { selector: 'dd' })).toBeTruthy();
+    expect(within(panel).getByText('March 2, 2026')).toBeTruthy();
     expect(within(panel).getByText('Clearer step three.', { selector: 'dd' })).toBeTruthy();
     // The gap is said out loud rather than papered over with the current text (backlog fc-h2p).
     expect(within(panel).getByText('The text of earlier versions is not published yet, so only this record is shown.')).toBeTruthy();
@@ -723,7 +723,7 @@ describe.each(LOCALES)('in %s', (locale) => {
 
   test('the date is written the way this language writes it, and the year is there', async () => {
     await renderLoaded({ locale });
-    const shown = screen.getAllByText(/2026/, { selector: 'dd' })[0]?.textContent ?? '';
+    const shown = document.querySelector('time[datetime="2026-05-12T10:00:00.000Z"]')?.textContent ?? '';
     expect(shown).toBe(new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date('2026-05-12T10:00:00.000Z')));
   });
 });
