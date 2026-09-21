@@ -298,7 +298,9 @@ describe('/train, cold reload offline', () => {
     for (const title of ['Ball taps', 'Cone slalom', 'First touch']) expect(within(list).getByText(title)).toBeTruthy();
     expect(screen.getByText(STALE)).toBeTruthy();
     expect(screen.queryByText(LOAD_ERROR)).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
+    // the only alert is the warn notice itself (Notice tone="warn" is role=alert); the error state's retry is not there
+    expect(screen.getAllByRole('alert').map((node) => node.textContent)).toEqual([STALE]);
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     expect(env.navigate).not.toHaveBeenCalled();
   });
 

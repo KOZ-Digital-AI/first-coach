@@ -195,7 +195,7 @@ describe('wireAppPlayerSession: the last player id is remembered and restored at
     const queryClient = new QueryClient();
     queryClient.setQueryData(['today'], { id: 'already-here' });
     wireAppPlayerSession(queryClient, h.deps);
-    expect(queryClient.getQueryData(['today'])).toEqual({ id: 'already-here' });
+    expect(queryClient.getQueryData<{ id: string }>(['today'])).toEqual({ id: 'already-here' });
   });
 
   test('the teardown stops the remembered player\'s wiring, ignores later signals and does NOT forget the id (a reload must restore it)', async () => {
@@ -571,7 +571,7 @@ describe('seedTodayFromDevice: the downloaded session of the last player, when t
     const queryClient = new QueryClient();
     queryClient.setQueryData(['today'], { id: 'fresher' });
     expect(bootstrap.seedTodayFromDevice(queryClient, storage)).toBeUndefined();
-    expect(queryClient.getQueryData(['today'])).toEqual({ id: 'fresher' });
+    expect(queryClient.getQueryData<{ id: string }>(['today'])).toEqual({ id: 'fresher' });
   });
 
   test('no remembered player: nothing is seeded', () => {
