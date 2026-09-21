@@ -1,0 +1,23 @@
+# Keep the build context small and free of local state and secrets.
+**/node_modules
+.git
+.beads
+
+# Local data, databases and secrets. .env.example stays.
+data
+**/*.db
+.env
+.env.*
+!.env.example
+
+# Rebuilt inside the image.
+**/dist
+**/coverage
+**/*.tsbuildinfo
+
+# Test-only material.
+apps/web/e2e/fixtures
+.playwright-cli
+e2e-artifacts
+
+**/*.log
