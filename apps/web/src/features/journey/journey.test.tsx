@@ -546,7 +546,7 @@ const EXPECTED: Record<Locale, { title: RegExp; sessions: string; retest: RegExp
   kk: { title: /менің жолым/i, sessions: 'Аяқталған жаттығулар', retest: /тестті қазір қайта тапсыру/i, start: /жаттығуды бастау/i, milestones: /жетістіктер/i, better: /алдыңғы жолдан жақсы/i },
 };
 
-describe.each(LOCALES)('language %s', (locale) => {
+for (const locale of LOCALES) describe(`language ${locale}`, () => {
   test('the success screen is fully worded, with no raw keys and no "undefined"', async () => {
     const want = EXPECTED[locale];
     await renderLoaded(locale);
