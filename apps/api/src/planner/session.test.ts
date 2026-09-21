@@ -280,7 +280,7 @@ describe('one drill per focus skill', () => {
 
   test('a focus pick is at the focus level when the track has a drill of that level', () => {
     const list = poolFor({}, RICH);
-    for (const level of [1, 2, 3]) {
+    for (const level of [1, 2, 3] as const) {
       const road = roadmapWithFocus([focusOn('dribbling', level), focusOn('passing-first-touch', level)]);
       const session = pickSession(profileOf(45), road, list, [], opts());
       for (const [i, focus] of road.focus.entries()) {
@@ -372,6 +372,8 @@ describe('fill to the minutes budget', () => {
     const both = byId([...list, ...twins]);
     const drills = session.items.map((item) => both.get(item.drillVersionId)!.drillId);
     expect(new Set(drills).size).toBe(drills.length);
+    // Extra versions of a drill are noise: the session is the one the single-version pool gives.
+    expect(session).toEqual(pickSession(profileOf(45), roadmapFor('control', MIXED, 45), list, [], opts()));
   });
 
   test('a pool that cannot fill the budget yields every drill it has, as close as it can get', () => {
@@ -381,6 +383,29 @@ describe('fill to the minutes budget', () => {
     expect(session.items.length).toBe(list.length);
     expect(session.totalMinutes).toBe(list.reduce((sum, v) => sum + v.minutes, 0));
   });
+
+  // The greedy trap: with mostly 7-minute drills a plain "add while it fits" fill strands itself just
+  // below the window (e.g. 3 + 7 + ... then every drill left is 7 and would pass budget + 3), although
+  // another selection of the same pool lands inside it. The picker must find that selection.
+  const TRAPS: { minutes: Minutes; extra: string[] }[] = [
+    { minutes: 15, extra: ['ball-mastery-foundation-touches'] },
+    { minutes: 15, extra: ['ball-mastery-sole-taps', 'ball-mastery-sole-rolls', 'passing-wall-alternate-feet'] },
+    { minutes: 20, extra: ['ball-mastery-sole-pull-push', 'juggling-touch-catch-reset'] },
+    { minutes: 10, extra: ['ball-mastery-sole-taps', 'dribbling-there-and-back'] },
+  ];
+  for (const { minutes, extra } of TRAPS) {
+    test(`a pool of 7-minute drills plus ${extra.join(', ')} still reaches the ${minutes}-minute window`, () => {
+      const all = poolFor({}, FRESH);
+      const list = all.filter((v) => v.minutes === 7 || extra.includes(v.slug));
+      expect(list.filter((v) => extra.includes(v.slug)).length).toBe(extra.length);
+      expect(reachable(list.map((v) => v.minutes), minutes - 2, minutes + 3)).toBe(true);
+      for (const playerId of ['x', PLAYER, 'player-2', 'player-3']) {
+        const session = pickSession(profileOf(minutes), roadmapFor('control', FRESH, minutes), list, [], opts({ playerId }));
+        expect(session.totalMinutes).toBeGreaterThanOrEqual(minutes - 2);
+        expect(session.totalMinutes).toBeLessThanOrEqual(minutes + 3);
+      }
+    });
+  }
 
   test('an empty pool gives an empty session', () => {
     const session = pickSession(profileOf(20), roadmapFor('control', FRESH, 20), [], [], opts());
