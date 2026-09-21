@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
+import { AI_UNAVAILABLE } from "../shared/ai";
 import { PROBLEM_CONTENT_TYPE, ProblemDetails } from "../shared/primitives";
 import { fromZodError, problem } from "./problem";
 
@@ -87,5 +88,67 @@ describe("problem", () => {
     expect(parsed.data.type).toBe("about:blank");
     expect(parsed.data.title).toBe("Not found");
     expect(parsed.data.status).toBe(404);
+  });
+
+  test("default output is unchanged: exact about:blank body with no extra keys", async () => {
+    const response = problem(404, "Not Found", "No route matches GET /x");
+
+    expect(await response.json()).toEqual({
+      type: "about:blank",
+      title: "Not Found",
+      status: 404,
+      detail: "No route matches GET /x",
+    });
+  });
+
+  test("a custom type is emitted instead of about:blank", async () => {
+    const response = problem(503, "AI Coach is unavailable", undefined, undefined, {
+      type: "https://example.com/probs/out-of-credit",
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("content-type")).toBe(PROBLEM_CONTENT_TYPE);
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body.type).toBe("https://example.com/probs/out-of-credit");
+    expect(body.type).not.toBe("about:blank");
+  });
+
+  test("the shared AI_UNAVAILABLE code round-trips through the ProblemDetails schema", async () => {
+    const response = problem(503, "AI Coach is unavailable", "Try again later", undefined, {
+      type: AI_UNAVAILABLE,
+    });
+
+    const parsed = ProblemDetails.parse(await response.json());
+    expect(parsed.type).toBe(AI_UNAVAILABLE);
+    expect(parsed.type).toBe("ai_unavailable");
+    expect(parsed.status).toBe(503);
+    expect(parsed.title).toBe("AI Coach is unavailable");
+    expect(parsed.detail).toBe("Try again later");
+  });
+
+  test("a custom type still merges with detail and errors", async () => {
+    const errors = [{ pointer: "/goal", detail: "Required" }];
+    const response = problem(422, "Validation failed", "Bad body", errors, { type: "invalid_goal" });
+
+    const parsed = ProblemDetails.parse(await response.json());
+    expect(parsed.type).toBe("invalid_goal");
+    expect(parsed.detail).toBe("Bad body");
+    expect(parsed.errors).toEqual(errors);
+  });
+
+  test("options without a type keep the about:blank default", async () => {
+    const response = problem(500, "Internal Server Error", undefined, undefined, {});
+
+    const parsed = ProblemDetails.parse(await response.json());
+    expect(parsed.type).toBe("about:blank");
+  });
+
+  test("an explicitly undefined type falls back to about:blank", async () => {
+    const response = problem(500, "Internal Server Error", undefined, undefined, {
+      type: undefined,
+    });
+
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body.type).toBe("about:blank");
   });
 });
