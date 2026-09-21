@@ -209,15 +209,15 @@ afterEach(() => {
 // --- helpers ---------------------------------------------------------------------------------------------------------
 
 const finishButton = () => screen.getByRole<HTMLButtonElement>('button', { name: 'Finish session' });
-const drillList = async () => screen.findByRole('list', { name: "Today's drills" });
-const rows = async () => within(await drillList()).getAllByRole('listitem');
+const drillList = async (locale: Locale = 'en') => screen.findByRole('list', { name: todayMessages[locale].list });
+const rows = async (locale: Locale = 'en') => within(await drillList(locale)).getAllByRole('listitem');
 
 // --- the session ------------------------------------------------------------------------------------------------------
 
 describe('the request', () => {
   test('opens today with exactly one GET, the UI locale and the X-Timezone header, after the session is ensured', async () => {
     const page = mountToday({ locale: 'ru' });
-    await drillList();
+    await drillList('ru');
     expect(page.todayCalls()).toHaveLength(1);
     const [call] = page.todayCalls();
     expect(call!.url).toBe('/api/player/today?locale=ru');
@@ -307,7 +307,7 @@ describe('the drill list', () => {
     const untitled = item({ itemId: 'item-9', minutes: 4, done: false });
     const onlyEnglish = item({ itemId: 'item-8', minutes: 4, done: false, title: { en: 'Only English' } });
     mountToday({ locale: 'ru', server: { today: () => json(session({ items: [ITEM_1, onlyEnglish, untitled] })) } });
-    const [first, second, third] = await rows();
+    const [first, second, third] = await rows('ru');
     expect(within(first!).getByText('Касания мяча')).toBeTruthy();
     expect(within(second!).getByText('Only English')).toBeTruthy();
     expect(within(third!).getByText('Цель item-9')).toBeTruthy();
