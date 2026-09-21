@@ -424,7 +424,7 @@ describe("PatchProfileRequest", () => {
     daysPerWeek: 4,
     minutesPerSession: 30,
     locale: "kk",
-  };
+  } as const;
 
   test("all seven listed fields parse together and keep their values", () => {
     expect(PatchProfileRequest.parse(full)).toEqual(full);
