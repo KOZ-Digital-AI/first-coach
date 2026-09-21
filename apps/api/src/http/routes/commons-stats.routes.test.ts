@@ -42,7 +42,7 @@ async function buildApp(): Promise<Hono> {
   return createApp(deps, routesDir, { webDist: join(dir, "no-dist") });
 }
 
-const get = (): Promise<Response> => app.request(PATH);
+const get = async (): Promise<Response> => app.request(PATH);
 
 /** Every table's rows, so "the DB is unchanged" compares the whole database, not a count. */
 function snapshot(): Record<string, unknown[]> {
