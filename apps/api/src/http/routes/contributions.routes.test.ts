@@ -508,9 +508,12 @@ describe("POST /api/contributions", () => {
       expectNothingStored();
     });
 
-    test("a file whose declared type is not allowed is a 415", async () => {
+    // Bun's multipart parser derives a part's File.type from the file NAME's extension and ignores the part's own
+    // Content-Type header, so the type a route sees is the name's. A real png sent under an `.exe` or `.bin`
+    // name is therefore a disallowed declared type.
+    test.each([["x.exe"], ["x.bin"]])("real png bytes under the name %s (a type that is not on the allow-list) are a 415", async (name) => {
       const alice = await signUpContributor();
-      const res = await create(alice, form(validPayload(), { files: [file(pngBytes(), "x.png", "application/x-msdownload")] }));
+      const res = await create(alice, form(validPayload(), { files: [file(pngBytes(), name, "image/png")] }));
       await expectProblem(res, 415);
       expectNothingStored();
     });
