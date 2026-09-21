@@ -4,10 +4,10 @@
 // developers. It REUSES the J1a schemas of ./commons (DrillListResponse, DrillDetail,
 // SkillGraph, CommonsExport): they are referenced by ENDPOINTS, never redefined or re-exported.
 //
-// SUPERSEDES the endpoint constants of ./commons (its `ENDPOINTS` and the query/params schemas
-// DrillListQuery, DrillParams, DrillQuery), whose paths other than /api/commons/export.json were
-// marked PROPOSED. The paths below are the criteria's; a later API bead uses THIS file's
-// ENDPOINTS. ./commons stays untouched, for its response schemas.
+// SUPERSEDES the PROPOSED endpoint constants of ./commons (its `ENDPOINTS` and the query/params
+// schemas DrillListQuery, DrillParams, DrillQuery), whose paths other than
+// /api/commons/export.json were marked PROPOSED. The paths below are the criteria's; a later API
+// bead uses THIS file's ENDPOINTS. ./commons stays untouched, for its response schemas.
 //
 // Bundled into the browser through the @api-types alias: imports ONLY "zod", "./primitives",
 // "./domain" and "./commons" (no node/bun APIs, no side effects). `z.toJSONSchema` is NOT used
@@ -34,19 +34,19 @@ import { EntityId, Equipment, ExperienceLevel, Locale, TrustStatus } from "./pri
 // --- GET /api/commons/drills?skill&status&equipment&level&q&locale ---------------------------
 
 /**
- * All optional. The six criteria params are the filters; `q` is a free-text search and must be
- * non-empty when present. `cursor` and `limit` are the pagination controls that follow the
- * list's `nextCursor`; `limit` is coerced exactly as ./commons' DrillListQuery does it (query
- * strings arrive as text), while `cursor` additionally rejects the empty string.
+ * All optional. The six criteria params are the filters; `q` is a free-text search, and an empty
+ * `q` is valid (a cleared search box sends `?q=`). `cursor` and `limit` are the pagination
+ * controls that follow the list's `nextCursor`; both are defined exactly as in ./commons'
+ * DrillListQuery (`limit` is coerced because query strings arrive as text).
  */
 export const CommonsDrillQuery = z.strictObject({
   skill: EntityId.optional(),
   status: TrustStatus.optional(),
   equipment: Equipment.optional(),
   level: ExperienceLevel.optional(),
-  q: z.string().min(1).optional(),
+  q: z.string().optional(),
   locale: Locale.optional(),
-  cursor: z.string().min(1).optional(),
+  cursor: z.string().optional(),
   limit: z.coerce.number().int().positive().optional(),
 });
 export type CommonsDrillQuery = z.infer<typeof CommonsDrillQuery>;
