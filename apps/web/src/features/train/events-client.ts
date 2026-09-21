@@ -16,18 +16,34 @@
  *   (the server is idempotent by clientUuid). The cache is set to the response's `session` exactly (replace, not merge); on
  *   any failure the ApiProblem is thrown unchanged and the cache is untouched. Concurrent submissions each write when their
  *   own response arrives, so the last response to arrive wins.
+ * - Summary (fc-mol-urn.10): right after the ['today'] write, the same successful response is also written to the in-memory key
+ *   ['session-summary'] (SESSION_SUMMARY_QUERY_KEY) as { progress, nextSessionDate, sessionId } (sessionId = response.session.id,
+ *   the server's id), replaced not merged; a failed or invalid response writes neither. It is what /train/summary reads. The key
+ *   is deliberately NOT in the persisted cache allow-list (lib/query-persist.ts), so a reload starts without one. Any batch
+ *   writes it (a drill_done response carries progress too), so the summary screen also checks that the session is finished.
  * - The QueryClient is the app's one (created in main.tsx); this module never creates another. The default instance reads
  *   it lazily from `configureEventsClient({ queryClient })`, which the app calls once at start-up. Until then a submit
  *   rejects before any request is made.
  */
 import { ENDPOINTS } from '@api-types/session';
-import type { SessionEvent, SessionEventsResponse } from '@api-types/session';
+import type { SessionEvent, SessionEventsResponse, SessionProgress } from '@api-types/session';
 import type { QueryClient } from '@tanstack/react-query';
 import { api as defaultApi } from '../../lib/api';
 import type { Api } from '../../lib/api';
 
 /** The React Query key of today's session. */
 export const TODAY_QUERY_KEY = ['today'] as const;
+
+/** The React Query key of the last accepted response's summary (in memory only, never persisted). */
+export const SESSION_SUMMARY_QUERY_KEY = ['session-summary'] as const;
+
+/** What `submitEvents` caches under SESSION_SUMMARY_QUERY_KEY. */
+export interface SessionSummary {
+  progress: SessionProgress;
+  nextSessionDate: SessionEventsResponse['nextSessionDate'];
+  /** The server's id of the session the response describes (`response.session.id`). */
+  sessionId: string;
+}
 
 export type SessionEventType = SessionEvent['type'];
 /** What the caller chooses: the session, and optionally the item and a value. The id, type and time are ours. */
@@ -66,6 +82,8 @@ export function createEventsClient(deps: EventsClientDeps): EventsClient {
         schema: ENDPOINTS.postSessionEvents.response,
       });
       queryClient.setQueryData(TODAY_QUERY_KEY, response.session);
+      const summary: SessionSummary = { progress: response.progress, nextSessionDate: response.nextSessionDate, sessionId: response.session.id };
+      queryClient.setQueryData(SESSION_SUMMARY_QUERY_KEY, summary);
       return response;
     },
   };
