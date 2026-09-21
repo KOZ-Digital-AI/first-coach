@@ -139,6 +139,11 @@ export function graphProblems(graph: SkillGraph): string[] {
  * One library row. `space` is the criteria's singular (the drill's primary space); the full
  * list lives in the detail's `content.conditions.spaces`. `level` = ExperienceLevel is an
  * unconfirmed guess. `minutes` is a positive integer, like the dose values in DrillContent.
+ *
+ * Additive, all OPTIONAL and omitted (never null) when there is no value (fc-mol-hum.6), so a
+ * library card needs no detail call per drill: `ageMin` / `ageMax` are the current version's
+ * `content.conditions` bounds, `source` / `license` its attribution, and `orgLabel` the label of the
+ * most recent review of that version that set its current status.
  */
 export const DrillSummary = z.object({
   slug: EntityId,
@@ -150,6 +155,11 @@ export const DrillSummary = z.object({
   space: Space,
   status: TrustStatus,
   versionId: EntityId,
+  ageMin: z.int().nonnegative().optional(),
+  ageMax: z.int().nonnegative().optional(),
+  source: z.string().optional(),
+  license: z.enum(LICENSE_IDS).optional(),
+  orgLabel: z.string().optional(),
 });
 export type DrillSummary = z.infer<typeof DrillSummary>;
 
