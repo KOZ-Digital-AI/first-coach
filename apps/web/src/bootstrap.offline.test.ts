@@ -236,7 +236,7 @@ describe('wireAppPlayerSession', () => {
     queryClient.setQueryData(['today'], { id: 'early' });
     h.resolveEnsure('p1');
     await flush();
-    expect(queryClient.getQueryData(['today'])).toEqual({ id: 'early' });
+    expect(queryClient.getQueryData<{ id: string }>(['today'])).toEqual({ id: 'early' });
   });
 
   test('an ensureSession that resolves AFTER the signal already reported an id is ignored (never a stale id)', async () => {
