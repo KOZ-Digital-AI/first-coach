@@ -181,10 +181,13 @@ async function renderDetail({ locale = 'en', slug = SLUG, slots }: RenderOptions
   return { ...view, router, queryClient, user: userEvent.setup() };
 }
 
-/** Renders and waits for the drill (the title heading is the first thing that only the loaded screen has). */
+/**
+ * Renders and waits for the drill. The page has an h1 in every state (a generic one until the drill's own title is known), so
+ * the wait is for the goal text, which only the loaded screen has.
+ */
 async function renderLoaded(options: RenderOptions = {}) {
   const view = await renderDetail(options);
-  await screen.findByRole('heading', { level: 1 });
+  await screen.findByText(INPUT.content.goal[options.locale ?? 'en']);
   return view;
 }
 
@@ -597,7 +600,7 @@ describe('an unknown drill (the not-found state)', () => {
     expect(back.getAttribute('href')).toBe('/commons');
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
-    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+    expect(screen.queryByRole('heading', { level: 2 })).toBeNull(); // no drill section is drawn
   });
 
   test('a slug the API refuses as malformed (400) is the same not-found state: no drill can have it', async () => {
@@ -622,7 +625,7 @@ describe('an error', () => {
     stubNetwork(() => json({ slug: SLUG }));
     await renderDetail();
     await screen.findByRole('alert');
-    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+    expect(screen.queryByRole('heading', { level: 2 })).toBeNull(); // no drill section is drawn
   });
 
   test('Try again is disabled (natively) and busy while the request runs, and the drill appears when it works', async () => {
