@@ -358,6 +358,11 @@ describe('watchAuthSession: the session-change signal from a Better Auth session
     expect(seen).toEqual([undefined]);
   });
 
+  test('an empty-string user id is "no session" (a wiring with id "" would throw in the persister)', () => {
+    const { seen } = collect({ data: { user: { id: '' } }, isPending: false });
+    expect(seen).toEqual([undefined]);
+  });
+
   test('the returned function unsubscribes', () => {
     const { fake, stop } = collect({ data: null, isPending: true });
     expect(fake.count()).toBe(1);
