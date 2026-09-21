@@ -608,10 +608,10 @@ const MAX_ISSUES = 20;
 const BOUNDARY = "----bounded-test";
 
 /** A hand-built multipart body of empty parts with the given names, plus the `payload` part when `withPayload`. */
-function rawMultipart(names: string[], opts: { withPayload?: boolean; boundaryParam?: string } = {}) {
-  const { withPayload = true, boundaryParam = `boundary=${BOUNDARY}` } = opts;
+function rawMultipart(names: string[], opts: { withPayload?: boolean; boundaryParam?: string; payload?: Record<string, unknown> } = {}) {
+  const { withPayload = true, boundaryParam = `boundary=${BOUNDARY}`, payload = validPayload() } = opts;
   let body = "";
-  if (withPayload) body += `--${BOUNDARY}\r\nContent-Disposition: form-data; name="payload"\r\n\r\n${JSON.stringify(validPayload())}\r\n`;
+  if (withPayload) body += `--${BOUNDARY}\r\nContent-Disposition: form-data; name="payload"\r\n\r\n${JSON.stringify(payload)}\r\n`;
   for (const name of names) {
     // `files` is what a browser's empty file input sends (an empty filename); any other name is a text part.
     const disposition = name === "files" ? `name="files"; filename=""\r\nContent-Type: application/octet-stream` : `name="${name}"`;
@@ -671,6 +671,13 @@ describe("bounded work per request", () => {
     expect(ok.status).toBe(201);
     await expectProblem(await postRaw(alice, rawMultipart(emptyFileInputs(MAX_PARTS), quoted)), 400, "Bad Request");
     expect(count("contributions")).toBe(1);
+  });
+
+  test("only real delimiters count as parts: a payload that merely mentions the boundary text 30 times is a normal 201", async () => {
+    const alice = await signUpContributor();
+    const chatty = validPayload({ instructions: `${"----bounded-test ".repeat(30)}(the word is the boundary's, without its leading dashes)` });
+    const res = await postRaw(alice, rawMultipart([], { payload: chatty }));
+    expect(res.status).toBe(201);
   });
 
   test("a multipart Content-Type without a boundary is a 400", async () => {
