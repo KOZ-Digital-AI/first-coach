@@ -109,6 +109,15 @@ describe("setConsents: grant and revoke", () => {
     expect(getConsents(db, "p1").videoAnalysis.granted).toBe(false);
   });
 
+  test("modelImprovement is revocable too, and a revoke of one kind leaves the other kind granted", () => {
+    createProfile("p1", 15);
+    setConsents(db, "p1", { videoAnalysis: true, modelImprovement: true }, { now: at("2026-03-01T10:00:00.000Z") });
+    const after = setConsents(db, "p1", { modelImprovement: false }, { now: at("2026-03-02T10:00:00.000Z") });
+    expect(after.modelImprovement).toEqual({ granted: false, at: "2026-03-02T10:00:00.000Z" });
+    expect(after.videoAnalysis.granted).toBe(true);
+    expect(consentRows("p1").filter((r) => r.kind === "modelImprovement").map((r) => r.granted)).toEqual([1, 0]);
+  });
+
   test("history is kept as rows: every change appends one row and no stored row is rewritten", () => {
     createProfile("p1", 15);
     setConsents(db, "p1", { videoAnalysis: true }, { now: at("2026-03-01T10:00:00.000Z") });
@@ -381,6 +390,13 @@ describe("GET/PUT /api/player/consents", () => {
     expect(after.videoAnalysis.granted).toBe(false);
     expect((await getOk(player)).videoAnalysis.granted).toBe(false);
     expect(consentRows(player.id).map((r) => r.granted)).toEqual([1, 0]);
+  });
+
+  test("PUT revokes modelImprovement, and GET agrees", async () => {
+    const player = await signInPlayer(15);
+    await putOk(player, { modelImprovement: true });
+    expect((await putOk(player, { modelImprovement: false })).modelImprovement.granted).toBe(false);
+    expect((await getOk(player)).modelImprovement.granted).toBe(false);
   });
 
   test("age 11 without guardianConfirmed is a 422 problem pointing at /guardianConfirmed, and nothing is stored", async () => {
