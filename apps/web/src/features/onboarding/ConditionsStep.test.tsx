@@ -373,7 +373,7 @@ describe('messages: kk, ru and en', () => {
   });
 });
 
-describe.each(LOCALES)('locale %s renders its own strings', (locale) => {
+describe.each([...LOCALES])('locale %s renders its own strings', (locale) => {
   test('heading, lead, legends, every option label and both buttons are this locale\'s text', () => {
     setup({ value: {} }, locale);
     expect(screen.getByRole('heading', { name: tree(locale, 'title') })).toBeTruthy();
