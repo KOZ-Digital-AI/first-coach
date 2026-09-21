@@ -176,9 +176,14 @@ function renderApp(start: string) {
     routeTree: rootRoute.addChildren([signIn, contribute]),
     history: createMemoryHistory({ initialEntries: [start] }),
   });
-  // Every location the router moves to after the first render, in order.
+  // Every location the router moves to after the first render, in order, and what the shared session atom held at that instant.
   const visited: string[] = [];
-  router.history.subscribe(({ location }) => void visited.push(location.pathname));
+  const arrivals: Array<{ path: string; reading: boolean; userId: unknown }> = [];
+  router.history.subscribe(({ location }) => {
+    visited.push(location.pathname);
+    const atom = client.$store.atoms.session.get() as { data?: { user?: { id?: unknown } } | null; isPending?: boolean; isRefetching?: boolean };
+    arrivals.push({ path: location.pathname, reading: atom.isPending === true || atom.isRefetching === true, userId: atom.data?.user?.id });
+  });
   const view = render(
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={instance}>
@@ -199,7 +204,7 @@ function renderApp(start: string) {
       </I18nextProvider>
     </QueryClientProvider>,
   );
-  return { ...view, router, visited };
+  return { ...view, router, visited, arrivals };
 }
 
 const SIGN_IN_FROM_CONTRIBUTE = `/account/sign-in?redirect=${encodeURIComponent('/contribute')}`;
@@ -239,13 +244,15 @@ const continueButton = () => screen.queryByRole('button', { name: /^continue$/i 
 
 describe('after signing in with ?redirect=/contribute the coach lands on the form', () => {
   test('sign-up: ends on /contribute with the form; the gate never sends the fresh coach back to sign-in', async () => {
-    const { visited, router } = renderApp(SIGN_IN_FROM_CONTRIBUTE);
+    const { visited, router, arrivals } = renderApp(SIGN_IN_FROM_CONTRIBUTE);
     await waitForGuestScreen();
 
     await signUp();
 
     await screen.findByRole('button', { name: SUBMIT_FORM });
     expect(router.state.location.pathname).toBe('/contribute');
+    // The screen left for /contribute only once the shared session atom had settled on the NEW session, not the guest's.
+    expect(arrivals[0]).toEqual({ path: '/contribute', reading: false, userId: COACH.id });
     // Every move the router made was to /contribute: no bounce back to /account/sign-in, at any point.
     expect(visited.length).toBeGreaterThan(0);
     expect(visited.every((path) => path === '/contribute')).toBe(true);
@@ -254,19 +261,20 @@ describe('after signing in with ?redirect=/contribute the coach lands on the for
   });
 
   test('sign-in tab with an existing account: ends on /contribute with the form', async () => {
-    const { visited, router } = renderApp(SIGN_IN_FROM_CONTRIBUTE);
+    const { visited, router, arrivals } = renderApp(SIGN_IN_FROM_CONTRIBUTE);
     await waitForGuestScreen();
 
     await signInWithAccount();
 
     await screen.findByRole('button', { name: SUBMIT_FORM });
     expect(router.state.location.pathname).toBe('/contribute');
+    expect(arrivals[0]).toEqual({ path: '/contribute', reading: false, userId: COACH.id });
     expect(visited.every((path) => path === '/contribute')).toBe(true);
     expect(continueButton() === null).toBe(true);
   });
 
   test('while the session is still being read after sign-up the coach waits, and is never sent to sign-in; the form shows once it settles', async () => {
-    const { visited, router } = renderApp(SIGN_IN_FROM_CONTRIBUTE);
+    const { visited, router, arrivals } = renderApp(SIGN_IN_FROM_CONTRIBUTE);
     await waitForGuestScreen();
     await waitFor(() => expect(screen.queryByText(signInMessages.en.guest.checking) === null).toBe(true));
 
@@ -281,6 +289,8 @@ describe('after signing in with ?redirect=/contribute the coach lands on the for
     // Whatever the screen shows while it waits, it is neither the form nor a redirect back to sign-in.
     expect(screen.queryByRole('button', { name: SUBMIT_FORM }) === null).toBe(true);
     expect(visited.includes('/account/sign-in')).toBe(false);
+    // The sign-in screen has not left yet: it is waiting for the answer.
+    expect(visited.length).toBe(0);
 
     server.hold = null;
     release();
@@ -288,6 +298,8 @@ describe('after signing in with ?redirect=/contribute the coach lands on the for
     await screen.findByRole('button', { name: SUBMIT_FORM });
     expect(router.state.location.pathname).toBe('/contribute');
     expect(visited.includes('/account/sign-in')).toBe(false);
+    // It left when NO read was running any more (Better Auth's own refresh may have replaced the first one) and the atom held the coach.
+    expect(arrivals[0]).toEqual({ path: '/contribute', reading: false, userId: COACH.id });
   });
 
   test('if the session read after sign-in fails, the coach reaches /contribute and can retry there; nothing bounces them to sign-in', async () => {
