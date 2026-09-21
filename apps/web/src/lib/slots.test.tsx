@@ -7,7 +7,7 @@ import { collectSlot, SLOT_NAMES, type SlotProps, type SlotRegistry, useSlot } f
 const Alpha = () => <p>alpha</p>;
 const Zeta = () => <p>zeta</p>;
 
-function renderAll(components: readonly ComponentType<Record<string, never>>[]): string {
+function renderAll(components: readonly ComponentType<{}>[]): string {
   return renderToStaticMarkup(
     <>
       {components.map((Component, index) => (
