@@ -75,3 +75,8 @@ _Add a brief overview of your project architecture_
 ## Conventions & Patterns
 
 _Add your project-specific conventions here_
+
+## Design Context
+
+Read DESIGN.md and PRODUCT.md before any UI work; load the impeccable skill.
+DESIGN.md holds the visual tokens and rules; PRODUCT.md holds the audience, brand and principles.
