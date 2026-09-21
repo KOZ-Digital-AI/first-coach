@@ -419,7 +419,10 @@ function ContributeScreen({ deps }: { deps: Omit<ContributeDeps, 'session'> }) {
   const locale = toLocale(i18n.language) ?? DEFAULT_LOCALE;
   const query = useQuery({
     queryKey: ['contribute', 'meta', locale],
-    queryFn: ({ signal }) => api.get(`${ENDPOINTS.getMeta.path}?locale=${locale}`, { schema: ContributionMeta, signal }),
+    // No AbortSignal on purpose: react-query cancels a fetch that consumed it when the last observer goes, and the Gate unmounts this
+    // screen whenever the session is re-read (resolveAccess). A re-read while the first request is in flight would then cancel it and
+    // the remount would send a second one (fc-mol-70i.14). Left alone, the request finishes into the cache and the remount joins it.
+    queryFn: () => api.get(`${ENDPOINTS.getMeta.path}?locale=${locale}`, { schema: ContributionMeta }),
     retry: false,
     staleTime: META_STALE_MS,
     refetchOnWindowFocus: false,
