@@ -395,13 +395,13 @@ describe("POST /api/player/session-events: finishing a session", () => {
 });
 
 describe("POST /api/player/session-events: the next session date", () => {
+  // The profile's daysPerWeek is 2-6 (DAYS_PER_WEEK).
   test.each([
-    [1, 7],
     [2, 3],
     [3, 2],
     [4, 1],
     [5, 1],
-    [7, 1],
+    [6, 1],
   ])("%i days a week: the next session is %i day(s) after the session", async (daysPerWeek, spacing) => {
     const player = await onboardedPlayer({ daysPerWeek: daysPerWeek as PlayerProfile["daysPerWeek"] });
     const session = await todayOk(player);
