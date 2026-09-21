@@ -300,7 +300,7 @@ describe('not colour alone: a marker shape and a word', () => {
     }
   });
 
-  test.each(NODE_STATES)('a %s node exposes its state as data-state', (state) => {
+  test.each([...NODE_STATES])('a %s node exposes its state as data-state', (state) => {
     setup({ tree: [{ track: 'ball-mastery', nodes: [{ slug: 'n', name: 'Node', state, level: 1 }] }] });
     expect(nodeItem('Node').getAttribute('data-state')).toBe(state);
   });
