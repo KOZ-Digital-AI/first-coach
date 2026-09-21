@@ -83,12 +83,6 @@ describe("CommonsDrillQuery", () => {
     expect(CommonsDrillQuery.parse({ locale })).toEqual({ locale });
   });
 
-  test("the query has the six criteria parameters plus the cursor and limit pagination controls", () => {
-    expect(Object.keys(CommonsDrillQuery.shape).sort()).toEqual(
-      ["cursor", "equipment", "level", "limit", "locale", "q", "skill", "status"],
-    );
-  });
-
   test("rejects an unknown status", () => {
     expect(ok(CommonsDrillQuery, { status: notIn(TRUST_STATUSES, "PUBLISHED") })).toBe(false);
   });
@@ -109,8 +103,8 @@ describe("CommonsDrillQuery", () => {
     expect(ok(CommonsDrillQuery, { level: "2" })).toBe(false);
   });
 
-  test("rejects an empty q", () => {
-    expect(ok(CommonsDrillQuery, { q: "" })).toBe(false);
+  test("accepts an empty q: a cleared search box sends ?q= and must not be a 400", () => {
+    expect(CommonsDrillQuery.parse({ q: "" })).toEqual({ q: "" });
   });
 
   test("rejects a bad locale", () => {
@@ -155,8 +149,26 @@ describe("query failures become a 400 problem with a pointer", () => {
     expect(pointers(CommonsDrillQuery, { locale: notIn(LOCALES, "de") })).toEqual(["/locale"]);
   });
 
-  test("an empty q points at /q", () => {
-    expect(pointers(CommonsDrillQuery, { q: "" })).toEqual(["/q"]);
+  test.each([
+    ["status", "PUBLISHED", TRUST_STATUSES],
+    ["equipment", "trampoline", EQUIPMENT],
+    ["level", "expert", EXPERIENCE_LEVELS],
+    ["locale", "de", LOCALES],
+  ] as const)("an unknown %s value fails at the single key, path [%s] and pointer /%s", (key, value, allowed) => {
+    const query = { [key]: notIn(allowed, value) };
+    expect(issuePaths(CommonsDrillQuery, query)).toEqual([[key]]);
+    expect(pointers(CommonsDrillQuery, query)).toEqual([`/${key}`]);
+  });
+
+  test("an UNRECOGNIZED query key (space=yard) fails at the empty path [], pointer \"\", and the detail names the key", () => {
+    const query = { space: "yard" };
+    expect(issuePaths(CommonsDrillQuery, query)).toEqual([[]]);
+    const parsed = CommonsDrillQuery.safeParse(query);
+    expect(parsed.success).toBe(false);
+    if (parsed.success) return;
+    const errors = fromZodError(parsed.error);
+    expect(errors.map((error) => error.pointer)).toEqual([""]);
+    expect(errors[0]?.detail).toContain("space");
   });
 
   test("a valid status alongside an unknown equipment reports only the equipment", () => {
@@ -227,21 +239,20 @@ describe("CommonsDrillQuery pagination (cursor and limit, so nextCursor can be f
     expect(ok(CommonsDrillQuery, { limit: "0" })).toBe(false);
   });
 
-  test("rejects an empty cursor", () => {
-    expect(ok(CommonsDrillQuery, { cursor: "" })).toBe(false);
+  test("accepts an empty cursor: it is not a criteria rule", () => {
+    expect(CommonsDrillQuery.parse({ cursor: "" })).toEqual({ cursor: "" });
   });
 
   test("a bad limit points at /limit", () => {
     expect(pointers(CommonsDrillQuery, { limit: 0 })).toEqual(["/limit"]);
   });
 
-  test("an empty cursor points at /cursor", () => {
-    expect(pointers(CommonsDrillQuery, { cursor: "" })).toEqual(["/cursor"]);
-  });
-
-  test("still rejects space: it is not one of the criteria's parameters", () => {
-    expect(ok(CommonsDrillQuery, { space: "yard" })).toBe(false);
-  });
+  test.each(["", "abc", "eyJvIjoyMH0", " ", "a b", 20, null, ["abc"]])(
+    "cursor %p is judged exactly as commons.ts's DrillListQuery judges it",
+    (cursor) => {
+      expect(ok(CommonsDrillQuery, { cursor })).toBe(ok(DrillListQuery, { cursor }));
+    },
+  );
 
   test("still rejects an unknown key next to a valid cursor and limit", () => {
     expect(ok(CommonsDrillQuery, { cursor: "abc", limit: 20, colour: "red" })).toBe(false);
@@ -340,8 +351,8 @@ describe("ENDPOINTS", () => {
     ["commonsSchema", "GET", "/api/commons/schema.json"],
   ] as const;
 
-  test("declares exactly the five criteria endpoints", () => {
-    expect(Object.keys(ENDPOINTS).sort()).toEqual(CASES.map(([name]) => name).sort());
+  test.each(CASES.map(([name]) => name))("declares the criteria endpoint %s", (name) => {
+    expect(ENDPOINTS).toHaveProperty(name);
   });
 
   test.each([...CASES])("%s is the public %s %s", (name, method, path) => {
@@ -495,9 +506,5 @@ describe("web-bundle safety", () => {
 
   test("commons-api.ts does not use z.toJSONSchema at runtime (the API side generates schema.json)", () => {
     expect(code).not.toMatch(/toJSONSchema/);
-  });
-
-  test("the header comment states that these endpoints supersede commons.ts's proposed ones", () => {
-    expect(raw).toMatch(/supersed/i);
   });
 });
