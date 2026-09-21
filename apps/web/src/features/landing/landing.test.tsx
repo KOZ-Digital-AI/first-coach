@@ -293,7 +293,8 @@ describe.each([...LOCALES])('landing page in %s', (locale) => {
     STAT_IDS.forEach((id, index) => {
       const item = (items[index]?.textContent ?? '').replace(/\s+/g, ' ');
       expect(item, `${locale} ${id} label`).toContain(copy(locale, `stats.${id}`));
-      expect(item, `${locale} ${id} number`).toContain(numberFormat(locale).format(expected[id]));
+      // Intl groups thousands with a no-break space in ru and kk; the text above has all whitespace folded, so fold it here too.
+      expect(item, `${locale} ${id} number`).toContain(numberFormat(locale).format(expected[id]).replace(/\s/g, ' '));
     });
     const region = statList(container)!.closest('[aria-label]');
     expect(region?.getAttribute('aria-label')).toBe(copy(locale, 'stats.label'));
