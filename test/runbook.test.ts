@@ -632,11 +632,11 @@ describe("runbook sections", () => {
   });
 
   test("Not yet verified names the external blockers", () => {
+    // One list item per blocker (a passing mention elsewhere in the section does not count).
     const text = section(runbook, /not yet verified/i);
-    expect(text).toMatch(/GitHub/);
-    expect(text).toMatch(/Railway project/i);
-    expect(text).toMatch(/OpenAI/);
-    expect(text).toMatch(/Kazakh/);
+    for (const blocker of [/GitHub/, /Railway project/i, /OpenAI/, /Kazakh/]) {
+      expect(text.split("\n").filter((line) => /^- /.test(line) && blocker.test(line)).length).toBeGreaterThan(0);
+    }
   });
 
   test("takedown section says what exists: the unpublished_at column and the contract-only unpublish endpoint", () => {
