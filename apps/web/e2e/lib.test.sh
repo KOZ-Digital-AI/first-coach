@@ -239,7 +239,7 @@ if (mode === "otherport") line({ level: "info", msg: "listening", port: s.port +
 TS
 run_child "E2E_API_ENTRY='$WORK/fake-api.ts' FAKE_MODE=reordered E2E_WEB=off start_stack && assert_api /health '.ok == true'"
 assert_eq "$CHILD_RC" 0 "readiness survives a key-order change in the listening line"
-assert_eq "$(yes_if contains "$CHILD_OUT" 'web=off')" yes "the summary records the degraded topology (web=off)"
+assert_eq "$(yes_if grep -Eq '^--- e2e summary: .*, web=off -- ' <<<"$CHILD_OUT")" yes "the summary line records the degraded topology (web=off)"
 assert_eq "$(yes_if contains "$CHILD_OUT" 'E2E_WEB=off')" yes "E2E_WEB=off is announced loudly"
 for mode in silent otherport; do
   run_child "E2E_API_ENTRY='$WORK/fake-api.ts' FAKE_MODE=$mode E2E_BOOT_TIMEOUT=2 E2E_WEB=off start_stack || true; echo AFTER_START"
@@ -251,7 +251,7 @@ assert_eq "$CHILD_RC|$(yes_if contains "$CHILD_OUT" E2E_WEB)" "1|yes" "an unknow
 
 # --- 12. exit codes, defers, traps, in child shells started from / -------------------------------------------
 run_child 'pass ok'
-assert_eq "$CHILD_RC|$(yes_if contains "$CHILD_OUT" 'web=api')" "0|yes" "exit 0 when everything passed; the summary names the topology"
+assert_eq "$CHILD_RC|$(yes_if grep -Eq '^--- e2e summary: .*, web=api -- PASS' <<<"$CHILD_OUT")" "0|yes" "exit 0 when everything passed; the summary line names the topology"
 run_child 'pass ok; fail bad || true; pass again'
 assert_eq "$CHILD_RC|$(yes_if contains "$CHILD_OUT" '1 failed')" "1|yes" "exit 1 and a summary when a step failed"
 run_child 'pass ok; blocked needs-key "no OpenAI key"'
@@ -337,7 +337,7 @@ EOF
   assert_eq "$(yes_if port_open "$c_port")" no "SIG$1: the stack port is closed"
   assert_eq "$(yes_if test -e "$c_tmp")" no "SIG$1: temp dir removed"
   assert_eq "$(yes_if alive "$c_pid")" no "SIG$1: the API process is gone"
-  assert_eq "$(yes_if grep -q 'web=off' "$WORK/child.out")" yes "SIG$1: the summary is still printed, with the topology"
+  assert_eq "$(yes_if grep -Eq '^--- e2e summary: .*, web=off -- ' "$WORK/child.out")" yes "SIG$1: the summary line is still printed, with the topology"
 }
 signal_case TERM 143
 signal_case HUP 129
