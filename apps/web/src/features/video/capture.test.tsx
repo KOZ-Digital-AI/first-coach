@@ -719,6 +719,16 @@ describe('the consent is re-checked before anything is sent', () => {
     expect(hasRole('button', 'Send for analysis')).toBe(false);
   });
 
+  test('a consent that a guardian confirmed is sent without reading the age again', async () => {
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toReview(view);
+    await view.user.click(button('Send for analysis'));
+    await heading('Your feedback');
+    expect(world.analyse).toHaveBeenCalledTimes(1);
+    expect(callsTo('/api/player/me')).toHaveLength(0);
+  });
+
   test('13 or older with consent and no guardian is sent, after the age has been read fresh too', async () => {
     consentsHeld = GRANTED_ALONE;
     stubNetwork({ me: () => json(meOfAge(14)) });
