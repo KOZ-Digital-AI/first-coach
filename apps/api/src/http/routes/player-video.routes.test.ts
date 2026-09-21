@@ -602,6 +602,29 @@ describe("keyframes are bounded", () => {
     expectNothingHappened();
   });
 
+  test("the declared width and the declared height are each compared with the JPEG's own", async () => {
+    const player = await readyPlayer();
+    const real = frame(500, 400);
+    const widthLie = { ...keyframeJson(real), width: 300 };
+    const heightLie = { ...keyframeJson(real), height: 200 };
+    const others = [keyframeJson(frame()), keyframeJson(frame())];
+    const wide = await expectProblem(await postJson(player, requestBody({ keyframes: [widthLie, ...others] })), 422);
+    expect(wide.errors?.map((e) => e.pointer)).toEqual(["/keyframes/0/width"]);
+    const high = await expectProblem(await postJson(player, requestBody({ keyframes: [heightLie, ...others] })), 422);
+    expect(high.errors?.map((e) => e.pointer)).toEqual(["/keyframes/0/height"]);
+    expectNothingHappened();
+    expect((await postJson(player, requestBody({ keyframes: [keyframeJson(real), ...others] }))).status).toBe(200);
+  });
+
+  test("six keyframes of exactly 200 KB are accepted in both encodings (the body limit is not tighter than the contract)", async () => {
+    const player = await readyPlayer();
+    const big = () => Array.from({ length: KEYFRAME_MAX_COUNT }, () => frame(320, 240, KEYFRAME_MAX_BYTES));
+    expect((await postJson(player, requestBody({}, big()))).status).toBe(200);
+    const sent = big();
+    expect((await postForm(player, multipartOf(requestBody({}, sent), sent))).status).toBe(200);
+    expect(agent.calls).toHaveLength(2);
+  });
+
   test("data that is not a JPEG is a 422", async () => {
     const player = await readyPlayer();
     const notJpeg = { mimeType: "image/jpeg", data: Buffer.from("just some text, not an image at all").toString("base64"), width: 320, height: 240 };
@@ -752,6 +775,16 @@ describe("the body is read under a hard limit", () => {
     await expectProblem(await postForm(player, huge), 413);
     const twice = multipartOf(requestBody({}, sent), sent, (form) => form.append("payload", "{}"));
     await expectProblem(await postForm(player, twice), 400);
+    expectNothingHappened();
+  });
+
+  test("keyframes in the multipart payload are refused even when file parts come with them", async () => {
+    const player = await readyPlayer();
+    const sent = frames();
+    const form = multipartOf(requestBody({}, sent), sent);
+    form.set("payload", JSON.stringify(requestBody({}, sent)));
+    const body = await expectProblem(await postForm(player, form), 422);
+    expect(body.errors?.some((e) => e.pointer === "/keyframes")).toBe(true);
     expectNothingHappened();
   });
 
@@ -984,6 +1017,39 @@ describe("a finished analysis", () => {
     expect(analysis.focusNext.length).toBeLessThanOrEqual(2000);
   });
 
+  test("words a model separates with newlines cannot join into one long run in the table (whitespace is collapsed)", async () => {
+    const player = await readyPlayer();
+    const lines = "abcdefghij\n".repeat(60);
+    agent = makeAgent(() => outputOf({ scores: CRITERIA.map((key) => ({ key, score: 5, note: lines })), focusNext: lines }));
+    await rebuild();
+    const res = await postJson(player, requestBody());
+    expect(res.status).toBe(200);
+    const analysis = VideoAnalysis.parse(await res.json());
+    expect(analysis.focusNext).not.toContain("\n");
+    expect(analysis.scores.every((score) => !score.note.includes("\n"))).toBe(true);
+  });
+
+  test("limitations are always given, and a low confidence adds a sentence", async () => {
+    const player = await readyPlayer();
+    const medium = VideoAnalysis.parse(await (await postJson(player, requestBody())).json());
+    agent = makeAgent(() => outputOf({ confidence: "low" }));
+    await rebuild();
+    const low = VideoAnalysis.parse(await (await postJson(player, requestBody())).json());
+    expect(medium.limitations.length).toBeGreaterThanOrEqual(1);
+    expect(medium.limitations.every((text) => text.trim().length > 0)).toBe(true);
+    expect(low.limitations.length).toBeGreaterThan(medium.limitations.length);
+    const listed = VideoAnalysisList.parse(await (await list(player)).json());
+    expect(listed.find((a) => a.id === low.id)?.limitations).toEqual(low.limitations);
+  });
+
+  test("only the features that were measured are summarised, as numbers", async () => {
+    const player = await readyPlayer();
+    const features = { trunkLeanStats: { mean: -4, min: -20, max: 9.5, stdDev: 3 }, meanVisibility: 0.85, framesAnalysed: 90 };
+    expect((await postJson(player, requestBody({ features }))).status).toBe(200);
+    const row = db.query("SELECT features_summary FROM video_analyses").get() as { features_summary: string };
+    expect(JSON.parse(row.features_summary)).toEqual(features);
+  });
+
   test("the answer is the one GET would give for the same analysis", async () => {
     const player = await readyPlayer();
     const created = VideoAnalysis.parse(await (await postJson(player, requestBody())).json());
@@ -1074,6 +1140,17 @@ describe("recommended drills are never free text", () => {
     expect(Math.min(...highLevels)).toBeGreaterThanOrEqual(Math.max(...highOthers));
 
     expect(Math.max(...lowLevels)).toBeLessThan(Math.max(...highLevels));
+  });
+
+  test("a lowest score of 4 still prefers easier drills, 5 prefers harder ones", async () => {
+    const player = await readyPlayer();
+    const pool = candidateSet(player).filter((v) => v.skills.includes(SKILL));
+    const rank = (id: string) => LEVEL_RANK[(pool.find((v) => v.versionId === id) as (typeof pool)[number]).level];
+    const withLowest = async (score: number) =>
+      (await recommendedFor(player, outputOf({ scores: CRITERIA.map((key, i) => ({ key, score: i === 0 ? score : 9, note: "ok" })) }))).recommended.map((r) => rank(r.drillVersionId));
+    const four = await withLowest(4);
+    const five = await withLowest(5);
+    expect(Math.max(...four)).toBeLessThan(Math.max(...five));
   });
 
   test("a skill the agent invents (or one with no candidate drill) recommends nothing: the agent's words are not a recommendation", async () => {
@@ -1190,12 +1267,12 @@ describe("the agent runs under a 60 s timeout", () => {
       await Bun.sleep(30);
       return outputOf();
     });
-    videoTimeoutMs = 2_000;
+    videoTimeoutMs = 150;
     await rebuild();
     const res = await postJson(player, requestBody());
     expect(res.status).toBe(200);
     expect(agent.calls[0]?.abortSignal?.aborted).toBe(false);
-    await Bun.sleep(20);
+    await Bun.sleep(300); // past the timeout: a timer that was not cleared would abort the finished call now
     expect(agent.calls[0]?.abortSignal?.aborted).toBe(false);
   });
 
