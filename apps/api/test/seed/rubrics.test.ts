@@ -172,7 +172,9 @@ describe("rubrics.json: what is judged and how to film", () => {
   test("the recording tips cover phone placement, distance, light and the full body in frame", async () => {
     for (const rubric of await loadRubrics()) {
       const tips = rubric.recordingTips.map((tip) => tip.en).join("\n");
-      expect(/phone/i.test(tips), `${rubric.skill}: phone placement`).toBe(true);
+      // Placement is a tip of its own: one tip names the phone AND how to set it up (not just "from the phone").
+      const placement = rubric.recordingTips.some((tip) => /phone/i.test(tip.en) && /lean|prop|place|wall|bottle|still|steady|tripod|rest/i.test(tip.en));
+      expect(placement, `${rubric.skill}: phone placement`).toBe(true);
       expect(/metre|meter|\bm\b|steps?\b|far|distance/i.test(tips), `${rubric.skill}: distance`).toBe(true);
       expect(/light|bright|sun|shadow|dark/i.test(tips), `${rubric.skill}: light`).toBe(true);
       expect(/whole body|full body|head to (toe|foot|feet)|from head/i.test(tips), `${rubric.skill}: full body in frame`).toBe(true);
