@@ -791,3 +791,76 @@ describe("unpublish", () => {
     expect(reviewsOf(`${slug}-v1.0.0`)).toHaveLength(2); // the approval and the unpublish
   });
 });
+
+// --- refusals and locked edits (added after the first mutation run) ------------------------
+
+describe("refusals and locked edits", () => {
+  const reasonOf = (attempt: () => unknown): string | undefined => {
+    try {
+      attempt();
+    } catch (error) {
+      expect(error).toBeInstanceOf(ModerationRefusedError);
+      return (error as ModerationRefusedError).reason;
+    }
+    return undefined;
+  };
+
+  test("what and where the coach wrote is locked in the STORED payload too: kind, target, improvement kind, locale, author", () => {
+    const result = decide(
+      db,
+      ADMIN,
+      submit().id,
+      approve({ edits: { kind: "improvement", targetDrillSlug: DRILL_SLUG, improvementKind: "safety", locale: "en", author: "Admin Aidar", name: "Renamed" } }),
+      opts,
+    );
+    expect(result.contribution.payload).toMatchObject({ kind: "new", locale: "ru", author: "Coach Aidos", name: "Renamed" });
+    expect(result.contribution.payload.targetDrillSlug).toBeUndefined();
+    expect(result.contribution.payload.improvementKind).toBeUndefined();
+  });
+
+  test("an improvement ignores sport and skill edits: the drill's place in the graph does not change", () => {
+    const skillsBefore = all("SELECT * FROM drill_skills WHERE drill_id = ? ORDER BY skill_id", DRILL_SLUG);
+    const result = decide(db, ADMIN, submit(improvementPayload()).id, approve({ edits: { sport: "no-such-sport", skill: "no-such-skill" } }), opts);
+    expect(result.contribution.state).toBe("approved");
+    expect(result.contribution.payload.sport).toBe("football");
+    expect(all("SELECT * FROM drill_skills WHERE drill_id = ? ORDER BY skill_id", DRILL_SLUG)).toEqual(skillsBefore);
+  });
+
+  test("an age range turned upside down by an edit is refused as an invalid edit", () => {
+    const contribution = submit();
+    expect(reasonOf(() => decide(db, ADMIN, contribution.id, approve({ edits: { ageMin: 12, ageMax: 8 } }), opts))).toBe("invalid_edit");
+  });
+
+  test("an edit that breaks the payload schema (blank name) is refused as an invalid edit and writes nothing", () => {
+    const contribution = submit();
+    const before = snapshot();
+    expect(reasonOf(() => decide(db, ADMIN, contribution.id, approve({ edits: { name: "" } }), opts))).toBe("invalid_edit");
+    expect(reasonOf(() => decide(db, ADMIN, contribution.id, approve({ edits: { instructions: "  \n " } }), opts))).toBe("invalid_edit");
+    expect(snapshot()).toEqual(before);
+  });
+
+  test("a new drill in an unknown sport, or with a skill of no such sport, is refused and writes nothing", () => {
+    const unknownSport = submit(newPayload({ name: "S", sport: "no-such-sport" }));
+    const unknownSkill = submit(newPayload({ name: "K", skill: "no-such-skill" }));
+    const before = snapshot();
+    expect(reasonOf(() => decide(db, ADMIN, unknownSport.id, approve(), opts))).toBe("unknown_sport");
+    expect(reasonOf(() => decide(db, ADMIN, unknownSkill.id, approve(), opts))).toBe("unknown_skill");
+    expect(snapshot()).toEqual(before);
+  });
+
+  test("an improvement of a drill that has been unpublished throws DrillNotFoundError and writes nothing", () => {
+    const contribution = submit(improvementPayload());
+    unpublish(db, ADMIN, DRILL_SLUG, { reason: "gone" }, opts);
+    const before = snapshot();
+    expect(() => decide(db, ADMIN, contribution.id, approve(), opts)).toThrow(DrillNotFoundError);
+    expect(snapshot()).toEqual(before);
+    expect(contributionRow(contribution.id).state).toBe("pending");
+  });
+
+  test("the acting admin needs a name or an id", () => {
+    const contribution = submit();
+    const before = snapshot();
+    expect(reasonOf(() => decide(db, { id: " ", name: "" }, contribution.id, approve(), opts))).toBe("reviewer_required");
+    expect(snapshot()).toEqual(before);
+  });
+});
