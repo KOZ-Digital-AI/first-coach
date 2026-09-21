@@ -1,10 +1,12 @@
 import type { Database } from "bun:sqlite";
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { EventEmitter } from "node:events";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ensureAuthSchema, getAuth, getSession } from "../auth/better-auth";
 import { openDatabase } from "../db/database";
+import * as admin from "./admin";
 import { runAdminCli } from "./admin";
 
 const SCRIPT = join(import.meta.dir, "admin.ts");
@@ -15,7 +17,9 @@ const ENV = { NODE_ENV: "test" } as const;
 const PW = "Zq7-MARKER-pw-9931";
 const NEW_PW = "Vx3-MARKER-new-4417";
 const OTHER_PW = "Kd9-MARKER-other-2208";
-const MARKERS = [PW, NEW_PW, OTHER_PW];
+// A secret typed by mistake as (part of) an option: it must never come back in any output.
+const ARG_SECRET = "Hunter2Secret";
+const MARKERS = [PW, NEW_PW, OTHER_PW, ARG_SECRET];
 
 let dir: string;
 let db: Database;
@@ -290,6 +294,97 @@ describe("create", () => {
   });
 });
 
+describe("output scrubbing", () => {
+  test("an error from a lower layer that contains the password is redacted", async () => {
+    await ensureAuthSchema(auth(), db);
+    const spy = spyOn(auth().api, "signUpEmail").mockRejectedValue(new Error(`upstream rejected ${NEW_PW}`));
+    try {
+      const result = await createAdmin("ada@example.com", "Ada", { env: { ...ENV, ADMIN_PASSWORD: NEW_PW } });
+
+      expect(result.code).toBe(1);
+      const message = result.stderr.join("\n");
+      expect(message).toContain("upstream rejected [redacted]");
+      expect(message).not.toContain(NEW_PW);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test("a line that does not contain the password is printed exactly as it is", async () => {
+    const result = await createAdmin("ada@example.com", "Ada", { env: { ...ENV, ADMIN_PASSWORD: "longpass123" } });
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toEqual(["Created admin ada@example.com (Ada)."]);
+  });
+});
+
+describe("the hidden password reader", () => {
+  function fakeTerminal() {
+    const calls: string[] = [];
+    const written: string[] = [];
+    const input = Object.assign(new EventEmitter(), {
+      setRawMode: (mode: boolean) => void calls.push(`raw:${mode}`),
+      resume: () => void calls.push("resume"),
+      pause: () => void calls.push("pause"),
+    });
+    const write = (text: string) => void written.push(text);
+    const send = (...chunks: string[]) => {
+      for (const chunk of chunks) input.emit("data", Buffer.from(chunk));
+    };
+    return { input, calls, written, write, send };
+  }
+
+  test("collects typed characters, ends on Enter, restores the terminal and never echoes", async () => {
+    const term = fakeTerminal();
+    const line = admin.readHiddenLine(term.input, "Password: ", term.write);
+
+    term.send("hun", "ter2\r");
+
+    expect(await line).toBe("hunter2");
+    expect(term.calls).toEqual(["raw:true", "resume", "raw:false", "pause"]);
+    expect(term.written).toEqual(["Password: ", "\n"]);
+    expect(term.input.listenerCount("data")).toBe(0);
+  });
+
+  test("arrow keys and other escape sequences are swallowed, not typed into the password", async () => {
+    const term = fakeTerminal();
+    const line = admin.readHiddenLine(term.input, "Password: ", term.write);
+
+    term.send("ab\x1b[A\x1b[Bc\x1b[1;5Cd\x1bOAe\x1bxf\r");
+
+    expect(await line).toBe("abcdef");
+  });
+
+  test("an escape sequence split across chunks is still swallowed", async () => {
+    const term = fakeTerminal();
+    const line = admin.readHiddenLine(term.input, "Password: ", term.write);
+
+    term.send("ab\x1b", "[1;", "5Cd\r");
+
+    expect(await line).toBe("abd");
+  });
+
+  test("backspace deletes the last character", async () => {
+    const term = fakeTerminal();
+    const line = admin.readHiddenLine(term.input, "Password: ", term.write);
+
+    term.send("abc\x7fd\r");
+
+    expect(await line).toBe("abd");
+  });
+
+  test("Ctrl-C cancels and restores the terminal", async () => {
+    const term = fakeTerminal();
+    const line = admin.readHiddenLine(term.input, "Password: ", term.write);
+
+    term.send("abc\x03");
+
+    await expect(line).rejects.toThrow("cancelled");
+    expect(term.calls.slice(-2)).toEqual(["raw:false", "pause"]);
+    expect(term.written).toEqual(["Password: ", "\n"]);
+  });
+});
+
 describe("passwords are never accepted as arguments", () => {
   test.each([
     ["--password value", ["create", "--email", "ada@example.com", "--name", "Ada", "--password", PW]],
@@ -302,9 +397,36 @@ describe("passwords are never accepted as arguments", () => {
     const message = result.stderr.join("\n");
     expect(message).toContain("--password");
     expect(message).toContain("ADMIN_PASSWORD");
-    expect(message).toMatch(/history|process list|ps\b/i); // the reason: it leaks via shell history / ps
+    expect(message).toContain("shell history"); // a phrase only the --password reason contains, not USAGE
     const tables = db.query("SELECT name FROM sqlite_master WHERE name = 'user'").all();
     expect(tables).toEqual([]);
+  });
+
+  test.each([
+    ["-pVALUE", [`-p${ARG_SECRET}`]],
+    ["-p VALUE", ["-p", ARG_SECRET]],
+    ["--passwordVALUE", [`--password${ARG_SECRET}`]],
+    ["--password=VALUE", [`--password=${ARG_SECRET}`]],
+    ["--pass VALUE", ["--pass", ARG_SECRET]],
+    ["--pwd=VALUE", [`--pwd=${ARG_SECRET}`]],
+  ])("%s: exit 2 with the password-option reason, and the value is never echoed", async (_label, tokens) => {
+    const result = await run(["create", "--email", "ada@example.com", "--name", "Ada", ...tokens]);
+
+    expect(result.code).toBe(2);
+    expect(result.stderr.join("\n")).toContain("shell history");
+    expect(result.stdout.join("\n")).not.toContain(ARG_SECRET);
+    expect(result.stderr.join("\n")).not.toContain(ARG_SECRET);
+  });
+
+  test("a completely unknown option exits 2 and its text is never echoed", async () => {
+    const result = await run(["create", "--email", "ada@example.com", "--name", "Ada", `--foo=${ARG_SECRET}`]);
+
+    expect(result.code).toBe(2);
+    const message = result.stderr.join("\n");
+    expect(message).toMatch(/unknown option/i);
+    expect(message).toContain("create");
+    expect(message).not.toContain("--foo");
+    expect(message).not.toContain("shell history");
   });
 });
 
@@ -317,6 +439,7 @@ describe("usage", () => {
     const usage = result.stderr.join("\n");
     expect(usage).toContain("Usage:");
     for (const command of ["create", "reset-password", "list"]) expect(usage).toContain(command);
+    expect(usage).not.toContain("shell history"); // only the --password reason says this
   });
 
   test("an unknown subcommand exits 2 and is not echoed", async () => {
@@ -593,6 +716,34 @@ describe("as a real process", () => {
     expect(result.stderr).toContain("Usage:");
     expect(result.stdout).toBe("");
     expect(existsSync(join(dir, "never"))).toBe(false);
+  });
+
+  test("a mistyped password option is never echoed by the real process", async () => {
+    const dbPath = join(dir, "never", "app.db");
+
+    const result = await spawnCli(
+      ["create", `-p${ARG_SECRET}`, "--email", "a@x.com", "--name", "A"],
+      { NODE_ENV: "test", APP_DB_PATH: dbPath },
+    );
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("shell history");
+    expect(result.stdout).not.toContain(ARG_SECRET);
+    expect(result.stderr).not.toContain(ARG_SECRET);
+  });
+
+  test("an unopenable APP_DB_PATH is a one-line error and exit 1, not a stack trace", async () => {
+    const blocker = join(dir, "afile");
+    writeFileSync(blocker, "not a directory");
+
+    const result = await spawnCli(["list"], { NODE_ENV: "test", APP_DB_PATH: join(blocker, "x.db") });
+
+    expect(result.code).toBe(1);
+    const lines = result.stderr.split("\n").filter((line) => line.trim() !== "");
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toStartWith("Error:");
+    expect(result.stderr).not.toMatch(/^\s+at /m);
+    expect(result.stdout).toBe("");
   });
 
   test("create, list and reset-password work under production config, reading the password from stdin", async () => {
