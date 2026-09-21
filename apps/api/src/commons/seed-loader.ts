@@ -14,8 +14,10 @@
 //   1. VALIDATE EVERYTHING, WRITE NOTHING. Every file is parsed with the seed schemas, each sport's
 //      graph goes through `validateGraph` (SQL prevents neither prerequisite cycles nor links
 //      across sports), tests / rubrics / drills must name skills of their own sport, slugs must
-//      be unique across the whole seed, and no seed slug may already belong to another sport in
-//      the database. All problems are collected into one SeedError: `<file>: <path>: <message>`,
+//      be unique across the whole seed, no seed slug may already belong to another sport in
+//      the database, and the graph the database would hold AFTER the load (the seed's skills with
+//      the seed's edges, plus the stored skills the seed does not list) must be free of cycles and
+//      dangling references. All problems are collected into one SeedError: `<file>: <path>: <message>`,
 //      never the file's content.
 //   2. ONE `db.transaction(...).immediate()` for every write of every sport. A validated seed the
 //      database still refuses rolls all of it back, so the database is either loaded or untouched.
@@ -24,6 +26,10 @@
 //   - Sports, skills, prerequisites and tests use `INSERT .. ON CONFLICT DO UPDATE .. WHERE <a
 //     column differs>`: seed text is mutable and updates in place; an unchanged row is not even
 //     written (no change is counted by SQLite), so an unchanged seed is a byte-identical no-op.
+//   - skill_prerequisites is a LINK table like drill_skills, not history: for every skill in the
+//     seed its stored edges are reconciled to exactly the seed's set (missing ones inserted,
+//     unlisted ones deleted), otherwise a reversed prerequisite would leave both edges and the
+//     stored graph cyclic. Skills the seed does not list keep their rows and edges.
 //   - sports.name is not part of the seed: it is filled from the slug on insert and left alone.
 //   - sports.graph_version = `<seed version>+<first 12 hex of sha256 of the canonical graph>`. The
 //     hash makes the version move whenever nodes or the seed's own version move, even when the
@@ -39,25 +45,27 @@
 //                  UPDATE drills.current_version_id
 //       changed -> a NEW drill_versions row: semver = patch bump of the current version's (1.0.9 ->
 //                  1.0.10, a prerelease is dropped, an already taken semver is skipped), parent =
-//                  the current version, status = the current version's status (the loader is not a
-//                  moderation actor: it neither upgrades nor silently downgrades trust, and a
-//                  status change always comes with a reviews row written by the server); then the
+//                  the current version, status COMMUNITY (edited content nobody has reviewed must
+//                  not keep a verification; a version starting at its initial status needs no
+//                  reviews row, and the old version keeps its status and reviews); then the
 //                  pointer moves and the mapping is rewritten (drill_skills is a link table, not
 //                  history). Older versions are never touched.
-//   - Nothing is ever deleted (the only DELETE is the drill_skills mapping of a changed drill). A
-//     row absent from the seed simply stays. drill_versions is only ever INSERTed: the immutability
+//   - Nothing is ever deleted except link rows (a changed drill's drill_skills mapping, stale
+//     skill_prerequisites edges of seed skills). A row absent from the seed simply stays. drill_versions is only ever INSERTed: the immutability
 //     trigger is never tripped.
 //   - Ids are deterministic: the slug for sports, skills, tests and drills (an id already in the
-//     database wins), `<drill id>@<semver>` for versions.
-//   - New drills start as COMMUNITY: the seed schema carries no trust status, and this is the
-//     lowest one; moderation promotes it and the promotion survives later loads.
+//     database wins), `<drill id>-v<semver>` for versions. Both are EntityIds (primitives): the
+//     read side hands version ids to clients, and the wire contracts reject any other character.
+//   - Every version the loader writes is COMMUNITY: the seed schema carries no trust status, and
+//     this is the lowest one; moderation promotes a version and the promotion survives reloads
+//     of an unchanged seed.
 import type { Database, SQLQueryBindings } from "bun:sqlite";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { z } from "zod";
 import { EXPERIENCE_LEVELS } from "../shared/primitives";
-import type { DrillContent, TrustStatus } from "../shared/primitives";
+import type { DrillContent } from "../shared/primitives";
 import { validateGraph } from "./graph";
 import type { GraphProblem } from "./graph";
 import { SeedDrillTrackFile, SeedRubricsFile, SeedSkillGraphFile, SeedTestsFile } from "./seed-schema";
@@ -362,6 +370,46 @@ function checkAgainstDatabase(db: Database, sports: SportSeed[], issues: SeedIss
   }
 }
 
+/**
+ * The graph the database would hold after this load: the seed's skills (with exactly the seed's
+ * edges, which is what reconciling makes of them) plus the stored skills of the sport the seed
+ * does not list, with their stored edges. Runs only for a sport whose seed graph is fine on its
+ * own, so what it finds is caused by what is already stored.
+ */
+function checkMerged(db: Database, sport: SportSeed, issues: SeedIssue[]): void {
+  const sportRow = db.query<{ id: string }, [string]>(`SELECT id FROM sports WHERE slug = ?`).get(sport.slug);
+  if (sportRow === null) return;
+  const inSeed = new Set(sport.graph.nodes.map((node) => node.slug));
+  const stored = db
+    .query<{ slug: string; parent: string | null }, [string]>(
+      `SELECT s.slug AS slug, p.slug AS parent FROM skills s LEFT JOIN skills p ON p.id = s.parent_id WHERE s.sport_id = ?`,
+    )
+    .all(sportRow.id)
+    .filter((row) => !inSeed.has(row.slug));
+  if (stored.length === 0) return;
+  const edges = db
+    .query<{ skill: string; target: string; min_level: number }, [string]>(
+      `SELECT s.slug AS skill, t.slug AS target, e.min_level AS min_level FROM skill_prerequisites e
+         JOIN skills s ON s.id = e.skill_id JOIN skills t ON t.id = e.prerequisite_id WHERE s.sport_id = ?`,
+    )
+    .all(sportRow.id);
+  const merged = [
+    ...sport.graph.nodes,
+    ...stored.map((row) => ({
+      slug: row.slug,
+      parent: row.parent,
+      prerequisites: edges.filter((edge) => edge.skill === row.slug).map((edge) => ({ skill: edge.target, minLevel: edge.min_level })),
+    })),
+  ];
+  for (const problem of validateGraph(merged, []).problems) {
+    issues.push({
+      file: sport.graphFile,
+      path: "$",
+      message: `${problem.message} (the seed merged with the skills already stored)`,
+    });
+  }
+}
+
 // --- phase 2: write ---------------------------------------------------------------------------
 
 type Params = SQLQueryBindings[];
@@ -422,7 +470,6 @@ function seedForm(drill: SeedDrill, track: string, titleOf: Map<string, SeedDril
 interface VersionRow {
   id: string;
   semver: string;
-  status: TrustStatus;
   content: string;
   equipment: string;
   space: string;
@@ -494,14 +541,25 @@ class Writer {
       if (this.writeSkill(sportId, bySlug.get(slug)!) > 0) written.add(slug);
     }
     for (const node of sport.graph.nodes) {
+      const skillId = this.idOf("skills", node.slug);
+      const wanted = new Set(node.prerequisites.map((prerequisite) => this.idOf("skills", prerequisite.skill)));
       for (const prerequisite of node.prerequisites) {
         const changed = this.run(
           `INSERT INTO skill_prerequisites (skill_id, prerequisite_id, min_level) VALUES (?, ?, ?)
            ON CONFLICT (skill_id, prerequisite_id) DO UPDATE SET min_level = excluded.min_level
             WHERE min_level IS NOT excluded.min_level`,
-          [this.idOf("skills", node.slug), this.idOf("skills", prerequisite.skill), prerequisite.minLevel],
+          [skillId, this.idOf("skills", prerequisite.skill), prerequisite.minLevel],
         );
         if (changed > 0) written.add(node.slug);
+      }
+      // A link table, not history: edges the seed no longer lists go.
+      const stored = this.db
+        .query<{ prerequisite_id: string }, [string]>(`SELECT prerequisite_id FROM skill_prerequisites WHERE skill_id = ?`)
+        .all(skillId);
+      for (const { prerequisite_id } of stored) {
+        if (wanted.has(prerequisite_id)) continue;
+        this.run(`DELETE FROM skill_prerequisites WHERE skill_id = ? AND prerequisite_id = ?`, [skillId, prerequisite_id]);
+        written.add(node.slug);
       }
     }
     this.summary.skills += written.size;
@@ -605,22 +663,20 @@ class Writer {
     drillId: string,
     semver: string,
     parentId: string | null,
-    status: TrustStatus,
     form: StoredForm,
     summary: string | null,
   ): string {
-    const id = `${drillId}@${semver}`;
+    const id = `${drillId}-v${semver}`;
     this.run(
       `INSERT INTO drill_versions (id, drill_id, semver, parent_version_id, status, content, equipment, space,
                                    partner, age_min, age_max, level, minutes, license, author_name, author_user_id,
                                    source, source_url, origin, change_summary, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 'seed', ?, ?)`,
+       VALUES (?, ?, ?, ?, 'COMMUNITY', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, 'seed', ?, ?)`,
       [
         id,
         drillId,
         semver,
         parentId,
-        status,
         canonical(form.content),
         form.equipment,
         form.space,
@@ -665,7 +721,7 @@ class Writer {
         sportId,
         this.stamp,
       ]);
-      const versionId = this.insertVersion(drillId, drill.semver, null, "COMMUNITY", form, null);
+      const versionId = this.insertVersion(drillId, drill.semver, null, form, null);
       this.writeMapping(drillId, form);
       this.run(`UPDATE drills SET current_version_id = ? WHERE id = ?`, [versionId, drillId]);
       this.summary.drills.inserted += 1;
@@ -683,7 +739,7 @@ class Writer {
 
     let semver = current === null ? drill.semver : bump(current.semver);
     while (this.semverTaken(existing.id, semver)) semver = bump(semver);
-    const versionId = this.insertVersion(existing.id, semver, current?.id ?? null, current?.status ?? "COMMUNITY", form, "Updated from seed");
+    const versionId = this.insertVersion(existing.id, semver, current?.id ?? null, form, "Updated from seed");
     this.writeMapping(existing.id, form);
     this.run(`UPDATE drills SET current_version_id = ? WHERE id = ?`, [versionId, existing.id]);
     this.summary.drills.updated += 1;
@@ -703,7 +759,9 @@ export function loadSeed(db: Database, dir: string, opts: SeedLoadOptions = {}):
   for (const folder of folders) {
     const sport = readSport(dir, folder, issues);
     if (sport === undefined) continue;
+    const before = issues.length;
     checkSport(sport, issues);
+    if (issues.length === before) checkMerged(db, sport, issues);
     sports.push(sport);
   }
   // Cross-sport rules and the database check run on every sport that could be read.
