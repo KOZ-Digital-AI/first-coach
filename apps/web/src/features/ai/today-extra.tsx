@@ -39,12 +39,13 @@ import { TODAY_QUERY_KEY } from '../train/events-client';
  *  - "hidden when offline": the whole control is hidden (no button, no field, no request, not even the availability check); the
  *    offline banner already says the device is offline. This follows the bead's words over "disabled with a reason". A session
  *    that is ALREADY AI-planned is content, not a control, so it still shows offline.
- *  - "hidden when the setting disables it": only the availability of the AI is readable by a player. GET /health carries
- *    `aiAvailable` (a key is configured), read here through the typed client (cached 5 minutes, one request; a failed or old
- *    /health with no such field keeps the control). CONTRACT GAP: `aiPlannerEnabled` (the admin setting) is served only by the
- *    admin-only GET /api/admin/settings, and neither /health nor the session exposes it, so the control cannot hide itself for it
- *    up front. When the setting is off the server answers `fallback: disabled`; the control then shows the note and goes away
- *    (nothing to retry). `no_key` does the same. The other codes (timeout, invalid_output, provider_error) keep a "Try AI again".
+ *  - "hidden when the setting disables it" (fc-mol-zo6.12): GET /health carries `aiPlannerEnabled` (the admin setting), read here
+ *    through the typed client (cached 5 minutes, one request). The control is hidden entirely only when it is EXACTLY false; an
+ *    absent field (an older server), any other value or a failed /health keeps the control (the server decides on the press).
+ *    NO KEY (fc-mol-zo6.12, gate j8 U2): /health `aiAvailable` false does NOT hide the control any more. The button stays and a
+ *    press is answered by the server with the deterministic session and `fallback: no_key`, which shows the quiet standard-plan
+ *    note (no error, no wait for /health). `no_key` and `disabled` then remove the button (nothing to retry); the other codes
+ *    (timeout, invalid_output, provider_error) keep a "Try AI again".
  *  - One AI plan per day: the server answers a second request from the stored plan, so once the session is AI-planned there is no
  *    button. CONTRACT GAP (server): a re-plan with a new note the same day has no request to ask for it.
  *  - The request carries `?locale=<ui locale>` and `X-Timezone: <device zone>` exactly as the today screen's GET does: the server
@@ -65,7 +66,7 @@ const PLANNER_REASON_KEYS: ReadonlySet<string> = new Set(['warmup', 'focus', 'fi
 const AVAILABILITY_STALE_MS = 5 * 60_000;
 
 /** /health is loose; the contract types only ok/version/database, so this adds the one key read here (optional: older servers). */
-const HealthWithAi = HealthResponse.extend({ aiAvailable: z.boolean().optional() });
+const HealthWithAi = HealthResponse.extend({ aiPlannerEnabled: z.boolean().optional() });
 
 function browserOnline(): boolean {
   return typeof navigator === 'undefined' || navigator.onLine !== false;
@@ -185,7 +186,8 @@ export function AiPlanControl({ api = appApi, timeZone = browserTimeZone }: AiPl
   const planned = today?.planner === 'ai';
   const visible = today !== undefined && !planned && online;
 
-  // Is the AI configured at all? One cheap read, only while the control could be shown. Unknown (pending, failed, old server) keeps it.
+  // Has the admin switched the AI planner off? One cheap read, only while the control could be shown. Unknown (pending, failed, old
+  // server, a value that is not a boolean) keeps it: only an aiPlannerEnabled of exactly false hides the control.
   const availability = useQuery({
     queryKey: ['ai-availability'],
     queryFn: ({ signal }) => api.get('/health', { schema: HealthWithAi, signal }),
@@ -227,7 +229,7 @@ export function AiPlanControl({ api = appApi, timeZone = browserTimeZone }: AiPl
 
   if (today === undefined) return null;
   if (planned) return <PlannedSession session={today} focusOnMount={justPlanned.current} />;
-  if (!online || availability.data?.aiAvailable === false) return null;
+  if (!online || availability.data?.aiPlannerEnabled === false) return null;
 
   const standard = fallback !== null && fallback.sessionId === today.id ? fallback.code : null;
   const finished = standard !== null && PERMANENT_CODES.has(standard);
