@@ -16,14 +16,30 @@
 // keys are stripped). Cross-field note rules are `.superRefine` on the REQUEST only; Zod 4
 // throws on `.pick()/.partial()` of a refined object, so the unrefined base is exported too.
 //
+// GET /api/admin/contributions with `state` omitted returns the queue for ALL states, unfiltered
+// (derived: the criteria only name the four filter values).
+//
+// `edits` is ContributionPayloadBase.partial(), so it also admits rightsAttested,
+// noCommercialContent, website and kind. The SERVER must ignore or reject those keys: for
+// example an approve with `kind: "improvement"` in `edits` meets no target rule at schema
+// level (the improvement rule lives on ContributionPayloadRequest, not on the base).
+//
+// DrillDetail (./commons) carries no unpublished marker, so the unpublish response cannot
+// show the drill's new state. Raised upstream; this contract reuses DrillDetail as the
+// criteria say.
+//
+// The root design lists the admin settings fields (minimum trust status per age band, upload
+// size cap, AI planner on/off, video coach on/off, retest intervals); the settings bead fixes
+// the exact field list, so `Settings` stays a loose object here.
+//
 // Gate-tested, NOT parse-tested (a schema parse cannot prove them): the call budget; that
 // only an admin may call these endpoints (auth is enforced by the API); that the allowed
 // transitions are enforced server-side (the tables below only let the UI hide illegal
 // actions); that an omitted decision `status` becomes DEFAULT_DECISION_STATUS on the server.
 //
 // DERIVED, not fixed by the criteria (marked again where they are defined): VERIFIED_STATUSES,
-// duplicateOf, ImpactMetrics.byWeek, both transition tables, and that `Settings` has no
-// field list.
+// duplicateOf, ImpactMetrics.byWeek, both transition tables, the unfiltered list and that
+// `Settings` has no field list.
 import { z } from "zod";
 import { CalendarDate, Count } from "./domain";
 import type { EndpointSpec } from "./domain";
@@ -166,7 +182,6 @@ export type UnpublishRequest = z.infer<typeof UnpublishRequest>;
 export const ImpactWeek = z.object({
   weekStart: CalendarDate,
   sessionsCompleted: Count,
-  activePlayers: Count,
 });
 export type ImpactWeek = z.infer<typeof ImpactWeek>;
 
@@ -202,30 +217,32 @@ export type Settings = z.infer<typeof Settings>;
 
 /**
  * Derived from the moderation flow: which decision actions a contribution in each state
- * accepts. A pending contribution can be approved, rejected or sent back; one that already
- * awaits changes cannot be sent back again; approved, rejected and withdrawn are terminal.
- * The server enforces it; the UI hides the buttons.
+ * accepts. A pending contribution can be approved, rejected or sent back. One in
+ * `changes_requested` awaits the contributor's changes, so it is not approvable and cannot
+ * be sent back again: it can only be rejected (after the contributor's PUT it returns to
+ * `pending`). Approved, rejected and withdrawn are terminal. The server enforces it; the UI
+ * hides the buttons.
  */
 export const CONTRIBUTION_TRANSITIONS: Readonly<Record<ContributionState, readonly DecisionAction[]>> = {
   pending: ["approve", "reject", "request_changes"],
-  changes_requested: ["approve", "reject"],
+  changes_requested: ["reject"],
   approved: [],
   rejected: [],
   withdrawn: [],
 };
 
 /**
- * Derived (conservative) from the trust ladder COMMUNITY < REVIEWED < EXPERT_VERIFIED <
- * ACADEMY_VERIFIED: a real coach must review a method before it is marked VERIFIED, so
- * COMMUNITY moves up to REVIEWED only; REVIEWED moves up to either verified status; a status
- * can always be revoked to any lower one; no status transitions to itself. The server
- * enforces it; the UI hides the actions.
+ * Derived (permissive): the design fixes only the closed set of four statuses and says every
+ * transition is enforced server-side with an audit row, so every status may move to every
+ * OTHER status (a decision can already approve straight at a VERIFIED status, so no review
+ * step is enforced here). A transition to the same status is illegal. Moving to a VERIFIED
+ * status needs a note (see DrillStatusRequest). The UI hides the actions.
  */
 export const STATUS_TRANSITIONS: Readonly<Record<TrustStatus, readonly TrustStatus[]>> = {
-  COMMUNITY: ["REVIEWED"],
-  REVIEWED: ["EXPERT_VERIFIED", "ACADEMY_VERIFIED", "COMMUNITY"],
-  EXPERT_VERIFIED: ["ACADEMY_VERIFIED", "REVIEWED", "COMMUNITY"],
-  ACADEMY_VERIFIED: ["EXPERT_VERIFIED", "REVIEWED", "COMMUNITY"],
+  COMMUNITY: ["REVIEWED", "EXPERT_VERIFIED", "ACADEMY_VERIFIED"],
+  REVIEWED: ["COMMUNITY", "EXPERT_VERIFIED", "ACADEMY_VERIFIED"],
+  EXPERT_VERIFIED: ["COMMUNITY", "REVIEWED", "ACADEMY_VERIFIED"],
+  ACADEMY_VERIFIED: ["COMMUNITY", "REVIEWED", "EXPERT_VERIFIED"],
 };
 
 // --- Endpoints (none is public) ---------------------------------------------------------------------------------
