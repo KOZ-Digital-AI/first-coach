@@ -213,7 +213,7 @@ describe("buildExport on the real seed", () => {
       expect(node?.levels).toHaveLength(expected.levels.length);
       expect(node?.ageMin).toBe(expected.ageMin);
       expect(node?.ageMax).toBe(expected.ageMax);
-      expect(node?.equipment).toBe(expected.equipment);
+      expect(node?.equipment as string | undefined).toBe(expected.equipment);
       expect(node?.safety).toHaveLength(expected.safety.length);
     }
   });
@@ -300,9 +300,9 @@ describe("buildExport on the real seed", () => {
 
     expect(slugs).toEqual([...slugs].sort());
     expect(testSlugs).toEqual([...testSlugs].sort());
-    expect(sport?.graph.nodes.map((node) => node.slug)).toEqual(
-      getSkillGraph(db, "football", "en")?.nodes.map((node) => node.slug),
-    );
+    const repoOrder = getSkillGraph(db, "football", "en")?.nodes.map((node) => node.slug) ?? [];
+    expect(repoOrder).toHaveLength(30);
+    expect(sport?.graph.nodes.map((node) => node.slug)).toEqual(repoOrder);
   });
 });
 
