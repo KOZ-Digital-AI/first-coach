@@ -425,11 +425,13 @@ describe("reset-password", () => {
     await adminWithSessions();
     await seedContributor("carol@example.com", OTHER_PW, "Carol");
     const carol = cookieOf(await signIn("carol@example.com", OTHER_PW));
+    const sessionsBefore = sessionCount("carol@example.com"); // sign-up opened one, sign-in another
+    expect(sessionsBefore).toBeGreaterThan(0);
 
     await run(["reset-password", "--email", "ada@example.com"], { env: { ...ENV, ADMIN_PASSWORD: NEW_PW } });
 
     expect((await sessionFor(carol))?.user.email).toBe("carol@example.com");
-    expect(sessionCount("carol@example.com")).toBe(1);
+    expect(sessionCount("carol@example.com")).toBe(sessionsBefore);
   });
 
   test("uses the password from the prompt when ADMIN_PASSWORD is unset", async () => {
