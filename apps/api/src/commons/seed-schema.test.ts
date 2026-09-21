@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { z } from "zod";
-import { SKILL_LEVEL_MAX, SKILL_LEVEL_MIN } from "../shared/domain";
 import { DrillContent, EQUIPMENT, LICENSE_IDS, LOCALES, SPACES } from "../shared/primitives";
 import { SkillNode, SkillTest } from "../shared/commons";
+import { Rubric } from "../shared/video";
 import {
   SeedDrill,
   SeedDrillBase,
@@ -110,14 +110,27 @@ const testsFile = (tests: unknown[] = [skillTest(), skillTest({ slug: "wall-pass
   tests,
 });
 
-const rubric = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
-  skill: "ball-control",
-  level: 1,
-  criteria: text("Допты екі рет ұстайды", "Удерживает мяч два раза", "Holds the ball twice"),
+// A rubric is the video-coach shape: it maps 1:1 onto the `Rubric` wire contract (shared/video.ts)
+// once its texts are localised, plus a `sport` on the file and a trust `status` on each rubric.
+const rubricCriterion = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+  key: "body-position",
+  label: text("Дене қалпы", "Положение тела", "Body position"),
+  description: text("Дене тік әрі тұрақты", "Тело прямое и устойчивое", "The body is upright and steady"),
+  lookFor: [text("Тізе сәл бүгілген", "Колени слегка согнуты", "Knees slightly bent")],
   ...overrides,
 });
 
-const rubricsFile = (rubrics: unknown[] = [rubric(), rubric({ level: 2 })]) => ({ sport: "football", rubrics });
+const rubric = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+  skill: "ball-control",
+  version: 1,
+  status: "COMMUNITY",
+  criteria: [rubricCriterion(), rubricCriterion({ key: "balance" })],
+  recordingTips: [text("Телефонды жерге қой", "Поставь телефон на землю", "Prop the phone on the ground")],
+  minVisibility: 0.6,
+  ...overrides,
+});
+
+const rubricsFile = (rubrics: unknown[] = [rubric(), rubric({ skill: "first-touch" })]) => ({ sport: "football", rubrics });
 
 describe("a valid sample passes", () => {
   test.each([
@@ -171,7 +184,18 @@ describe("three locales are required and non-empty on every LocalizedText", () =
     missingKk((t) => graphFile([node({ outcomes: [t] })]), SeedSkillGraphFile, ["nodes", 0, "outcomes", 0]),
     missingKk((t) => graphFile([node({ mistakes: [t] })]), SeedSkillGraphFile, ["nodes", 0, "mistakes", 0]),
     missingKk((t) => testsFile([skillTest({ protocol: t })]), SeedTestsFile, ["tests", 0, "protocol"]),
-    missingKk((t) => rubricsFile([rubric({ criteria: t })]), SeedRubricsFile, ["rubrics", 0, "criteria"]),
+    missingKk((t) => rubricsFile([rubric({ criteria: [rubricCriterion({ label: t })] })]), SeedRubricsFile, ["rubrics", 0, "criteria", 0, "label"]),
+    missingKk(
+      (t) => rubricsFile([rubric({ criteria: [rubricCriterion({ description: t })] })]),
+      SeedRubricsFile,
+      ["rubrics", 0, "criteria", 0, "description"],
+    ),
+    missingKk(
+      (t) => rubricsFile([rubric({ criteria: [rubricCriterion({ lookFor: [t] })] })]),
+      SeedRubricsFile,
+      ["rubrics", 0, "criteria", 0, "lookFor", 0],
+    ),
+    missingKk((t) => rubricsFile([rubric({ recordingTips: [t] })]), SeedRubricsFile, ["rubrics", 0, "recordingTips", 0]),
   ])("a missing kk text fails at %s.kk", (_name, schema, input, path) => {
     expect(issuePaths(schema, input)).toEqual([path]);
   });
@@ -289,8 +313,91 @@ describe("attribution and test fields keep the wire rules", () => {
     expect(issuePaths(SeedTestsFile, testsFile([skillTest({ metric: "" })]))).toEqual([["tests", 0, "metric"]]);
   });
 
-  test.each([SKILL_LEVEL_MIN - 1, SKILL_LEVEL_MAX + 1])("a rubric level of %d fails at level", (level) => {
-    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ level })]))).toEqual([["rubrics", 0, "level"]]);
+});
+
+describe("rubrics.json: the video-coach rubric shape", () => {
+  test.each([-0.01, 1.01])("a minVisibility of %d fails at minVisibility", (minVisibility) => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ minVisibility })]))).toEqual([["rubrics", 0, "minVisibility"]]);
+  });
+
+  test("the visibility bounds 0 and 1 are accepted", () => {
+    for (const minVisibility of [0, 1]) {
+      expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ minVisibility })]))).toBeNull();
+    }
+  });
+
+  test.each([0, -1, 1.5])("a version of %d fails at version", (version) => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ version })]))).toEqual([["rubrics", 0, "version"]]);
+  });
+
+  test("a rubric needs at least one criterion", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ criteria: [] })]))).toEqual([["rubrics", 0, "criteria"]]);
+  });
+
+  test("a criterion needs at least one look-for cue and a rubric at least one recording tip", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ criteria: [rubricCriterion({ lookFor: [] })] })]))).toEqual([
+      ["rubrics", 0, "criteria", 0, "lookFor"],
+    ]);
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ recordingTips: [] })]))).toEqual([["rubrics", 0, "recordingTips"]]);
+  });
+
+  test("the status is a trust status: COMMUNITY passes, an invented one fails at status", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ status: "COMMUNITY" })]))).toBeNull();
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ status: "DRAFT" })]))).toEqual([["rubrics", 0, "status"]]);
+  });
+
+  test.each(["version", "status", "criteria", "recordingTips", "minVisibility"])("a rubric without %s fails at that key", (key) => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([without(rubric(), key)]))).toEqual([["rubrics", 0, key]]);
+  });
+
+  test("the retired per-level shape is rejected: a `level` key is unrecognised", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ level: 1 })]))).toEqual([["rubrics", 0]]);
+  });
+
+  test("an unknown key on a criterion is rejected", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ criteria: [rubricCriterion({ weight: 2 })] })]))).toEqual([
+      ["rubrics", 0, "criteria", 0],
+    ]);
+  });
+
+  test("a repeated skill is reported at the repeat, not at its first use", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric(), rubric()]))).toEqual([["rubrics", 1, "skill"]]);
+  });
+
+  test("a repeated criterion key inside one rubric is reported at the repeat", () => {
+    const criteria = [rubricCriterion({ key: "balance" }), rubricCriterion({ key: "balance" })];
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ criteria })]))).toEqual([["rubrics", 0, "criteria", 1, "key"]]);
+  });
+
+  test("the same criterion key in two different rubrics is fine", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric(), rubric({ skill: "first-touch" })]))).toBeNull();
+  });
+
+  test("a criterion key that is not kebab-case fails at its key", () => {
+    expect(issuePaths(SeedRubricsFile, rubricsFile([rubric({ criteria: [rubricCriterion({ key: "Bad_Key" })] })]))).toEqual([
+      ["rubrics", 0, "criteria", 0, "key"],
+    ]);
+  });
+
+  test("a seed rubric maps 1:1 onto the Rubric wire contract once its texts are localised", () => {
+    const parsed = SeedRubricsFile.parse(rubricsFile());
+    for (const locale of LOCALES) {
+      for (const seed of parsed.rubrics) {
+        const wire = {
+          skill: seed.skill,
+          version: seed.version,
+          criteria: seed.criteria.map((c) => ({
+            key: c.key,
+            label: c.label[locale],
+            description: c.description[locale],
+            lookFor: c.lookFor.map((cue) => cue[locale]),
+          })),
+          recordingTips: seed.recordingTips.map((tip) => tip[locale]),
+          minVisibility: seed.minVisibility,
+        };
+        expect(Rubric.safeParse(wire).success).toBe(true);
+      }
+    }
   });
 });
 

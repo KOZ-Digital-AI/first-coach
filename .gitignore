@@ -17,3 +17,5 @@ data/
 apps/web/src/routeTree.gen.ts
 .playwright-cli/
 e2e-artifacts/
+# Self-hosted MediaPipe pose model + WASM, fetched by scripts/fetch-pose-model.ts (apps/web prebuild)
+apps/web/public/mediapipe/
