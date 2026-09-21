@@ -1213,6 +1213,14 @@ describe('an unsent draft survives a reload', () => {
     expect(honeypot().value).toBe('');
   });
 
+  test('a draft that holds only choices meta does not offer restores nothing: no notice, no draft kept', async () => {
+    const storage = fakeStorage();
+    storage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: NOW, value: { level: 'legend', equipment: 'jetpack', skill: 'no-such-skill' } }));
+    await renderForm({ storage });
+    expect(screen.queryByText(messages.en.restored) === null).toBe(true);
+    expect(storage.data.has(DRAFT_KEY)).toBe(false);
+  });
+
   test('a draft that is not JSON is ignored', async () => {
     const storage = fakeStorage();
     storage.setItem(DRAFT_KEY, '{not json');
