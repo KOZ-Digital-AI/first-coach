@@ -482,3 +482,89 @@ describe("GET /api/player/today: how the session is picked", () => {
     expect((await todayOk(player)).skillTest).toBeUndefined();
   });
 });
+
+// --- fc-mol-urn.11: every item carries its drill's primary skill (track) and level ---------------
+
+/** The primary skill slug of the drill a version belongs to, read straight from the commons tables. */
+const primarySkillOf = (versionId: string): string | undefined =>
+  (
+    db
+      .query(
+        `SELECT s.slug AS slug FROM drill_versions v
+           JOIN drill_skills ds ON ds.drill_id = v.drill_id AND ds.is_primary = 1
+           JOIN skills s ON s.id = ds.skill_id
+          WHERE v.id = ?`,
+      )
+      .get(versionId) as { slug: string } | null
+  )?.slug;
+
+const levelOf = (versionId: string): string => (db.query("SELECT level FROM drill_versions WHERE id = ?").get(versionId) as { level: string }).level;
+
+describe("GET /api/player/today: each item's track and level (fc-mol-urn.11)", () => {
+  test("every item carries the primary skill slug of its drill and the level of its version", async () => {
+    const player = await onboardedPlayer();
+    const session = await todayOk(player);
+    expect(session.items.length).toBeGreaterThan(0);
+    for (const item of session.items) {
+      // The premise: the real seed links a primary skill to every drill of the session.
+      expect(primarySkillOf(item.drillVersionId)).toBeDefined();
+      expect(item.track).toBe(primarySkillOf(item.drillVersionId)!);
+      expect(item.level).toBe(levelOf(item.drillVersionId) as typeof item.level);
+    }
+  });
+
+  test("the track is a real skill of the graph, not a drill slug or a made-up label", async () => {
+    const player = await onboardedPlayer();
+    const session = await todayOk(player);
+    const skills = (db.query("SELECT slug FROM skills").all() as Array<{ slug: string }>).map((row) => row.slug);
+    for (const item of session.items) expect(skills).toContain(item.track!);
+  });
+
+  test("the second call and the ?locale variants say the same track and level", async () => {
+    const player = await onboardedPlayer();
+    const first = await todayOk(player);
+    const second = await todayOk(player, { locale: "en" });
+    expect(second.items.map((item) => [item.track, item.level])).toEqual(first.items.map((item) => [item.track, item.level]));
+  });
+
+  test("the level is the STORED version's: a newer version of the drill with another level does not change it", async () => {
+    const player = await onboardedPlayer();
+    const first = await todayOk(player);
+    const target = first.items[0]!;
+    const old = versionRow(target.drillVersionId);
+    const otherLevel = levelOf(old.id) === "intermediate" ? "beginner" : "intermediate";
+    db.query(
+      `INSERT INTO drill_versions (id, drill_id, semver, parent_version_id, status, content, equipment, space, partner, age_min, age_max,
+                                   level, minutes, license, author_name, author_user_id, source, source_url, origin, change_summary, created_at)
+       SELECT 'newer-version', drill_id, '9.9.9', id, status, content, equipment, space, partner, age_min, age_max, ?, minutes, license,
+              author_name, author_user_id, source, source_url, 'contribution', NULL, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         FROM drill_versions WHERE id = ?`,
+    ).run(otherLevel, old.id);
+    db.query("UPDATE drills SET current_version_id = 'newer-version' WHERE id = ?").run(old.drill_id);
+
+    const second = await todayOk(player);
+    expect(second.items[0]!.drillVersionId).toBe(target.drillVersionId);
+    expect(second.items[0]!.level).toBe(target.level!);
+    expect(second.items[0]!.level).not.toBe(otherLevel as typeof target.level);
+  });
+
+  test("a drill with no primary skill has no `track` key at all, keeps its level, and the response still parses", async () => {
+    const player = await onboardedPlayer();
+    const first = await todayOk(player);
+    const target = first.items[0]!;
+    const drillId = versionRow(target.drillVersionId).drill_id;
+    db.query("DELETE FROM drill_skills WHERE drill_id = ? AND is_primary = 1").run(drillId);
+
+    const res = await today({ cookie: player.cookie });
+    expect(res.status).toBe(200);
+    const raw = (await res.json()) as { items: Array<Record<string, unknown>> };
+    expect(TodaySession.safeParse(raw).success).toBe(true);
+    const item = raw.items.find((entry) => entry.itemId === target.itemId)!;
+    expect(Object.hasOwn(item, "track")).toBe(false);
+    expect(item.level).toBe(target.level as string);
+    // The other items still have theirs.
+    for (const other of raw.items.filter((entry) => entry.itemId !== target.itemId && primarySkillOf(entry.drillVersionId as string) !== undefined)) {
+      expect(typeof other.track).toBe("string");
+    }
+  });
+});
