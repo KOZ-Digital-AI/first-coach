@@ -183,7 +183,7 @@ function plantVersion(drillId: string, edit: (content: DrillContent) => void): s
 
 /** The dump of every commons table an explain must never write to. */
 const commonsDump = (): string =>
-  JSON.stringify(["drills", "drill_versions", "drill_skills", "reviews", "contributions", "contribution_attachments"].map((table) => db.query(`SELECT * FROM ${table} ORDER BY rowid`).all()));
+  JSON.stringify(["drills", "drill_versions", "drill_skills", "reviews", "contributions", "contribution_attachments"].map((table) => db.query(`SELECT * FROM ${table}`).all()));
 
 /** Every row of every table, as text: for "this string is stored nowhere". */
 const wholeDatabase = (): string =>
