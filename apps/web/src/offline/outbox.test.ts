@@ -330,6 +330,15 @@ describe('flush failures keep the queue', () => {
     expect(await outbox.pendingCount()).toBe(1);
   });
 
+  test('a 2xx with JSON that is not the contract response is NOT treated as delivered either', async () => {
+    const { outbox, idb } = harness(() => json(200, { ok: true }));
+    await outbox.enqueue(ev(1));
+    const result = await outbox.flush();
+    expect(result.outcome).toBe('failed');
+    expect(result.sent).toBe(0);
+    expect(idb.stored()[0]?.attempts).toBe(1);
+  });
+
   test('a 4xx that names nothing (401, 404, 429, a bare 400) drops nothing and counts an attempt', async () => {
     for (const bad of [
       problemResponse(401, 'Unauthorized'),
@@ -549,6 +558,32 @@ describe('start', () => {
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();
     expect(h.server.requests).toHaveLength(before);
+  });
+
+  test('the returned stop function detaches exactly the listeners start() attached', async () => {
+    const added: Array<[string, unknown]> = [];
+    const removed: Array<[string, unknown]> = [];
+    const spy = (): EventTarget => {
+      const target = new EventTarget();
+      const add = target.addEventListener.bind(target);
+      const remove = target.removeEventListener.bind(target);
+      target.addEventListener = (type: string, listener: EventListenerOrEventListenerObject | null, options?: AddEventListenerOptions | boolean) => {
+        added.push([type, listener]);
+        add(type, listener, options);
+      };
+      target.removeEventListener = (type: string, listener: EventListenerOrEventListenerObject | null, options?: EventListenerOptions | boolean) => {
+        removed.push([type, listener]);
+        remove(type, listener, options);
+      };
+      return target;
+    };
+    const { outbox } = harness();
+    const stop = outbox.start({ window: spy(), document: spy() });
+    expect(added.map(([type]) => type).sort()).toEqual(['online', 'visibilitychange']);
+    stop();
+    expect(removed).toEqual(expect.arrayContaining(added));
+    expect(removed).toHaveLength(added.length);
+    await settle();
   });
 
   test('a failed flush schedules ONE retry after the backoff; running it re-sends; success schedules nothing more', async () => {
