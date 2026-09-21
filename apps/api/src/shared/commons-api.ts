@@ -13,6 +13,9 @@
 // "./domain" and "./commons" (no node/bun APIs, no side effects). `z.toJSONSchema` is NOT used
 // here: generating schema.json belongs to the API side.
 //
+// `cursor` and `limit` of the drill list are pagination controls beyond the criteria's six filter
+// params; they are needed to request the page that the response's `nextCursor` points to.
+//
 // Requests are strict: an unknown query or param key fails. Responses stay loose (unknown server
 // keys are stripped). Query values arrive as strings and every filter here is a string or a
 // primitives enum (ExperienceLevel is the strings beginner|basic|intermediate), so nothing is
@@ -30,7 +33,12 @@ import { EntityId, Equipment, ExperienceLevel, Locale, TrustStatus } from "./pri
 
 // --- GET /api/commons/drills?skill&status&equipment&level&q&locale ---------------------------
 
-/** All filters optional. `q` is a free-text search and must be non-empty when present. */
+/**
+ * All optional. The six criteria params are the filters; `q` is a free-text search and must be
+ * non-empty when present. `cursor` and `limit` are the pagination controls that follow the
+ * list's `nextCursor`; `limit` is coerced exactly as ./commons' DrillListQuery does it (query
+ * strings arrive as text), while `cursor` additionally rejects the empty string.
+ */
 export const CommonsDrillQuery = z.strictObject({
   skill: EntityId.optional(),
   status: TrustStatus.optional(),
@@ -38,6 +46,8 @@ export const CommonsDrillQuery = z.strictObject({
   level: ExperienceLevel.optional(),
   q: z.string().min(1).optional(),
   locale: Locale.optional(),
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().positive().optional(),
 });
 export type CommonsDrillQuery = z.infer<typeof CommonsDrillQuery>;
 
