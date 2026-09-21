@@ -301,6 +301,14 @@ describe('there is NO overall score', () => {
     expect(body).not.toMatch(/6[.,]7|6[.,]67/);
   });
 
+  test('every "x / 10" on the page is one criterion\'s own score: exactly one per criterion of this analysis and of each earlier one', async () => {
+    await renderAnalysis();
+    const shown = text(document.body).match(/\d+ \/ \d+/g) ?? [];
+    // This analysis (3 criteria) + the one earlier dribbling analysis (3 criteria): a computed total or mean would be a 7th.
+    expect(shown).toHaveLength(HISTORY[1]!.scores.length + HISTORY[2]!.scores.length);
+    expect(text(screen.getByRole('region', { name: /part by part/i })).match(/\d+ \/ \d+/g)).toEqual(['7 / 10', '4 / 10', '9 / 10']);
+  });
+
   test('the message bundle has no wording of an overall score in any language', () => {
     const all = JSON.stringify(messages);
     expect(all).not.toMatch(/overall|total score|average|out of 100|\/ ?100|общий балл|итоговый|средний балл|жалпы балл|қорытынды балл/i);
