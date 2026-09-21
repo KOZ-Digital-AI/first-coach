@@ -230,6 +230,16 @@ describe("pickSwap: no alternative", () => {
     expect(pickSwap(zigzag, "easier", pool, taken)).toBeUndefined();
   });
 
+  test("the drill being replaced is never its own alternative, even when the session does not list it", () => {
+    const pool = poolOf(CONES_PLAYER, LEVELS_2);
+    // The session holds an OLDER version of two-foot-zigzag, at a lower level; the pool holds its current version.
+    const zigzag = bySlug(pool, "dribbling-two-foot-zigzag");
+    const older = { ...zigzag, level: "beginner" as const };
+    const picked = pickSwap(older, "harder", without(pool, "dribbling-sole-stop-turn"), new Set());
+    expect(picked).toBeDefined();
+    expect(picked!.drillId).not.toBe(zigzag.drillId);
+  });
+
   test("a drill that trains no skill has only its links to swap to", () => {
     const pool = poolOf(CONES_PLAYER, LEVELS_2);
     const zigzag = { ...bySlug(pool, "dribbling-two-foot-zigzag"), track: null };
@@ -253,6 +263,28 @@ describe("pickSwap: properties over the whole seed", () => {
       expect(isLinked(subject, picked, direction) || (picked.track === subject.track && inDirection)).toBe(true);
     }
     expect(picks).toBeGreaterThan(20);
+  });
+
+  test.each(["easier", "harder"] as const)("%s: with no link in the pool the pick is on the NEAREST level of the skill that has a free drill", (direction) => {
+    const pool = poolOf(CONES_PLAYER, LEVELS_2);
+    let checked = 0;
+    for (const subject of pool) {
+      const rest = pool.filter((v) => !isLinked(subject, v, direction));
+      const picked = pickSwap(subject, direction, rest, new Set([subject.drillId]));
+      const level = EXPERIENCE_NUMBER[subject.level];
+      const steps = rest
+        .filter((v) => v.drillId !== subject.drillId && v.track === subject.track)
+        .map((v) => (direction === "easier" ? level - EXPERIENCE_NUMBER[v.level] : EXPERIENCE_NUMBER[v.level] - level))
+        .filter((step) => step > 0);
+      if (steps.length === 0) {
+        expect(picked).toBeUndefined();
+        continue;
+      }
+      checked += 1;
+      const step = direction === "easier" ? level - EXPERIENCE_NUMBER[picked!.level] : EXPERIENCE_NUMBER[picked!.level] - level;
+      expect(step).toBe(Math.min(...steps));
+    }
+    expect(checked).toBeGreaterThan(10);
   });
 
   test("the pick does not depend on the order of the pool and the inputs are not touched", () => {
@@ -549,6 +581,10 @@ describe("POST /api/player/today/swap: a swap", () => {
     expect(picked!.track).toBe("passing-first-touch");
     expect(picked!.level).toBe("basic");
     expect(picked!.slug).toBe("passing-roll-receive-redirect"); // 5 min against the drill's 6; pass-walk-stop is 4
+    // The item takes the new drill's minutes (5), not the old one's (6), and the total follows.
+    expect(swapped.minutes).toBe(picked!.minutes);
+    expect(swapped.minutes).not.toBe(minutesOf("passing-partner-pass-and-stop"));
+    expect(updated.totalMinutes).toBe(picked!.minutes + (updated.skillTest === undefined ? 0 : 2));
   });
 
   test("the replacement always comes from the player's candidate set: equipment, age, partner and level rules hold", async () => {
@@ -610,9 +646,17 @@ describe("POST /api/player/today/swap: a swap", () => {
     expect(storedItems(player.id, eastSession.id)[0]!.drillVersionId).toBe(versionIdOf("dribbling-two-foot-zigzag"));
     expect(storedItems(player.id, westSession.id)[0]!.drillVersionId).toBe(versionIdOf("dribbling-freeze-and-go"));
 
+    // And the other way round (the UTC day is one of the two, so a header that was ignored fails one direction).
+    const other = await swapOk(player, { itemId: "item-1", direction: "harder" }, { timeZone: east });
+    expect(other.id).toBe(eastSession.id);
+    expect(storedItems(player.id, eastSession.id)[0]!.progressionOf).toBe(versionIdOf("dribbling-two-foot-zigzag"));
+    expect(storedItems(player.id, westSession.id)[0]!.drillVersionId).toBe(versionIdOf("dribbling-freeze-and-go"));
+    expect(storedItems(player.id, westSession.id)[0]!.progressionOf).toBeUndefined();
+
     // The contract's locale rule applies: an unknown locale is refused, nothing is swapped.
+    const before = sessionRows(player.id);
     await expectProblem(await swap({ itemId: "item-1", direction: "harder" }, { cookie: player.cookie, timeZone: east, query: "?locale=de" }), 400);
-    expect(storedItems(player.id, eastSession.id)[0]!.drillVersionId).toBe(versionIdOf("dribbling-two-foot-zigzag"));
+    expect(sessionRows(player.id)).toEqual(before);
   });
 });
 
