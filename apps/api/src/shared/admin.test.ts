@@ -143,8 +143,8 @@ const makeImpact = (patch: Record<string, unknown> = {}): Record<string, unknown
   verifiedCoaches: 3,
   openMethodologies: 24,
   byWeek: [
-    { weekStart: "2026-09-07", sessionsCompleted: 410, activePlayers: 96 },
-    { weekStart: "2026-09-14", sessionsCompleted: 455, activePlayers: 101 },
+    { weekStart: "2026-09-07", sessionsCompleted: 410 },
+    { weekStart: "2026-09-14", sessionsCompleted: 455 },
   ],
   ...patch,
 });
@@ -620,7 +620,7 @@ describe("ImpactMetrics", () => {
     expect(parsed.playersWithBaseline).toBe(1240);
     expect(parsed.medianImprovementPct).toBe(18.5);
     expect(parsed.trainingHours).toBe(2280.5);
-    expect(parsed.byWeek[1]).toEqual({ weekStart: "2026-09-14", sessionsCompleted: 455, activePlayers: 101 });
+    expect<unknown>(parsed.byWeek[1]).toEqual({ weekStart: "2026-09-14", sessionsCompleted: 455 });
   });
 
   test("a negative median improvement is legitimate", () => {
@@ -667,25 +667,34 @@ describe("ImpactMetrics", () => {
   });
 
   test("a byWeek weekStart must be a calendar date", () => {
-    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "14.09.2026", sessionsCompleted: 1, activePlayers: 1 }] }))).toBe(
+    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "14.09.2026", sessionsCompleted: 1 }] }))).toBe(
       false,
     );
   });
 
   test("a byWeek sessionsCompleted must be a non-negative integer", () => {
-    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: -1, activePlayers: 1 }] }))).toBe(
+    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: -1 }] }))).toBe(
       false,
     );
   });
 
-  test("a byWeek activePlayers must be a non-negative integer", () => {
-    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: 1, activePlayers: 1.5 }] }))).toBe(
-      false,
-    );
+  test("a byWeek sessionsCompleted must be an integer", () => {
+    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: 1.5 }] }))).toBe(false);
   });
 
-  test.each(["weekStart", "sessionsCompleted", "activePlayers"])("a byWeek entry missing %s fails", (key) => {
-    const entry = { weekStart: "2026-09-14", sessionsCompleted: 1, activePlayers: 1 };
+  test("a byWeek entry needs only weekStart and sessionsCompleted", () => {
+    expect(ok(ImpactMetrics, makeImpact({ byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: 1 }] }))).toBe(true);
+  });
+
+  test("a byWeek entry carries no activePlayers (not in the design): a sent one is stripped", () => {
+    const parsed = ImpactMetrics.parse(
+      makeImpact({ byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: 1, activePlayers: 9 }] }),
+    );
+    expect(parsed.byWeek[0]).not.toHaveProperty("activePlayers");
+  });
+
+  test.each(["weekStart", "sessionsCompleted"])("a byWeek entry missing %s fails", (key) => {
+    const entry = { weekStart: "2026-09-14", sessionsCompleted: 1 };
     expect(ok(ImpactMetrics, makeImpact({ byWeek: [without(entry, key)] }))).toBe(false);
   });
 
@@ -693,7 +702,7 @@ describe("ImpactMetrics", () => {
     const parsed = ImpactMetrics.parse(
       makeImpact({
         countriesReached: 3,
-        byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: 1, activePlayers: 1, churn: 0.1 }],
+        byWeek: [{ weekStart: "2026-09-14", sessionsCompleted: 1, churn: 0.1 }],
       }),
     );
     expect(parsed).not.toHaveProperty("countriesReached");
@@ -745,11 +754,15 @@ describe("CONTRIBUTION_TRANSITIONS (derived: state -> actions the UI may offer)"
     ["pending", "approve"],
     ["pending", "reject"],
     ["pending", "request_changes"],
-    ["changes_requested", "approve"],
     ["changes_requested", "reject"],
   ] satisfies Array<[ContributionStateName, string]>)("%s allows %s", (state, action) => {
     const allowed: readonly string[] = CONTRIBUTION_TRANSITIONS[state];
     expect(allowed).toContain(action);
+  });
+
+  test("changes_requested does not allow approve (it awaits the contributor's changes)", () => {
+    const allowed: readonly string[] = CONTRIBUTION_TRANSITIONS.changes_requested;
+    expect(allowed).not.toContain("approve");
   });
 
   test("changes_requested does not allow request_changes again", () => {
@@ -807,12 +820,21 @@ describe("STATUS_TRANSITIONS (derived: TrustStatus -> allowed toStatus values)",
     expect(allowedFrom("REVIEWED")).toContain("COMMUNITY");
   });
 
-  test("COMMUNITY cannot skip the coach review straight to EXPERT_VERIFIED", () => {
-    expect(allowedFrom("COMMUNITY")).not.toContain("EXPERT_VERIFIED");
+  test("COMMUNITY may be set straight to EXPERT_VERIFIED (a decision can already approve there)", () => {
+    expect(allowedFrom("COMMUNITY")).toContain("EXPERT_VERIFIED");
   });
 
-  test("COMMUNITY cannot skip the coach review straight to ACADEMY_VERIFIED", () => {
-    expect(allowedFrom("COMMUNITY")).not.toContain("ACADEMY_VERIFIED");
+  test("COMMUNITY may be set straight to ACADEMY_VERIFIED", () => {
+    expect(allowedFrom("COMMUNITY")).toContain("ACADEMY_VERIFIED");
+  });
+
+  test("EXPERT_VERIFIED and ACADEMY_VERIFIED may be swapped", () => {
+    expect(allowedFrom("EXPERT_VERIFIED")).toContain("ACADEMY_VERIFIED");
+    expect(allowedFrom("ACADEMY_VERIFIED")).toContain("EXPERT_VERIFIED");
+  });
+
+  test.each([...TRUST_STATUSES])("%s may move to every other status", (from) => {
+    for (const to of TRUST_STATUSES.filter((status) => status !== from)) expect(allowedFrom(from)).toContain(to);
   });
 });
 
