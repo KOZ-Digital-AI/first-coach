@@ -39,7 +39,11 @@ COPY --from=build /app/apps/web/dist apps/web/dist
 # volume at run time, and a plain `docker run -v` works the same way. The mkdir only
 # makes the paths exist when nothing is mounted.
 RUN mkdir -p /data/media /data/backups
-ENV APP_DB_PATH=/data/app.db \
+# NODE_ENV=production lives only here: the build stage needs devDependencies, and
+# `bun install` skips them under NODE_ENV=production. Env validation and secure
+# cookies read it at run time.
+ENV NODE_ENV=production \
+    APP_DB_PATH=/data/app.db \
     MEDIA_DIR=/data/media \
     MASTRA_DB_PATH=/data/mastra.db \
     BACKUP_DIR=/data/backups
