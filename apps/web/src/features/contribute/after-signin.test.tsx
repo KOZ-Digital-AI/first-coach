@@ -8,8 +8,10 @@ import { createPlayerAuthClient } from '../../lib/auth';
 import { createI18n } from '../../lib/i18n';
 import problemMessages from '../../lib/problem.messages';
 import { Route as SignInRoute, SignInDepsContext } from '../../routes/account/sign-in';
+import { AdminLayoutView } from '../../routes/admin/route';
 import { ContributeDepsContext, Route as ContributeRoute } from '../../routes/contribute/index';
 import signInMessages from '../account/sign-in.messages';
+import adminLayoutMessages from '../admin/admin-layout.messages';
 import formMessages from './form.messages';
 
 // The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. From the repo root there is no
@@ -63,10 +65,13 @@ const sessionOf = (user: Record<string, unknown>) => ({
 });
 const GUEST = { id: 'guest-1', isAnonymous: true };
 const COACH = { id: 'coach-1', isAnonymous: false };
+const ADMIN = { id: 'admin-1', isAnonymous: false, role: 'admin' };
 
 interface Server {
-  /** Who the cookie belongs to. Signing up or in turns the guest into the coach. */
-  who: 'guest' | 'coach';
+  /** Who the cookie belongs to. Signing up or in turns the guest into `account`. */
+  who: 'guest' | 'account';
+  /** The account a sign-up or sign-in gives the visitor: a coach, or an admin. */
+  account: typeof COACH | typeof ADMIN;
   /** While set, every get-session waits for it (a slow network). */
   hold: Promise<void> | null;
   /** While true, every get-session answers 500. */
@@ -75,20 +80,31 @@ interface Server {
 }
 
 let server: Server;
-const freshServer = (): Server => ({ who: 'guest', hold: null, failReads: false, sessionReads: 0 });
+const freshServer = (): Server => ({ who: 'guest', account: COACH, hold: null, failReads: false, sessionReads: 0 });
+
+/** Waits for `hold` like a slow network would, and gives up with an AbortError the moment the caller aborts (as a real fetch does). */
+function heldRead(hold: Promise<void> | null, signal: AbortSignal | null | undefined): Promise<void> {
+  const aborted = () => new DOMException('The operation was aborted.', 'AbortError');
+  if (signal?.aborted) return Promise.reject(aborted());
+  if (hold === null) return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    signal?.addEventListener('abort', () => reject(aborted()), { once: true });
+    void hold.then(resolve);
+  });
+}
 
 async function serveAuth(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, 'http://localhost/');
   const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
   if (url.pathname === '/api/auth/get-session' && method === 'GET') {
     server.sessionReads += 1;
-    await server.hold;
+    await heldRead(server.hold, init?.signal);
     if (server.failReads) return json({ message: 'boom' }, 500);
-    return json(sessionOf(server.who === 'coach' ? COACH : GUEST));
+    return json(sessionOf(server.who === 'account' ? server.account : GUEST));
   }
   if (method === 'POST' && (url.pathname === '/api/auth/sign-up/email' || url.pathname === '/api/auth/sign-in/email')) {
-    server.who = 'coach';
-    return json({ token: 't', user: COACH });
+    server.who = 'account';
+    return json({ token: 't', user: server.account });
   }
   return json({ message: 'not found' }, 404);
 }
@@ -138,6 +154,7 @@ afterEach(() => {
 const modules = {
   './sign-in.messages.ts': { default: signInMessages },
   './form.messages.ts': { default: formMessages },
+  './admin-layout.messages.ts': { default: adminLayoutMessages },
   '../../lib/problem.messages.ts': { default: problemMessages },
 };
 const noStorage = { getItem: () => null, setItem: () => {} };
@@ -172,8 +189,18 @@ function renderApp(start: string) {
     validateSearch: SignInRoute.options.validateSearch,
   });
   const contribute = createRoute({ getParentRoute: () => rootRoute, path: '/contribute', component: ContributeRoute.options.component });
+  // /contribute/mine and /contribute/:id/edit decide from the API's own 401/403, not from the session atom: a stand-in is enough here.
+  const mine = createRoute({ getParentRoute: () => rootRoute, path: '/contribute/mine', component: () => <p>my contributions</p> });
+  const home = createRoute({ getParentRoute: () => rootRoute, path: '/', component: () => <p>home page</p> });
+  // The real admin layout (its gate), fed by the same Better Auth session atom.
+  const AdminGate = () => <AdminLayoutView session={client.useSession()} />;
+  const admin = createRoute({ getParentRoute: () => rootRoute, path: '/admin', component: AdminGate });
+  const adminIndex = createRoute({ getParentRoute: () => admin, path: '/', component: () => <p>review queue</p> });
+  const adminSections = ['drills', 'impact', 'settings'].map((section) =>
+    createRoute({ getParentRoute: () => admin, path: `/${section}`, component: () => <p>{section}</p> }),
+  );
   const router = createRouter({
-    routeTree: rootRoute.addChildren([signIn, contribute]),
+    routeTree: rootRoute.addChildren([signIn, contribute, mine, home, admin.addChildren([adminIndex, ...adminSections])]),
     history: createMemoryHistory({ initialEntries: [start] }),
   });
   // Every location the router moves to after the first render, in order, and what the shared session atom held at that instant.
@@ -207,6 +234,7 @@ function renderApp(start: string) {
   return { ...view, router, visited, arrivals };
 }
 
+const signInFor = (redirect: string) => `/account/sign-in?redirect=${encodeURIComponent(redirect)}`;
 const SIGN_IN_FROM_CONTRIBUTE = `/account/sign-in?redirect=${encodeURIComponent('/contribute')}`;
 const SUBMIT_FORM = /^Send for review$/;
 
@@ -319,6 +347,74 @@ describe('after signing in with ?redirect=/contribute the coach lands on the for
     });
     await screen.findByRole('button', { name: SUBMIT_FORM });
     expect(visited.includes('/account/sign-in')).toBe(false);
+  });
+});
+
+describe('the same holds for every redirect target, and for a missing or unsafe one', () => {
+  test('admin: signing in from ?redirect=/admin opens the admin area, not the sign-in screen', async () => {
+    server.account = ADMIN;
+    const { visited, router, arrivals } = renderApp(signInFor('/admin'));
+    await waitForGuestScreen();
+
+    await signInWithAccount();
+
+    await screen.findByText('review queue');
+    expect(router.state.location.pathname).toBe('/admin');
+    expect(visited.every((path) => path === '/admin')).toBe(true);
+    expect(arrivals[0]).toEqual({ path: '/admin', reading: false, userId: ADMIN.id });
+    expect(continueButton() === null).toBe(true);
+  });
+
+  test('admin: creating the account tab is no different (the session atom, not the tab, is what the gate reads)', async () => {
+    server.account = ADMIN;
+    const { visited, arrivals } = renderApp(signInFor('/admin'));
+    await waitForGuestScreen();
+
+    await signUp();
+
+    await screen.findByText('review queue');
+    expect(visited.every((path) => path === '/admin')).toBe(true);
+    expect(arrivals[0]).toEqual({ path: '/admin', reading: false, userId: ADMIN.id });
+  });
+
+  test('/contribute/mine: leaves for it only once the session atom holds the coach', async () => {
+    const { visited, router, arrivals } = renderApp(signInFor('/contribute/mine'));
+    await waitForGuestScreen();
+
+    await signUp();
+
+    await screen.findByText('my contributions');
+    expect(router.state.location.pathname).toBe('/contribute/mine');
+    expect(visited).toEqual(['/contribute/mine']);
+    expect(arrivals[0]).toEqual({ path: '/contribute/mine', reading: false, userId: COACH.id });
+  });
+
+  test('no redirect param: lands on the home page, after the session settled', async () => {
+    const { visited, router, arrivals } = renderApp('/account/sign-in');
+    await waitForGuestScreen();
+
+    await signUp();
+
+    await screen.findByText('home page');
+    expect(router.state.location.pathname).toBe('/');
+    expect(visited).toEqual(['/']);
+    expect(arrivals[0]).toEqual({ path: '/', reading: false, userId: COACH.id });
+  });
+
+  test.each([
+    ['a protocol-relative URL', '//evil.example/x'],
+    ['an absolute URL', 'https://evil.example/x'],
+    ['a backslash trick', '/\\evil.example'],
+  ])('%s in ?redirect= is not followed: lands on the home page, after the session settled', async (_name, redirect) => {
+    const { visited, router, arrivals } = renderApp(signInFor(redirect));
+    await waitForGuestScreen();
+
+    await signUp();
+
+    await screen.findByText('home page');
+    expect(router.state.location.pathname).toBe('/');
+    expect(visited).toEqual(['/']);
+    expect(arrivals[0]).toEqual({ path: '/', reading: false, userId: COACH.id });
   });
 });
 
