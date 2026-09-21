@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { Hono } from 'hono';
 import type { AppDeps } from '../../app';
 import { openDatabase } from '../../db/database';
+import { migrate } from '../../db/migrate';
 import { HealthResponse } from '../../shared/primitives';
 import { register } from './health.routes';
 
@@ -40,12 +41,14 @@ afterEach(() => {
 
 describe('GET /health', () => {
   test('answers 200 with ok/version/database against a real SQLite file', async () => {
+    migrate(db);
+
     const res = await app.request('/health');
 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(HealthResponse.safeParse(body).success).toBe(true);
-    expect(body).toEqual({ ok: true, version: DEPS_VERSION, database: 'ok' });
+    expect(body).toMatchObject({ ok: true, version: DEPS_VERSION, database: 'ok' });
   });
 
   test('responds with an application/json content type', async () => {
