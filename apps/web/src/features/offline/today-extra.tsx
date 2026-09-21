@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { ErrorState } from '../../components/ui/error-state';
 import { Skeleton } from '../../components/ui/skeleton';
+import { readLastPlayerId } from '../../bootstrap';
 import { authClient } from '../../lib/auth';
 import { DEFAULT_LOCALE, formatNumber, toLocale } from '../../lib/i18n';
 import { describeProblem } from '../../lib/problem';
@@ -41,8 +42,10 @@ import { TODAY_QUERY_KEY } from '../train/events-client';
  *  - Once available there is no re-download button: the store keeps a stored session with the same id untouched, so a second
  *    download could not change anything.
  *  - The player id comes from the auth session (`authClient.useSession`). The device store and the outbox are keyed by it, and
- *    it is not in the ['today'] cache. A cold start OFFLINE has no auth session to read, so the player is "unknown" there until
- *    something persists it. CONTRACT GAP for the app wiring: expose the last signed-in player id without the network.
+ *    it is not in the ['today'] cache. A cold start OFFLINE has no auth session to read, so (fc-mol-eay.14) the slot component
+ *    falls back to the id of the last player of this device, `readLastPlayerId()` (bootstrap.ts, fc-mol-eay.12): a live session
+ *    id always wins; with neither the player is "unknown"/"checking" as before. The fallback also applies while the session read
+ *    is still pending (offline it may never answer), which changes nothing when a live id arrives: it then wins.
  *  - CONTRACT GAP: `downloadToday` sends no `X-Timezone` (the today screen does), so near midnight the server's "today" for the
  *    download can differ from the screen's; then the stored session's date is not the screen's date and it reads as not
  *    downloaded. Fix in the store (send the device's zone).
@@ -265,8 +268,11 @@ export function OfflineDownload({
   );
 }
 
-/** The slot component: the auth session supplies the player, everything else is the device's own store and outbox. */
+/**
+ * The slot component: the auth session supplies the player (else the last player of this device, read at every render: the
+ * key is cleared on sign-out), everything else is the device's own store and outbox.
+ */
 export default function TodayExtra() {
   const session = authClient.useSession();
-  return <OfflineDownload playerId={session.data?.user.id} playerPending={session.isPending} />;
+  return <OfflineDownload playerId={session.data?.user.id ?? readLastPlayerId()} playerPending={session.isPending} />;
 }
