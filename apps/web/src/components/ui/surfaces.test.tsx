@@ -136,12 +136,14 @@ describe('Card', () => {
 });
 
 describe('Tag', () => {
-  test.each(tones)('renders its label for the %s tone', (tone) => {
-    render(<Tag tone={tone}>{`label-${tone}`}</Tag>);
-    const tag = screen.getByText(`label-${tone}`);
-    expect(tag.textContent).toContain(`label-${tone}`);
-    expect(tag.getAttribute('data-tone')).toBe(tone);
-  });
+  for (const tone of tones) {
+    test(`renders its label for the ${tone} tone`, () => {
+      render(<Tag tone={tone}>{`label-${tone}`}</Tag>);
+      const tag = screen.getByText(`label-${tone}`);
+      expect(tag.textContent).toContain(`label-${tone}`);
+      expect(tag.getAttribute('data-tone')).toBe(tone);
+    });
+  }
 
   test('every tone is a pill with a 12px bold label', () => {
     for (const tone of tones) {
