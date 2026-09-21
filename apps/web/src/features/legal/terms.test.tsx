@@ -64,7 +64,7 @@ const STEMS: Record<Locale, Partial<Record<SectionId, string[]>>> = {
   kk: {
     free: ['тегін'],
     reuse: ['attribution', 'share-alike'],
-    contributing: ['авторлық', 'құқық'],
+    contributing: ['авторлы', 'құқ'],
     communityDraft: ['community draft', 'қауымдастық жобасы', 'академия'],
     ownRisk: ['жауапкершілі', 'жылын', 'жол'],
     children: ['ата-ана'],
