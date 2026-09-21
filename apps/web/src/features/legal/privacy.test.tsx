@@ -57,6 +57,7 @@ const CLAIMS: Record<
   {
     title: string;
     pending: RegExp;
+    aiProvider: RegExp;
     videoStaysOnDevice: RegExp;
     stillFramesOnly: RegExp;
     noAds: RegExp;
@@ -69,6 +70,7 @@ const CLAIMS: Record<
   en: {
     title: 'Privacy policy',
     pending: /pending legal review/i,
+    aiProvider: /AI provider/,
     videoStaysOnDevice: /never leaves your phone/i,
     stillFramesOnly: /still pictures/i,
     noAds: /no ads/i,
@@ -80,6 +82,7 @@ const CLAIMS: Record<
   ru: {
     title: 'Политика конфиденциальности',
     pending: /юридической проверки/i,
+    aiProvider: /поставщику ИИ/,
     videoStaysOnDevice: /не покидает ваш телефон/i,
     stillFramesOnly: /стоп-кадры/i,
     noAds: /рекламы/i,
@@ -91,6 +94,7 @@ const CLAIMS: Record<
   kk: {
     title: 'Құпиялылық саясаты',
     pending: /заңгерлік тексеру/i,
+    aiProvider: /жасанды интеллект \(ЖИ\) провайдеріне/,
     videoStaysOnDevice: /телефоннан шықпайды/i,
     stillFramesOnly: /кадр/i,
     noAds: /жарнама/i,
@@ -157,7 +161,7 @@ describe('privacy.messages.ts', () => {
 
   test('page-level strings exist in all three locales', () => {
     for (const locale of LOCALES) {
-      for (const key of ['eyebrow', 'title', 'lead', 'status.label', 'status.note', 'contact.label']) {
+      for (const key of ['eyebrow', 'title', 'lead', 'status.label', 'status.note', 'contact.guardians', 'contact.takedown']) {
         expect(typeof valueAt(messages[locale], key)).toBe('string');
       }
     }
@@ -206,7 +210,7 @@ describe.each([...LOCALES])('locale %s', (locale) => {
     const video = screen.getByRole('region', { name: valueAt(messages[locale], 'sections.video.title') as string });
     expect(video.textContent).toMatch(claims.videoStaysOnDevice);
     expect(video.textContent).toMatch(claims.stillFramesOnly);
-    expect(video.textContent).toContain('AI');
+    expect(video.textContent).toMatch(claims.aiProvider);
   });
 
   test('says nothing is used for advertising and there is no third-party analytics', () => {
@@ -272,7 +276,9 @@ describe('contact address', () => {
     const { container } = renderPage(locale);
     expect(mailtoLinks(container)).toHaveLength(0);
     expect(container.textContent).not.toContain('@');
-    expect(container.textContent).not.toContain(valueAt(messages[locale], 'contact.label') as string);
+    for (const key of ['contact.guardians', 'contact.takedown']) {
+      expect(container.textContent).not.toContain(valueAt(messages[locale], key) as string);
+    }
   });
 
   test.each(['', '   ', 'not-an-email', 'two words@example.org', 'a@b@c'])('a blank or malformed value (%p) hides it too', (value) => {
