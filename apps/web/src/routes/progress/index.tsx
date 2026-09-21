@@ -39,8 +39,8 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * - Percentage. `changePct` is signed so that a positive number is ALWAYS an improvement, also for a lower-is-better test.
  *   It is shown rounded to one decimal, with a real minus sign, an icon and a written phrase, never colour alone; a fall is
  *   "lower than last time" in a neutral tone, never red, never a failure.
- * - Links, not router Links. START TRAINING and Retest now are plain anchors to TRAIN_PATH / RETEST_PATH: those routes belong
- *   to other beads and are not in the route tree yet, so a typed <Link> could not compile. One constant each to repoint.
+ * - Links, not router Links. START TRAINING and Retest now are plain anchors to TRAIN_PATH / retestPath(slug): those routes belong
+ *   to other beads and are not in the route tree yet, so a typed <Link> could not compile. One constant / builder each to repoint.
  * - Retries. The query does not retry by itself: Try again is the way out, so a failure is never a silent 7-second wait.
  * - Track names. Journey.tree carries only the track SLUG (no localised name, and a second call for it would break the
  *   1-call budget), so SkillTree shows its humanised slug.
@@ -48,8 +48,8 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
 
 /** Where START TRAINING leads (the landing page's START TRAINING goes to the same place). */
 const TRAIN_PATH = '/train';
-/** Where Retest now leads. There is no dedicated retest route yet; the training area is where tests are taken. */
-const RETEST_PATH = '/train';
+/** Where Retest now leads for one test: the retest screen /progress/retest/:testSlug. The slug is URL-encoded. */
+export const retestPath = (testSlug: string): string => `/progress/retest/${encodeURIComponent(testSlug)}`;
 
 /** Copy of MILESTONE_KEYS in apps/api/src/player/milestones.ts, in the order upcoming ones are listed. */
 const MILESTONE_KEYS = ['FIRST_SESSION', 'TEN_TRAINING_DAYS', 'THOUSAND_TOUCHES', 'WEAK_FOOT_LEVEL_2', 'FIVE_HOURS_TRAINED', 'FIRST_RETEST'] as const;
@@ -239,7 +239,7 @@ function TestCard({ test, due, locale }: { test: JourneyTest; due: boolean; loca
             <div className="flex flex-col items-start gap-2">
               <p className="m-0 font-bold">{t('tests.retestTitle')}</p>
               <p className="m-0">{t('tests.retestHint')}</p>
-              <a href={RETEST_PATH} className={LINK_SECONDARY}>
+              <a href={retestPath(test.testSlug)} className={LINK_SECONDARY}>
                 {t('tests.retestAction')}
                 <span className="sr-only">: {test.name}</span>
               </a>
