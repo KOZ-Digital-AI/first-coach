@@ -20,7 +20,7 @@ if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
-const { act, cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
+const { act, cleanup, fireEvent, render, screen, waitFor, within } = await import('@testing-library/react');
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
@@ -151,6 +151,8 @@ type Setup = {
   pendingCount?: (playerId: string) => Promise<number>;
   /** Makes the store's download reject with this instead of calling the server. */
   failWith?: Error;
+  /** Milliseconds between timed re-reads of the pending count. Default 0 (timer off). */
+  refreshMs?: number;
 };
 
 function mount(setup: Setup = {}) {
@@ -182,7 +184,7 @@ function mount(setup: Setup = {}) {
     playerPending: setup.playerPending ?? false,
     store,
     pendingCount,
-    refreshMs: 0,
+    refreshMs: setup.refreshMs ?? 0,
   };
   const view = render(
     <QueryClientProvider client={queryClient}>
@@ -195,6 +197,8 @@ function mount(setup: Setup = {}) {
 }
 
 const DOWNLOAD = "Download today's session";
+/** The pending-sync line's text, or null. Text (not the element) so a failing poll inside waitFor stays cheap to report. */
+const syncLine = () => screen.queryByText(/will sync/)?.textContent ?? null;
 const downloadButton = () => screen.queryByRole('button', { name: DOWNLOAD });
 
 // --- tests ---------------------------------------------------------------------------------------------------------------
@@ -245,6 +249,19 @@ describe('downloading', () => {
     expect(calls.length).toBe(1);
 
     await act(async () => pending.resolve(json(todaySession())));
+  });
+
+  test('two taps in the same tick (before the button can re-render as disabled) send one request', async () => {
+    const pending = deferred<Response>();
+    const { calls } = mount({ today: () => pending.promise });
+    const button = screen.getByRole('button', { name: DOWNLOAD });
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    await waitFor(() => expect(calls.length).toBe(1));
+    await act(async () => pending.resolve(json(todaySession())));
+    expect(calls.length).toBe(1);
   });
 
   test('idle -> downloading -> available: the badge appears, the button goes, the session is on the device', async () => {
@@ -404,7 +421,38 @@ describe('pending sync count', () => {
     expect((await screen.findByText(/will sync/)).textContent).toContain('2');
     waiting = 0;
     await goOnline();
-    await waitFor(() => expect(screen.queryByText(/will sync/)).toBeNull());
+    await waitFor(() => expect(syncLine()).toBeNull());
+  });
+
+  test('is read again on a timer, because the flush that empties the outbox happens elsewhere', async () => {
+    let waiting = 2;
+    mount({ stored: todaySession(), pendingCount: async () => waiting, refreshMs: 20 });
+    expect((await screen.findByText(/will sync/)).textContent).toContain('2');
+    waiting = 5;
+    await waitFor(() => expect(screen.getByText(/will sync/).textContent).toContain('5'));
+    waiting = 0;
+    await waitFor(() => expect(syncLine()).toBeNull());
+  });
+
+  test('is read again when the tab becomes visible', async () => {
+    let waiting = 2;
+    mount({ stored: todaySession(), pendingCount: async () => waiting });
+    await screen.findByText(/will sync/);
+    waiting = 0;
+    await act(async () => void document.dispatchEvent(new Event('visibilitychange')));
+    await waitFor(() => expect(syncLine()).toBeNull());
+  });
+
+  test('a count that stops being readable is no longer shown (it is not left standing as if current)', async () => {
+    let readable = true;
+    mount({
+      stored: todaySession(),
+      pendingCount: async () => (readable ? 3 : Promise.reject(new Error('outbox unavailable'))),
+    });
+    await screen.findByText(/will sync/);
+    readable = false;
+    await goOnline();
+    await waitFor(() => expect(syncLine()).toBeNull());
   });
 
   test('a count that cannot be read is not shown, and nothing crashes', async () => {
@@ -419,6 +467,7 @@ describe('who is training', () => {
   test('while the player is still being identified: a status line, no download button', () => {
     mount({ playerId: undefined, playerPending: true });
     expect(within(screen.getByRole('status')).getByText('Checking this device…')).toBeTruthy();
+    expect(screen.queryByText(/check what is saved on this device/i)).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
   });
 
