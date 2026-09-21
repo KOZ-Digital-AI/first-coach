@@ -100,11 +100,12 @@ function scratchDir(name: string, seventh: 'real' | 'stand-in' | 'none', with008
 }
 
 /** A migrated in-memory database opened like production (foreign_keys ON). */
-function migrated(which: 'all' | 'seven' | 'after-006' = 'all'): Database {
+function migrated(which: 'all' | 'seven' | 'eight' | 'after-006' = 'all'): Database {
   const db = openDatabase(':memory:');
   opened.push(db);
   if (which === 'all') migrate(db);
   else if (which === 'seven') migrate(db, scratchDir('seven', 'real', false));
+  else if (which === 'eight') migrate(db, scratchDir('eight', 'real', true));
   else migrate(db, scratchDir('after-006', 'stand-in', true));
   return db;
 }
@@ -254,8 +255,8 @@ describe('008_ai_calls: applying', () => {
   });
 
   test('creates ai_calls and leaves every table of 001-007 exactly as it was', () => {
-    const before = migrated('seven');
-    const after = migrated('all');
+    const before = migrated('seven'); // 001-007 only
+    const after = migrated('eight'); // 001-008 only, not every migration: a later migration must not break this test
     const added = tableNames(after).filter((t) => !tableNames(before).includes(t));
     expect(added).toEqual(['ai_calls']);
     for (const table of tableNames(before)) expect(createSql(after, table), table).toBe(createSql(before, table));
