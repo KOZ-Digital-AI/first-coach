@@ -9,7 +9,7 @@ import {
   Rubric,
   VideoAnalysis,
 } from '@api-types/video';
-import { dehydrate, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { dehydrate, focusManager, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, i18n as appI18n, LOCALES, toLocale } from '../../lib/i18n';
@@ -316,6 +316,7 @@ afterEach(() => {
   globalThis.fetch = realFetch;
   // React Query listens to window 'offline' (the offline tests fire it) and would keep every later query paused.
   onlineManager.setOnline(true);
+  focusManager.setFocused(undefined);
 });
 
 // --- rendering ----------------------------------------------------------------------------------------------------------
@@ -592,9 +593,27 @@ describe('the consent gate', () => {
     expect(await screen.findByText(RUBRIC.recordingTips[0] as string)).toBeTruthy();
   });
 
-  test('the server refusing the analysis with "consent required" sends the player back to the gate (nothing is retried)', async () => {
+  // CHANGED by the cold review of fc-mol-8nt.9 (send-time consent re-check). This test used to revoke the consent before Send
+  // and expect `analyse` to be called ONCE (the server's 403 being the only enforcement): it pinned the defect. The new
+  // expectation is that nothing is sent at all and the gate is shown; the server's 403 path has its own test below.
+  test('consent revoked (another tab) after the review: Send sends NOTHING, the gate is shown and the pictures are dropped', async () => {
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toReview(view);
+    consentsHeld = DEFAULT_CONSENTS;
+    await view.user.click(button('Send for analysis'));
+    await heading('Before you start');
+    expect(world.analyse).not.toHaveBeenCalled();
+    expect(callsTo('/api/player/video-analyses', 'POST')).toHaveLength(0);
+    expect(hasRole('button', 'Send for analysis')).toBe(false);
+    expect(screen.queryAllByRole('img').length).toBe(0);
+    expect(hasRole('button', 'Record with the camera')).toBe(false);
+  });
+
+  test('the server refusing an analysis with "consent required" (revoked just after the fresh read) also returns to the gate', async () => {
     const world = makeWorld({
       analyse: mock(async () => {
+        consentsHeld = DEFAULT_CONSENTS;
         throw new ApiProblem({
           kind: 'forbidden',
           status: 403,
@@ -604,11 +623,125 @@ describe('the consent gate', () => {
     });
     const view = renderVideo(world);
     await toReview(view);
-    consentsHeld = DEFAULT_CONSENTS; // the player revoked it meanwhile (another tab)
     await view.user.click(button('Send for analysis'));
     await heading('Before you start');
     expect(hasRole('button', 'Record with the camera')).toBe(false);
     expect(world.analyse).toHaveBeenCalledTimes(1);
+  });
+});
+
+// --- the consent is re-checked before anything is sent -----------------------------------------------------------------------
+
+describe('the consent is re-checked before anything is sent', () => {
+  const refocus = () =>
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+
+  test('revoking in another tab and coming back to this one closes the review at once: the gate is shown, nothing is sent', async () => {
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toReview(view);
+    consentsHeld = DEFAULT_CONSENTS;
+    refocus(); // the consents refetch on window focus and now say "off"
+    await heading('Before you start');
+    expect(hasRole('button', 'Send for analysis')).toBe(false);
+    expect(screen.queryAllByRole('img').length).toBe(0);
+    expect(world.analyse).not.toHaveBeenCalled();
+    expect(callsTo('/api/player/video-analyses', 'POST')).toHaveLength(0);
+  });
+
+  test('revoking while the request is out aborts it and shows the gate, not a result', async () => {
+    const world = makeWorld({
+      analyse: mock(
+        (_request: unknown, signal: AbortSignal) =>
+          new Promise((_, reject) => {
+            signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+          }),
+      ),
+    });
+    const view = renderVideo(world);
+    await toReview(view);
+    await view.user.click(button('Send for analysis'));
+    await screen.findByRole('status', { name: 'Sending and waiting for feedback' });
+    await waitFor(() => expect(world.analyse).toHaveBeenCalledTimes(1));
+    consentsHeld = DEFAULT_CONSENTS;
+    refocus();
+    await heading('Before you start');
+    expect((world.analyse.mock.calls[0]?.[1] as AbortSignal).aborted).toBe(true);
+    expect(screen.queryByRole('alert') === null).toBe(true);
+    expect(hasRole('heading', 'Your feedback')).toBe(false);
+  });
+
+  test('the consents are read fresh right before `analyse` (a cached "granted" does not authorise a send), and the send goes ahead once', async () => {
+    let readsWhenSent = -1;
+    const world = makeWorld({
+      analyse: mock(async () => {
+        readsWhenSent = callsTo('/api/player/consents').length;
+        return ANALYSIS;
+      }),
+    });
+    const view = renderVideo(world);
+    await toReview(view);
+    const readsBefore = callsTo('/api/player/consents').length;
+    await view.user.click(button('Send for analysis'));
+    await heading('Your feedback');
+    expect(world.analyse).toHaveBeenCalledTimes(1);
+    expect(readsWhenSent).toBeGreaterThan(readsBefore);
+  });
+
+  test('a fresh read that fails sends nothing and shows the error; Try again reads again and then sends once', async () => {
+    let reads = 0;
+    const world = makeWorld();
+    const view = renderVideo(world);
+    stubNetwork({ consents: () => (++reads === 2 ? problem(500) : json(GRANTED_WITH_GUARDIAN)) });
+    await toReview(view);
+    expect(reads).toBe(1);
+    await view.user.click(button('Send for analysis'));
+    expect(text(await screen.findByRole('alert'))).toContain('We could not get your feedback');
+    expect(world.analyse).not.toHaveBeenCalled();
+    await view.user.click(button('Try again'));
+    await heading('Your feedback');
+    expect(reads).toBe(3);
+    expect(world.analyse).toHaveBeenCalledTimes(1);
+  });
+
+  test('under 13 whose guardian confirmation is gone at send time: back to the guardian gate, nothing is sent', async () => {
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toReview(view);
+    consentsHeld = GRANTED_ALONE;
+    stubNetwork({ me: () => json(meOfAge(9)) });
+    await view.user.click(button('Send for analysis'));
+    expect(await screen.findByText('A parent or guardian must say yes')).toBeTruthy();
+    expect(world.analyse).not.toHaveBeenCalled();
+    expect(hasRole('button', 'Send for analysis')).toBe(false);
+  });
+
+  test('13 or older with consent and no guardian is sent, after the age has been read fresh too', async () => {
+    consentsHeld = GRANTED_ALONE;
+    stubNetwork({ me: () => json(meOfAge(14)) });
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toReview(view);
+    const agesBefore = callsTo('/api/player/me').length;
+    await view.user.click(button('Send for analysis'));
+    await heading('Your feedback');
+    expect(world.analyse).toHaveBeenCalledTimes(1);
+    expect(callsTo('/api/player/me').length).toBeGreaterThan(agesBefore);
+  });
+
+  test('an age that cannot be read at send time sends nothing (never a guess)', async () => {
+    consentsHeld = GRANTED_ALONE;
+    let reads = 0;
+    stubNetwork({ me: () => (++reads === 1 ? json(meOfAge(14)) : problem(500)) });
+    const world = makeWorld();
+    const view = renderVideo(world);
+    await toReview(view);
+    await view.user.click(button('Send for analysis'));
+    expect(text(await screen.findByRole('alert'))).toContain('We could not get your feedback');
+    expect(world.analyse).not.toHaveBeenCalled();
   });
 });
 
