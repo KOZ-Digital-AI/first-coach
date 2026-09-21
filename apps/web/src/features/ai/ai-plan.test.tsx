@@ -24,11 +24,15 @@ const { default: userEvent } = await import('@testing-library/user-event');
  * (features/ai/today-extra.tsx) shows "Personalise with AI" with an optional short note field; while running it shows progress
  * and keeps the current session usable; on planner 'ai' the session updates with an "AI-personalised from approved drills" tag
  * and a reason under each drill; on planner 'rules' it shows the quiet note "AI is unavailable — here is your standard plan"
- * (no error toast); hidden when offline or when the setting disables it; loading, empty, error, disabled and success states;
+ * (no error toast); hidden when offline or when the setting disables it (zo6.12: the /health aiPlannerEnabled flag); loading, empty, error, disabled and success states;
  * the mutation button is disabled while a request is in flight; strings in kk, ru and en.
  *
  * What is real: the component, the typed client (`createApi`, with the real Zod-parsing of the shared contract), the React
  * Query cache and the i18n bundle. What is replaced: `fetch` (the fake server below). Fixtures are test data only.
+ *
+ * fc-mol-zo6.12 (gate j8 U2/U5) changes two criteria of the above: with no key on the server (/health aiAvailable false) the
+ * button STAYS and answers with the standard plan and the quiet note; the setting that disables the AI is read from /health
+ * `aiPlannerEnabled` (hidden only when it is exactly false; absent means enabled).
  */
 
 const TODAY_DATE = '2026-09-21';
@@ -521,22 +525,121 @@ describe('offline', () => {
   });
 });
 
-describe('the setting that disables the AI', () => {
-  test('the server saying aiAvailable is false (no key) hides the control', async () => {
+describe('no key on the server (/health aiAvailable false): the button stays and the answer is the standard plan', () => {
+  // fc-mol-zo6.12 (gate j8 U2). This describe REPLACES the zo6.9 test "the server saying aiAvailable is false (no key) hides the
+  // control": the criteria say the same button stays and returns the deterministic session with the quiet note.
+  const NO_KEY_REASON = 'The AI coach is not set up on this server.';
+  const noKey = () => json({ ...session(), fallback: { code: 'no_key' } });
+
+  test('the control is still there once /health has answered aiAvailable false: button, note field and heading', async () => {
     const { calls } = mount({ health: () => health({ aiAvailable: false }) });
+    await waitFor(() => expect(calls.some((call) => call.url.startsWith('/health'))).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect((control() as HTMLButtonElement).disabled).toBe(false);
+    expect(noteField()).not.toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: NAME })).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  test('pressing it sends the ai-plan request and shows the standard plan with the quiet no_key note, no error', async () => {
+    const { user, plans, calls, queryClient } = mount({ health: () => health({ aiAvailable: false }), plan: noKey });
+    await waitFor(() => expect(calls.some((call) => call.url.startsWith('/health'))).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await user.click(control() as HTMLButtonElement);
+
+    const status = await screen.findByRole('status');
+    expect(within(status).getByText(STANDARD)).toBeTruthy();
+    expect(within(status).getByText(NO_KEY_REASON)).toBeTruthy();
+    expect(status.getAttribute('data-tone')).toBe('info');
+    expect(status.querySelector('svg')).not.toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(plans().length).toBe(1);
+    expect(plans()[0]?.method).toBe('POST');
+    // The deterministic session (planner rules) is what stays on the page, without the fallback key.
+    const cached = cachedToday(queryClient) as { planner: string; items: unknown[] };
+    expect(cached.planner).toBe('rules');
+    expect('fallback' in cached).toBe(false);
+    expect(cached.items.length).toBe(2);
+    // Nothing to retry: the button goes, the note stays.
+    expect(control()).toBeNull();
+  });
+
+  test('the press does not wait for /health: the request goes out even while the availability check is still pending', async () => {
+    const pending = deferred<Response>();
+    const { user, plans } = mount({ health: () => pending.promise, plan: noKey });
+    await user.click(control() as HTMLButtonElement);
+    expect(await screen.findByText(STANDARD)).toBeTruthy();
+    expect(plans().length).toBe(1);
+    await act(async () => pending.resolve(health({ aiAvailable: false })));
+  });
+
+  test.each([
+    ['kk', 'ЖИ арқылы жекелендіру', 'ЖИ қолжетімсіз — міне, әдеттегі жоспарыңыз.', 'ЖИ жаттықтырушы бұл серверде қосылмаған.'],
+    ['ru', 'Персонализировать с ИИ', 'ИИ недоступен — вот ваш обычный план.', 'ИИ-тренер не настроен на этом сервере.'],
+    ['en', NAME, STANDARD, NO_KEY_REASON],
+  ] as const)('%s: the button stays with aiAvailable false and the no_key note is worded in that language', async (locale, action, standard, reason) => {
+    const { user, calls } = mount({ locale, health: () => health({ aiAvailable: false }), plan: noKey });
+    await waitFor(() => expect(calls.some((call) => call.url.startsWith('/health'))).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await user.click(control(action) as HTMLButtonElement);
+    expect(await screen.findByText(standard)).toBeTruthy();
+    expect(screen.getByText(reason)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/undefined|fallback\.|reasons\./);
+  });
+});
+
+describe('the admin setting that disables the AI (/health aiPlannerEnabled)', () => {
+  // fc-mol-zo6.12 (gate j8 U5): only an aiPlannerEnabled that is EXACTLY false hides the control; absent means enabled.
+  test('aiPlannerEnabled false hides the control entirely: no button, no note field, no heading', async () => {
+    const { calls } = mount({ health: () => health({ aiPlannerEnabled: false }) });
     await waitFor(() => expect(control()).toBeNull());
     expect(noteField()).toBeNull();
+    expect(screen.queryByRole('heading')).toBeNull();
     expect(calls.some((call) => call.url.startsWith('/health'))).toBe(true);
   });
 
-  test('aiAvailable true, a missing field (older server) or a failed check all keep the control', async () => {
-    for (const answer of [() => health({ aiAvailable: true }), () => json({ ok: true, version: '0.1.0', database: 'ok' }), () => serverError()]) {
+  test('aiPlannerEnabled false hides it whatever aiAvailable says (a key set, or none)', async () => {
+    for (const aiAvailable of [true, false]) {
+      mount({ health: () => health({ aiAvailable, aiPlannerEnabled: false }) });
+      await waitFor(() => expect(control()).toBeNull());
+      expect(noteField()).toBeNull();
+      cleanup();
+    }
+  });
+
+  test('aiPlannerEnabled true, absent (older server), not exactly false (null, "false", 0) or a failed check all keep the control', async () => {
+    const answers = [
+      () => health({ aiPlannerEnabled: true }),
+      () => health({ aiPlannerEnabled: true, aiAvailable: false }),
+      () => json({ ok: true, version: '0.1.0', database: 'ok' }),
+      () => health({ aiPlannerEnabled: null }),
+      () => health({ aiPlannerEnabled: 'false' }),
+      () => health({ aiPlannerEnabled: 0 }),
+      () => serverError(),
+    ];
+    for (const answer of answers) {
       const { calls } = mount({ health: answer });
       await waitFor(() => expect(calls.some((call) => call.url.startsWith('/health'))).toBe(true));
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(control()).not.toBeNull();
+      expect(noteField()).not.toBeNull();
       cleanup();
     }
+  });
+
+  test('a session that is already AI-planned is content, not a control: it stays even when the setting is off', async () => {
+    mount({ cached: aiSession(), health: () => health({ aiPlannerEnabled: false }) });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByText('AI-personalised from approved drills')).toBeTruthy();
+    expect(screen.getByText(REASON_3)).toBeTruthy();
+  });
+
+  test('offline is unchanged with the new field: hidden and no request, whatever the setting says', async () => {
+    onLine = false;
+    const { calls } = mount({ health: () => health({ aiPlannerEnabled: true }) });
+    expect(control()).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(calls).toEqual([]);
   });
 });
 
