@@ -3,8 +3,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { QueryClient } from '@tanstack/react-query';
 import config from '../vite.config';
-import { createAppQueryClient, watchAuthSession, wireAppPlayerSession } from './bootstrap';
+import { createAppQueryClient, readExistingSession, watchAuthSession, wireAppPlayerSession } from './bootstrap';
 import type { PlayerSessionWiringDeps } from './bootstrap';
+import { createPlayerAuthClient } from './lib/auth';
 import { PERSIST_MAX_AGE_MS, resolveBuildVersion } from './lib/query-persist';
 
 // fc-mol-eay.9: the offline pieces (session events through the outbox, the persisted query cache) were built but nothing called
@@ -19,6 +20,9 @@ import { PERSIST_MAX_AGE_MS, resolveBuildVersion } from './lib/query-persist';
 //   next wiring the events player is `undefined`.
 // - "sign-out stops sync": the events player becomes undefined, the sync's stop function is called, the persister is
 //   unsubscribed, and no new sync is started until an id is known again.
+// - fc-mol-eay.10: the wiring only READS the existing session (a getSession read + the session atom); it never signs anybody in.
+//   A fresh visitor (landing, /legal/*) therefore gets no session and no wiring at start-up; a session a SCREEN creates later
+//   (train / roadmap / onboarding) reaches the wiring through the atom, exactly once.
 // - a player switch (id -> another id, or -> signed out) also empties the in-memory query cache, otherwise the previous
 //   player's ['today'] would be saved into the next player's persisted record. The FIRST wiring keeps the cache as it is.
 
@@ -31,27 +35,28 @@ interface Harness {
   /** What the session-change signal delivers. */
   emit(playerId: string | undefined): void;
   listening(): number;
-  resolveEnsure(id: string): void;
-  rejectEnsure(error: unknown): void;
+  /** The session read answers with this id (`undefined`: it answers "no session"). */
+  resolveRead(id: string | undefined): void;
+  rejectRead(error: unknown): void;
 }
 
-function harness(options: { ensure?: 'pending' | string } = {}): Harness {
+function harness(options: { read?: 'pending' | 'none' | string } = {}): Harness {
   const calls: string[] = [];
   const persisted: Harness['persisted'] = [];
   const listeners = new Set<(playerId: string | undefined) => void>();
-  let resolveEnsure: (session: { user: { id: string } }) => void = () => {};
-  let rejectEnsure: (error: unknown) => void = () => {};
-  const ensured =
-    options.ensure === undefined || options.ensure === 'pending'
-      ? new Promise<{ user: { id: string } }>((resolve, reject) => {
-          resolveEnsure = resolve;
-          rejectEnsure = reject;
+  let resolveRead: (session: { user: { id: string } } | null) => void = () => {};
+  let rejectRead: (error: unknown) => void = () => {};
+  const read =
+    options.read === undefined || options.read === 'pending'
+      ? new Promise<{ user: { id: string } } | null>((resolve, reject) => {
+          resolveRead = resolve;
+          rejectRead = reject;
         })
-      : Promise.resolve({ user: { id: options.ensure } });
-  ensured.catch(() => {});
+      : Promise.resolve(options.read === 'none' ? null : { user: { id: options.read } });
+  read.catch(() => {});
   let syncs = 0;
   const deps: PlayerSessionWiringDeps = {
-    ensureSession: () => ensured,
+    readSession: () => read,
     watchSession(listener) {
       listeners.add(listener);
       return () => void listeners.delete(listener);
@@ -80,8 +85,8 @@ function harness(options: { ensure?: 'pending' | string } = {}): Harness {
       for (const listener of [...listeners]) listener(playerId);
     },
     listening: () => listeners.size,
-    resolveEnsure: (id) => resolveEnsure({ user: { id } }),
-    rejectEnsure: (error) => rejectEnsure(error),
+    resolveRead: (id) => resolveRead(id === undefined ? null : { user: { id } }),
+    rejectRead: (error) => rejectRead(error),
   };
 }
 
@@ -95,15 +100,15 @@ describe('createAppQueryClient: persisted queries outlive the restore', () => {
 
 describe('wireAppPlayerSession', () => {
   test('wires nothing before the session id is known', async () => {
-    const h = harness({ ensure: 'pending' });
+    const h = harness({ read: 'pending' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     expect(h.calls).toEqual([]);
     expect(h.persisted).toEqual([]);
   });
 
-  test('once ensureSession resolves: the events player is configured, sync started and the cache persisted for that id', async () => {
-    const h = harness({ ensure: 'p1' });
+  test('once readSession resolves: the events player is configured, sync started and the cache persisted for that id', async () => {
+    const h = harness({ read: 'p1' });
     const queryClient = new QueryClient();
     wireAppPlayerSession(queryClient, h.deps);
     await flush();
@@ -115,7 +120,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('the player is configured BEFORE the sync starts (the first flush must already know its player)', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     expect(h.calls.indexOf('player:p1')).toBeGreaterThanOrEqual(0);
@@ -123,14 +128,14 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('the persist buster is what resolveBuildVersion() returns', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     expect(h.persisted[0]?.buildVersion).toBe('build-test-1');
   });
 
   test('the default buster is the real resolveBuildVersion() (no version other than the build one)', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     const rest: Partial<PlayerSessionWiringDeps> = { ...h.deps };
     delete rest.resolveBuildVersion;
     wireAppPlayerSession(new QueryClient(), rest);
@@ -139,7 +144,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('exactly once per session id: the same id reported again (the atom re-emits on refetch) wires nothing more', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     const before = [...h.calls];
@@ -151,7 +156,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('a different id re-wires: the old sync and persister stop first, then the new id is configured, synced and persisted', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     h.emit('p2');
@@ -161,7 +166,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('never a stale id: after the switch the last events player is the new id and only one sync is running', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     h.emit('p2');
@@ -178,7 +183,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('sign-out stops the sync, unsubscribes the persister and clears the events player; nothing is started', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     h.emit(undefined);
@@ -187,7 +192,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('sign-out twice in a row stops once (nothing is wired the second time)', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     h.emit(undefined);
@@ -197,7 +202,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('after sign-out the next session id is wired again', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     h.emit(undefined);
@@ -208,7 +213,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('a player switch empties the in-memory cache, so the previous player is never saved into the next one', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     const queryClient = new QueryClient();
     wireAppPlayerSession(queryClient, h.deps);
     await flush();
@@ -219,7 +224,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('the sign-out also empties the in-memory cache', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     const queryClient = new QueryClient();
     wireAppPlayerSession(queryClient, h.deps);
     await flush();
@@ -230,38 +235,38 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('the FIRST wiring keeps what the cache already holds (screens may have fetched while the session was being read)', async () => {
-    const h = harness({ ensure: 'pending' });
+    const h = harness({ read: 'pending' });
     const queryClient = new QueryClient();
     wireAppPlayerSession(queryClient, h.deps);
     queryClient.setQueryData(['today'], { id: 'early' });
-    h.resolveEnsure('p1');
+    h.resolveRead('p1');
     await flush();
     expect(queryClient.getQueryData<{ id: string }>(['today'])).toEqual({ id: 'early' });
   });
 
-  test('an ensureSession that resolves AFTER the signal already reported an id is ignored (never a stale id)', async () => {
-    const h = harness({ ensure: 'pending' });
+  test('a readSession that resolves AFTER the signal already reported an id is ignored (never a stale id)', async () => {
+    const h = harness({ read: 'pending' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     h.emit('p2');
-    h.resolveEnsure('p1');
+    h.resolveRead('p1');
     await flush();
     expect(h.calls.filter((call) => call.startsWith('player:'))).toEqual(['player:p2']);
     expect(h.persisted.map((entry) => entry.playerId)).toEqual(['p2']);
   });
 
-  test('a "no session yet" report before ensureSession resolves does not cancel the wiring of the resolved id', async () => {
-    const h = harness({ ensure: 'pending' });
+  test('a "no session yet" report before readSession resolves does not cancel the wiring of the resolved id', async () => {
+    const h = harness({ read: 'pending' });
     wireAppPlayerSession(new QueryClient(), h.deps);
     h.emit(undefined);
-    h.resolveEnsure('p1');
+    h.resolveRead('p1');
     await flush();
     expect(h.calls.filter((call) => call.startsWith('player:'))).toEqual(['player:p1']);
   });
 
-  test('an ensureSession failure (offline, server down) wires nothing and throws nothing; a later id from the signal still wires', async () => {
-    const h = harness({ ensure: 'pending' });
+  test('a readSession failure (offline, server down) wires nothing and throws nothing; a later id from the signal still wires', async () => {
+    const h = harness({ read: 'pending' });
     wireAppPlayerSession(new QueryClient(), h.deps);
-    h.rejectEnsure(new Error('offline'));
+    h.rejectRead(new Error('offline'));
     await flush();
     expect(h.calls).toEqual([]);
     h.emit('p1');
@@ -270,7 +275,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('a persister whose restore rejects does not become an unhandled rejection', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     const rejecting = new Promise<void>((_, reject) => reject(new Error('idb unavailable')));
     const deps: PlayerSessionWiringDeps = { ...h.deps, persistAppQueryClient: () => [() => {}, rejecting] };
     wireAppPlayerSession(new QueryClient(), deps);
@@ -280,7 +285,7 @@ describe('wireAppPlayerSession', () => {
   });
 
   test('the returned teardown stops the sync and persister and ignores later signals', async () => {
-    const h = harness({ ensure: 'p1' });
+    const h = harness({ read: 'p1' });
     const teardown = wireAppPlayerSession(new QueryClient(), h.deps);
     await flush();
     teardown();
@@ -292,13 +297,133 @@ describe('wireAppPlayerSession', () => {
     expect(h.calls).toEqual(before);
   });
 
-  test('the teardown before ensureSession resolves: the late id is never wired', async () => {
-    const h = harness({ ensure: 'pending' });
+  test('the teardown before readSession resolves: the late id is never wired', async () => {
+    const h = harness({ read: 'pending' });
     const teardown = wireAppPlayerSession(new QueryClient(), h.deps);
     teardown();
-    h.resolveEnsure('p1');
+    h.resolveRead('p1');
     await flush();
     expect(h.calls).toEqual([]);
+  });
+});
+
+describe('wireAppPlayerSession: an existing session only (fc-mol-eay.10)', () => {
+  test('a fresh visitor (the read finds no session): nothing is wired at start-up', async () => {
+    const h = harness({ read: 'none' });
+    wireAppPlayerSession(new QueryClient(), h.deps);
+    await flush();
+    expect(h.calls).toEqual([]);
+    expect(h.persisted).toEqual([]);
+    expect(h.listening()).toBe(1);
+  });
+
+  test('a session that a screen creates later reaches the wiring through the signal and is wired exactly once', async () => {
+    const h = harness({ read: 'none' });
+    wireAppPlayerSession(new QueryClient(), h.deps);
+    await flush();
+    h.emit('anon-1');
+    h.emit('anon-1');
+    await flush();
+    expect(h.calls).toEqual(['player:anon-1', 'persist:anon-1', 'start:1']);
+  });
+
+  test('a "no session" read that settles after the signal reported an id does not unwire it', async () => {
+    const h = harness({ read: 'pending' });
+    wireAppPlayerSession(new QueryClient(), h.deps);
+    h.emit('anon-1');
+    h.resolveRead(undefined);
+    await flush();
+    expect(h.calls).toEqual(['player:anon-1', 'persist:anon-1', 'start:1']);
+  });
+
+  test('bootstrap.ts never imports or calls the anonymous sign-in helpers of lib/auth', () => {
+    const source = readFileSync(join(import.meta.dir, 'bootstrap.ts'), 'utf8');
+    expect(source).not.toMatch(/ensurePlayerSession/);
+    expect(source).not.toMatch(/signIn/);
+  });
+});
+
+describe('wireAppPlayerSession with the real Better Auth client: a visitor without a session is never signed in', () => {
+  const ORIGIN = 'http://coach.test';
+
+  /** A fake server: get-session answers the current session (or null), sign-in/anonymous creates one. Records every request. */
+  function server() {
+    const requests: string[] = [];
+    let session: { session: { id: string }; user: { id: string; isAnonymous: boolean } } | null = null;
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = new Request(input, init);
+      const path = new URL(request.url).pathname;
+      requests.push(`${request.method} ${path}`);
+      if (path === '/api/auth/sign-in/anonymous') {
+        session = { session: { id: 's1' }, user: { id: 'anon-1', isAnonymous: true } };
+        return Response.json({ token: 't', user: session.user });
+      }
+      if (path === '/api/auth/get-session') return Response.json(session);
+      return new Response('not found', { status: 404 });
+    }) as typeof fetch;
+    return { requests, fetchImpl };
+  }
+
+  function wired() {
+    const s = server();
+    const client = createPlayerAuthClient({ baseURL: ORIGIN, fetch: s.fetchImpl });
+    const h = harness({ read: 'none' });
+    const deps: Partial<PlayerSessionWiringDeps> = {
+      ...h.deps,
+      readSession: () => readExistingSession(client),
+      watchSession: (listener) => watchAuthSession(client.$store.atoms.session, listener),
+    };
+    const teardown = wireAppPlayerSession(new QueryClient(), deps);
+    return { s, h, client, teardown };
+  }
+
+  const until = async (condition: () => boolean) => {
+    for (let i = 0; i < 100 && !condition(); i += 1) await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  };
+
+  test('start-up: only session READS reach the server, no sign-in request, nothing is wired', async () => {
+    const { s, h, teardown } = wired();
+    await until(() => s.requests.length > 0);
+    await flush();
+    expect(s.requests.length).toBeGreaterThan(0);
+    expect(s.requests.every((request) => request === 'GET /api/auth/get-session')).toBe(true);
+    expect(s.requests.some((request) => request.includes('sign-in'))).toBe(false);
+    expect(h.calls).toEqual([]);
+    teardown();
+  });
+
+  test('a screen signs in later (anonymous): the new session id is wired exactly once', async () => {
+    const { s, h, client, teardown } = wired();
+    await until(() => s.requests.length > 0);
+    await flush();
+    await client.signIn.anonymous();
+    await until(() => h.calls.length >= 3);
+    await flush();
+    expect(h.calls).toEqual(['player:anon-1', 'persist:anon-1', 'start:1']);
+    // the one sign-in is the screen's own; the wiring made none
+    expect(s.requests.filter((request) => request.includes('sign-in'))).toEqual(['POST /api/auth/sign-in/anonymous']);
+    teardown();
+  });
+});
+
+describe('readExistingSession: the session READ used at start-up', () => {
+  test('a session with a user id resolves { user: { id } }', async () => {
+    const session = await readExistingSession({ getSession: async () => ({ data: { user: { id: 'p1' } }, error: null }) });
+    expect(session).toEqual({ user: { id: 'p1' } });
+  });
+
+  test('no session (null data) resolves null', async () => {
+    expect(await readExistingSession({ getSession: async () => ({ data: null, error: null }) })).toBeNull();
+  });
+
+  test('a payload without a usable user id resolves null', async () => {
+    expect(await readExistingSession({ getSession: async () => ({ data: { user: {} }, error: null }) })).toBeNull();
+    expect(await readExistingSession({ getSession: async () => ({ data: { user: { id: '' } }, error: null }) })).toBeNull();
+  });
+
+  test('a failed read rejects (the wiring then waits for the signal); it is never turned into a sign-in', async () => {
+    await expect(readExistingSession({ getSession: async () => ({ data: null, error: { status: 500 } }) })).rejects.toBeDefined();
+    await expect(readExistingSession({ getSession: async () => Promise.reject(new TypeError('offline')) })).rejects.toBeDefined();
   });
 });
 
