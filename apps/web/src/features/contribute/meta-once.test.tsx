@@ -32,8 +32,9 @@ const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@test
  *   visit fetches again; a language change is a different query (the names come back localised) and fetches its own.
  * - The client here has the app's gcTime (PERSIST_MAX_AGE_MS, bootstrap.ts); with react-query's own gcTime of 0 (form.test.tsx)
  *   the query would be dropped at unmount and this bug could not show.
- * - "long staleTime": the tests move the clock a whole day ahead before the focus / reconnect events, so they fail whichever of
- *   staleTime or the refetchOn* flags is missing.
+ * - "long staleTime": the focus / reconnect test moves the clock a whole day ahead before the events, so it fails whichever of
+ *   staleTime or the refetchOn* flags is missing. A REMOUNT after the staleTime has run out is a new visit and may read again, so
+ *   no test asserts that a remount a day later is silent.
  */
 
 type Locale = (typeof LOCALES)[number];
@@ -293,18 +294,13 @@ describe('GET /api/contribute/meta happens once per visit', () => {
   });
 
   test('window focus, visibility and going offline then online do not read it again, even a day later', async () => {
-    const view = mount();
+    mount();
     await formButton();
     await focusAndReconnect();
     expect(metaCalls()).toHaveLength(1);
     setSystemTime(new Date(Date.now() + 24 * 60 * 60 * 1000));
     await focusAndReconnect();
     expect(formIsShown()).toBe(true);
-    expect(metaCalls()).toHaveLength(1);
-    view.show(rereading());
-    view.show(ready());
-    await formButton();
-    await tick();
     expect(metaCalls()).toHaveLength(1);
   });
 
