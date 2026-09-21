@@ -12,19 +12,16 @@ import {
   type Rubric,
   type RerecordReason,
   VIDEO_ANALYSIS_TIMEOUT_MS,
-  type VideoAnalysis,
 } from '@api-types/video';
 import { type QueryClient, type UseQueryResult, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { Camera, Check, CircleAlert, FileVideo, ShieldCheck, Square, X } from 'lucide-react';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
 import { EmptyState } from '../../components/ui/empty-state';
 import { ErrorState } from '../../components/ui/error-state';
 import { Skeleton } from '../../components/ui/skeleton';
-import { Tag } from '../../components/ui/tag';
 import { api } from '../../lib/api';
 // Also registers the i18n instance before the first render (see the convention in lib/i18n.ts).
 import { DEFAULT_LOCALE, formatNumber, toLocale } from '../../lib/i18n';
@@ -56,7 +53,14 @@ import { detectOnVideo, load as loadPoseModel, PoseError, type PoseVideo } from 
  * concurrently: the default is one api.post against the shared contract).
  *
  * Flow: skill pick -> consent gate -> tips (rubric) + record/choose -> on-device reading with a progress bar and Cancel ->
- * review (the pictures that will be sent) -> send -> result. Readings of the criteria where they are open, and gaps found:
+ * review (the pictures that will be sent) -> send -> the RESULT SCREEN /video/result/:id (routes/video/result.$id.tsx).
+ * Readings of the criteria where they are open, and gaps found:
+ *  - THE HAND-OVER (fc-mol-8nt.12). The answer is not rendered here: `handOver` drops everything this screen holds (the clip, the
+ *    camera, the pictures: the phase becomes a bare 'leaving' status) and THEN navigates. A finished analysis invalidates
+ *    ['video','analyses'] (the history the result screen reads it from) and goes to /video/result/<analysis.id>. A rerecord answer
+ *    (the server's, or the device's own "not seen well enough") has no stored analysis, hence no id: it goes to
+ *    /video/result/rerecord?rerecord=<reason>&skill=<the picked skill>, the search contract of the result screen. The analysis is
+ *    never put into the query cache from here. The navigation is a seam (`navigate`, default: the router) like the others.
  *  - THE PICK LIST. There is no endpoint that lists rubrics, so the five skills the seed has a rubric for are listed here, worded
  *    in the messages file. The rubric request is the truth: a skill without one (404) is an empty state.
  *  - THE CONSENT GATE comes after the pick and before the rubric, camera and model (nothing is requested or loaded before it opens).
@@ -82,7 +86,6 @@ import { detectOnVideo, load as loadPoseModel, PoseError, type PoseVideo } from 
  *    nothing is sent, the pictures are dropped and the gate is shown; a read that fails: nothing is sent and the error shows (Try
  *    again reads again). Coming back to a tab where the consent was revoked refetches the consents on focus, and a gate that is no
  *    longer open closes the review (and aborts a request that is out) by itself; Send is disabled meanwhile.
- *  - The recommended drills link to /commons/:slug with plain anchors (no router context is needed).
  */
 
 // --- constants ------------------------------------------------------------------------------------------------------------
@@ -107,6 +110,8 @@ const CONSENTS_KEY = ['consents'] as const;
 /** The privacy and plan screens' own key; only the age is read from it. */
 const ME_KEY = ['me'] as const;
 const ME_PATH = '/api/player/me';
+/** The history the result screen finds an analysis in (routes/video/result.$id.tsx owns the key); invalidated when one is added. */
+const ANALYSES_KEY = ['video', 'analyses'] as const;
 /** NOT on lib/query-persist's allow-list, on purpose: nothing of this screen is ever saved to the device. */
 const rubricKey = (skill: string, locale: string) => ['video', 'rubric', skill, locale] as const;
 
@@ -136,12 +141,21 @@ export interface Camera {
   open(): Promise<CameraSession>;
 }
 
+/** Where the result screen is: /video/result/$id, and for a rerecord answer its search (see routes/video/result.$id.tsx). */
+export interface ResultTarget {
+  /** The analysis id, or the literal 'rerecord' (a rerecord answer is not stored, so it has no id). */
+  id: string;
+  search?: { rerecord: RerecordReason; skill?: string };
+}
+
 export interface VideoDeps {
   pose?: { load(): Promise<void>; detectOnVideo(video: PoseVideo, fps?: number, onProgress?: (fraction: number) => void): Promise<PoseFrame[]> };
   loadClip?: (blob: Blob) => Promise<LoadedClip>;
   sampleKeyframes?: typeof sampleDomKeyframes;
   /** null = this device has no camera or no MediaRecorder. Absent = detect it. */
   camera?: Camera | null;
+  /** Goes to the result screen. Default: the router's navigate (a router that cannot be reached is a failed navigation). */
+  navigate?: (target: ResultTarget) => void | Promise<unknown>;
   /** POST /api/player/video-analyses. */
   analyse?: (request: CreateVideoAnalysisRequest, signal: AbortSignal) => Promise<CreateVideoAnalysisResponse>;
   online?: () => boolean;
@@ -156,7 +170,7 @@ export interface VideoDeps {
 /** Test seam and default: nothing in the app provides it, so the browser implementations below apply. */
 export const VideoDepsContext = createContext<VideoDeps>({});
 
-type ResolvedDeps = Required<Omit<VideoDeps, 'camera'>> & { camera: Camera | null };
+type ResolvedDeps = Required<Omit<VideoDeps, 'camera' | 'navigate'>> & { camera: Camera | null };
 
 // --- the browser implementations ------------------------------------------------------------------------------------------
 
@@ -290,6 +304,7 @@ const defaultAnalyse: ResolvedDeps['analyse'] = (request, signal) =>
   api.post(VIDEO.createAnalysis.path, { body: request, schema: VIDEO.createAnalysis.response, signal });
 
 function resolveDeps(given: VideoDeps): ResolvedDeps {
+  // `navigate` is not resolved here: its default needs the router, which only a component can reach.
   return {
     pose: given.pose ?? { load: loadPoseModel, detectOnVideo },
     loadClip: given.loadClip ?? loadDomClip,
@@ -326,11 +341,10 @@ type Phase =
   | { kind: 'checking' }
   | { kind: 'processing'; progress: number }
   | { kind: 'unsupported' }
-  | { kind: 'rerecord'; reason: RerecordReason; local: boolean }
   | { kind: 'review'; pending: Pending }
   | { kind: 'sending'; pending: Pending }
   | { kind: 'send-failed'; pending: Pending; error: unknown }
-  | { kind: 'result'; analysis: VideoAnalysis }
+  | { kind: 'leaving' }
   | { kind: 'disabled' };
 
 /** A flag shared by one run of the on-device pipeline, so a Cancel can stop every later step of it. */
@@ -768,7 +782,7 @@ function RecorderView({ phase, countdownLeft, elapsed, stream, locale, onStop, o
   );
 }
 
-// --- review, result -------------------------------------------------------------------------------------------------------
+// --- review -------------------------------------------------------------------------------------------------------
 
 type ReviewProps = {
   phase: Extract<Phase, { kind: 'review' | 'sending' | 'send-failed' }>;
@@ -834,92 +848,6 @@ function ReviewStep({ phase, canSend, onSend, onCancelSending, onDiscard }: Revi
   );
 }
 
-function ResultStep({ analysis, onAgain }: { analysis: VideoAnalysis; onAgain: () => void }) {
-  const { t } = useTranslation('capture');
-  return (
-    <section aria-labelledby="result-title" className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 id="result-title" data-step-heading tabIndex={-1} className={H2}>
-          {t('result.title')}
-        </h2>
-        <Tag tone="warning">{t('result.beta')}</Tag>
-      </div>
-      <p className={BODY}>{t('result.confidence', { level: t(`result.levels.${analysis.confidence}`) })}</p>
-      <ul className="m-0 grid list-none gap-3 p-0">
-        {analysis.scores.map((score) => (
-          <li key={score.key}>
-            <Card className="grid gap-2">
-              <div className="flex items-baseline justify-between gap-3">
-                <h3 className={H3}>{score.label}</h3>
-                <span className="shrink-0 text-xl font-bold text-ink">{t('result.score', { score: score.score })}</span>
-              </div>
-              <Bar role="meter" label={score.label} value={score.score} min={1} max={10} />
-              <p className={`${BODY} text-muted`}>{score.note}</p>
-            </Card>
-          </li>
-        ))}
-      </ul>
-      <Card variant="ink" className="grid gap-2">
-        <h3 className="m-0 text-xl leading-tight font-bold tracking-tight text-white">{t('result.focus')}</h3>
-        <p className="m-0 text-lg leading-[1.45]">{analysis.focusNext}</p>
-      </Card>
-      {analysis.recommended.length === 0 ? null : (
-        <div className="grid gap-3">
-          <h3 className={H3}>{t('result.drills')}</h3>
-          <ul className="m-0 grid list-none gap-3 p-0">
-            {analysis.recommended.map((drill) => (
-              <li key={drill.drillVersionId} className="grid gap-1 rounded-control border border-line bg-paper p-4">
-                <a href={`/commons/${encodeURIComponent(drill.slug)}`} className="inline-flex min-h-tap items-center font-bold text-ink underline">
-                  {drill.title}
-                </a>
-                <span className="text-base text-muted">{drill.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <p className={BODY}>{t('result.repeat', { sessions: analysis.repeatAfterSessions })}</p>
-      {analysis.limitations.length === 0 ? null : (
-        <div className="grid gap-2">
-          <h3 className={H3}>{t('result.limits')}</h3>
-          <ul className="m-0 grid list-disc gap-1 pl-5">
-            {analysis.limitations.map((line) => (
-              <li key={line} className={BODY}>
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <div className={ACTIONS}>
-        <Button className="w-full sm:w-auto" onClick={onAgain}>
-          {t('result.again')}
-        </Button>
-      </div>
-    </section>
-  );
-}
-
-function RerecordStep({ reason, local, onAgain }: { reason: RerecordReason; local: boolean; onAgain: () => void }) {
-  const { t } = useTranslation('capture');
-  return (
-    <section aria-labelledby="rerecord-title" className="grid gap-4">
-      <Card className="grid gap-3">
-        <h2 id="rerecord-title" data-step-heading tabIndex={-1} className={H2}>
-          {t(`rerecord.${reason}.title`)}
-        </h2>
-        <p className={BODY}>{t(`rerecord.${reason}.hint`)}</p>
-        {local ? <p className={`${BODY} font-bold`}>{t('rerecord.local')}</p> : null}
-        <div className={ACTIONS}>
-          <Button className="w-full sm:w-auto" onClick={onAgain}>
-            {t('rerecord.action')}
-          </Button>
-        </div>
-      </Card>
-    </section>
-  );
-}
-
 // --- the page -------------------------------------------------------------------------------------------------------------
 
 function VideoPage() {
@@ -930,6 +858,14 @@ function VideoPage() {
   const deps = useMemo(() => resolveDeps(given), [given]);
   const online = useOnline(deps.online);
   const canDetect = useMemo(() => deps.canDetectPose(), [deps]);
+  // Without a RouterProvider (and no seam) there is nowhere to go: the navigation fails and the screen falls back to the capture step.
+  const router = useRouter({ warn: false });
+  const navigate: NonNullable<VideoDeps['navigate']> =
+    given.navigate ??
+    ((target) =>
+      router === undefined
+        ? Promise.reject(new Error('no router'))
+        : router.navigate({ to: '/video/result/$id', params: { id: target.id }, search: target.search ?? {} }));
 
   const [skill, setSkill] = useState<SkillSlug | null>(null);
   const [phase, setPhase] = useState<Phase>({ kind: 'capture' });
@@ -948,8 +884,8 @@ function VideoPage() {
   });
 
   // What the async pipeline reads: always the latest render's values, never a stale closure.
-  const latest = useRef({ skill, rubric: rubric.data, deps, locale, queryClient, gateState: gate.state });
-  latest.current = { skill, rubric: rubric.data, deps, locale, queryClient, gateState: gate.state };
+  const latest = useRef({ skill, rubric: rubric.data, deps, locale, queryClient, gateState: gate.state, navigate });
+  latest.current = { skill, rubric: rubric.data, deps, locale, queryClient, gateState: gate.state, navigate };
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
 
@@ -969,6 +905,25 @@ function VideoPage() {
     session.current?.release();
     session.current = null;
     setStream(null);
+  }
+  /**
+   * Hands the answer to the result screen. Everything this screen holds is dropped FIRST (the clip, the camera, and with the phase
+   * the pictures), and only then does it navigate: nothing of the capture travels with the player. If the navigation fails the
+   * player is back at the capture step (the pictures are gone; a new clip is the way on).
+   */
+  function handOver(target: ResultTarget): void {
+    releaseClip();
+    releaseCamera();
+    setPhase({ kind: 'leaving' });
+    let moving: void | Promise<unknown>;
+    try {
+      moving = latest.current.navigate(target);
+    } catch (error) {
+      moving = Promise.reject(error);
+    }
+    Promise.resolve(moving).catch(() => {
+      if (mounted.current) setPhase({ kind: 'capture' });
+    });
   }
   function cancelWork(): void {
     if (run.current !== null) run.current.cancelled = true;
@@ -1059,7 +1014,7 @@ function VideoPage() {
     const features = extractFeatures(frames, Number.isFinite(ratio) && ratio > 0 ? { aspectRatio: ratio } : {});
     if (features === null || seen.length < KEYFRAME_MIN_COUNT || features.meanVisibility < minVisibility) {
       releaseClip();
-      if (mounted.current) setPhase({ kind: 'rerecord', reason: 'low_visibility', local: true });
+      if (mounted.current) handOver({ id: 'rerecord', search: { rerecord: 'low_visibility', ...(chosen === null ? {} : { skill: chosen }) } });
       return;
     }
 
@@ -1206,7 +1161,13 @@ function VideoPage() {
       timer = setTimeout(() => controller.abort(new DOMException('The analysis took too long.', 'TimeoutError')), analyseTimeoutMs);
       const response = await analyse(pending.request, controller.signal);
       if (sending.current !== controller) return;
-      setPhase(response.rerecord === true ? { kind: 'rerecord', reason: response.reason, local: false } : { kind: 'result', analysis: response });
+      if (response.rerecord === true) {
+        handOver({ id: 'rerecord', search: { rerecord: response.reason, skill: pending.request.skillSlug } });
+      } else {
+        // The analysis is now in the player's history: the result screen must read it again, not a cached list without it.
+        void latest.current.queryClient.invalidateQueries({ queryKey: ANALYSES_KEY });
+        handOver({ id: response.id });
+      }
     } catch (error) {
       if (sending.current !== controller) return;
       if (isApiProblem(error) && error.kind === 'forbidden') {
@@ -1374,9 +1335,6 @@ function VideoPage() {
           </section>
         );
         break;
-      case 'rerecord':
-        content = <RerecordStep reason={phase.reason} local={phase.local} onAgain={() => setPhase({ kind: 'capture' })} />;
-        break;
       case 'review':
       case 'sending':
       case 'send-failed':
@@ -1390,8 +1348,9 @@ function VideoPage() {
           />
         );
         break;
-      case 'result':
-        content = <ResultStep analysis={phase.analysis} onAgain={() => setPhase({ kind: 'capture' })} />;
+      case 'leaving':
+        // No picture, no button: the pictures are already dropped and the result screen is on its way.
+        content = <Busy label={t('review.sending')} />;
         break;
       case 'disabled':
         content = <EmptyState title={t('disabled.title')} hint={t('disabled.hint')} />;
