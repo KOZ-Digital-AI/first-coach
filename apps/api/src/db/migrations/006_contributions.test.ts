@@ -680,7 +680,7 @@ describe('006_contributions: contributions', () => {
     addDrills(db);
     const row = contributionRow(improvement({ improvement_kind: 'translation', reviewer_note: 'please add kk', state: 'changes_requested', origin: 'form', updated_at: T1 }));
     insertRow(db, 'contributions', row);
-    expect(one(db, 'SELECT * FROM contributions WHERE id = ?', 'c1')).toEqual(row);
+    expect(one<Record<string, unknown>>(db, 'SELECT * FROM contributions WHERE id = ?', 'c1')).toEqual(row);
   });
 
   test('state defaults to pending and origin to form when omitted; the other defaults are absent', () => {
@@ -1089,7 +1089,7 @@ describe('006_contributions: contribution_attachments', () => {
     const db = withContribution();
     const row = attachmentRow({ created_at: T1 });
     insertRow(db, 'contribution_attachments', row);
-    expect(one(db, 'SELECT * FROM contribution_attachments WHERE id = ?', 'a1')).toEqual(row);
+    expect(one<Record<string, unknown>>(db, 'SELECT * FROM contribution_attachments WHERE id = ?', 'a1')).toEqual(row);
   });
 
   test('created_at defaults to the canonical UTC now when omitted', () => {
