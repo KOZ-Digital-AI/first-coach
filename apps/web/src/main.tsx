@@ -5,11 +5,13 @@ import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 import { createAppQueryClient } from './bootstrap';
 // A separate statement: bootstrap.test.ts pins the exact `import { createAppQueryClient } from './bootstrap'` line.
-import { installAppSessionExpired } from './bootstrap';
+import { installAppSessionExpired, wireAppPlayerSession } from './bootstrap';
 import { routeTree } from './routeTree.gen';
 import './styles/app.css';
 
 const queryClient = createAppQueryClient();
+// The offline pieces (outbox sync, persisted cache) follow the player session; see bootstrap.ts.
+wireAppPlayerSession(queryClient);
 const router = createRouter({ routeTree });
 installAppSessionExpired((url) => void router.history.push(url));
 
