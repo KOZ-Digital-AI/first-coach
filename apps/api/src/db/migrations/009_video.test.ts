@@ -462,7 +462,9 @@ describe('009_video: client_uuid (the offline outbox idempotency key)', () => {
   test('refuses upper case, the wrong version or variant, and anything that is not a uuid', () => {
     const good = uuid(5);
     const bad = [
-      good.toUpperCase(),
+      '01234567-89AB-4DEF-8ABC-0123456789AB', // upper case (uuid(5) is all digits, so upper-casing it would change nothing)
+      '01234567-89ab-4DEF-8abc-0123456789ab', // one upper-case run
+      '01234567-89ab-4def-8abc-0123456789aB',
       '01234567-89ab-0def-8123-0123456789ab',
       '01234567-89ab-9def-8123-0123456789ab',
       '01234567-89ab-4def-c123-0123456789ab',
