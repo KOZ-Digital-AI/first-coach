@@ -201,9 +201,13 @@ describe("pickSwap: no alternative", () => {
     const quickFeet = bySlug(pool, "dribbling-quick-feet-look-around");
     expect(quickFeet.content.regressions).toEqual([]);
     expect(pickSwap(quickFeet, "easier", pool, new Set([quickFeet.drillId]))).toBeUndefined();
-    const dash = bySlug(pool, "dribbling-speed-dash-stop");
-    expect(dash.content.progressions).toEqual([]);
-    expect(pickSwap(dash, "harder", pool, new Set([dash.drillId]))).toBeUndefined();
+    const thighAndFoot = bySlug(pool, "juggling-thigh-and-foot");
+    expect(thighAndFoot.content.progressions).toEqual([]);
+    expect(pickSwap(thighAndFoot, "harder", pool, new Set([thighAndFoot.drillId]))).toBeUndefined();
+    // A progression that is not a candidate is no link either: speed-dash-stop is a field drill, this player has a yard.
+    const weave = bySlug(pool, "dribbling-tight-cone-weave");
+    expect(pool.some((v) => v.slug === "dribbling-speed-dash-stop")).toBe(false);
+    expect(pickSwap(weave, "harder", pool, new Set([weave.drillId]))).toBeUndefined();
   });
 
   test("an empty pool has no alternative", () => {
