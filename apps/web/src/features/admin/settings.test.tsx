@@ -15,6 +15,10 @@ if (typeof document === 'undefined') {
   GlobalRegistrator.register({ url: 'http://localhost/' });
 }
 const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
+
+// NOTE: never `expect(element).toBeNull()` / `.toBe(element)`. When such an assertion FAILS, bun pretty-prints the happy-dom
+// element (a huge circular object graph): it can take a minute and even report the test as passed. Compare to null / with
+// === and assert on the boolean instead, so a failure is instant and honest.
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
@@ -237,12 +241,12 @@ describe('loading', () => {
     const status = await screen.findByRole('status', { name: 'Loading settings' });
     expect(status.getAttribute('aria-busy')).toBe('true');
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Save settings' })).toBeNull();
-    expect(screen.queryByLabelText('Upload size limit (MB)')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save settings' }) === null).toBe(true);
+    expect(screen.queryByLabelText('Upload size limit (MB)') === null).toBe(true);
 
     release(json(SAVED));
     await screen.findByRole('button', { name: 'Save settings' });
-    expect(screen.queryByRole('status', { name: 'Loading settings' })).toBeNull();
+    expect(screen.queryByRole('status', { name: 'Loading settings' }) === null).toBe(true);
   });
 });
 
@@ -336,7 +340,7 @@ describe('saving', () => {
     expect(screen.getByText('You have unsaved changes.')).toBeTruthy();
     await u.click(saveButton());
 
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putCalls()).toHaveLength(1);
     expect(putCalls()[0]?.init?.method).toBe('PUT');
     expect(new Headers(putCalls()[0]?.init?.headers).get('content-type')).toContain('application/json');
@@ -348,7 +352,7 @@ describe('saving', () => {
     expect(retestInput().value).toBe('7, 21');
     expect(saveButton().disabled).toBe(true);
     expect(screen.getByText('No changes yet.')).toBeTruthy();
-    expect(failedNotice()).toBeNull();
+    expect(failedNotice() === null).toBe(true);
 
     cleanup();
     renderSettings();
@@ -364,7 +368,7 @@ describe('saving', () => {
     await renderLoaded();
     await user().selectOptions(select('Ages 10 to 13'), 'REVIEWED');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ minStatusByAgeBand: { u14: 'REVIEWED' } });
     expect(select('Ages 10 to 13').value).toBe('REVIEWED');
     expect(select('Under 10').value).toBe('COMMUNITY');
@@ -386,7 +390,7 @@ describe('saving', () => {
     await renderLoaded();
     await typeInto(retestInput(), '3,  10 21');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ retestIntervalsDays: [3, 10, 21] });
   });
 
@@ -394,16 +398,16 @@ describe('saving', () => {
     await renderLoaded();
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     await typeInto(uploadInput(), '81');
-    expect(savedNotice()).toBeNull();
+    expect(savedNotice() === null).toBe(true);
   });
 
   test('after a save the focus lands on the result message, not on a disabled button', async () => {
     await renderLoaded();
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(savedNotice()!.contains(document.activeElement)).toBe(true);
   });
 
@@ -441,12 +445,12 @@ describe('disabled while a request is in flight', () => {
 
     await u.click(saveButton());
     expect(putCalls()).toHaveLength(1);
-    expect(savedNotice()).toBeNull();
+    expect(savedNotice() === null).toBe(true);
 
     release(json({ ...SAVED, uploadMaxMb: 80 }));
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     for (const control of controls()) expect(control.disabled).toBe(false);
-    expect(saveButton().getAttribute('aria-busy')).toBeNull();
+    expect(saveButton().getAttribute('aria-busy') === null).toBe(true);
     expect(putCalls()).toHaveLength(1);
   });
 });
@@ -472,22 +476,22 @@ describe('a 422 from the server', () => {
     await typeInto(uploadInput(), '500');
     await typeInto(retestInput(), '7, 14');
     await u.click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
 
     const bandError = errorOf(select('Under 10'));
-    expect(bandError).not.toBeNull();
+    expect(bandError === null).toBe(false);
     expect(text(bandError!)).toContain('Choose one of the four trust statuses.');
     expect(select('Under 10').getAttribute('aria-invalid')).toBe('true');
-    expect(bandError!.querySelector('svg')).not.toBeNull();
+    expect(bandError!.querySelector('svg') === null).toBe(false);
 
     expect(text(errorOf(uploadInput())!)).toContain('Enter a whole number of megabytes, 1 or more.');
     expect(uploadInput().getAttribute('aria-invalid')).toBe('true');
     expect(text(errorOf(retestInput())!)).toContain('Enter whole days, 1 or more, separated by commas.');
 
     // Fields the server did not name stay clean, and the server's own English text is never shown.
-    expect(errorOf(select('Ages 10 to 13'))).toBeNull();
-    expect(select('Ages 10 to 13').getAttribute('aria-invalid')).toBeNull();
-    expect(errorOf(aiSwitch())).toBeNull();
+    expect(errorOf(select('Ages 10 to 13')) === null).toBe(true);
+    expect(select('Ages 10 to 13').getAttribute('aria-invalid') === null).toBe(true);
+    expect(errorOf(aiSwitch()) === null).toBe(true);
     expect(document.body.textContent).not.toContain('Too small');
     expect(document.body.textContent).not.toContain('Invalid option');
     expect(document.body.textContent).not.toContain('server text');
@@ -498,10 +502,10 @@ describe('a 422 from the server', () => {
     await renderLoaded();
     await user().click(aiSwitch());
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
     expect(text(errorOf(aiSwitch())!)).toContain('This setting could not be saved.');
     expect(aiSwitch().getAttribute('aria-invalid')).toBe('true');
-    expect(errorOf(videoSwitch())).toBeNull();
+    expect(errorOf(videoSwitch()) === null).toBe(true);
   });
 
   test('the form says nothing was saved, points to the fields, keeps the typed values and never shows success', async () => {
@@ -509,13 +513,13 @@ describe('a 422 from the server', () => {
     await renderLoaded();
     await typeInto(uploadInput(), '500');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
 
     expect(text(failedNotice()!)).toContain('Check the highlighted fields.');
-    expect(savedNotice()).toBeNull();
+    expect(savedNotice() === null).toBe(true);
     expect(uploadInput().value).toBe('500'); // what the admin typed is not thrown away
     expect(saveButton().disabled).toBe(false); // and can be corrected and sent again
-    expect(saveButton().getAttribute('aria-busy')).toBeNull();
+    expect(saveButton().getAttribute('aria-busy') === null).toBe(true);
     for (const control of controls()) expect(control.disabled).toBe(false);
     expect(putCalls()).toHaveLength(1);
   });
@@ -529,8 +533,8 @@ describe('a 422 from the server', () => {
     await user().selectOptions(select('Age 14 and older'), 'REVIEWED');
     await typeInto(uploadInput(), '500');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
-    expect(document.activeElement).toBe(select('Age 14 and older'));
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
+    expect(document.activeElement === select('Age 14 and older')).toBe(true);
   });
 
   test('editing a field clears its own error and keeps the others', async () => {
@@ -542,14 +546,14 @@ describe('a 422 from the server', () => {
     await typeInto(uploadInput(), '500');
     await typeInto(retestInput(), '7');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
-    expect(errorOf(uploadInput())).not.toBeNull();
-    expect(errorOf(retestInput())).not.toBeNull();
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
+    expect(errorOf(uploadInput()) === null).toBe(false);
+    expect(errorOf(retestInput()) === null).toBe(false);
 
     await typeInto(uploadInput(), '501');
-    expect(errorOf(uploadInput())).toBeNull();
-    expect(uploadInput().getAttribute('aria-invalid')).toBeNull();
-    expect(errorOf(retestInput())).not.toBeNull();
+    expect(errorOf(uploadInput()) === null).toBe(true);
+    expect(uploadInput().getAttribute('aria-invalid') === null).toBe(true);
+    expect(errorOf(retestInput()) === null).toBe(false);
   });
 
   test('an error at a path the screen has no field for is a form-level message, not a pointer at nothing', async () => {
@@ -557,10 +561,10 @@ describe('a 422 from the server', () => {
     await renderLoaded();
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
     expect(text(failedNotice()!)).not.toContain('Check the highlighted fields.');
     expect(text(failedNotice()!)).toContain('Something went wrong. Try again.');
-    for (const control of controls()) expect(control.getAttribute('aria-invalid')).toBeNull();
+    for (const control of controls()) expect(control.getAttribute('aria-invalid') === null).toBe(true);
     expect(document.body.textContent).not.toContain('Unrecognized key');
   });
 });
@@ -574,15 +578,15 @@ describe('a save that fails outright', () => {
     await renderLoaded();
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
 
     expect(text(failedNotice()!)).toContain('Something went wrong on our side. Try again in a moment.');
     expect(document.body.textContent).not.toContain('server text');
-    expect(savedNotice()).toBeNull();
+    expect(savedNotice() === null).toBe(true);
     expect(saveButton().disabled).toBe(false);
-    expect(saveButton().getAttribute('aria-busy')).toBeNull();
+    expect(saveButton().getAttribute('aria-busy') === null).toBe(true);
     for (const control of controls()) expect(control.disabled).toBe(false);
-    for (const control of controls()) expect(errorOf(control)).toBeNull();
+    for (const control of controls()) expect(errorOf(control) === null).toBe(true);
     // Nothing reached the store.
     expect(server.state.settings.uploadMaxMb).toBe(50);
   });
@@ -596,9 +600,9 @@ describe('a save that fails outright', () => {
     await renderLoaded();
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
     expect(text(failedNotice()!)).toContain('No connection. Check your internet and try again.');
-    expect(savedNotice()).toBeNull();
+    expect(savedNotice() === null).toBe(true);
   });
 
   test('roll back: the saved state is untouched, Discard returns to it, and the failure message goes away', async () => {
@@ -610,7 +614,7 @@ describe('a save that fails outright', () => {
     await u.click(videoSwitch());
     await u.selectOptions(select('Under 10'), 'REVIEWED');
     await u.click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
 
     // What was typed is kept (nothing is silently lost) and still counts as unsaved.
     expect(uploadInput().value).toBe('80');
@@ -621,7 +625,7 @@ describe('a save that fails outright', () => {
     expect(videoSwitch().checked).toBe(false);
     expect(select('Under 10').value).toBe('COMMUNITY');
     expect(saveButton().disabled).toBe(true);
-    expect(failedNotice()).toBeNull();
+    expect(failedNotice() === null).toBe(true);
   });
 
   test('after a failure the same save can be tried again and then succeeds', async () => {
@@ -637,11 +641,11 @@ describe('a save that fails outright', () => {
     await renderLoaded();
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(failedNotice()).not.toBeNull());
+    await waitFor(() => expect(failedNotice() === null).toBe(false));
 
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
-    expect(failedNotice()).toBeNull();
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
+    expect(failedNotice() === null).toBe(true);
     expect(putCalls()).toHaveLength(2);
     expect(putBody(1)).toEqual({ uploadMaxMb: 80 });
     expect(server.state.settings.uploadMaxMb).toBe(80);
@@ -661,10 +665,10 @@ describe('values the screen refuses to send', () => {
     await renderLoaded();
     await typeInto(uploadInput(), value);
     await user().click(saveButton());
-    await waitFor(() => expect(errorOf(uploadInput())).not.toBeNull());
+    await waitFor(() => expect(errorOf(uploadInput()) === null).toBe(false));
     expect(text(errorOf(uploadInput())!)).toContain('Enter a whole number of megabytes, 1 or more.');
     expect(putCalls()).toHaveLength(0);
-    expect(savedNotice()).toBeNull();
+    expect(savedNotice() === null).toBe(true);
   });
 
   test.each([
@@ -678,7 +682,7 @@ describe('values the screen refuses to send', () => {
     await renderLoaded();
     await typeInto(retestInput(), value);
     await user().click(saveButton());
-    await waitFor(() => expect(errorOf(retestInput())).not.toBeNull());
+    await waitFor(() => expect(errorOf(retestInput()) === null).toBe(false));
     expect(text(errorOf(retestInput())!)).toContain('Enter whole days, 1 or more, separated by commas.');
     expect(putCalls()).toHaveLength(0);
   });
@@ -687,13 +691,13 @@ describe('values the screen refuses to send', () => {
     await renderLoaded();
     await typeInto(uploadInput(), 'abc');
     await user().click(saveButton());
-    await waitFor(() => expect(errorOf(uploadInput())).not.toBeNull());
-    expect(errorOf(uploadInput())!.querySelector('svg')).not.toBeNull();
-    expect(document.activeElement).toBe(uploadInput());
+    await waitFor(() => expect(errorOf(uploadInput()) === null).toBe(false));
+    expect(errorOf(uploadInput())!.querySelector('svg') === null).toBe(false);
+    expect(document.activeElement === uploadInput()).toBe(true);
 
     await typeInto(uploadInput(), '64');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ uploadMaxMb: 64 });
   });
 });
@@ -708,14 +712,14 @@ describe('the low drill pool warning', () => {
     await user().selectOptions(select('Under 10'), 'REVIEWED');
 
     const notice = lowPoolNotice('Under 10');
-    expect(notice).not.toBeNull();
+    expect(notice === null).toBe(false);
     expect(text(notice!)).toMatch(/“Reviewed”/);
     expect(text(notice!)).toMatch(/fewer than 20 drills/);
     expect(text(notice!)).toMatch(/\b19\b/); // 12 + 5 + 2
-    expect(notice!.querySelector('svg')).not.toBeNull(); // an icon as well as the words
+    expect(notice!.querySelector('svg') === null).toBe(false); // an icon as well as the words
     // Only the raised band is named.
-    expect(lowPoolNotice('Ages 10 to 13')).toBeNull();
-    expect(lowPoolNotice('Age 14 and older')).toBeNull();
+    expect(lowPoolNotice('Ages 10 to 13') === null).toBe(true);
+    expect(lowPoolNotice('Age 14 and older') === null).toBe(true);
   });
 
   test('exactly 20 eligible drills is enough: no warning', async () => {
@@ -723,7 +727,7 @@ describe('the low drill pool warning', () => {
     await renderLoaded();
     await user().selectOptions(select('Under 10'), 'REVIEWED');
     expect(screen.getAllByText('Drills at this status or higher: 20')).toHaveLength(1);
-    expect(lowPoolNotice('Under 10')).toBeNull();
+    expect(lowPoolNotice('Under 10') === null).toBe(true);
   });
 
   test('the warning follows the selection: higher still warns for the new count, back down clears it', async () => {
@@ -735,7 +739,7 @@ describe('the low drill pool warning', () => {
     expect(text(lowPoolNotice('Ages 10 to 13')!)).toMatch(/“Academy verified”/);
     expect(text(lowPoolNotice('Ages 10 to 13')!)).toMatch(/\b2\b/);
     await u.selectOptions(select('Ages 10 to 13'), 'COMMUNITY');
-    expect(lowPoolNotice('Ages 10 to 13')).toBeNull();
+    expect(lowPoolNotice('Ages 10 to 13') === null).toBe(true);
   });
 
   test('each raised band is warned about on its own', async () => {
@@ -745,30 +749,30 @@ describe('the low drill pool warning', () => {
     await u.selectOptions(select('Age 14 and older'), 'REVIEWED');
     expect(text(lowPoolNotice('Under 10')!)).toMatch(/\b7\b/);
     expect(text(lowPoolNotice('Age 14 and older')!)).toMatch(/\b19\b/);
-    expect(lowPoolNotice('Ages 10 to 13')).toBeNull();
+    expect(lowPoolNotice('Ages 10 to 13') === null).toBe(true);
   });
 
   test('a band that is not being raised gives no warning, even if its saved minimum already leaves few drills', async () => {
     stubNetwork(createServer({ settings: { ...SAVED, minStatusByAgeBand: { u10: 'EXPERT_VERIFIED', u14: 'EXPERT_VERIFIED', adult: 'COMMUNITY' } } }).handler);
     await renderLoaded();
-    expect(lowPoolNotice('Under 10')).toBeNull();
+    expect(lowPoolNotice('Under 10') === null).toBe(true);
     // Lowering it (or leaving it) is not "raising".
     await user().selectOptions(select('Under 10'), 'REVIEWED');
-    expect(lowPoolNotice('Under 10')).toBeNull();
+    expect(lowPoolNotice('Under 10') === null).toBe(true);
     await user().selectOptions(select('Ages 10 to 13'), 'EXPERT_VERIFIED');
-    expect(lowPoolNotice('Ages 10 to 13')).toBeNull();
+    expect(lowPoolNotice('Ages 10 to 13') === null).toBe(true);
   });
 
   test('it warns and does not block: the raised minimum can still be saved', async () => {
     await renderLoaded();
     await user().selectOptions(select('Under 10'), 'REVIEWED');
-    expect(lowPoolNotice('Under 10')).not.toBeNull();
+    expect(lowPoolNotice('Under 10') === null).toBe(false);
     expect(saveButton().disabled).toBe(false);
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ minStatusByAgeBand: { u10: 'REVIEWED' } });
     // Saved, so the minimum is no longer "raised": the warning is gone with it.
-    expect(lowPoolNotice('Under 10')).toBeNull();
+    expect(lowPoolNotice('Under 10') === null).toBe(true);
   });
 
   test('when the drills cannot be counted there is no warning, a note says so, and saving still works', async () => {
@@ -779,10 +783,10 @@ describe('the low drill pool warning', () => {
     await screen.findByText('Could not count the drills, so low-drill warnings are off for now.');
 
     await user().selectOptions(select('Under 10'), 'ACADEMY_VERIFIED');
-    expect(lowPoolNotice('Under 10')).toBeNull();
-    expect(screen.queryByText(POOL_HINT)).toBeNull();
+    expect(lowPoolNotice('Under 10') === null).toBe(true);
+    expect(screen.queryByText(POOL_HINT) === null).toBe(true);
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ minStatusByAgeBand: { u10: 'ACADEMY_VERIFIED' } });
   });
 });
@@ -798,7 +802,7 @@ describe('the server environment (read-only)', () => {
     await screen.findByRole('button', { name: 'Save settings' });
     await waitFor(() => expect(within(panel()).getByText('Configured')).toBeTruthy());
     expect(within(panel()).getByText('AI provider key')).toBeTruthy();
-    expect(within(panel()).queryByText('Not configured')).toBeNull();
+    expect(within(panel()).queryByText('Not configured') === null).toBe(true);
     expect(within(panel()).queryAllByRole('textbox')).toHaveLength(0);
     expect(within(panel()).queryAllByRole('switch')).toHaveLength(0);
     expect(within(panel()).queryAllByRole('button')).toHaveLength(0);
@@ -810,8 +814,8 @@ describe('the server environment (read-only)', () => {
     renderSettings();
     await screen.findByRole('button', { name: 'Save settings' });
     await waitFor(() => expect(within(panel()).getByText('Not configured')).toBeTruthy());
-    expect(within(panel()).queryByText('Configured')).toBeNull();
-    expect(within(panel()).getByText('Not configured').querySelector('svg')).not.toBeNull();
+    expect(within(panel()).queryByText('Configured') === null).toBe(true);
+    expect(within(panel()).getByText('Not configured').querySelector('svg') === null).toBe(false);
   });
 
   test('says it could not check, instead of guessing, when the answer is missing or the call fails', async () => {
@@ -819,8 +823,8 @@ describe('the server environment (read-only)', () => {
     renderSettings();
     await screen.findByRole('button', { name: 'Save settings' });
     await waitFor(() => expect(within(panel()).getByText('Could not check')).toBeTruthy());
-    expect(within(panel()).queryByText('Configured')).toBeNull();
-    expect(within(panel()).queryByText('Not configured')).toBeNull();
+    expect(within(panel()).queryByText('Configured') === null).toBe(true);
+    expect(within(panel()).queryByText('Not configured') === null).toBe(true);
     cleanup();
 
     const server = createServer({ aiAvailable: true });
@@ -828,7 +832,7 @@ describe('the server environment (read-only)', () => {
     renderSettings();
     await screen.findByRole('button', { name: 'Save settings' });
     await waitFor(() => expect(within(panel()).getByText('Could not check')).toBeTruthy());
-    expect(within(panel()).queryByText('Configured')).toBeNull();
+    expect(within(panel()).queryByText('Configured') === null).toBe(true);
   });
 
   test('explains that model ids and secrets are set in the server environment and are not shown', async () => {
@@ -844,7 +848,7 @@ describe('the server environment (read-only)', () => {
     await screen.findByRole('button', { name: 'Save settings' });
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
   });
 });
 
@@ -868,8 +872,8 @@ describe('error: the settings could not be loaded', () => {
     expect(text(alert)).toContain('Could not load the settings');
     expect(text(alert)).toContain('Something went wrong on our side. Try again in a moment.');
     expect(within(alert).getByRole('button', { name: 'Try again' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Save settings' })).toBeNull();
-    expect(screen.queryByLabelText('Upload size limit (MB)')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save settings' }) === null).toBe(true);
+    expect(screen.queryByLabelText('Upload size limit (MB)') === null).toBe(true);
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeTruthy();
     expect(document.body.textContent).not.toContain('server text');
   });
@@ -879,7 +883,7 @@ describe('error: the settings could not be loaded', () => {
     renderSettings();
     const alert = await screen.findByRole('alert');
     expect(text(alert)).toContain("You don't have access to this.");
-    expect(screen.queryByRole('button', { name: 'Save settings' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save settings' }) === null).toBe(true);
   });
 
   test('a body that is not the settings (e.g. an HTML page from a proxy) is an error, never an empty form', async () => {
@@ -887,14 +891,14 @@ describe('error: the settings could not be loaded', () => {
     renderSettings();
     const alert = await screen.findByRole('alert');
     expect(text(alert)).toContain('The server sent an unexpected answer. Try again.');
-    expect(screen.queryByRole('button', { name: 'Save settings' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save settings' }) === null).toBe(true);
   });
 
   test('a value of the wrong type is an error too: no control is filled from a guess', async () => {
     failGet(() => json({ ...SAVED, uploadMaxMb: 'lots' }));
     renderSettings();
     await screen.findByRole('alert');
-    expect(screen.queryByLabelText('Upload size limit (MB)')).toBeNull();
+    expect(screen.queryByLabelText('Upload size limit (MB)') === null).toBe(true);
   });
 
   test('Try again is disabled and busy while the retry is in flight, then the form appears', async () => {
@@ -918,7 +922,7 @@ describe('error: the settings could not be loaded', () => {
 
     release(json(SAVED));
     await screen.findByRole('button', { name: 'Save settings' });
-    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' }) === null).toBe(true);
   });
 });
 
@@ -930,19 +934,19 @@ describe('empty: the server lists no setting this screen knows', () => {
     renderSettings();
     await screen.findByText('No settings to change yet');
     expect(screen.getByText('The server did not list any settings. Check back after the next update.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Save settings' })).toBeNull();
-    expect(screen.queryByLabelText('Upload size limit (MB)')).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Save settings' }) === null).toBe(true);
+    expect(screen.queryByLabelText('Upload size limit (MB)') === null).toBe(true);
+    expect(screen.queryByRole('alert') === null).toBe(true);
   });
 
   test('a setting the server does not send has no control, and the ones it sends still work', async () => {
     const { uploadMaxMb: _dropped, ...withoutUpload } = SAVED;
     stubNetwork(createServer({ settings: withoutUpload }).handler);
     await renderLoaded();
-    expect(screen.queryByLabelText('Upload size limit (MB)')).toBeNull();
+    expect(screen.queryByLabelText('Upload size limit (MB)') === null).toBe(true);
     await user().click(videoSwitch());
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ videoCoachEnabled: true });
   });
 
@@ -952,7 +956,7 @@ describe('empty: the server lists no setting this screen knows', () => {
     expect(document.body.textContent).not.toContain('hunter2');
     await typeInto(uploadInput(), '80');
     await user().click(saveButton());
-    await waitFor(() => expect(savedNotice()).not.toBeNull());
+    await waitFor(() => expect(savedNotice() === null).toBe(false));
     expect(putBody()).toEqual({ uploadMaxMb: 80 });
   });
 });
