@@ -35,9 +35,14 @@
 #   * "in 1 API call": POST /api/player/session-events requests between the `online` switch and the moment the sync settles.
 #     The Better Auth session READS (GET /api/auth/get-session) are not API calls of the journey and are not counted.
 #   * "footer version changes after accepting": the footer reads GET /health, i.e. the API process's BUILD_VERSION, which the
-#     deploy changes at once; so the footer is asserted to read j7-v1 before the deploy and j7-v2 after Update, and the bundle
-#     that runs after Update must carry j7-v2 (its entry script text). Whether the footer already showed v2 while the prompt was
-#     up is printed as a note, not asserted.
+#     deploy changes at once; so the footer is asserted to read j7-v1 before the deploy and j7-v2 after Update. The new build is
+#     proven by the footer (j7-v2 shown, j7-v1 gone), the persisted-cache buster (== BUILD_VERSION j7-v2), the entry script
+#     filename differing from the one the page ran before Update (captured before pressing Update) and no prompt left; the
+#     version string is NOT looked for inside the entry script text (it is no longer in the entry chunk). Whether the footer
+#     already showed v2 while the prompt was up is printed as a note, not asserted.
+#   * dist/mediapipe/ (the pose model .task and vision_wasm_* files) legitimately sits in dist since 8nt.11 so /video can fetch
+#     it; the dist check only forbids video files there, and the precache and Cache Storage checks forbid any pose/mediapipe
+#     entry from being precached or cached.
 #   * The browser runs in UTC and en-US (playwright-cli config): downloadToday sends no X-Timezone (the server's "today" is then
 #     the UTC day) while the /train screen sends the device's zone, so near local midnight a non-UTC device would disagree with
 #     itself; pinning the zone keeps the run deterministic (that gap is reported, not hidden).
@@ -198,8 +203,10 @@ if grep -qE 'StaleWhileRevalidate|NetworkFirst|CacheFirst|NetworkOnly|caches\.op
 else pass "service worker: no runtime caching strategy in sw.js"; fi
 if grep -qF 'NavigationRoute' <<<"$SW_JS" && grep -qF '/^\/api' <<<"$SW_JS"; then pass "service worker: navigations fall back to index.html with /api excluded (NavigationRoute denylist)"
 else fail "service worker: navigations fall back to index.html with /api excluded" "  tail of sw.js: ${SW_JS: -400}"; fi
-media=$(find "$DIST1" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.task' -o -iname '*.tflite' \) 2>/dev/null)
-if [ -z "$media" ]; then pass "dist: the production build contains no video and no pose model file"; else fail "dist: the production build contains no video and no pose model file" "  $media"; fi
+# dist/mediapipe/ (pose model .task, vision_wasm_*) is served from dist on purpose (8nt.11); only video is forbidden in dist.
+# That none of it is precached is asserted above (precache list) and on the device below (Cache Storage).
+media=$(find "$DIST1" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' \) 2>/dev/null)
+if [ -z "$media" ]; then pass "dist: the production build contains no video file (.mp4/.webm/.mov)"; else fail "dist: the production build contains no video file (.mp4/.webm/.mov)" "  $media"; fi
 
 # --- B. installability: manifest, icons -------------------------------------------------------------------------------------
 MANIFEST=$(curl -s -D "$scratch/m.hdr" --max-time "$E2E_HTTP_TIMEOUT" "$STACK_URL/manifest.webmanifest")
@@ -514,9 +521,11 @@ if [ "$WEB_ON" = 1 ]; then
         const t1 = await page.evaluate(() => performance.timeOrigin);
         const updateBtn = await page.getByRole("button", { name: "Update", exact: true }).isEnabled();
         const later = await page.getByRole("button", { name: "Later", exact: true }).count();
-        return JSON.stringify({ prompt, footerBefore, sameDocument: t0 === t1, updateBtn, later, t0 }); }' 40000
+        const entryBefore = await page.evaluate(() => { const s = document.querySelector("script[type=module]"); return s ? s.src.replace(/^.*\//, "") : null; });
+        return JSON.stringify({ prompt, footerBefore, sameDocument: t0 === t1, updateBtn, later, t0, entryBefore }); }' 40000
       if [ "$WEB_OK" = 1 ]; then
         T0=$(jq -r .t0 <<<"$PW_OUT")
+        ENTRY_BEFORE=$(jq -r '.entryBefore // empty' <<<"$PW_OUT")
         jchk "new build: the app shows 'New version available' with an Update button (and Later) and names the running version $V1" "$PW_OUT" ".updateBtn == true and .later == 1 and (.prompt | contains(\"New version available\")) and (.prompt | contains(\"$V1\"))"
         jchk "new build: the prompt does not reload the page by itself (same document 3 s later)" "$PW_OUT" '.sameDocument == true'
         if jq -e ".footerBefore | contains(\"Version $V2\")" >/dev/null <<<"$PW_OUT"; then echo "  note: the footer already reads $V2 while the prompt is up (it shows the API's BUILD_VERSION from GET /health, not the bundle's)"; else echo "  note: the footer still reads $V1 while the prompt is up"; fi
@@ -527,15 +536,17 @@ if [ "$WEB_ON" = 1 ]; then
           let footerV2 = true; await page.waitForFunction((v) => { const f = document.querySelector("footer"); return !!f && f.innerText.includes("Version " + v); }, A.v2, { timeout: 15000 }).catch(() => { footerV2 = false; });
           const footer = await page.locator("footer").innerText();
           const promptLeft = await page.getByText("New version available").count();
-          const entry = await page.evaluate(async () => { const s = document.querySelector("script[type=module]"); const t = await (await fetch(s.src)).text(); return { src: s.src.replace(/^.*\//, ""), text: t }; });
+          const entrySrc = await page.evaluate(() => { const s = document.querySelector("script[type=module]"); return s ? s.src.replace(/^.*\//, "") : null; });
           const sw = await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); return { active: r && r.active && r.active.state, waiting: !!(r && r.waiting), controller: !!navigator.serviceWorker.controller }; });
           await page.getByText("Available offline").or(page.getByRole("button", { name: "Download today\x27s session" })).first().waitFor();
           const badge = await page.getByText("Available offline").count();
           let buster = null; for (let i = 0; i < 25 && buster !== A.v2; i++) { const v = await idbAll(); const k = Object.keys(v).find((x) => x.endsWith(":query-cache")); buster = k ? v[k].buster : null; if (buster !== A.v2) await page.waitForTimeout(400); }
-          return JSON.stringify({ footerV2, footer, promptLeft, entrySrc: entry.src, hasV2: entry.text.includes(A.v2), hasV1: entry.text.includes(A.v1), sw, badge, buster }); }' 90000
+          return JSON.stringify({ footerV2, footer, promptLeft, entrySrc, sw, badge, buster }); }' 90000
         if [ "$WEB_OK" = 1 ]; then
           jchk "new build: after Update the page reloaded and the footer reads 'Version $V2' (it read $V1 before the deploy)" "$PW_OUT" '.footerV2 == true'
-          jchk "new build: the bundle that runs after Update is the new build ($V2 in its entry script, no $V1), the prompt is gone" "$PW_OUT" '.hasV2 == true and .hasV1 == false and .promptLeft == 0'
+          if [ -n "$ENTRY_BEFORE" ]; then pass "new build: the entry script before Update was captured ($ENTRY_BEFORE)"; else fail "new build: the entry script before Update was captured" "  no script[type=module] on the page before Update"; fi
+          jchk "new build: the bundle that runs after Update is the new build (footer shows $V2 and not $V1, cache-buster is $V2, entry script differs from the pre-update $ENTRY_BEFORE, the prompt is gone)" "$PW_OUT" \
+            ".footerV2 == true and (.footer | contains(\"Version $V2\")) and ((.footer | contains(\"Version $V1\")) | not) and .buster == \"$V2\" and (.entrySrc | type) == \"string\" and .entrySrc != \"\" and .entrySrc != \"$ENTRY_BEFORE\" and .promptLeft == 0"
           jchk "new build: the new service worker is active and in control, none is left waiting" "$PW_OUT" '.sw.active == "activated" and .sw.controller == true and .sw.waiting == false'
           jchk "new build: the device still holds today's downloaded session (the 'Available offline' badge)" "$PW_OUT" '.badge == 1'
           jchk "new build: the persisted query cache is re-stamped with the new build version $V2 (buster tied to BUILD_VERSION)" "$PW_OUT" ".buster == \"$V2\""
