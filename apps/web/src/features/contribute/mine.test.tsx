@@ -473,7 +473,9 @@ describe('withdraw: confirm flow', () => {
     expect(text(alert)).toContain('We could not withdraw it');
     expect(text(alert)).not.toContain('(server text)');
     expect(text(alert)).not.toContain('Boom');
-    expect(text(item('Wall passes').closest('ul') as Element)).toContain('Pending');
+    // The page behind a modal dialog is aria-hidden, so it is looked up with hidden: true.
+    const behind = screen.getByRole('heading', { level: 2, name: 'Wall passes', hidden: true }).closest('li') as Element;
+    expect(text(behind)).toContain('Pending');
     const again = within(box).getByRole('button', { name: 'Yes, withdraw' }) as HTMLButtonElement;
     expect(again.disabled).toBe(false);
     expect(again.getAttribute('aria-busy')).not.toBe('true');
