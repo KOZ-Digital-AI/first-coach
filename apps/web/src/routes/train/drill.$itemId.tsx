@@ -18,6 +18,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { seedTodayFromDevice } from '../../bootstrap';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { EmptyState } from '../../components/ui/empty-state';
@@ -43,6 +44,9 @@ import { type DrillSlotProps, useSlot } from '../../lib/slots';
  *     GET /api/player/today itself, exactly as /train does (locale, X-Timezone, anonymous sign-in first); a 404 "not onboarded"
  *     sends the player to /train/onboarding. There is no refetch on focus or reconnect: /train owns keeping the session fresh, and a
  *     background refetch must never overwrite an optimistic change that is still in flight.
+ *     OFFLINE COLD RELOAD (fc-mol-eay.12): when that request fails (no network, and no readable session) and the cache holds no
+ *     session (no persisted cache), the session the last player downloaded is put into the cache (`seedTodayFromDevice`,
+ *     bootstrap.ts) and the drill opens from it, with all its text. The load error stays only when the device holds nothing.
  *  2. Mutations. Done, Undo and Save result are session events through the events client (never fetch directly). Done and Undo
  *     are OPTIMISTIC: the ['today'] cache is patched at once and restored to the snapshot if the post fails. The server's
  *     session then replaces the cache (the events client does that). A result has no representation in the session, so it is
@@ -363,6 +367,11 @@ function DrillScreen({ itemId }: { itemId: string }) {
     if (notOnboarded) navigate(ONBOARDING_PATH, { replace: true });
     // `navigate` is a fresh closure on every render; the redirect must fire once per failure, not once per render.
   }, [notOnboarded]);
+
+  // The request failed and the cache holds no session: fall back to the one the last player downloaded (never on a 404 answer).
+  useEffect(() => {
+    if (today.isError && !notOnboarded && today.data === undefined) seedTodayFromDevice(queryClient);
+  }, [today.isError, today.data, notOnboarded, queryClient]);
 
   // --- mutations ---
   const [busy, setBusy] = useState<ControlKey | null>(null);
