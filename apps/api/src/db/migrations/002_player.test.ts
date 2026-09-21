@@ -887,7 +887,7 @@ describe('002_player: test_results replay key', () => {
   test('the shape mirrors z.uuid() (ClientUuid) exactly on lower-case input: version 1-8, variant 8/9/a/b, nil and max accepted', () => {
     const db = migrated('all');
     addProfile(db);
-    const candidates = [
+    const candidates = new Set([
       '00000000-0000-0000-0000-000000000000', // nil: Zod accepts
       'ffffffff-ffff-ffff-ffff-ffffffffffff', // max: Zod accepts
       '00000000-0000-4000-8000-000000000001',
@@ -904,9 +904,9 @@ describe('002_player: test_results replay key', () => {
       '00000000-0000-ffff-ffff-ffffffffffff',
       '0190f1c2-7a3b-7c5d-8e9f-0a1b2c3d4e5f', // v7
       ...[1, 2, 3, 4, 5, 6, 7, 8].map((v) => `00000000-0000-${v}000-8000-000000000001`),
-    ];
+    ]); // a Set: a repeated candidate would hit UNIQUE instead of the CHECK
 
-    candidates.forEach((client_uuid, i) => {
+    [...candidates].forEach((client_uuid, i) => {
       const zodAccepts = ClientUuid.safeParse(client_uuid).success;
       const dbAccepts = (() => {
         try {
