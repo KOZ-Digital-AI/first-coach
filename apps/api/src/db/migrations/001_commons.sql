@@ -101,14 +101,21 @@ CREATE INDEX drills_by_sport ON drills (sport_id);
 CREATE TABLE drill_versions (
   id                TEXT NOT NULL PRIMARY KEY,
   drill_id          TEXT NOT NULL REFERENCES drills (id),
-  semver            TEXT NOT NULL
-                    CHECK (semver GLOB '[0-9]*.[0-9]*.[0-9]*' AND semver NOT GLOB '*[^0-9A-Za-z.-]*'),
+  semver            TEXT NOT NULL                           -- Semver: three digit-only segments, optional -prerelease
+                    CHECK (semver NOT GLOB '*[^0-9A-Za-z.-]*'
+                           AND instr(semver, '-') <> length(semver)                      -- a '-' needs a non-empty suffix
+                           AND substr(semver, 1, instr(semver || '-', '-') - 1) GLOB '[0-9]*.[0-9]*.[0-9]*'
+                           AND substr(semver, 1, instr(semver || '-', '-') - 1) NOT GLOB '*[^0-9.]*'
+                           AND substr(semver, 1, instr(semver || '-', '-') - 1) NOT GLOB '*..*'
+                           AND length(substr(semver, 1, instr(semver || '-', '-') - 1)) - length(replace(substr(semver, 1, instr(semver || '-', '-') - 1), '.', '')) = 2),
   parent_version_id TEXT,                                     -- NULL for the first version
   status            TEXT NOT NULL
                     CHECK (status IN ('COMMUNITY', 'REVIEWED', 'EXPERT_VERIFIED', 'ACADEMY_VERIFIED')),
   content           TEXT NOT NULL CHECK (json_valid(content) AND json_type(content) = 'object'), -- DrillContent
   -- Filter columns: copies of content.conditions kept for indexing. The CHECKs below make them
-  -- impossible to disagree with `content`.
+  -- impossible to disagree with `content`. They use IS, never =: a NULL CHECK result ACCEPTS the
+  -- row, so `=` against an absent JSON key would let any column value through. The json_type
+  -- tests reject a mistyped value that column affinity would otherwise coerce (5 vs '5').
   equipment         TEXT NOT NULL,
   space             TEXT NOT NULL,                            -- primary space = conditions.spaces[0]
   partner           INTEGER NOT NULL DEFAULT 0 CHECK (partner IN (0, 1)),
@@ -130,11 +137,16 @@ CREATE TABLE drill_versions (
   FOREIGN KEY (drill_id, parent_version_id) REFERENCES drill_versions (drill_id, id),  -- same lineage
   CHECK (parent_version_id IS NULL OR parent_version_id <> id),
   CHECK (age_min IS NULL OR age_max IS NULL OR age_min <= age_max),
-  CHECK (equipment = json_extract(content, '$.conditions.equipment')),
-  CHECK (space = json_extract(content, '$.conditions.spaces[0]')),
-  CHECK (partner = coalesce(json_extract(content, '$.conditions.partner'), 0)),
-  CHECK (age_min IS json_extract(content, '$.conditions.ageMin')),
-  CHECK (age_max IS json_extract(content, '$.conditions.ageMax'))
+  CHECK (equipment IS json_extract(content, '$.conditions.equipment')
+         AND json_type(content, '$.conditions.equipment') IS 'text'),
+  CHECK (space IS json_extract(content, '$.conditions.spaces[0]')
+         AND json_type(content, '$.conditions.spaces[0]') IS 'text'),
+  CHECK (partner IS coalesce(json_extract(content, '$.conditions.partner'), 0)
+         AND coalesce(json_type(content, '$.conditions.partner'), 'false') IN ('true', 'false')),
+  CHECK (age_min IS json_extract(content, '$.conditions.ageMin')
+         AND coalesce(json_type(content, '$.conditions.ageMin'), 'integer') = 'integer'),
+  CHECK (age_max IS json_extract(content, '$.conditions.ageMax')
+         AND coalesce(json_type(content, '$.conditions.ageMax'), 'integer') = 'integer')
 ) STRICT;
 CREATE INDEX drill_versions_by_drill ON drill_versions (drill_id, created_at);
 
