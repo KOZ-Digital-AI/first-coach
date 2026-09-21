@@ -27,6 +27,8 @@
 #   G. API      the same player over curl: no cookie is 401, a visitor that never onboarded gets 404 "not onboarded", an empty
 #               batch is a 422 with a pointer, swapping a finished drill is a 409, a foreign/unknown session is a 404 that
 #               names the event.
+#   H. COHORT   5 other players over curl (ages 7-16, budgets 10-45 min): kit fit, minutes within 3 of their own budget, exact
+#               progress, and no repeat of the drills done on day 1 (the picker is seeded per player, so this is not luck).
 # Exit codes (lib.sh): 0 every check passed, 1 at least one FAIL, 3 nothing failed but a check was BLOCKED (no browser,
 # E2E_WEB=off, no playwright-cli); E2E_ALLOW_BLOCKED=1 keeps a blocked-only run at 0. BLOCKED is never counted as a pass.
 #
@@ -206,7 +208,9 @@ FIT_JQ='def owned: ["nothing","ball","ball_wall"];
   def size: {"home_3x3":1,"yard":2,"gym":2,"field":3};
   .content.conditions as $c
   | ($c.equipment | IN(owned[])) and ([$c.spaces[] | size[.]] | min) <= 2 and ($c.partner == false)
-    and ($c.ageMin == null or $c.ageMin <= '"$PLAYER_AGE"') and ($c.ageMax == null or $c.ageMax >= '"$PLAYER_AGE"')'
+    and ($c.ageMin == null or $c.ageMin <= $age) and ($c.ageMax == null or $c.ageMax >= $age)'
+# fit_bad <session json> <age>: the titles of the drills that do NOT fit a "Ball + wall" / yard / no-partner player of that age
+fit_bad() { jq -r --argjson age "$2" "[.items[] | select(($FIT_JQ) | not) | .content.title.en] | join(\", \")" <<<"$1"; }
 # title of an item (en) and expected words
 EQUIPMENT_WORDS='{"nothing":"No equipment","ball":"A ball","ball_wall":"A ball and a wall","cones":"Cones","full_field":"A full pitch"}'
 SPACE_WORDS='{"home_3x3":"Home, about 3 by 3 metres","yard":"Yard","field":"Field","gym":"Gym"}'
@@ -348,9 +352,9 @@ if [ "$WEB_ON" = 1 ] && [ "$WEB_OK" = 1 ]; then
     title=$(jq -r ".items[$i].content.title.en" <<<"$S1")
     has "row $((i + 1)): the API's drill '$title' is in this place of the list" "$(jq -r ".[$i]" <<<"$ROWS")" "$title"
   done
-  fit_bad=$(jq -r "[.items[] | select(($FIT_JQ) | not) | .content.title.en] | join(\", \")" <<<"$S1")
-  if [ -z "$fit_bad" ]; then pass "every drill of the session fits the player: equipment in the Ball + wall kit, space no larger than a yard, no partner, age $PLAYER_AGE in range"
-  else fail "every drill of the session fits the player's equipment and space" "  not fitting: $fit_bad"; fi
+  unfit=$(fit_bad "$S1" "$PLAYER_AGE")
+  if [ -z "$unfit" ]; then pass "every drill of the session fits the player: equipment in the Ball + wall kit, space no larger than a yard, no partner, age $PLAYER_AGE in range"
+  else fail "every drill of the session fits the player's equipment and space" "  not fitting: $unfit"; fi
   pw_run "Finish session is disabled while drills are open, with its hint" '(async page => JSON.stringify({
     disabled: await page.getByRole("button", { name: "Finish session" }).isDisabled(),
     hint: await page.getByText("Finish is available when every drill is done.").isVisible() }))'
@@ -406,8 +410,8 @@ if [ "$WEB_ON" = 1 ] && [ "$WEB_OK" = 1 ]; then
         assert_eq "$(jq -c "[.items[$i] | .done]" <<<"$CUR")" "[false]" "swap: the swapped item is still to do"
         assert_eq "$(sqlite_count sessions "player_id = '$PLAYER'")" 1 "db: the swap rewrote the session, it made no second one"
         assert_eq "$(sqlite_scalar "SELECT json_extract(items, '\$[$i].drillVersionId') FROM sessions WHERE player_id = '$PLAYER'")" "$(jq -r .drillVersionId <<<"$new")" "db: the session stores the swapped-in drill version"
-        fit_bad=$(jq -r "[.items[] | select(($FIT_JQ) | not) | .content.title.en] | join(\", \")" <<<"$CUR")
-        [ -z "$fit_bad" ] && pass "swap: every drill of the session still fits the player's kit and space" || fail "swap: every drill still fits the player's kit and space" "  not fitting: $fit_bad"
+        unfit=$(fit_bad "$CUR" "$PLAYER_AGE")
+        [ -z "$unfit" ] && pass "swap: every drill of the session still fits the player's kit and space" || fail "swap: every drill still fits the player's kit and space" "  not fitting: $unfit"
         echo "info: session total after the swap: $(jq '[.items[].minutes] | add' <<<"$CUR") min (budget $BUDGET)" >&2
         check_drill_page "$new"   # the new drill's own page shows its own content
         item=$new
@@ -562,8 +566,8 @@ if [ "$WEB_ON" = 1 ] && [ "$WEB_OK" = 1 ]; then
       sum2=$(jq '[.items[].minutes] | add' <<<"$S2")
       if [ "$sum2" -ge $((BUDGET - BUDGET_TOLERANCE)) ] && [ "$sum2" -le $((BUDGET + BUDGET_TOLERANCE)) ]; then pass "next visit: the drill minutes are $sum2, within $BUDGET_TOLERANCE of the $BUDGET-minute budget"
       else fail "next visit: the drill minutes are within $BUDGET_TOLERANCE of the $BUDGET-minute budget" "  sum: $sum2 (skill test: $(jq -c '.skillTest' <<<"$S2"))"; fi
-      fit_bad=$(jq -r "[.items[] | select(($FIT_JQ) | not) | .content.title.en] | join(\", \")" <<<"$S2")
-      [ -z "$fit_bad" ] && pass "next visit: every drill fits the player's kit and space" || fail "next visit: every drill fits the player's kit and space" "  not fitting: $fit_bad"
+      unfit=$(fit_bad "$S2" "$PLAYER_AGE")
+      [ -z "$unfit" ] && pass "next visit: every drill fits the player's kit and space" || fail "next visit: every drill fits the player's kit and space" "  not fitting: $unfit"
       has "next visit: the headline is this session's minutes" "$(jq -r .text <<<"$DAY2_UI")" "$(jq -r .totalMinutes <<<"$S2") min today"
       assert_eq "$(sqlite_count session_events)" "$EXPECTED_EVENTS" "db: the later visit added no event (still $EXPECTED_EVENTS)"
       assert_eq "$(sqlite_count sessions "finished_at IS NOT NULL")" 1 "db: only day 1 is finished"
@@ -589,6 +593,66 @@ sign_in "a visitor who never onboarded"
 if [ -n "$V_COOKIE" ]; then
   fetch "$V_COOKIE" GET '/api/player/today?locale=en'
   chk "api: a signed-in visitor without a plan gets 404 'not onboarded' from today" 404 '.status == 404 and (.detail | test("not onboarded"))'
+fi
+
+# --- H. a cohort of other players over curl: the same journey, other ages and budgets --------------------------------------------------
+# The browser journey above is ONE player. The picker is seeded by player id and date, so its rules (budget window, kit, history)
+# are also proven on other players with other ages and minutes budgets: sign in, start, open today (day-1 zone), do every drill and
+# finish in ONE batch, then open the later day (day-2 zone). Per player: the drills fit the kit, the minutes are within 3 of the
+# player's own budget, the progress is exact, and none of the drills done on day 1 is in day 2's session.
+drill_of() { sqlite_scalar "SELECT drill_id FROM drill_versions WHERE id = '$1'"; }
+cohort_player() { # <age> <level> <minutes>
+  local age=$1 level=$2 minutes=$3 label="cohort (age $1, $3 min)" ck body s1 s2 sum1 sum2 batch i n bad ids1 ids2 overlap reps
+  sign_in "$label"; [ -n "$V_COOKIE" ] || return 0
+  ck=$V_COOKIE
+  body=$(jq -nc --argjson age "$age" --arg level "$level" --argjson minutes "$minutes" --arg u1 "$(cat /proc/sys/kernel/random/uuid)" --arg u2 "$(cat /proc/sys/kernel/random/uuid)" --arg u3 "$(cat /proc/sys/kernel/random/uuid)" --arg u4 "$(cat /proc/sys/kernel/random/uuid)" --arg u5 "$(cat /proc/sys/kernel/random/uuid)" '{
+    profile: {age: $age, level: $level, goal: "weakfoot", equipment: "ball_wall", space: "yard", partner: false, daysPerWeek: 3, minutesPerSession: $minutes, locale: "en"},
+    baseline: [{testSlug: "juggling-max-touches", value: 15, clientUuid: $u1}, {testSlug: "wall-passing-60s", value: 30, clientUuid: $u2}, {testSlug: "ball-mastery-30s", value: 40, clientUuid: $u3},
+               {testSlug: "weak-foot-passes", value: 4, clientUuid: $u4}, {testSlug: "slalom-time", value: 0, skipped: true, clientUuid: $u5}]}')
+  fetch "$ck" POST /api/player/start "$body"
+  chk "$label: onboarded over the API" 200 '.roadmap.focus | length >= 2'
+  fetch "$ck" GET '/api/player/today?locale=en' '' -H "X-Timezone: $TZ_DAY1"
+  s1=$F_BODY
+  chk "$label: today's session ($D1) has drills and no skill test yet" 200 ".date == \"$D1\" and (.items | length) >= 2 and .skillTest == null"
+  [ "$F_CODE" = 200 ] || return 0
+  sum1=$(jq '[.items[].minutes] | add' <<<"$s1")
+  if [ "$sum1" -ge $((minutes - BUDGET_TOLERANCE)) ] && [ "$sum1" -le $((minutes + BUDGET_TOLERANCE)) ]; then pass "$label: the drill minutes are $sum1, within $BUDGET_TOLERANCE of the $minutes-minute budget"
+  else fail "$label: the drill minutes are within $BUDGET_TOLERANCE of the $minutes-minute budget" "  sum: $sum1 drills: $(jq -c '[.items[] | {t: .content.title.en, m: .minutes}]' <<<"$s1")"; fi
+  bad=$(fit_bad "$s1" "$age"); [ -z "$bad" ] && pass "$label: every drill fits (Ball + wall kit, yard, no partner, age $age)" || fail "$label: every drill fits the player's kit, space and age" "  not fitting: $bad"
+  n=$(jq '.items | length' <<<"$s1")
+  batch=$(jq -nc --argjson s "$s1" --arg at "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" --argjson u "$(for ((i = 0; i <= n; i++)); do cat /proc/sys/kernel/random/uuid; done | jq -R . | jq -sc .)" '
+    {events: ([$s.items | to_entries[] | {clientUuid: $u[.key], sessionId: $s.id, type: "drill_done", itemId: .value.itemId, at: $at}]
+      + [{clientUuid: $u[($s.items | length)], sessionId: $s.id, type: "session_finished", at: $at}])}')
+  fetch "$ck" POST /api/player/session-events "$batch" -H "X-Timezone: $TZ_DAY1"
+  chk "$label: every drill done and the session finished in ONE call: progress is 1 session, $sum1 minutes, streak 1" 200 \
+    ".progress == {sessionsCompleted: 1, minutesTrained: $sum1, streakDays: 1} and (.session.items | all(.[]; .done)) and .nextSessionDate == \"$D_NEXT\""
+  fetch "$ck" GET '/api/player/today?locale=en' '' -H "X-Timezone: $TZ_DAY2"
+  s2=$F_BODY
+  chk "$label: the later day ($D2) is a new session, all to do" 200 ".date == \"$D2\" and .id != \"$(jq -r .id <<<"$s1")\" and (.items | length) >= 2 and all(.items[]; .done == false)"
+  [ "$F_CODE" = 200 ] || return 0
+  ids1=$(for v in $(jq -r '.items[].drillVersionId' <<<"$s1"); do drill_of "$v"; done | sort)
+  ids2=$(for v in $(jq -r '.items[].drillVersionId' <<<"$s2"); do drill_of "$v"; done | sort)
+  overlap=$(comm -12 <(printf '%s\n' "$ids1") <(printf '%s\n' "$ids2") | tr '\n' ' ')
+  # "deprioritised, not banned": a repeat is allowed only when nothing else fits. Up to 30 minutes the pool is far larger than
+  # two sessions, so no repeat at all; a 45-minute session uses a large part of the pool, so there fewer than half may repeat.
+  if [ "$minutes" -le 30 ]; then
+    [ -z "$overlap" ] && pass "$label: none of the $n drills done on day 1 is in the later session (deprioritised)" || fail "$label: none of the drills done on day 1 is in the later session" "  repeated: $overlap"
+  else
+    reps=$(wc -w <<<"$overlap")
+    if [ $((reps * 2)) -lt "$n" ]; then pass "$label: the pool is short at $minutes min; fewer than half of the drills done on day 1 come back ($reps of $n, deprioritised)"
+    else fail "$label: fewer than half of the drills done on day 1 come back in the later session" "  repeated ($reps of $n): $overlap"; fi
+  fi
+  sum2=$(jq '[.items[].minutes] | add' <<<"$s2")
+  if [ "$sum2" -ge $((minutes - BUDGET_TOLERANCE)) ] && [ "$sum2" -le $((minutes + BUDGET_TOLERANCE)) ]; then pass "$label: the later session's minutes are $sum2, within $BUDGET_TOLERANCE of $minutes"
+  else fail "$label: the later session's minutes are within $BUDGET_TOLERANCE of $minutes" "  sum: $sum2"; fi
+  bad=$(fit_bad "$s2" "$age"); [ -z "$bad" ] && pass "$label: the later session's drills fit the kit, space and age" || fail "$label: the later session's drills fit" "  not fitting: $bad"
+}
+if [ -n "${SID:-}" ]; then
+  cohort_player 12 basic 10
+  cohort_player 7 beginner 15
+  cohort_player 16 basic 20
+  cohort_player 12 basic 30
+  cohort_player 16 basic 45
 fi
 
 if [ "$WEB_ON" = 1 ] && [ "$WEB_OK" = 0 ]; then _e2e_err "NOTE: a browser step failed; the browser steps that depend on it were not run (the first FAIL above is the cause)"; fi
