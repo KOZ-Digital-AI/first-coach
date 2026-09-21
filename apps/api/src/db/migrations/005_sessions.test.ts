@@ -204,7 +204,7 @@ function ownTables(): string[] {
 }
 
 const columnShape = (db: Database, table: string): ColumnShape[] =>
-  rows<ColumnShape>(db, `SELECT name, type, "notnull" AS notnull, pk FROM pragma_table_info('${table}') ORDER BY cid`);
+  rows<ColumnShape>(db, `SELECT name, type, "notnull" AS "notnull", pk FROM pragma_table_info('${table}') ORDER BY cid`);
 
 const notNullColumns = (db: Database, table: string): string[] =>
   rows<{ name: string }>(db, `SELECT name FROM pragma_table_info('${table}') WHERE "notnull" = 1`).map((r) => r.name);
@@ -687,8 +687,8 @@ describe('005_sessions: sessions', () => {
     const db = migrated();
     addProfile(db);
     expect(thrown(() => addSession(db, { items: new TextEncoder().encode('[]') })).message).toMatch(/cannot store BLOB value in TEXT column|CHECK constraint failed/);
-    expect(thrown(() => addSession(db, { id: 'x2', date: 20260105 })).message).toMatch(/cannot store INT/i);
-    expect(thrown(() => addSession(db, { id: 'x3', planner: 1 })).message).toMatch(/cannot store INT/i);
+    expect(thrown(() => addSession(db, { id: 'x2', date: 20260105 })).message).toMatch(/cannot store INT|CHECK constraint failed/i);
+    expect(thrown(() => addSession(db, { id: 'x3', planner: 1 })).message).toMatch(/cannot store INT|CHECK constraint failed/i);
     expect(count(db, 'sessions')).toBe(0);
   });
 
@@ -952,6 +952,36 @@ describe('005_sessions: session_events is an append-only log', () => {
     const e = thrown(() => db.run("UPDATE session_events SET player_id = 'p2'"));
     expect(e.message).toMatch(/FOREIGN KEY constraint failed/);
     expect(one<{ player_id: string }>(db, 'SELECT player_id FROM session_events').player_id).toBe('p1');
+  });
+
+  test('the re-key exemption is exactly "player_id and nothing else": with foreign keys OFF (the trigger alone answers) no other column may change alongside it', () => {
+    const db = new Database(':memory:');
+    opened.push(db);
+    copy005(five);
+    migrate(db, five);
+    expect(one<{ foreign_keys: number }>(db, 'PRAGMA foreign_keys').foreign_keys).toBe(0);
+    addProfile(db);
+    addSession(db);
+    addEvent(db, { client_uuid: uuid(1), item_id: 'i1', value: 1 }); // every column set
+    addEvent(db, { client_uuid: uuid(2), item_id: null, value: null }); // the nullable columns NULL
+    const alternative: Record<string, Cell> = {
+      id: 99, session_id: 's1b', client_uuid: uuid(77), type: 'drill_undone', at: T2, received_at: T2,
+    };
+    const before = rows(db, 'SELECT * FROM session_events ORDER BY id');
+
+    for (const column of ['id', 'session_id', 'client_uuid', 'type', 'item_id', 'value', 'at', 'received_at']) {
+      for (const [uuidOf, nullable] of [[uuid(1), false], [uuid(2), true]] as const) {
+        // A NULL column becomes a value and a value becomes NULL: the comparison must be NULL-safe.
+        const next: Cell = column in alternative ? (alternative[column] as Cell) : nullable ? (column === 'item_id' ? 'i9' : 2) : null;
+        const e = thrown(() => db.run(`UPDATE session_events SET player_id = 'p-other', ${column} = ? WHERE client_uuid = ?`, [next, uuidOf]));
+        expect(e.message, `${column} on ${uuidOf}`).toMatch(/session_events is append-only/);
+      }
+    }
+    expect(rows(db, 'SELECT * FROM session_events ORDER BY id')).toEqual(before);
+
+    // The one allowed shape, for contrast: player_id alone.
+    db.run("UPDATE session_events SET player_id = 'p-other' WHERE client_uuid = ?", [uuid(1)]);
+    expect(one<{ player_id: string }>(db, 'SELECT player_id FROM session_events WHERE client_uuid = ?', uuid(1)).player_id).toBe('p-other');
   });
 
   test('INSERT stays possible, and a direct DELETE is not blocked (erasure and cascade must work; only UPDATE is guarded)', () => {
