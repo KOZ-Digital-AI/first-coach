@@ -1,0 +1,170 @@
+{
+  "sport": "football",
+  "tests": [
+    {
+      "slug": "juggling-max-touches",
+      "skill": "juggling-coordination",
+      "metric": "maximum consecutive touches",
+      "unit": "touches",
+      "direction": "higher",
+      "equipment": "ball",
+      "protocol": {
+        "kk": "1. Терезелерден, көліктерден және басқа адамдардан алыс, тегіс әрі құрғақ жер тап.\n2. Алдымен жылын: орнында бір минут баяу жүріп, тобығыңды бірнеше рет айналдыр.\n3. Допты қолыңнан жіберіп, аяғыңмен немесе санмен жоғары қағып ойна. Допты басыңмен де, қолыңмен де ойнама.\n4. Әр жанасуды дауыстап сана. Доп жерге түссе немесе қолыңа тисе, талпыныс аяқталады.\n5. Үш талпыныс жаса, әр талпыныстан кейін 1 минут демал.\n6. Ең жақсы талпынысыңды жазып қой: доп жерге түспей қатарынан неше рет жанасқаныңды.\n7. Басың айналса немесе аяғың ауырса, тоқтап демал.",
+        "ru": "1. Найди ровное сухое место подальше от окон, машин и других людей.\n2. Сначала разомнись: минуту медленно походи на месте и покрути стопами.\n3. Отпусти мяч из рук и подбивай его стопой или бедром. Головой и руками мяч не трогай.\n4. Считай каждое касание вслух. Если мяч упал на землю или ты тронул его рукой, попытка закончена.\n5. Сделай 3 попытки и отдыхай 1 минуту после каждой.\n6. Запиши лучшую попытку: сколько касаний подряд ты сделал, пока мяч не упал.\n7. Если закружилась голова или заболела нога, остановись и отдохни.",
+        "en": "1. Find a flat, dry place away from windows, cars and other people.\n2. Warm up first: walk slowly on the spot for one minute and roll your ankles a few times.\n3. Let the ball go from your hands and keep it up with your foot or thigh. Do not play it with your head or hands.\n4. Count every touch out loud. If the ball hits the ground or your hand, the try is over.\n5. Do 3 tries and rest for 1 minute after each one.\n6. Write down your best try: how many touches in a row you made before the ball fell.\n7. If you feel dizzy or your leg hurts, stop and rest."
+      },
+      "thresholds": {
+        "upTo9": [
+          3,
+          8,
+          15,
+          30
+        ],
+        "from10to13": [
+          5,
+          12,
+          25,
+          50
+        ],
+        "from14": [
+          8,
+          20,
+          40,
+          80
+        ]
+      }
+    },
+    {
+      "slug": "wall-passing-60s",
+      "skill": "passing-first-touch",
+      "metric": "successful passes in 60 s",
+      "unit": "passes",
+      "direction": "higher",
+      "equipment": "ball_wall",
+      "protocol": {
+        "kk": "1. Терезесіз, берік қабырға таңда; алдындағы жер тегіс әрі құрғақ болсын, жол мен адамдардан алыс тұр.\n2. Қабырғадан 3 м жерге бормен немесе таспамен сызық сыз.\n3. Досың немесе ата-анаң 60 секундты өлшеп, «баста» және «тоқта» десін.\n4. Сызықтың артында тұр, допты аяғыңның ішкі жағымен жермен қабырғаға жібер, қайтқан допты тоқтатып, қайта жібер.\n5. Пас сызықтың артынан берілсе және доп жермен барып қабырғаға тисе, есептеледі. Биік ұшқан немесе сызықтың алдынан берілген пас есептелмейді.\n6. Әр пасты дауыстап сана. Доп алыс кетсе, жүріп барып ал: уақыт тоқтамайды. «Тоқта» дегенше жалғастыр.\n7. Екі талпыныс жаса, арасында 2 минут демал, жақсы нәтижені жазып қой. Аяғың шаршаса не ауырса, тоқтап демал.",
+        "ru": "1. Найди прочную стену без окон и ровную сухую землю перед ней, подальше от дороги и людей.\n2. Отмерь 3 м от стены и проведи мелом или лентой линию.\n3. Пусть родитель или друг засечёт 60 секунд и скажет «начали» и «стоп».\n4. Встань за линию, отдай мяч внутренней стороной стопы по земле в стену, останови вернувшийся мяч и снова отдай пас.\n5. Пас считается, если ты отдал его из-за линии и мяч по земле попал в стену. Высокие пасы и пасы, отданные перед линией, не считаются.\n6. Считай каждый пас вслух. Если мяч укатился, сходи за ним шагом: время не останавливается. Продолжай, пока не скажут «стоп».\n7. Сделай 2 попытки с отдыхом 2 минуты между ними и запиши лучший результат. Если устанешь или заболит нога, остановись и отдохни.",
+        "en": "1. Find a solid wall without windows and flat, dry ground in front of it, away from roads and people.\n2. Measure 3 m from the wall and mark a line with chalk or tape.\n3. Ask a parent or friend to time 60 seconds and say \"go\" and \"stop\".\n4. Stand behind the line, pass the ball along the ground into the wall with the inside of your foot, stop the ball when it comes back and pass again.\n5. A pass counts if you played it from behind the line and the ball hit the wall along the ground. High passes and passes from in front of the line do not count.\n6. Count each pass out loud. If the ball rolls away, walk after it: the clock keeps running. Keep going until you hear \"stop\".\n7. Do 2 tries with a 2-minute rest between them and write down the better score. If you get tired or your leg hurts, stop and rest."
+      },
+      "thresholds": {
+        "upTo9": [
+          10,
+          20,
+          30,
+          40
+        ],
+        "from10to13": [
+          15,
+          28,
+          40,
+          52
+        ],
+        "from14": [
+          20,
+          34,
+          48,
+          60
+        ]
+      }
+    },
+    {
+      "slug": "ball-mastery-30s",
+      "skill": "ball-mastery",
+      "metric": "touches in 30 s",
+      "unit": "touches",
+      "direction": "higher",
+      "equipment": "ball",
+      "protocol": {
+        "kk": "1. Кемінде 2 м кеңдікте, тегіс әрі құрғақ, терезелер мен адамдардан алыс жер тап.\n2. Алдымен жылын: орнында 20 баяу қадам жасап, тобығыңды бірнеше рет айналдыр.\n3. Допты алдыңа қой да, аяғыңның табанымен допты үстінен кезектесіп түрт: бірде оң, бірде сол аяқпен. Әр түрту бір жанасу болып есептеледі, доп орнында тұрсын.\n4. Досың немесе ата-анаң 30 секундты өлшеп, «баста» және «тоқта» десін. Жанасуларды дауыстап сана немесе олар санасын.\n5. Доп бір қадамнан артық алыс кетсе, тез қайтарып ал: уақыт тоқтамайды.\n6. Үш талпыныс жаса, әрқайсысынан кейін 1 минут демал. Ең көп жанасу санын жазып қой.\n7. Тірек аяғың тайса немесе аяғың ауырса, тоқтап демал.",
+        "ru": "1. Найди ровное сухое место шириной не меньше 2 м, подальше от окон и людей.\n2. Сначала разомнись: 20 медленных шагов на месте и несколько вращений стопой.\n3. Поставь мяч перед собой и по очереди касайся подошвой верха мяча: то правой ногой, то левой. Каждое касание считается за один раз, мяч остаётся на месте.\n4. Пусть родитель или друг засечёт 30 секунд и скажет «начали» и «стоп». Считай касания вслух или пусть считают они.\n5. Если мяч укатился дальше чем на шаг, быстро верни его: время не останавливается.\n6. Сделай 3 попытки и отдыхай 1 минуту после каждой. Запиши самое большое число касаний.\n7. Если опорная нога скользит или заболела нога, остановись и отдохни.",
+        "en": "1. Find a flat, dry place at least 2 m wide, away from windows and people.\n2. Warm up first: 20 slow steps on the spot and a few ankle rolls.\n3. Put the ball in front of you and tap the top of it with the sole of your foot, right foot then left foot in turn. Every tap counts as one touch, and the ball stays in place.\n4. Ask a parent or friend to time 30 seconds and say \"go\" and \"stop\". Count the touches out loud or let them count.\n5. If the ball rolls more than one step away, bring it back quickly: the clock keeps running.\n6. Do 3 tries and rest for 1 minute after each one. Write down your highest number of touches.\n7. If your standing foot slips or your leg hurts, stop and rest."
+      },
+      "thresholds": {
+        "upTo9": [
+          20,
+          35,
+          50,
+          70
+        ],
+        "from10to13": [
+          30,
+          50,
+          70,
+          95
+        ],
+        "from14": [
+          40,
+          65,
+          90,
+          120
+        ]
+      }
+    },
+    {
+      "slug": "slalom-time",
+      "skill": "dribbling",
+      "metric": "completion time",
+      "unit": "s",
+      "direction": "lower",
+      "equipment": "cones",
+      "protocol": {
+        "kk": "1. Ұзындығы 10 м, тегіс әрі құрғақ, терезелер, жол және адамдардан алыс алаң тап.\n2. 5 конусты түзу сызықпен бір-бірінен 1,5 м қашықтықта қой, сонда қатар 6 м болады. Бірінші конустың алдына 1,5 м жерге старт сызығын, соңғы конустан кейін 1,5 м жерге финиш сызығын сыз.\n3. Допты старт сызығына қой. Досың немесе ата-анаң «баста» десе, уақыт басталады; доп финиш сызығынан өткенде уақыт тоқтайды.\n4. Допты конустардың арасымен, бірде оң, бірде сол аяғыңмен жүргізіп өт. Доп әрқашан жаныңда болсын.\n5. Құлатқан немесе айналып өтпей қалдырған әр конус 1 қате болып есептеледі. Қателерді уақытқа қоспай, бөлек санап жаз.\n6. Үш жүгіріс жаса, арасында 1 минут демал. Ең жылдам жүгірістің уақытын секундпен және сол жүгірістегі қате санын жазып қой.\n7. Доп алаңнан шығып кетсе, тоқтап, жүріп барып ал, адамдарға соғылма. Аяғың ауырса, демал.",
+        "ru": "1. Найди ровное сухое место длиной 10 м, подальше от окон, дороги и людей.\n2. Поставь 5 конусов по прямой на расстоянии 1,5 м друг от друга, так что ряд будет длиной 6 м. Проведи линию старта в 1,5 м перед первым конусом и линию финиша в 1,5 м за последним.\n3. Положи мяч на линию старта. Родитель или друг говорит «начали», и время пошло; когда мяч пересёк линию финиша, время останавливается.\n4. Проведи мяч между конусами змейкой, то правой ногой, то левой. Мяч всё время должен быть рядом с тобой.\n5. Каждый сбитый или пропущенный конус считается за 1 ошибку. Не прибавляй ошибки ко времени, записывай их отдельно.\n6. Сделай 3 забега, между ними отдыхай 1 минуту. Запиши время самого быстрого забега в секундах и число ошибок в этом забеге.\n7. Если мяч ушёл с площадки, остановись и сходи за ним шагом, не налетай на людей. Если заболела нога, отдохни.",
+        "en": "1. Find a flat, dry space 10 m long, away from windows, roads and people.\n2. Set 5 cones in a straight line 1.5 m apart, so the line is 6 m long. Mark a start line 1.5 m before the first cone and a finish line 1.5 m after the last cone.\n3. Put the ball on the start line. A parent or friend says \"go\" and starts the clock; the clock stops when the ball crosses the finish line.\n4. Weave the ball in and out of the cones, using your right foot and your left foot in turn. Keep the ball close to you the whole time.\n5. Each cone you knock over or skip counts as 1 error. Do not add errors to the time; write them down separately.\n6. Do 3 runs with a 1-minute rest between them. Write down the time of your fastest run in seconds and the number of errors in that run.\n7. If the ball leaves the space, stop and walk after it, and do not run into people. If your leg hurts, rest."
+      },
+      "thresholds": {
+        "upTo9": [
+          14,
+          11.5,
+          9.5,
+          8
+        ],
+        "from10to13": [
+          12,
+          10,
+          8.5,
+          7
+        ],
+        "from14": [
+          10,
+          8.5,
+          7,
+          6
+        ]
+      }
+    },
+    {
+      "slug": "weak-foot-passes",
+      "skill": "weak-foot",
+      "metric": "successful passes out of 10 attempts",
+      "unit": "passes",
+      "direction": "higher",
+      "equipment": "ball_wall",
+      "protocol": {
+        "kk": "1. Терезесіз, берік қабырға таңда; алдындағы жер тегіс әрі құрғақ болсын, жол мен адамдардан алыс тұр.\n2. Қабырғаға бормен немесе таспамен нысана сыз: жерде тұрған, ені 1 м, биіктігі 1 м төртбұрыш. Қабырғадан 3 м жерге сызық сыз.\n3. Қай аяғың әлсіз екенін анықта: допты аз тебетін аяғың. Барлық пасты тек сол аяғыңмен бересің.\n4. Сызықтың артында тұрып, әлсіз аяғыңның ішкі жағымен допты жермен қабырғаға 10 пас беріп көр. Әр пастан кейін допты тоқтатып, сызықтың артына қайта қой. Асықпа, уақыт жоқ.\n5. Доп жермен барып нысанаға тисе, пас сәтті болып есептеледі. Сәтті пастарды сана; талпыныс саны әрқашан 10.\n6. Екі раунд жаса, арасында 2 минут демал. Жақсы нәтижені жазып қой, мысалы «10-нан 6».\n7. Әлсіз аяқпен қатты теппе: тобығың бұрылып кетуі мүмкін. Аяғың ауырса, тоқтап демал.",
+        "ru": "1. Найди прочную стену без окон и ровную сухую землю перед ней, подальше от дороги и людей.\n2. Нарисуй на стене мелом или лентой мишень: квадрат шириной 1 м и высотой 1 м, стоящий на земле. Проведи линию в 3 м от стены.\n3. Определи, какая нога у тебя слабая: та, которой ты бьёшь по мячу реже. Все пасы ты отдаёшь только ею.\n4. Встань за линию и попробуй отдать 10 пасов по земле в стену внутренней стороной слабой ноги. После каждого паса останови мяч и верни его за линию. Не спеши, времени нет.\n5. Пас удался, если мяч по земле попал в мишень. Считай удачные пасы; попыток всегда 10.\n6. Сделай 2 раунда, между ними отдыхай 2 минуты. Запиши лучший результат, например «6 из 10».\n7. Не бей слабой ногой сильно: можно подвернуть стопу. Если заболела нога, остановись и отдохни.",
+        "en": "1. Find a solid wall without windows and flat, dry ground in front of it, away from roads and people.\n2. Mark a target on the wall with chalk or tape: a square 1 m wide and 1 m high, standing on the ground. Mark a line 3 m from the wall.\n3. Work out your weaker foot: the one you kick the ball with less often. You will pass with that foot only.\n4. Stand behind the line and try 10 passes along the ground into the wall with the inside of your weaker foot. After each pass, stop the ball and bring it back behind the line. Take your time; there is no clock.\n5. A pass is successful if the ball hits the target along the ground. Count your successful passes; the number of attempts is always 10.\n6. Do 2 rounds with a 2-minute rest between them. Write down the better result, for example \"6 out of 10\".\n7. Do not kick hard with your weaker foot: you could twist your ankle. If your leg hurts, stop and rest."
+      },
+      "thresholds": {
+        "upTo9": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "from10to13": [
+          3,
+          5,
+          7,
+          9
+        ],
+        "from14": [
+          4,
+          6,
+          8,
+          9
+        ]
+      }
+    }
+  ]
+}
