@@ -41,6 +41,8 @@
 //     en, status, attribution, the skill test that is due as of the end of the session's date), so what the
 //     client caches from this response is what GET would answer. There is no ?locale here (the contract has no
 //     query on this endpoint): the profile's locale is used.
+//   * Each item carries `track` (the drill's primary skill slug, omitted when none is linked) and `level` (its stored
+//     version's), exactly as GET /api/player/today has them (fc-mol-urn.11).
 //   * CONTRACT/OWNERSHIP GAP: the session builders live, unexported, in player-today.routes.ts, which this bead
 //     does not own; the block "the session as GET /api/player/today has it" below is a copy of them and must
 //     follow them until both routes import one shared module.
@@ -59,7 +61,7 @@ import { DEFAULT_SPORT, buildJourney } from "../../player/journey";
 import { getProfile, getRoadmap } from "../../player/profile-repo";
 import type { Attribution, CalendarDate, PlayerProfileView, Roadmap, SkillTest } from "../../shared/domain";
 import { pickLocalized } from "../../shared/primitives";
-import type { DrillContent, Locale, LocalizedText, ProblemError, TrustStatus } from "../../shared/primitives";
+import type { DrillContent, ExperienceLevel, Locale, LocalizedText, ProblemError, TrustStatus } from "../../shared/primitives";
 import { ENDPOINTS } from "../../shared/session";
 import type { SessionEvent, SessionEventsResponse, TodayItem, TodaySession } from "../../shared/session";
 import { fromZodError, problem } from "../problem";
@@ -154,6 +156,8 @@ interface SessionRow {
 
 interface VersionRow {
   content: string;
+  level: ExperienceLevel;
+  track: string | null;
   status: TrustStatus;
   semver: string;
   license: Attribution["license"];
@@ -167,7 +171,9 @@ interface VersionRow {
 function toItem(db: Database, stored: StoredItem, locale: Locale): TodayItem {
   const version = db
     .query<VersionRow, [string]>(
-      "SELECT content, status, semver, license, author_name, source, source_url, created_at FROM drill_versions WHERE id = ?1",
+      `SELECT v.content, v.level, v.status, v.semver, v.license, v.author_name, v.source, v.source_url, v.created_at,
+              (SELECT s.slug FROM drill_skills ds JOIN skills s ON s.id = ds.skill_id WHERE ds.drill_id = v.drill_id AND ds.is_primary = 1) AS track
+         FROM drill_versions v WHERE v.id = ?1`,
     )
     .get(stored.drillVersionId);
   // A version is never deleted and the writer validated the id: a miss is a corrupt database, so it is a 500.
@@ -180,6 +186,8 @@ function toItem(db: Database, stored: StoredItem, locale: Locale): TodayItem {
     done: stored.done === true,
     content: localizeContent(JSON.parse(version.content) as DrillContent, locale),
     status: version.status,
+    ...(version.track === null ? {} : { track: version.track }),
+    level: version.level,
     attribution: {
       author: version.author_name,
       source: version.source,

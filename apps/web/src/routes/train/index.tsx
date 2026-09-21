@@ -39,10 +39,12 @@ import { type TodaySlotProps, useSlot } from '../../lib/slots';
  *     `<div data-slot="today">`; they take no props and read the ['today'] cache themselves.
  *
  * Readings of the criteria where they are open, and gaps found:
- *  - CONTRACT GAP: the drill list should show each drill's "track" and "level", but TodayItem (shared/session.ts) carries
- *    neither (nor does DrillContent), so they cannot be shown from real data. Instead each row shows what the contract does
- *    carry: title, goal, minutes, the planner's reason (warm-up / focus / extra practice), TrustBadge and the done state.
- *    Add `track` and `level` to TodayItem to show them here.
+ *  - TRACK AND LEVEL (fc-mol-urn.11): each row shows the drill's track (TodayItem.track, its primary skill) above the title and
+ *    its level (TodayItem.level, an ExperienceLevel) in the meta line. Both are OPTIONAL on the contract (a session cached by an
+ *    older build, or answered by an older server, has neither): a row without one shows nothing in its place, never a blank
+ *    label. The contract carries only the track SLUG: the five root tracks (the only primary skills of the seeded drills) are
+ *    worded in `today.messages.ts` (`tracks`, the roadmap screen's wording); any other slug is shown humanised. The focus panel
+ *    below still humanises its own skill slugs (its existing behaviour), so a skill can read slightly differently there.
  *  - Skill names in the focus panel: the roadmap carries only the skill SLUG (no localised name), so it is shown humanised,
  *    as the skill tree does. `focus.reason` and `currentLevelLabel` are free text in the contract but the API sends keys
  *    (goal | weakest; Foundation | Basic | Intermediate | Advanced): known keys are worded here, anything else is shown as sent.
@@ -62,6 +64,8 @@ const drillPath = (itemId: string): string => `/train/drill/${encodeURIComponent
 const ITEM_REASONS: ReadonlySet<string> = new Set(['warmup', 'focus', 'fill']);
 const FOCUS_REASONS: ReadonlySet<string> = new Set(['goal', 'weakest']);
 const LEVEL_LABELS: ReadonlySet<string> = new Set(['Foundation', 'Basic', 'Intermediate', 'Advanced']);
+/** The skill graph's root tracks, which `today.messages.ts` words; a drill's primary skill is one of them. */
+const TRACKS: ReadonlySet<string> = new Set(['ball-mastery', 'dribbling', 'passing-first-touch', 'weak-foot', 'juggling-coordination']);
 
 // --- dependencies -----------------------------------------------------------------------------------------------------------
 
@@ -108,6 +112,7 @@ function DrillRow({ item, index, onOpen }: { item: TodayItem; index: number; onO
   const goal = pickLocalized(item.content.goal, locale) ?? '';
   const title = item.content.title === undefined ? goal : (pickLocalized(item.content.title, locale) ?? goal);
   const reason = item.reason?.trim() ?? '';
+  const track = item.track === undefined ? '' : TRACKS.has(item.track) ? t(`tracks.${item.track}`) : humanise(item.track);
 
   return (
     <li>
@@ -126,10 +131,12 @@ function DrillRow({ item, index, onOpen }: { item: TodayItem; index: number; onO
           {item.done ? <Check aria-hidden="true" className="size-5" /> : formatNumber(index + 1, locale)}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {track === '' ? null : <span className="text-xs font-bold tracking-[0.12em] text-muted uppercase wrap-anywhere">{track}</span>}
           <span className="text-xl leading-tight font-bold tracking-tight wrap-anywhere">{title}</span>
           {goal !== '' && goal !== title ? <span className="text-base text-muted wrap-anywhere">{goal}</span> : null}
           <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-bold">
             <span>{t('drill.minutes', { minutes: formatNumber(item.minutes, locale) })}</span>
+            {item.level === undefined ? null : <span>{t('drill.level', { level: t(`drill.levels.${item.level}`) })}</span>}
             {reason === '' ? null : <Tag>{ITEM_REASONS.has(reason) ? t(`reasons.${reason}`) : reason}</Tag>}
             <TrustBadge status={item.status} source={item.attribution.source} />
             <span className="inline-flex items-center gap-1">

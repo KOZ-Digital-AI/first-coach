@@ -19,7 +19,7 @@
 import { z } from "zod";
 import { Attribution, CalendarDate, Count, Roadmap, SkillTest, Timestamp } from "./domain";
 import type { EndpointSpec } from "./domain";
-import { ClientUuid, DrillContent, EntityId, Locale, TrustStatus } from "./primitives";
+import { ClientUuid, DrillContent, EntityId, ExperienceLevel, Locale, TrustStatus } from "./primitives";
 
 /**
  * The offline outbox may sync events up to this many days old. The server enforces it
@@ -35,6 +35,11 @@ export type TodayQuery = z.infer<typeof TodayQuery>;
 /**
  * One drill of today's session. `content` is the drill's full DrillContent (the server
  * sends its LocalizedText in the requested locale AND en), so the session trains offline.
+ *
+ * `track` and `level` (fc-mol-urn.11) are the drill's primary skill slug (DrillSummary.track: one of the skill graph's
+ * tracks) and the ExperienceLevel of the drill VERSION the item points at. Both are OPTIONAL and additive: a session cached
+ * by an older client, or answered by an older server, has neither and must still parse (see backlog fc-r99 on strict
+ * DrillContent). The server omits `track` for a drill that has no primary skill linked yet; it always sends `level`.
  */
 export const TodayItem = z.object({
   itemId: EntityId,
@@ -45,6 +50,8 @@ export const TodayItem = z.object({
   content: DrillContent,
   status: TrustStatus,
   attribution: Attribution,
+  track: EntityId.optional(),
+  level: ExperienceLevel.optional(),
   regressionOf: EntityId.optional(),
   progressionOf: EntityId.optional(),
 });

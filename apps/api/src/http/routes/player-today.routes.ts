@@ -21,6 +21,11 @@
 //     minutes, reason, done}. The drill VERSION id keeps resolving (versions are immutable and never deleted),
 //     so the content, status and attribution are read from that version at every call: a newly published
 //     version cannot change today's session, while a trust-status change of the version shows.
+//   * TRACK AND LEVEL (fc-mol-urn.11): each item also carries `track` = the drill's primary skill slug (drill_skills
+//     is_primary, read at every call: the link is not stored in the session) and `level` = the level of the stored
+//     drill VERSION (immutable, so it cannot drift). Both are optional on the contract; a drill with no primary skill
+//     linked has no `track` key. player-events.routes.ts and player-swap.routes.ts answer the same view (the latter
+//     through this route's handler), so all three carry them identically.
 //   * CONTENT: every locale the drill has is kept, and the requested locale's slot and `en` are filled
 //     (requested -> ru -> en, as the commons' localisation) so the client can show either offline.
 //   * Locale: ?locale, else the player's profile locale (as the journey route).
@@ -50,7 +55,7 @@ import { DEFAULT_SPORT, buildJourney } from "../../player/journey";
 import { getGraphVersion, getProfile, getRoadmap } from "../../player/profile-repo";
 import type { Attribution, CalendarDate, PlayerProfileView, Roadmap, SkillTest } from "../../shared/domain";
 import { pickLocalized } from "../../shared/primitives";
-import type { DrillContent, Locale, LocalizedText, TrustStatus } from "../../shared/primitives";
+import type { DrillContent, ExperienceLevel, Locale, LocalizedText, TrustStatus } from "../../shared/primitives";
 import { ENDPOINTS } from "../../shared/session";
 import type { TodayItem, TodaySession } from "../../shared/session";
 import { fromZodError, problem } from "../problem";
@@ -142,6 +147,8 @@ function findSession(db: Database, playerId: string, date: CalendarDate): Sessio
 
 interface VersionRow {
   content: string;
+  level: ExperienceLevel;
+  track: string | null;
   status: TrustStatus;
   semver: string;
   license: Attribution["license"];
@@ -155,7 +162,9 @@ interface VersionRow {
 function toItem(db: Database, stored: StoredItem, locale: Locale): TodayItem {
   const version = db
     .query<VersionRow, [string]>(
-      "SELECT content, status, semver, license, author_name, source, source_url, created_at FROM drill_versions WHERE id = ?1",
+      `SELECT v.content, v.level, v.status, v.semver, v.license, v.author_name, v.source, v.source_url, v.created_at,
+              (SELECT s.slug FROM drill_skills ds JOIN skills s ON s.id = ds.skill_id WHERE ds.drill_id = v.drill_id AND ds.is_primary = 1) AS track
+         FROM drill_versions v WHERE v.id = ?1`,
     )
     .get(stored.drillVersionId);
   // A version is never deleted and the writer validated the id: a miss is a corrupt database, so it is a 500.
@@ -168,6 +177,8 @@ function toItem(db: Database, stored: StoredItem, locale: Locale): TodayItem {
     done: stored.done === true,
     content: localizeContent(JSON.parse(version.content) as DrillContent, locale),
     status: version.status,
+    ...(version.track === null ? {} : { track: version.track }),
+    level: version.level,
     attribution: {
       author: version.author_name,
       source: version.source,
