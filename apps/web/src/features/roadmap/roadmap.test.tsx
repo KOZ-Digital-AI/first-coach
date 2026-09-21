@@ -199,7 +199,7 @@ describe('data', () => {
   test('keeps the answer in the query cache under the persisted key ["me"]', async () => {
     const page = mountRoadmap();
     await screen.findByRole('link', { name: text('en', 'start') });
-    expect(page.queryClient.getQueryData(['me'])).toEqual(ME);
+    expect(page.queryClient.getQueryData<StartResponse>(['me'])).toEqual(ME);
   });
 
   test('shows the saved ["me"] answer at once while the refresh is still on its way', async () => {
