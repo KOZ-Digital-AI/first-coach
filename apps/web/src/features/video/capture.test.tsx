@@ -9,7 +9,7 @@ import {
   Rubric,
   VideoAnalysis,
 } from '@api-types/video';
-import { dehydrate, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { dehydrate, onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, LOCALES } from '../../lib/i18n';
@@ -107,12 +107,19 @@ const profileOfAge = (age: number): PlayerProfile => ({
 });
 const ROADMAP: Roadmap = {
   currentLevelLabel: 'Basic',
-  tracks: [{ skill: 'dribbling', level: 3, source: 'self' }],
+  tracks: [
+    { skill: 'ball-mastery', level: 2, source: 'test' },
+    { skill: 'dribbling', level: 3, source: 'self' },
+    { skill: 'weak-foot', level: 1, source: 'self' },
+  ],
   goal: 'control',
   weeks: 4,
   sessionsPerWeek: 3,
   minutesPerSession: 20,
-  focus: [{ skill: 'dribbling', level: 3, targetLevel: 4, reason: 'goal' }],
+  focus: [
+    { skill: 'ball-mastery', level: 2, targetLevel: 3, reason: 'goal' },
+    { skill: 'weak-foot', level: 1, targetLevel: 2, reason: 'weakest' },
+  ],
 };
 const meOfAge = (age: number) => StartResponse.parse({ profile: profileOfAge(age), roadmap: ROADMAP });
 
@@ -284,7 +291,18 @@ function makeWorld(over: Record<string, unknown> = {}) {
     analyseTimeoutMs: 5000,
     ...over,
   };
-  return { deps, pose, sampleKeyframes, analyse, loadClip, camera, clips, sessions, detectGate };
+  // The effective fakes: a test may replace one through `over`, and its assertions must read the one that ran.
+  return {
+    deps,
+    pose,
+    camera,
+    clips,
+    sessions,
+    detectGate,
+    sampleKeyframes: deps.sampleKeyframes as typeof sampleKeyframes,
+    analyse: deps.analyse as typeof analyse,
+    loadClip: deps.loadClip as typeof loadClip,
+  };
 }
 type World = ReturnType<typeof makeWorld>;
 
@@ -296,6 +314,8 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   globalThis.fetch = realFetch;
+  // React Query listens to window 'offline' (the offline tests fire it) and would keep every later query paused.
+  onlineManager.setOnline(true);
 });
 
 // --- rendering ----------------------------------------------------------------------------------------------------------
@@ -1318,7 +1338,7 @@ describe.each(['kk', 'ru'] as const)('%s', (locale) => {
     await view.user.click(await screen.findByRole('button', { name: messages[locale].skills.dribbling.option }));
     await screen.findByRole('heading', { name: messages[locale].gate.title });
     clean();
-    expect(screen.getByRole('link', { name: messages[locale].gate.open }).getAttribute('href')).toBe('/settings/privacy');
+    expect((await screen.findByRole('link', { name: messages[locale].gate.open })).getAttribute('href')).toBe('/settings/privacy');
   });
 
   test('capture and result in this language', async () => {
