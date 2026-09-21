@@ -404,6 +404,8 @@ describe("only the caller's own history", () => {
     const other = await signInPlayer();
     onboard(mine.id);
     onboard(other.id);
+    // Both roadmaps put ball-mastery at level 4, so only the completed drills (the other player's) could master a node.
+    storeRoadmap(mine.id, { "ball-mastery": 4 }, "2026-03-01T00:00:00.000Z");
     storeRoadmap(other.id, { "ball-mastery": 4 }, "2026-03-01T00:00:00.000Z");
     addSession(other.id, "other-s1", "2026-03-10", versionsOf("ball-mastery", 3));
     completeSession(other.id, "other-s1", "2026-03-10T09:00:00.000Z", 3);
