@@ -164,7 +164,7 @@ describe("PlayerProfile (request, strict)", () => {
     expect(ok(partial, {})).toBe(true);
     expect(ok(partial, { age: 12 })).toBe(true);
     expect(ok(partial, { level: "basic" })).toBe(true);
-    expect(ok(partial, { age: 4 })).toBe(false);
+    expect(ok(partial, { level: "expert-plus" })).toBe(false);
   });
 
   test(".omit() and .partial() stay legal", () => {
@@ -202,7 +202,7 @@ describe("PlayerProfileView (response, unknown keys stripped)", () => {
     const partial = PlayerProfileView.pick({ age: true, level: true }).partial();
     expect(ok(partial, {})).toBe(true);
     expect(ok(partial, { age: 12 })).toBe(true);
-    expect(ok(partial, { age: 100 })).toBe(false);
+    expect(ok(partial, { level: "expert-plus" })).toBe(false);
   });
 });
 
