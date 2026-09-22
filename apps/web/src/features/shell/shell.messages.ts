@@ -3,6 +3,9 @@ import type { MessageBundle } from '../../lib/i18n';
 // App shell copy: skip link, navigation, admin link and footer. Namespace `shell` (from the file name), registered by the
 // eager glob in lib/i18n.ts. The brand "FIRST COACH / БІРІНШІ БАПКЕР", "Open Commons" (a product name) and "Genesis"
 // (a release name) are never translated. Nav labels stay short because five of them share a 360px tab bar (about 72px each).
+// `nav.start` (auth-gate-spec.md §3.4): the visitor's one primary action ("Start training", shortened here the way the
+// other tab labels are — it shares the same 360px tab bar). The longer sign-in-screen copy ("Start training", the full
+// sentence) lives in features/account/sign-in.messages.ts (`start.button`), a separate bead's file.
 // The Kazakh text still needs a native review.
 export default {
   kk: {
@@ -16,6 +19,7 @@ export default {
       contribute: 'Әдіс қосу',
       progress: 'Прогресс',
       video: 'Бейне бапкер · Бета',
+      start: 'Бастау',
     },
     admin: 'Әкімші',
     footer: {
@@ -40,6 +44,7 @@ export default {
       contribute: 'Добавить методику',
       progress: 'Прогресс',
       video: 'Видео-тренер · Бета',
+      start: 'Начать',
     },
     admin: 'Админ',
     footer: {
@@ -64,6 +69,7 @@ export default {
       contribute: 'Contribute',
       progress: 'Progress',
       video: 'Video Coach · Beta',
+      start: 'Start',
     },
     admin: 'Admin',
     footer: {

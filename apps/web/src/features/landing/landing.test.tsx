@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
+import { NavTierProvider, type NavTier } from '../shell/Shell';
 import { createI18n, LOCALES } from '../../lib/i18n';
 import { Route } from '../../routes/index';
 import messages from './landing.messages';
@@ -99,15 +100,23 @@ function deferred<T>() {
 }
 
 let clients: QueryClient[] = [];
+// auth-gate-spec.md §3.3: the CTA hrefs read the tier `AppShell` publishes through NavTierContext (features/shell/Shell.tsx),
+// never a session hook of their own — see routes/index.tsx's `useCtaHrefs`. `tier` defaults to `'visitor'`, matching both
+// the context's own default (rendering Landing outside a shell, as this file does) and Shell's fail-closed default.
+const START_HREF = '/account/sign-in?redirect=%2Ftrain';
+const CONTRIBUTE_HREF = '/account/sign-in?redirect=%2Fcontribute';
+
 /** A default-configured QueryClient (library defaults, as the app's own one has): the page must set its own retry policy. */
-function renderLanding(locale: Locale = 'en') {
+function renderLanding(locale: Locale = 'en', tier: NavTier = 'visitor') {
   const instance = createI18n({ modules, languages: [locale], storage: noStorage, root: { lang: '' }, dev: false });
   const client = new QueryClient();
   clients.push(client);
   const view = render(
     <QueryClientProvider client={client}>
       <I18nextProvider i18n={instance}>
-        <Landing />
+        <NavTierProvider tier={tier}>
+          <Landing />
+        </NavTierProvider>
       </I18nextProvider>
     </QueryClientProvider>,
   );
@@ -213,15 +222,39 @@ describe.each([...LOCALES])('landing page in %s', (locale) => {
     await waitFor(() => expect(statList(container)).not.toBeNull());
   });
 
-  test('START TRAINING goes to /train and CONTRIBUTE to /contribute, as links at least 44px tall', async () => {
+  test('START TRAINING and CONTRIBUTE send a signed-out visitor to the sign-in gate with their return path', async () => {
     stubFetch(() => ok(STATS));
     const { container } = renderLanding(locale);
-    const start = findLink(container, '/train');
-    const contribute = findLink(container, '/contribute');
+    const start = findLink(container, START_HREF);
+    const contribute = findLink(container, CONTRIBUTE_HREF);
     expect(start?.textContent?.trim()).toBe(copy(locale, 'cta.start'));
     expect(contribute?.textContent?.trim()).toBe(copy(locale, 'cta.contribute'));
     expect(tokens(start!)).toContain('min-h-tap');
     expect(tokens(contribute!)).toContain('min-h-tap');
+    await waitFor(() => expect(statList(container)).not.toBeNull());
+  });
+
+  test('a player who already has a session goes straight to /train', async () => {
+    stubFetch(() => ok(STATS));
+    const { container } = renderLanding(locale, 'player');
+    const start = findLink(container, '/train');
+    expect(start?.textContent?.trim()).toBe(copy(locale, 'cta.start'));
+    await waitFor(() => expect(statList(container)).not.toBeNull());
+  });
+
+  test("an anonymous player's CONTRIBUTE still goes to the sign-in gate (contributing needs an account)", async () => {
+    stubFetch(() => ok(STATS));
+    const { container } = renderLanding(locale, 'player');
+    const contribute = findLink(container, CONTRIBUTE_HREF);
+    expect(contribute?.textContent?.trim()).toBe(copy(locale, 'cta.contribute'));
+    await waitFor(() => expect(statList(container)).not.toBeNull());
+  });
+
+  test('a coach account goes straight to both /train and /contribute', async () => {
+    stubFetch(() => ok(STATS));
+    const { container } = renderLanding(locale, 'account');
+    expect(findLink(container, '/train')?.textContent?.trim()).toBe(copy(locale, 'cta.start'));
+    expect(findLink(container, '/contribute')?.textContent?.trim()).toBe(copy(locale, 'cta.contribute'));
     await waitFor(() => expect(statList(container)).not.toBeNull());
   });
 
@@ -332,8 +365,8 @@ describe('stat strip states', () => {
     expect(within(region!).getAllByText(copy('en', 'stats.loading')).length).toBeGreaterThan(0);
     expect(statList(container)).toBeNull();
     expect(container.querySelector('h1')?.textContent).toBe(EN.headline);
-    expect(findLink(container, '/train')).not.toBeNull();
-    expect(findLink(container, '/contribute')).not.toBeNull();
+    expect(findLink(container, START_HREF)).not.toBeNull();
+    expect(findLink(container, CONTRIBUTE_HREF)).not.toBeNull();
     expect(container.querySelectorAll('ol > li')).toHaveLength(6);
     expect(text()).not.toContain(copy('en', 'stats.error.retry'));
 
@@ -351,7 +384,7 @@ describe('stat strip states', () => {
     expect(statList(container)).toBeNull();
     expect(within(container).queryByRole('button')).toBeNull();
     expect(container.querySelector('[role="alert"]')).toBeNull();
-    expect(findLink(container, '/train')).not.toBeNull();
+    expect(findLink(container, START_HREF)).not.toBeNull();
   });
 
   test('a single zero is still a number: only the all-zero strip is empty', async () => {
@@ -383,7 +416,7 @@ describe('stat strip states', () => {
     expect(container.querySelector('h1')?.textContent).toBe(EN.headline);
     expect(container.querySelector('aside')?.textContent).toContain(EN.credit);
     expect(container.querySelectorAll('ol > li')).toHaveLength(6);
-    for (const href of ['/train', '/contribute']) {
+    for (const href of [START_HREF, CONTRIBUTE_HREF]) {
       const link = findLink(container, href);
       expect(link).not.toBeNull();
       expect(link?.getAttribute('aria-disabled')).toBeNull();
@@ -414,7 +447,7 @@ describe('stat strip states', () => {
     fireEvent.click(busy);
     expect(seen).toHaveLength(2);
     // The CTAs stay usable while the retry is in flight.
-    expect(findLink(container, '/train')).not.toBeNull();
+    expect(findLink(container, START_HREF)).not.toBeNull();
 
     await act(async () => second.resolve(ok(STATS)));
     await waitFor(() => expect(statList(container)).not.toBeNull());
@@ -498,7 +531,7 @@ describe('landing page structure', () => {
       await instance.changeLanguage('ru');
     });
     expect(container.querySelector('h1')?.textContent).toBe(copy('ru', 'headline'));
-    expect(findLink(container, '/train')?.textContent?.trim()).toBe(copy('ru', 'cta.start'));
+    expect(findLink(container, START_HREF)?.textContent?.trim()).toBe(copy('ru', 'cta.start'));
     expect(statList(container)?.textContent).toContain(copy('ru', 'stats.drills'));
     await act(async () => {
       await instance.changeLanguage('kk');
@@ -547,7 +580,8 @@ describe('landing page structure', () => {
     const gate = deferred<Response>();
     stubFetch(() => gate.promise);
     const { container } = renderLanding('en');
-    for (const href of ['/train', '/contribute']) {
+    // Only the href expectation moves (auth-gate-spec.md §3.3): a signed-out visitor's CTAs point at the sign-in gate.
+    for (const href of [START_HREF, CONTRIBUTE_HREF]) {
       const link = findLink(container, href);
       expect(link).not.toBeNull();
       expect(link?.hasAttribute('disabled')).toBe(false);

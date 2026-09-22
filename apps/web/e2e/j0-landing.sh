@@ -14,9 +14,10 @@
 #                    no other /api/auth call (no sign-in, sign-up or anonymous sign-in: POST /api/auth/*) on a landing view
 #   4. language      Қазақша -> Русский -> English: <html lang>, aria-pressed, navigation labels and hero copy change, the
 #                    stat numbers do not, and the choice (localStorage fc:lang) survives a reload
-#   5. START / CONTRIBUTE   START TRAINING loads /train (a real document request) and the app lands on the onboarding
-#                    wizard (/train/onboarding, a new visitor is not onboarded); CONTRIBUTE loads /contribute (a real document
-#                    request) and the anonymous visitor lands on /account/sign-in (the J5 contributor gate)
+#   5. START / CONTRIBUTE   START TRAINING and CONTRIBUTE both point straight at the sign-in gate for a signed-out
+#                    visitor (/account/sign-in?redirect=/train and ?redirect=/contribute, real document requests, built
+#                    with signInUrl() — auth-gate-spec.md §3.3); pressing Start on the gate creates the session and
+#                    lands on the onboarding wizard (/train/onboarding, a new visitor is not onboarded)
 #   6. unknown URL   the localized 404 page inside the shell, with links home and to training
 #   7. 360px         no horizontal scroll on / in kk, ru and en
 #
@@ -27,13 +28,15 @@
 #     /api/auth call (a POST sign-in / sign-up / anonymous sign-in on a landing view would create a player before the
 #     visitor asked for anything). /health is not under /api. The three are separate checks; a failure prints the full
 #     request list with statuses.
-#   - "START TRAINING navigates to /train": the link is a hard navigation, so the document request for /train is what is
-#     asserted; the page then replaces itself with /train/onboarding (the API answers 404 "not onboarded" for a new visitor).
-#   - "CONTRIBUTE navigates to /contribute": the link is a hard navigation, so the document request for /contribute is what
-#     is asserted. Contributing needs a signed-in, non-anonymous account (journey J5, routes/contribute/index.tsx), so the
-#     SPA then replaces the URL with /account/sign-in?redirect=/contribute for the anonymous visitor this journey is. The
-#     landing pathname is asserted as /account/sign-in (location.pathname, so the query string is tolerated) and the
-#     redirect parameter as /contribute (the way back after sign-in).
+#   - "START TRAINING navigates to the sign-in gate": the link is a hard navigation, so the document request for
+#     /account/sign-in?redirect=/train is what is asserted; pressing Start there creates the anonymous session and the
+#     page then replaces itself with /train/onboarding (the API answers 404 "not onboarded" for a new visitor).
+#   - "CONTRIBUTE navigates to the sign-in gate": contributing needs a signed-in, non-anonymous account (journey J5,
+#     routes/contribute/index.tsx), so a signed-out visitor's CONTRIBUTE link itself points at
+#     /account/sign-in?redirect=/contribute (built with signInUrl(), same as START TRAINING) — the link is a hard
+#     navigation, so the document request for /account/sign-in is what is asserted. The landing pathname is asserted as
+#     /account/sign-in (location.pathname, so the query string is tolerated) and the redirect parameter as /contribute
+#     (the way back after sign-in).
 #   - Kazakh and Russian copy is judged structurally (script letters, differs from English, differs from each other), not by
 #     exact sentence: the Kazakh text is awaiting a native-speaker review and will change.
 #   - The browser is Playwright's chromium, whose default locale is en-US: a fresh visitor sees English first.
@@ -50,7 +53,7 @@ EN_HEADLINE='Every child deserves a great first coach.'
 EN_CREDIT='Created by KOZ AI.'
 EN_DEDICATION='Opened to everyone on the 60th birthday of Kairat Boranbayev.'
 EN_SUMMARY='60 YEARS. 60 OPEN TRAINING SESSIONS. FREE FOR EVERYONE.'
-EN_NAV='["Train","Open Commons","Contribute","Progress","Video Coach · Beta"]'
+EN_NAV='["Open Commons","Start"]'
 EN_NOT_FOUND='We can'"'"'t find that page'
 
 # wait_eval <js> <expected> <label>: polls a JS expression on the live page until its value equals <expected>.
@@ -80,6 +83,14 @@ PATH_JS='location.pathname'
 # api_reqs: the /api requests the browser has made in this session, one "METHOD path status" per line.
 api_reqs() {
   pw requests | jq -r '.result // ""' | sed -nE 's#^[0-9]+\. \[([A-Z]+)\] https?://[^/]+(/api/[^ ?]*)[^ ]* => \[([0-9]+)\].*#\1 \2 \3#p'
+}
+# last_request_index: the highest request number playwright-cli has recorded so far (a checkpoint to diff against).
+last_request_index() { pw requests | jq -r '.result // ""' | sed -nE 's/^([0-9]+)\. \[.*/\1/p' | sort -n | tail -n1; }
+# api_reqs_since <index>: like api_reqs, but only the /api requests made after request number <index> — used for the
+# gate's own call-budget checks, which must not be polluted by the language-switch reloads earlier in this journey.
+api_reqs_since() {
+  pw requests | jq -r '.result // ""' | sed -nE 's#^([0-9]+)\. \[([A-Z]+)\] https?://[^/]+(/api/[^ ?]*)[^ ]* => \[([0-9]+)\].*#\1 \2 \3 \4#p' \
+    | awk -v since="${1:-0}" '$1 > since { print $2, $3, $4 }'
 }
 # doc_requests: every request (static ones too) the browser has made, "METHOD path", no assets.
 doc_requests() {
@@ -136,7 +147,7 @@ if [ "$BROWSER" = 1 ]; then
     "landing: the strip shows 60 drills and 5 tracks (from GET /api/commons/stats, which sqlite_count confirms)"
   eval_jq "$STATS_JS" '.[0][1] == $d and .[1][1] == $t' "landing: the strip's drills/tracks equal sqlite_count" \
     --arg d "$DB_DRILLS" --arg t "$DB_TRACKS"
-  eval_jq "$NAV_JS" ". == $EN_NAV" "landing: the navigation reads Train, Open Commons, Contribute, Progress, Video Coach · Beta"
+  eval_jq "$NAV_JS" ". == $EN_NAV" "landing: the navigation reads Open Commons and Start (a signed-out visitor sees no player tabs)"
   # No console error on load (the only run of this check: later pages are not part of the landing).
   out=$(pw console error) || true
   n=$(jq -r '.result // ""' <<<"$out" | grep -oE 'Errors: [0-9]+' | head -n1 | grep -oE '[0-9]+')
@@ -183,8 +194,8 @@ if [ "$BROWSER" = 1 ]; then
       else fail "language $code: the hero headline changed to Cyrillic text" "  h1 is '${HEAD[$code]}'"; fi
       if [ "${CARD[$code]}" != "${CARD[en]}" ]; then pass "language $code: the dedication card copy changed"
       else fail "language $code: the dedication card copy changed" "  card is still '${CARD[$code]}'"; fi
-      eval_jq "$NAV_JS" ".[0] != \"Train\" and .[2] != \"Contribute\" and .[4] != \"Video Coach · Beta\" and length == 5" \
-        "language $code: the navigation labels (Train, Contribute, Video Coach) changed: $nav"
+      eval_jq "$NAV_JS" ".[1] != \"Start\" and length == 2" \
+        "language $code: the navigation labels (Open Commons, Start) changed: $nav"
       kz=$(pw_eval '/[\u04D8\u04D9\u0492\u0493\u049A\u049B\u04A2\u04A3\u04E8\u04E9\u04B0\u04B1\u04AE\u04AF\u04BA\u04BB]/.test(document.querySelector("h1").innerText)')
       if [ "$code" = kk ]; then assert_eq "$kz" true "language kk: the headline uses Kazakh letters"
       else assert_eq "$kz" false "language ru: the headline is Russian, not Kazakh"; fi
@@ -199,26 +210,37 @@ if [ "$BROWSER" = 1 ]; then
     wait_eval "document.querySelector('button[lang=\"$code\"]').getAttribute('aria-pressed')" true "language $code: its button is still pressed after a reload"
   }
   switch_language kk
-  eval_jq "$NAV_JS" 'length == 5' "language kk: the navigation still has its 5 links after the reload"
+  eval_jq "$NAV_JS" 'length == 2' "language kk: the navigation still has its 2 links after the reload"
   switch_language ru
   if [ "${HEAD[kk]}" != "${HEAD[ru]}" ]; then pass "language: the kk and ru headlines differ"; else fail "language: the kk and ru headlines differ" "  both '${HEAD[kk]}'"; fi
   switch_language en
 
   # --- 5. START TRAINING and CONTRIBUTE ----------------------------------------------------------
-  wait_eval 'document.querySelector("main a[href=\"/train\"]").innerText' 'Start training' "START TRAINING: the primary button is a link to /train"
-  wait_eval 'document.querySelector("main a[href=\"/contribute\"]").innerText' 'Contribute' "CONTRIBUTE: the secondary button is a link to /contribute"
-  pw click 'main a[href="/train"]' >/dev/null || fail "START TRAINING: click"
-  wait_eval "$PATH_JS" /train/onboarding "START TRAINING: the visitor ends on the onboarding wizard (/train/onboarding)"
-  if doc_requests | grep -qxF 'GET /train'; then pass "START TRAINING: the browser navigated to /train (GET /train)"
-  else fail "START TRAINING: the browser navigated to /train (GET /train)" "$(doc_requests | sed 's/^/    /')"; fi
+  wait_eval 'document.querySelector("main a[href=\"/account/sign-in?redirect=%2Ftrain\"]").innerText' 'Start training' "START TRAINING: the primary button is a link to the sign-in gate (/account/sign-in?redirect=/train)"
+  wait_eval 'document.querySelector("main a[href=\"/account/sign-in?redirect=%2Fcontribute\"]").innerText' 'Contribute' "CONTRIBUTE: the secondary button is a link to the sign-in gate (/account/sign-in?redirect=/contribute)"
+  gate_mark=$(last_request_index) # checkpoint: only requests after this belong to the START TRAINING -> gate navigation, not the earlier language-switch reloads
+  pw click 'main a[href="/account/sign-in?redirect=%2Ftrain"]' >/dev/null || fail "START TRAINING: click"
+  wait_eval "$PATH_JS" /account/sign-in "START TRAINING: a signed-out visitor lands on /account/sign-in"
+  wait_eval 'new URLSearchParams(location.search).get("redirect")' /train "START TRAINING: the sign-in page keeps ?redirect=/train"
+  if doc_requests | grep -qxF 'GET /account/sign-in'; then pass "START TRAINING: the browser navigated to the sign-in gate (GET /account/sign-in)"
+  else fail "START TRAINING: the browser navigated to the sign-in gate (GET /account/sign-in)" "$(doc_requests | sed 's/^/    /')"; fi
+  pre_start_reqs=$(api_reqs_since "$gate_mark")
+  if grep -qF '/api/player/' <<<"$pre_start_reqs"; then
+    fail "gate: opening /train signed out makes no player API call before the redirect (no GET /api/player/today)" "$(sed 's/^/    /' <<<"${pre_start_reqs:-(none)}")"
+  else pass "gate: opening /train signed out makes no player API call before the redirect (no GET /api/player/today)"; fi
+  pre_start_session_reads=$(grep -c '^GET /api/auth/get-session ' <<<"$pre_start_reqs")
+  if [ "$pre_start_session_reads" -le 1 ]; then pass "gate: the redirect to sign-in costs no extra session read (still at most 1 GET /api/auth/get-session)"
+  else fail "gate: the redirect to sign-in costs no extra session read (still at most 1 GET /api/auth/get-session)" "$(sed 's/^/    /' <<<"${pre_start_reqs:-(none)}")"; fi
+  pw click 'button:has-text("Start training")' >/dev/null || fail "START TRAINING: click Start"
+  wait_eval "$PATH_JS" /train/onboarding "START TRAINING: pressing Start creates the player session and opens the onboarding wizard (/train/onboarding)"
   assert_text "Step" 'eval:document.querySelector("main").innerText'
   pw goto "$STACK_URL/" >/dev/null || fail "return to /"
   wait_eval "$PATH_JS" / "back on the landing page"
-  pw click 'main a[href="/contribute"]' >/dev/null || fail "CONTRIBUTE: click"
+  pw click 'main a[href="/account/sign-in?redirect=%2Fcontribute"]' >/dev/null || fail "CONTRIBUTE: click"
   wait_eval "$PATH_JS" /account/sign-in "CONTRIBUTE: an anonymous visitor lands on /account/sign-in (the J5 contributor gate)"
   wait_eval 'new URLSearchParams(location.search).get("redirect")' /contribute "CONTRIBUTE: the sign-in page keeps ?redirect=/contribute (the way back after sign-in)"
-  if doc_requests | grep -qxF 'GET /contribute'; then pass "CONTRIBUTE: the browser navigated to /contribute (GET /contribute)"
-  else fail "CONTRIBUTE: the browser navigated to /contribute (GET /contribute)" "$(doc_requests | sed 's/^/    /')"; fi
+  if doc_requests | grep -qxF 'GET /account/sign-in'; then pass "CONTRIBUTE: the browser navigated to the sign-in gate (GET /account/sign-in)"
+  else fail "CONTRIBUTE: the browser navigated to the sign-in gate (GET /account/sign-in)" "$(doc_requests | sed 's/^/    /')"; fi
   echo "NOTE     the sign-in page for CONTRIBUTE renders: '$(pw_eval 'document.querySelector("h1")?.innerText ?? ""' 2>/dev/null)'"
 
   # --- 6. an unknown URL -------------------------------------------------------------------------

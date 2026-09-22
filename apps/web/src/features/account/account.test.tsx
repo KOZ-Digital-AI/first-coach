@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, type LOCALES } from '../../lib/i18n';
 import { collectSlot } from '../../lib/slots';
+import LanguageSwitch from '../i18n/header-extra';
+import i18nMessages from '../i18n/i18n.messages';
+import { Shell } from '../shell/Shell';
+import shellMessages from '../shell/shell.messages';
 import * as headerModule from './header-extra';
 import { AccountControls, type AccountDeps, type AccountSessionState } from './header-extra';
 import accountMessages from './account.messages';
@@ -189,6 +193,55 @@ describe('anonymous players', () => {
     await renderAccount({ session: { data: '<html>proxy error</html>' } });
     expect(header().queryByRole('button')).toBeNull();
     expect(header().getByRole('link', { name: 'Coach sign-in' })).toBeTruthy();
+  });
+});
+
+// --- the auth gate's visitor tier (auth-gate-spec.md §3, P2 auth-gate-shell) --------------------------------------------
+//
+// Rendered through the real Shell (not the bare <header><AccountControls/></header> rig above): a visitor tier adds the
+// primary Start link beside this feature's own "Coach sign-in" link, and DESIGN.md's "never hide the language switch"
+// still holds once Start is in the row too.
+
+describe('the auth-gate visitor tier, inside the real shell', () => {
+  test('a visitor sees the Coach sign-in link beside the Start button, and the language switch is still there', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const instance = createI18n({
+      modules: {
+        './account.messages.ts': { default: accountMessages },
+        '../shell/shell.messages.ts': { default: shellMessages },
+        '../i18n/i18n.messages.ts': { default: i18nMessages },
+      },
+      languages: ['en'],
+      storage: noStorage,
+      root: { lang: '' },
+      dev: false,
+    });
+    const VisitorHeader = () => <AccountControls session={anonymous} />;
+    const rootRoute = createRootRoute({
+      component: () => (
+        <Shell tier="visitor" slots={{ header: [VisitorHeader, LanguageSwitch] }}>
+          <Outlet />
+        </Shell>
+      ),
+    });
+    const router = createRouter({
+      routeTree: rootRoute.addChildren(
+        ROUTES.map((routePath) => createRoute({ getParentRoute: () => rootRoute, path: routePath, component: () => <p>page {routePath}</p> })),
+      ),
+      history: createMemoryHistory({ initialEntries: ['/'] }),
+    });
+    render(
+      <QueryClientProvider client={client}>
+        <I18nextProvider i18n={instance}>
+          <RouterProvider router={router} />
+        </I18nextProvider>
+      </QueryClientProvider>,
+    );
+    await screen.findByRole('banner');
+    const shellHeader = header();
+    expect(shellHeader.getByRole('link', { name: 'Coach sign-in' }).getAttribute('href')).toBe('/account/sign-in');
+    expect(shellHeader.getByRole('link', { name: 'Start' }).getAttribute('href')).toBe('/account/sign-in?redirect=%2Ftrain');
+    expect(shellHeader.getByRole('group', { name: 'Language' })).toBeTruthy();
   });
 });
 

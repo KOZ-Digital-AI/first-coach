@@ -305,8 +305,10 @@ fi
 if [ "$WEB_ON" = 1 ]; then
   WEB_OK=1
   if [ "$(pw cookie-list | jq -r '.result // ""' | grep -c 'better-auth')" = 0 ]; then pass "browser A starts with no session cookie"; else fail "browser A starts with no session cookie"; fi
-  pw_run "landing: START TRAINING leads to the wizard" '(async page => {
+  pw_run "landing: START TRAINING leads to the sign-in gate, and Start opens the wizard" '(async page => {
     await page.getByRole("link", { name: "Start training" }).first().click();
+    await page.waitForURL("**/account/sign-in**");
+    await page.getByRole("button", { name: "Start training" }).click();
     await page.waitForURL("**/train/onboarding");
     await page.getByRole("heading", { name: "A few questions to get started" }).waitFor();
     return page.url(); })'
@@ -376,7 +378,7 @@ fi
 
 # --- B. PRIVACY SETTINGS in browser A -------------------------------------------------------------------------------------------
 if [ "$WEB_ON" = 1 ] && [ "$WEB_OK" = 1 ]; then
-  echo "NOTE     no link to /settings/privacy exists in the app (shell, footer, roadmap, policy): the script opens it by URL"
+  echo "NOTE     the footer link 'Privacy settings' exists and is public (shown at every tier); /settings/privacy itself is gated (routes/settings/route.tsx beforeLoad); the script opens it here with browser A's own player session already in place"
   assert_eq "$(sqlite_count consents "player_id = '$OLD_ID'")" 0 "db: no consents row for the player before it chooses anything"
   pw goto "$STACK_URL/settings/privacy" >/dev/null
   pw_run "privacy settings: /settings/privacy shows the screen with both consent switches" '(async page => {
@@ -788,6 +790,11 @@ if [ "$WEB_B" = 1 ] && [ -n "${NEW_ID:-}" ] && [ "$NEW_ID" != "$OLD_ID" ]; then
     fi
     pw_run "fresh visitor: the deleted player's export is gone (DELETE answered, the session ended)" '(async page => JSON.stringify(await page.evaluate(async () => (await fetch("/api/player/export")).status)))'
     if [ "$WEB_OK" = 1 ]; then assert_eq "$PW_OUT" 401 "fresh visitor: GET /api/player/export is 401 (the session ended)"; fi
+    pw_run "delete: with the data gone there is no session either — opening /train now lands on /account/sign-in" '(async page => {
+      const origin = page.url().replace(/^(https?:\/\/[^\/]+).*$/, "$1");
+      await page.goto(origin + "/train");
+      await page.waitForURL("**/account/sign-in**");
+      return page.url(); })'
   fi
   WEB_OK=1
 fi

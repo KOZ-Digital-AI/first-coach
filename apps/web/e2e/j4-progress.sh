@@ -208,8 +208,10 @@ if [ "$WEB_ON" = 1 ]; then
   pw_run "the browser runs in the pinned time zone $BROWSER_ZONE" '(async page => await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone))'
   assert_eq "$PW_OUT" "$BROWSER_ZONE" "the browser's IANA zone is $BROWSER_ZONE (the API sees it in X-Timezone)"
 
-  pw_run "landing: START TRAINING leads to the wizard" '(async page => {
+  pw_run "landing: START TRAINING leads to the sign-in gate, and Start opens the wizard" '(async page => {
     await page.getByRole("link", { name: "Start training" }).first().click();
+    await page.waitForURL("**/account/sign-in**");
+    await page.getByRole("button", { name: "Start training" }).click();
     await page.waitForURL("**/train/onboarding");
     await page.getByRole("heading", { name: "A few questions to get started" }).waitFor();
     return page.url(); })'
@@ -289,6 +291,9 @@ if [ "$WEB_ON" = 1 ] && [ "$WEB_OK" = 1 ]; then
     else fail "call budget: the dashboard is fed by GET /api/player/journey" "  observed /api calls: ${summary:-none}"; fi
     if [ "$ncalls" -eq "$J4_DASHBOARD_BUDGET" ]; then pass "call budget: the dashboard loads with $ncalls API call (= $J4_DASHBOARD_BUDGET; Better Auth session reads not counted)"
     else fail "call budget: the dashboard loads with $J4_DASHBOARD_BUDGET API call, got $ncalls" "  observed (Better Auth get-session reads not counted): ${summary:-none}"; fi
+    session_reads=$(pw requests | jq -r '.result // ""' | sed -nE 's/^([0-9]+)\. \[([A-Z]+)\] https?:\/\/[^\/]+(\/api\/[^ ?]*)[^ ]* => \[([0-9]+)\].*/\2 \3 \4/p' | grep -c '^GET /api/auth/get-session ')
+    if [ "$session_reads" -eq 1 ]; then pass "gate: /progress makes exactly 1 GET /api/auth/get-session (the gate reuses the shell's session read)"
+    else fail "gate: /progress makes exactly 1 GET /api/auth/get-session (the gate reuses the shell's session read)" "  observed $session_reads session reads"; fi
 
     pw_run "journey: the four metric cards" '(async page => JSON.stringify(await page.evaluate(() => Object.fromEntries([...document.querySelector("main dl").children].map((d) => [d.querySelector("dt").innerText, d.querySelector("dd").innerText])))))'
     if [ "$WEB_OK" = 1 ]; then

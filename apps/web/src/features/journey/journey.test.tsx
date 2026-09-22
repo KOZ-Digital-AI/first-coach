@@ -464,7 +464,7 @@ describe('empty', () => {
     expect(document.body.textContent).not.toMatch(/not onboarded/i);
   });
 
-  test('a visitor with no session yet (401) has no journey either: the same empty state, not an error', async () => {
+  test('a session that ends mid-visit (401) shows the same empty state, not an error (a first visit never gets this far: routes/progress/route.tsx)', async () => {
     stubNetwork(() => problem(401, 'Unauthorized', 'Sign in required.'));
     renderJourney();
     const start = await screen.findByRole('link', { name: /start training/i });

@@ -747,7 +747,7 @@ describe('loading, empty and error states', () => {
     expect(screen.queryByRole('button', { name: 'Redo baseline' })).toBeNull();
   });
 
-  test('empty: no session yet (401 from /me) is the same, not an error', async () => {
+  test('empty: a 401 mid-visit is the same as no plan yet, not an error (a first visit is gated at routes/settings/route.tsx)', async () => {
     stubNetwork({ me: () => problem(401) });
     await renderPlan();
     expect(await screen.findByText('No plan yet')).toBeTruthy();

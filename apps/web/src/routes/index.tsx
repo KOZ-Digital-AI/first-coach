@@ -4,6 +4,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { clsx } from 'clsx';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { signInUrl } from '../features/account/session-expired';
+import { useNavTier } from '../features/shell/Shell';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -19,8 +21,14 @@ import { formatNumber, toLocale } from '../lib/i18n';
  *
  * Readings of the criteria:
  * - START TRAINING / CONTRIBUTE are the two buttons. They navigate, so they are real links styled like the Button primitive
- *   (the primitive is a <button>), at least 44px tall. Their targets (/train, /contribute) belong to later beads and are not
- *   in the route tree yet, so they are plain anchors (a hard navigation); a typed <Link> would not compile until then.
+ *   (the primitive is a <button>), at least 44px tall. They stay plain anchors (a hard navigation), not typed <Link>s
+ *   (auth-gate-spec.md §3.3: "Both CTAs stay plain <a> anchors, always visible, never disabled").
+ * - Auth gate (auth-gate-spec.md §3.3): a signed-out visitor has no session yet, so both CTAs point at the sign-in gate
+ *   with their own return path (`signInUrl('/train')` / `signInUrl('/contribute')`), never at hand-built query strings.
+ *   A player (an anonymous session) goes straight to /train, but CONTRIBUTE still gates — an anonymous player cannot
+ *   contribute (§8 Q1). Only an account goes straight to /contribute. The tier comes from `useNavTier()`, the value
+ *   `AppShell` already computed from `useSession()` (features/shell/Shell.tsx) — this page does not read the session a
+ *   second time, so a landing view on its own still makes at most one `/api/auth/get-session` call.
  * - The page makes no mutation. "Mutation buttons are disabled while a request is in flight" is met by the one control that
  *   sends a request, the stat strip's retry: it is disabled (and shows a spinner) while its request runs. The CTAs are links
  *   and stay usable in every state, including error.
@@ -211,8 +219,18 @@ function HowItWorks() {
   );
 }
 
+/** §3.3: visitor gates both; player goes straight to /train but still gates Contribute; account goes straight to both. */
+function useCtaHrefs(): { start: string; contribute: string } {
+  const tier = useNavTier();
+  return {
+    start: tier === 'visitor' ? signInUrl('/train') : '/train',
+    contribute: tier === 'account' ? '/contribute' : signInUrl('/contribute'),
+  };
+}
+
 function LandingPage() {
   const { t } = useTranslation('landing');
+  const { start, contribute } = useCtaHrefs();
   return (
     <main className="mx-auto w-full max-w-295 px-3 pt-9 pb-13.5 sm:px-5 min-[900px]:pt-23">
       <div className="grid items-center gap-10 min-[900px]:grid-cols-[1.12fr_.88fr] min-[900px]:gap-16">
@@ -223,10 +241,10 @@ function LandingPage() {
           </h1>
           <p className="mt-6 max-w-180 text-lg leading-[1.45] wrap-break-word text-ink min-[600px]:text-xl">{t('intro')}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="/train" className={CTA_PRIMARY}>
+            <a href={start} className={CTA_PRIMARY}>
               {t('cta.start')}
             </a>
-            <a href="/contribute" className={CTA_SECONDARY}>
+            <a href={contribute} className={CTA_SECONDARY}>
               {t('cta.contribute')}
             </a>
           </div>

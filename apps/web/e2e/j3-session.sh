@@ -319,8 +319,10 @@ WEB_ON=0
 open_browser "browser opened on the landing page (day 1: device zone $TZ_DAY1)" "$TZ_DAY1" / && WEB_ON=1
 if [ "$WEB_ON" = 1 ]; then
   WEB_OK=1
-  pw_run "onboarding (J2 wizard): START TRAINING opens the wizard" '(async page => {
+  pw_run "landing: START TRAINING leads to the sign-in gate, and Start opens the wizard" '(async page => {
     await page.getByRole("link", { name: "Start training" }).first().click();
+    await page.waitForURL("**/account/sign-in**");
+    await page.getByRole("button", { name: "Start training" }).click();
     await page.waitForURL("**/train/onboarding");
     await page.getByRole("heading", { name: "A few questions to get started" }).waitFor();
     return page.url(); })'
