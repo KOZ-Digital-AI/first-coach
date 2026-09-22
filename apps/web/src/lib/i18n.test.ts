@@ -649,13 +649,26 @@ describe('language switch (features/i18n/header-extra.tsx)', () => {
     expect(i18n.language).toBe(INITIAL_LANGUAGE);
   });
 
-  test('renders three buttons named Қазақша, Русский and English, each in its own lang', () => {
+  // fc-zfg.9: the visible label is now the compact 3-letter short form (Қаз / Рус / Eng, i18n.messages.ts's `short`),
+  // not the full native name - the header row must never wrap at >=1220px, and the full names are too wide for that.
+  // The full native name is still there, just moved to the accessible name/title (next test).
+  test('renders three buttons with the short labels Қаз, Рус and Eng, each in its own lang', () => {
     renderSwitch('en');
     const buttons = screen.getAllByRole('button');
-    expect(buttons.map((el) => el.textContent)).toEqual(['Қазақша', 'Русский', 'English']);
+    expect(buttons.map((el) => el.textContent)).toEqual(['Қаз', 'Рус', 'Eng']);
     expect(buttons.map((el) => el.getAttribute('lang'))).toEqual(['kk', 'ru', 'en']);
     expect(buttons.map((el) => el.getAttribute('type'))).toEqual(['button', 'button', 'button']);
-    expect(buttons.map((el) => el.textContent)).toEqual(LOCALES.map((locale) => LANGUAGE_NAMES[locale]));
+    expect(buttons.map((el) => el.textContent)).toEqual(LOCALES.map((locale) => switchMessages.en.short[locale]));
+  });
+
+  test('each button keeps the full native name as its accessible name and its title, not the short label', () => {
+    renderSwitch('en');
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.map((el) => el.getAttribute('aria-label'))).toEqual(LOCALES.map((locale) => LANGUAGE_NAMES[locale]));
+    expect(buttons.map((el) => el.getAttribute('title'))).toEqual(LOCALES.map((locale) => LANGUAGE_NAMES[locale]));
+    // getByRole's `name` option resolves the ARIA accessible name (aria-label wins over text content), so a lookup by
+    // the FULL native name still finds the button even though its visible text is now the short label.
+    for (const locale of LOCALES) expect(button(LANGUAGE_NAMES[locale])).toBeTruthy();
   });
 
   test.each([...LOCALES])('with %s current, aria-pressed is true on that button only', (current) => {
@@ -787,6 +800,7 @@ describe('header slot contract (lib/slots.ts)', () => {
     expect(Extra).toBeDefined();
     const inst = createI18n({ modules: switchModules, languages: ['ru'] });
     render(createElement(I18nextProvider, { i18n: inst }, createElement(Extra!)));
-    expect(screen.getAllByRole('button').map((el) => el.textContent)).toEqual(['Қазақша', 'Русский', 'English']);
+    // fc-zfg.9: short visible labels, see the "language switch" describe block above for the full contract.
+    expect(screen.getAllByRole('button').map((el) => el.textContent)).toEqual(['Қаз', 'Рус', 'Eng']);
   });
 });

@@ -99,8 +99,10 @@ export interface ShellProps {
 }
 
 // Every link is at least 44px tall (DESIGN.md tap targets). The focus ring is the global :focus-visible rule in app.css.
+// whitespace-nowrap (fc-zfg.9): the top navigation must never squeeze a link's own text onto two lines ("Open Commons",
+// "Video Coach · Beta"); the row it sits in has its own no-wrap rule below instead.
 const TOP_LINK =
-  'relative inline-flex min-h-tap items-center rounded-control px-3 font-bold text-ink hover:bg-ink/5 motion-safe:transition-colors';
+  'relative inline-flex min-h-tap items-center whitespace-nowrap rounded-control px-0.5 font-bold text-ink hover:bg-ink/5 motion-safe:transition-colors';
 const TAB_LINK =
   'relative flex min-h-tap flex-col items-center justify-center gap-1 px-0.5 py-2 text-center text-xs leading-[1.15] font-bold text-ink wrap-anywhere aria-[current=page]:bg-accent-2';
 const ACTION_LINK =
@@ -150,7 +152,15 @@ export function Shell({ children, isAdmin = false, version, slots }: ShellProps)
 
       {/* Translucent bench paper with a blur; the blur is progressive enhancement, the bar stays readable without it. */}
       <header className="sticky top-0 z-20 border-b border-ink/10 bg-bg/90 backdrop-blur-[18px]">
-        <div className={`${CONTAINER} flex min-h-19 flex-wrap items-center gap-x-6 gap-y-1 py-1.5`}>
+        {/*
+         * min-[900px]:flex-nowrap (fc-zfg.9): below the 1220px desktop-nav breakpoint (see the nav element below) this
+         * row only ever holds the brand mark and the header-extra slot (the primary nav is `hidden` until 1220px and
+         * removed from flex layout, not merely squeezed) - comfortably narrow even at 900px width, so 900px is plenty
+         * of margin for "never wrap this row"; it is not tied to the nav's own breakpoint. Two user screenshots showed
+         * the header-extra slot (sign-in + language switch) dropping onto a second row in ru/kk, and the nav links
+         * wrapping inside themselves in en; whitespace-nowrap on the links plus this rule fix both.
+         */}
+        <div className={`${CONTAINER} flex min-h-19 flex-wrap items-center gap-x-1 gap-y-1 py-1.5 min-[900px]:flex-nowrap`}>
           <Link to={PATHS.home} className="flex min-h-tap items-center gap-2.5 rounded-control text-ink">
             <span
               aria-hidden="true"
@@ -166,7 +176,20 @@ export function Shell({ children, isAdmin = false, version, slots }: ShellProps)
             <span className="sr-only">, {t('home')}</span>
           </Link>
 
-          <nav aria-label={t('nav.primary')} className="hidden flex-1 justify-center gap-1.5 min-[900px]:flex">
+          {/*
+           * fc-zfg.9 - desktop-nav breakpoint raised from 900px to 1220px (below it the nav stays `hidden` and the
+           * bottom tab bar carries navigation instead; keep this in lockstep with the tab bar's min-[1220px]:hidden
+           * further down and the admin link's min-[1220px]:ms-0 beside it). Measured live (playwright, real browser,
+           * apps/web dev server) with nowrap links, the compacted language switch and the tightened paddings/gaps
+           * above and below: the header row's own natural (unconstrained) content width is 1030px (kk), 938px (en)
+           * and 1160px (ru, the widest - longer Cyrillic nav labels), all under CONTAINER's 1180px cap (DESIGN.md
+           * Layout: "min(1180px, 100% - 40px)"), so it's the RAMP-UP region that matters: CONTAINER equals
+           * `100% - 40px` until the viewport reaches 1220px, so a viewport narrower than 1220px hands the row less
+           * than the 1160px ru needs even though 1160 < 1180. 1220px is the smallest breakpoint at which CONTAINER
+           * has already reached its 1180px cap in every locale, giving ru a 20px margin instead of landing exactly on
+           * the edge. See shell.test.tsx and the report for the full 5-width x 3-locale measurement table.
+           */}
+          <nav aria-label={t('nav.primary')} className="hidden flex-1 justify-center gap-0.5 min-[1220px]:flex">
             {NAV_ITEMS.map(({ key, to }) => (
               <Link key={key} to={to} className={TOP_LINK}>
                 {({ isActive }) => (
@@ -180,7 +203,7 @@ export function Shell({ children, isAdmin = false, version, slots }: ShellProps)
           </nav>
 
           {isAdmin && (
-            <Link to={PATHS.admin} className={`${ACTION_LINK} ms-auto min-[900px]:ms-0`}>
+            <Link to={PATHS.admin} className={`${ACTION_LINK} ms-auto min-[1220px]:ms-0`}>
               <ShieldCheck aria-hidden="true" size={16} />
               {t('admin')}
             </Link>
@@ -189,7 +212,7 @@ export function Shell({ children, isAdmin = false, version, slots }: ShellProps)
           {headerExtras.length > 0 && (
             <div
               data-slot="header"
-              className="flex w-full flex-wrap items-center gap-2 sm:ms-auto sm:w-auto"
+              className="flex w-full flex-wrap items-center gap-2 sm:ms-auto sm:w-auto min-[900px]:flex-nowrap"
             >
               {headerExtras.map((Extra, index) => (
                 <Extra key={index} />
@@ -250,10 +273,14 @@ export function Shell({ children, isAdmin = false, version, slots }: ShellProps)
         </div>
       </footer>
 
-      {/* Replaces the top navigation under 900px. Sticky (not fixed) at the end of the page: it never hides content. */}
+      {/*
+       * Replaces the top navigation under 1220px (fc-zfg.9: raised from 900px in lockstep with the nav's own
+       * min-[1220px]:flex above - see that comment for the measured widths behind the number). Sticky (not fixed) at
+       * the end of the page: it never hides content.
+       */}
       <nav
         aria-label={t('nav.tabs')}
-        className="sticky bottom-0 z-20 border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] min-[900px]:hidden"
+        className="sticky bottom-0 z-20 border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] min-[1220px]:hidden"
       >
         <ul className="mx-auto grid max-w-lg grid-cols-5">
           {NAV_ITEMS.map(({ key, to, icon: Icon }) => (
