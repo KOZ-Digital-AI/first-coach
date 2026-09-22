@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';
 import type { ComponentType } from 'react';
 import { I18nextProvider } from 'react-i18next';
@@ -19,7 +21,30 @@ const { act, cleanup, fireEvent, render, screen, within } = await import('@testi
 
 type Locale = (typeof LOCALES)[number];
 
-afterEach(() => cleanup());
+// Web test hygiene (fc-zfg.9): this file renders many describe blocks with dozens of getBy*/findBy* queries, which
+// leaves unbounded entries in happy-dom's internal query caches and can slow down or time out LATER test files that
+// share the same happy-dom window. Copied from the working pattern in features/contribute/form.test.tsx's last
+// afterEach: invalidate then empty happy-dom's affectsCache/affectsComputedStyleCache/querySelectorCache symbols,
+// written against happy-dom 20.x symbols by description (does nothing if they are not there).
+function resetHappyDomCaches(): void {
+  const targets: object[] = [document, document.documentElement, document.body, window];
+  for (const target of targets) {
+    for (const symbol of Object.getOwnPropertySymbols(target)) {
+      const value: unknown = (target as Record<symbol, unknown>)[symbol];
+      if ((symbol.description === 'affectsCache' || symbol.description === 'affectsComputedStyleCache') && Array.isArray(value)) {
+        for (const item of value) if (typeof item === 'object' && item !== null) (item as { result: unknown }).result = null;
+        value.length = 0;
+      } else if (symbol.description === 'querySelectorCache' && value instanceof Map) {
+        value.clear();
+      }
+    }
+  }
+}
+
+afterEach(() => {
+  cleanup();
+  resetHappyDomCaches();
+});
 
 // --- helpers ----------------------------------------------------------------------------------
 
@@ -168,13 +193,19 @@ describe('bottom tab bar', () => {
     }
   });
 
-  test('replaces the top navigation under 900px: tab bar hidden from 900px up, top navigation hidden below it', async () => {
+  // fc-zfg.9: the breakpoint moved from 900px to 1220px (see Shell.tsx's comment on the nav element for the measured
+  // widths behind the number - the header row's extras slot did not fit at 900px once the primary nav also showed).
+  // Kept in lockstep, as the report's mutation table checks: the tab bar's own hidden-from breakpoint must always
+  // equal the nav's own shown-from breakpoint, or there would be a width band with neither navigation visible.
+  test('replaces the top navigation under 1220px: tab bar hidden from 1220px up, top navigation hidden below it', async () => {
     await renderShell();
     const bar = screen.getByRole('navigation', { name: shellMessages.en.nav.tabs });
     const top = screen.getByRole('navigation', { name: shellMessages.en.nav.primary });
-    expect(bar.className).toContain('min-[900px]:hidden');
+    expect(bar.className).toContain('min-[1220px]:hidden');
     expect(top.className).toMatch(/(^|\s)hidden(\s|$)/);
-    expect(top.className).toContain('min-[900px]:flex');
+    expect(top.className).toContain('min-[1220px]:flex');
+    expect(bar.className).not.toContain('min-[900px]:hidden');
+    expect(top.className).not.toContain('min-[900px]:flex');
   });
 
   test('is a distinct landmark from the top navigation and sits outside the sticky header', async () => {
@@ -182,6 +213,47 @@ describe('bottom tab bar', () => {
     const bar = screen.getByRole('navigation', { name: shellMessages.en.nav.tabs });
     expect(within(screen.getByRole('banner')).queryByRole('navigation', { name: shellMessages.en.nav.tabs })).toBeNull();
     expect(bar.getAttribute('aria-label')).not.toBe(screen.getByRole('navigation', { name: shellMessages.en.nav.primary }).getAttribute('aria-label'));
+  });
+});
+
+// --- desktop header row never wraps (fc-zfg.9) -------------------------------------------------
+//
+// Two user screenshots (desktop widths >=900px) showed the header-extra slot (sign-in + language switch) dropping
+// onto a second row in ru/kk, and the primary nav links wrapping inside themselves in en ("Open Commons" on two
+// lines, "Video Coach · Beta" on three). happy-dom does no layout, so these tests assert the provable CSS properties
+// behind the fix (nowrap on the text that must not wrap internally, and the no-wrap rule on the row that holds it),
+// not actual pixel positions; the single-row proof at real widths is done once in a real browser (see the report).
+
+describe('desktop header row never wraps (fc-zfg.9)', () => {
+  test('every primary navigation link carries whitespace-nowrap, so its own label can never wrap onto two lines', async () => {
+    await renderShell();
+    for (const link of primaryNav().getAllByRole('link')) expect(link.className).toContain('whitespace-nowrap');
+  });
+
+  test('the header row itself never wraps onto a second line from 900px up (min-[900px]:flex-nowrap)', async () => {
+    await renderShell();
+    const row = screen.getByRole('banner').firstElementChild as HTMLElement;
+    expect(row).toBeTruthy();
+    expect(row.className).toContain('flex-nowrap');
+    expect(row.className).toContain('min-[900px]:flex-nowrap');
+  });
+
+  test('the header-extra slot (sign-in + language switch) never wraps onto a second line from 900px up either', async () => {
+    await renderShell({ slots: { header: [LanguageSwitch] } });
+    const slot = document.querySelector('[data-slot="header"]');
+    expect(slot).toBeTruthy();
+    expect(slot?.className).toContain('min-[900px]:flex-nowrap');
+  });
+
+  // Source-inspection (same technique as lib/i18n.test.ts's "i18n.ts imports primitives type-only" test): the sign-in
+  // link is a component of the account feature (not owned by this test file, so it is not rendered here - rendering
+  // AccountControls needs a QueryClientProvider and a session it does not have in this suite), but the class list
+  // that must carry whitespace-nowrap is still literal, readable source.
+  test('the "Coach sign-in" link (features/account/header-extra.tsx) carries whitespace-nowrap', () => {
+    const source = readFileSync(join(import.meta.dir, '../account/header-extra.tsx'), 'utf8');
+    const match = source.match(/const VISITOR_LINK =\s*\n?\s*'([^']*)'/);
+    expect(match).not.toBeNull();
+    expect(match?.[1]).toContain('whitespace-nowrap');
   });
 });
 
