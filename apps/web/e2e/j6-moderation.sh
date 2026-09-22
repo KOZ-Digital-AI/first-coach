@@ -469,6 +469,11 @@ if [ "$BROWSER" = 1 ] && open_browser admin /admin; then
       await page.getByRole("heading", { name: "Coach account", level: 1 }).waitFor();
       return JSON.stringify({ url: page.url().replace(/^https?:\/\/[^\/]+/, "") }); }' 20000 &&
     jchk "admin: /admin (signed out) becomes /account/sign-in?redirect=%2Fadmin" "$PW_OUT" '.url == "/account/sign-in?redirect=%2Fadmin"'
+  if [ "$STEP5" = 1 ]; then
+    admin_calls=$(api_calls 0 | grep -c '/api/admin/')
+    if [ "$admin_calls" = 0 ]; then pass "gate: a signed-out visitor opening /admin lands on /account/sign-in?redirect=/admin before any /api/admin request"
+    else fail "gate: a signed-out visitor opening /admin lands on /account/sign-in?redirect=/admin before any /api/admin request" "  observed $admin_calls /api/admin request(s): $(api_calls 0 | grep '/api/admin/')"; fi
+  fi
   if ui_auth "admin: sign in on the sign-in screen with the CLI's account" signIn "$ADMIN_EMAIL" "$ADMIN_PASS" 'Review queue'; then
     jchk "admin: after signing in from /admin the review queue opens by itself (not the 'You are already signed in' dead end of the sign-in screen)" "$PW_OUT" \
       '.bounced == false and .url == "/admin"'

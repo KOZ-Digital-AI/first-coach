@@ -3,7 +3,7 @@ import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet
 import type { ComponentType } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { createI18n, type LOCALES } from '../../lib/i18n';
-import { Shell } from './Shell';
+import { Shell, type NavTier } from './Shell';
 import shellMessages from './shell.messages';
 
 // Same DOM guard as features/shell/shell.test.tsx: the web preload only applies when bun runs from apps/web.
@@ -76,16 +76,18 @@ const PATHS = ['/', '/train', '/commons', '/contribute', '/progress', '/video', 
 interface Options {
   path?: string;
   locale?: Locale;
+  // Default 'visitor' matches Shell's own fail-closed default (auth-gate-spec.md §3.1).
+  tier?: NavTier;
   isAdmin?: boolean;
   slots?: { header?: readonly ComponentType[]; root?: readonly ComponentType[] };
 }
 
 /** A real router (memory history) with the Shell as the root layout: the same wiring routes/__root.tsx does. */
-async function renderShell({ path = '/', locale = 'en', isAdmin, slots }: Options = {}) {
+async function renderShell({ path = '/', locale = 'en', tier, isAdmin, slots }: Options = {}) {
   const instance = createI18n({ modules, languages: [locale], storage: noStorage, root: { lang: '' }, dev: false });
   const rootRoute = createRootRoute({
     component: () => (
-      <Shell isAdmin={isAdmin} slots={slots}>
+      <Shell tier={tier} isAdmin={isAdmin} slots={slots}>
         <Outlet />
       </Shell>
     ),
@@ -175,13 +177,15 @@ describe('Privacy settings entry: in the shell', () => {
     for (const link of [settings, policy, terms]) expect(landmark.contains(link)).toBe(true);
   });
 
-  test('is shown to every visitor kind and on every page: no session, role or route decides it', async () => {
-    for (const isAdmin of [undefined, false, true]) {
-      for (const path of ['/', '/train', '/commons', '/legal/terms', '/settings/privacy', '/video']) {
-        await renderShell({ isAdmin, path });
-        const link = footer().getByRole('link', { name: 'Privacy settings' });
-        expect(hrefOf(link)).toBe('/settings/privacy');
-        cleanup();
+  test('is shown to every visitor kind and on every page: no session, role, tier or route decides it', async () => {
+    for (const tier of ['visitor', 'player', 'account'] as const) {
+      for (const isAdmin of [undefined, false, true]) {
+        for (const path of ['/', '/train', '/commons', '/legal/terms', '/settings/privacy', '/video']) {
+          await renderShell({ tier, isAdmin, path });
+          const link = footer().getByRole('link', { name: 'Privacy settings' });
+          expect(hrefOf(link)).toBe('/settings/privacy');
+          cleanup();
+        }
       }
     }
   });
@@ -244,7 +248,8 @@ describe('Privacy settings entry: in the shell', () => {
   });
 
   test('is not a primary navigation item: it is in neither navigation and Train is still the first destination', async () => {
-    await renderShell();
+    // account tier: Train is only the first destination for a tier that shows it (auth-gate-spec.md §3.2).
+    await renderShell({ tier: 'account' });
     expect(primaryNav().queryByRole('link', { name: 'Privacy settings' }) === null).toBe(true);
     expect(tabBar().queryByRole('link', { name: 'Privacy settings' }) === null).toBe(true);
     expect(hrefOf(primaryNav().getAllByRole('link')[0]!)).toBe('/train');
@@ -253,49 +258,72 @@ describe('Privacy settings entry: in the shell', () => {
 
 // --- Video Coach · Beta -----------------------------------------------------------------------
 
-describe('Video Coach · Beta entry', () => {
+// auth-gate-spec.md §3.2: an anonymous player does not get a Contribute tab, but keeps Video Coach · Beta (a session,
+// any session, is enough to see the video entry — only a visitor with none does not).
+const HAS_VIDEO_TIERS = ['player', 'account'] as const;
+
+describe('Video Coach · Beta entry (tier-aware: present for player and account, absent for visitor)', () => {
   for (const locale of LOCALE_LIST) {
-    test(`is in the primary navigation and the tab bar, labelled in ${locale}, pointing at /video`, async () => {
-      await renderShell({ locale });
+    test(`is in the primary navigation and the tab bar for player and account, labelled in ${locale}, pointing at /video`, async () => {
+      for (const tier of HAS_VIDEO_TIERS) {
+        await renderShell({ locale, tier });
+        const label = shellMessages[locale].nav.video;
+        expect(label).toMatch(/·\s*(Beta|Бета)$/);
+        expect(hrefOf(primaryNav(locale).getByRole('link', { name: label }))).toBe('/video');
+        expect(hrefOf(tabBar(locale).getByRole('link', { name: label }))).toBe('/video');
+        cleanup();
+      }
+    });
+
+    test(`is absent for a visitor in ${locale} (no session, no Video)`, async () => {
+      await renderShell({ locale, tier: 'visitor' });
       const label = shellMessages[locale].nav.video;
-      expect(label).toMatch(/·\s*(Beta|Бета)$/);
-      expect(hrefOf(primaryNav(locale).getByRole('link', { name: label }))).toBe('/video');
-      expect(hrefOf(tabBar(locale).getByRole('link', { name: label }))).toBe('/video');
+      expect(primaryNav(locale).queryByRole('link', { name: label })).toBeNull();
+      expect(tabBar(locale).queryByRole('link', { name: label })).toBeNull();
     });
   }
 
   test('reads "Video Coach · Beta" in English', async () => {
-    await renderShell();
+    await renderShell({ tier: 'account' });
     expect(hrefOf(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBe('/video');
   });
 
-  test('is a real link that a keyboard reaches, in both navigations', async () => {
-    await renderShell();
-    expect(keyboardReachable(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBe(true);
-    expect(keyboardReachable(tabBar().getByRole('link', { name: 'Video Coach · Beta' }))).toBe(true);
+  test('is a real link that a keyboard reaches, in both navigations, for player and account', async () => {
+    for (const tier of HAS_VIDEO_TIERS) {
+      await renderShell({ tier });
+      expect(keyboardReachable(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBe(true);
+      expect(keyboardReachable(tabBar().getByRole('link', { name: 'Video Coach · Beta' }))).toBe(true);
+      cleanup();
+    }
   });
 
-  test('carries aria-current="page" on /video, and not on the other pages', async () => {
-    await renderShell({ path: '/video' });
-    expect(current(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBe('page');
-    expect(current(tabBar().getByRole('link', { name: 'Video Coach · Beta' }))).toBe('page');
-    cleanup();
-    await renderShell({ path: '/train' });
-    expect(current(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBeNull();
-    expect(current(tabBar().getByRole('link', { name: 'Video Coach · Beta' }))).toBeNull();
+  test('carries aria-current="page" on /video for player and account, and not on the other pages', async () => {
+    for (const tier of HAS_VIDEO_TIERS) {
+      await renderShell({ path: '/video', tier });
+      expect(current(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBe('page');
+      expect(current(tabBar().getByRole('link', { name: 'Video Coach · Beta' }))).toBe('page');
+      cleanup();
+      await renderShell({ path: '/train', tier });
+      expect(current(primaryNav().getByRole('link', { name: 'Video Coach · Beta' }))).toBeNull();
+      expect(current(tabBar().getByRole('link', { name: 'Video Coach · Beta' }))).toBeNull();
+      cleanup();
+    }
   });
 
-  test('never comes before or in place of training: Train is first and the video entry last in both navigations', async () => {
-    await renderShell();
-    for (const nav of [primaryNav(), tabBar()]) {
-      const links = nav.getAllByRole('link');
-      expect(hrefOf(links[0]!)).toBe('/train');
-      expect(hrefOf(links.at(-1)!)).toBe('/video');
+  test('never comes before or in place of training: Train is first and the video entry last in both navigations, for player and account', async () => {
+    for (const tier of HAS_VIDEO_TIERS) {
+      await renderShell({ tier });
+      for (const nav of [primaryNav(), tabBar()]) {
+        const links = nav.getAllByRole('link');
+        expect(hrefOf(links[0]!)).toBe('/train');
+        expect(hrefOf(links.at(-1)!)).toBe('/video');
+      }
+      cleanup();
     }
   });
 
   test('never blocks training: from the video page the Train link is enabled and still navigates to /train', async () => {
-    await renderShell({ path: '/video' });
+    await renderShell({ path: '/video', tier: 'account' });
     const train = primaryNav().getByRole('link', { name: 'Train' });
     expect(train.getAttribute('aria-disabled')).toBeNull();
     expect(current(train)).toBeNull();

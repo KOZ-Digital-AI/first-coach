@@ -369,6 +369,30 @@ fetch "$A_COOKIE" GET /api/player/video-analyses
 chk "A api: the history can be read without the consent (200, empty)" 200 '. == []'
 assert_eq "$(sqlite_count video_analyses),$(count_files "$MEDIA_DIR")" "0,0" "A: the refused request stored nothing (no analysis row, no file in MEDIA_DIR)"
 
+# --- gate: a signed-out visitor cannot reach /video -----------------------------------------------------------------------------------
+GATE_LABEL="gate: a visitor with no session opening /video lands on /account/sign-in?redirect=/video — no camera prompt, no consent card"
+if [ "$E2E_WEB" = api ] && pw_available; then
+  pw close >/dev/null 2>&1
+  if out=$(pw open "$STACK_URL/video" 2>&1); then
+    pw resize 1280 1800 >/dev/null
+    pw_js "$GATE_LABEL (browser JS)" "$(jq -nc --arg base "$STACK_URL" '{base: $base}')" \
+      "await page.getByRole('button', { name: 'Start training' }).waitFor();
+       const url = page.url().replace(/^https?:\\/\\/[^\\/]+/, '');
+       const camera = await page.getByRole('button', { name: /Analyse my dribbling/i }).count();
+       const consent = await page.getByText(/consent/i).count();
+       return JSON.stringify({ url, camera, consent }); "
+    if [ "$WEB_OK" = 1 ]; then
+      jchk "$GATE_LABEL" "$PW_OUT" '.url == "/account/sign-in?redirect=%2Fvideo" and .camera == 0 and .consent == 0'
+    fi
+  elif grep -qiE 'not installed|Executable doesn.t exist' <<<"$out"; then
+    blocked "$GATE_LABEL" "no usable browser: $(grep -iE 'not installed|Executable' <<<"$out" | head -n1)"
+  else
+    fail "$GATE_LABEL" "$out"
+  fi
+else
+  blocked "$GATE_LABEL" "no browser (E2E_WEB=$E2E_WEB, playwright-cli $(pw_available && echo present || echo absent))"
+fi
+
 # --- the browser, as player A ---------------------------------------------------------------------------------------------------------
 browse_as "A" "$A_COOKIE"
 
@@ -525,8 +549,13 @@ JS_FLOW="$JS_NET_ON
     if (body.includes('This video cannot be opened.')) { outcome = 'unreadable'; break; }
     if (/This clip is [0-9.,]+ seconds\\. That is too (short|long)\\./.test(body)) { outcome = 'duration'; break; }
     if (body.includes('Reading your movement on this phone') && !phases.includes('processing')) phases.push('processing');
-    const pb = page.getByRole('progressbar', { name: 'Reading your movement' });
-    if ((await pb.count()) > 0) { const v = await pb.first().getAttribute('aria-valuenow'); if (progress[progress.length - 1] !== v) progress.push(v); }
+    // A direct DOM read (never a Playwright locator wait): the on-device pipeline can finish and hand the player over to
+    // the result screen between this tick's checks above and a progress-bar query below, unmounting the progress bar the
+    // very instant this runs. A locator query (getByRole().count() then .first().getAttribute()) auto-retries for its
+    // default action timeout when that race is lost, which can make this ONE poll tick block for the timeout instead of
+    // just seeing 'gone' and looping back to the url/body checks above on the next tick.
+    const pv = await page.evaluate(() => document.querySelector('[role=\"progressbar\"]')?.getAttribute('aria-valuenow') ?? null);
+    if (pv !== null && progress[progress.length - 1] !== pv) progress.push(pv);
     await page.waitForTimeout(200);
   }
   let after = {};

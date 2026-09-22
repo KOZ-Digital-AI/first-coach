@@ -268,7 +268,10 @@ async function freshVisitorToRoadmap(net: Network): Promise<App> {
     </QueryClientProvider>,
   );
   const start = await screen.findByRole('link', { name: 'Start training' });
-  expect(start.getAttribute('href')).toBe('/train');
+  // A signed-out visitor's Start link now points at the sign-in gate (auth-gate spec §3.3);
+  // pressing Start there mints the anonymous session and lands on /train — modelled below as the
+  // hard navigation to /train, so the call budget (sign-in, options, start) is unchanged.
+  expect(start.getAttribute('href')).toBe('/account/sign-in?redirect=%2Ftrain');
   await user.click(start);
   landing.unmount();
   net.calls.length = 0; // the count starts at the press
@@ -445,10 +448,12 @@ describe('ensurePlayerSessionOutcome (additive to ensurePlayerSession)', () => {
     expect(await auth.ensurePlayerSessionOutcome()).toEqual({ session: created, created: false });
   });
 
-  test('a session created through plain ensurePlayerSession is not "just created" for a later outcome call either', async () => {
+  test('a session created through plain ensurePlayerSession IS "just created" for the next outcome call, even after it settled (auth-gate: the sign-in screen\'s Start button calls plain ensurePlayerSession() and navigates before /train ever mounts to ask)', async () => {
     const { client, created } = fakeClient();
     const auth = createPlayerAuth({ client, locks: null, online: () => true });
     await auth.ensurePlayerSession();
+    expect(await auth.ensurePlayerSessionOutcome()).toEqual({ session: created, created: true });
+    // consumed: a second outcome call (a later revisit in the same page load) no longer sees it as fresh.
     expect(await auth.ensurePlayerSessionOutcome()).toEqual({ session: created, created: false });
   });
 

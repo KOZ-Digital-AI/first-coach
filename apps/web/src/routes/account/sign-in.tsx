@@ -18,20 +18,37 @@ import { Card } from '../../components/ui/card';
 import { Field } from '../../components/ui/field';
 import { Notice } from '../../components/ui/notice';
 import {
+  areaOf,
   type DraftStorage,
   resetSessionExpired,
   SIGN_IN_PATH,
   takeExpiredNotice,
 } from '../../features/account/session-expired';
-import { authClient, resetPlayerSession } from '../../lib/auth';
+import { authClient, ensurePlayerSession, resetPlayerSession } from '../../lib/auth';
 // Side-effect import: registers the i18n instance before the first render (see the convention in lib/i18n.ts).
 import '../../lib/i18n';
 
 /**
- * /account/sign-in: coach (contributor) sign-up and sign-in with Better Auth. Operate mode: a form, calm and short.
+ * /account/sign-in: the one door the auth gate opens onto (spec: auth-gate, package P3). A kid-sized Start card for a
+ * player, and coach (contributor) sign-up / sign-in with Better Auth below it. Operate mode: calm and short; Start is the
+ * only Ink-filled (primary) control on the screen, per DESIGN.md's one-primary-action rule.
  * All words live in features/account/sign-in.messages.ts (namespace `sign-in`).
  *
  * How it works
+ *  - The Start card (start.title / start.body / start.button): one tap calls `ensureSession()` (lib/auth's
+ *    ensurePlayerSession, default; a test injects its own), then `resetSessionExpired()`, then `settleSession()` on the
+ *    same session atom the coach flow waits on (so the next screen never sees "no session"), then navigates to the
+ *    validated `?redirect=`, defaulting to `/train` (not `/`: a fresh player has nowhere else to go). A double press is
+ *    guarded like the coach form's `sending` ref. A failed attempt (always a PlayerSessionError) shows `start.error` in
+ *    the existing Notice component — never the server's English text — and leaves the button usable.
+ *  - The Start card is hidden once the session is a real account, or once the requested `?redirect=` is a coach area
+ *    (`areaOf(...) === 'coach'`, /contribute* or /admin*): an anonymous session cannot satisfy that gate, so Start would
+ *    be a dead end there. `start.coach`, the quiet heading above the coach tabs, is paired with it (hidden the same way).
+ *  - The already-satisfied short-circuit (spec 2.5): a session that already satisfies the requested `?redirect=` — an
+ *    account with any valid redirect, or an anonymous session with a PLAYER redirect — is carried straight through
+ *    (`navigate(redirect, { replace: true })`) without ever rendering the form; this is also the race-fix for a visitor
+ *    the gate bounced here on a flaky read who in fact has a session. Only an explicit, valid `?redirect=` counts (one
+ *    that is not the same as `DEFAULT_REDIRECT`); an absent or invalid one behaves like "absent" (see safeRedirect).
  *  - Two tabs, "Create coach account" (display name, email, password >= 10 characters) and "Sign in" (email, password).
  *    Validation runs on submit, in the app's language (the form is noValidate, so no browser-language bubbles), and the
  *    first bad field takes focus. Nothing is sent while a field is bad.
@@ -67,8 +84,10 @@ import '../../lib/i18n';
  *  - "empty" state: the visitor is already signed in with an account, so there is nothing to fill in (Continue instead).
  *  - "loading": the one-time session read (a small status line; the form is already usable) and the request in flight
  *    (busy button, everything disabled). "success": a status line while the router leaves; the form stays locked.
- *  - The default redirect is `/`: the contributor area does not exist in the route tree yet.
- *  - Navigation is `router.history.push`, like the onboarding wizard: the target is any path, not a typed route.
+ *  - The default redirect is `/`: the contributor area does not exist in the route tree yet. Start's own default is
+ *    `/train` (see `START_DEFAULT_REDIRECT`): a brand-new player has nowhere sensible to land but the wizard.
+ *  - Navigation is `router.history.push`, like the onboarding wizard, except the spec 2.5 short-circuit which is a
+ *    `replace` (a visitor never gets "Back" pointed at a form they never needed): the target is any path, not a typed route.
  *  - Only `Route` and the small SignInDepsContext test seam are exported: a route file's other exports end up in the entry
  *    chunk (see routes/train/onboarding.tsx).
  */
@@ -84,6 +103,10 @@ interface SessionAtomValue {
   /** Set while the session is being re-read; `data` then still holds the PREVIOUS session. */
   isRefetching?: boolean;
   refetch?: () => unknown;
+  /** The session payload, once settled — read by the mount classification below (same shape `classifySession` expects). */
+  data?: unknown;
+  /** Set when the last read FAILED; `data` then keeps whatever it had. */
+  error?: unknown;
 }
 
 /** The part of a nanostores atom that `settleSession` uses; Better Auth's session atom is assignable to it. */
@@ -106,7 +129,10 @@ export interface SignInDeps {
   resetSession: () => void;
   /** features/account/session-expired.ts resetSessionExpired: a successful sign-in arms the 401 handler again. */
   resetSessionExpired: () => void;
-  navigate: (to: string) => void;
+  /** lib/auth.ts ensurePlayerSession: what the Start card calls. Rejects with a PlayerSessionError; never creates a second identity. */
+  ensureSession: () => Promise<unknown>;
+  /** `options.replace`: a history replace (the already-satisfied short-circuit) instead of a push (every other navigation). */
+  navigate: (to: string, options?: { replace?: boolean }) => void;
   /** Where the "session expired" note is; `null`: no storage. Absent: sessionStorage, looked up by takeExpiredNotice. */
   storage?: DraftStorage | null;
   now: () => number;
@@ -118,6 +144,8 @@ export const SignInDepsContext = createContext<Partial<SignInDeps>>({});
 // --- the redirect ----------------------------------------------------------------------------------------------------------
 
 const DEFAULT_REDIRECT = '/';
+/** The Start card's own default (spec 2.4): a fresh player who followed no link has nowhere to go but the wizard. */
+const START_DEFAULT_REDIRECT = '/train';
 const MAX_REDIRECT_LENGTH = 2048;
 const MAX_DECODE_ROUNDS = 5;
 const PLACEHOLDER_ORIGIN = 'https://redirect.invalid';
@@ -255,7 +283,8 @@ function SignInRoute() {
     client: injected.client ?? authClient,
     resetSession: injected.resetSession ?? resetPlayerSession,
     resetSessionExpired: injected.resetSessionExpired ?? resetSessionExpired,
-    navigate: injected.navigate ?? ((to) => router?.history.push(to)),
+    ensureSession: injected.ensureSession ?? ensurePlayerSession,
+    navigate: injected.navigate ?? ((to, options) => (options?.replace === true ? router?.history.replace(to) : router?.history.push(to))),
     storage: injected.storage,
     now: injected.now ?? Date.now,
   };
@@ -277,8 +306,12 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<FormErrorKind | null>(null);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done'>('idle');
+  const [starting, setStarting] = useState(false);
+  const [startFailed, setStartFailed] = useState(false);
   // A second submit in the same tick (double tap, Enter plus click) must not send twice, before state has caught up.
   const sending = useRef(false);
+  // Same guard, for the Start card's own button.
+  const startSending = useRef(false);
   const nameInput = useRef<HTMLInputElement>(null);
   const emailInput = useRef<HTMLInputElement>(null);
   const passwordInput = useRef<HTMLInputElement>(null);
@@ -287,7 +320,24 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
   // Bumped when an error appears, so focus moves to it (a disabled submit button drops the keyboard's place).
   const [attention, setAttention] = useState<{ n: number; target: FieldName | 'form' }>({ n: 0, target: 'form' });
   const busy = status !== 'idle';
+  // While either side is busy, the OTHER side is locked too: only one primary action runs at a time (DESIGN.md).
+  const coachDisabled = busy || starting;
   const client = deps.client;
+
+  // Spec 2.5: an explicit, VALID `?redirect=` only — safeRedirect already folds an absent or unsafe one into DEFAULT_REDIRECT,
+  // so those read the same as "absent" here, which is the point (no destination worth carrying anyone to).
+  const hasRedirect = redirect !== DEFAULT_REDIRECT;
+  const coachArea = areaOf(redirect) === 'coach';
+  // An anonymous session cannot satisfy a coach-area gate, so Start would be a dead end there (spec P3.2).
+  const startHidden = session === 'account' || coachArea;
+  // The already-satisfied short-circuit (spec 2.5): account + any valid redirect, or a guest whose redirect is a PLAYER
+  // path (the gate is already met). "none"/"unknown" never short-circuits: there is nothing yet to carry through.
+  const carryThrough = session === 'account' ? hasRedirect : session === 'guest' ? hasRedirect && !coachArea : false;
+  const startTarget = hasRedirect ? redirect : START_DEFAULT_REDIRECT;
+
+  useEffect(() => {
+    if (carryThrough) deps.navigate(redirect, { replace: true });
+  }, [carryThrough, redirect]); // eslint-disable-line react-hooks/exhaustive-deps -- deps.navigate is a fresh closure every render
 
   // On mount: take the "session expired" note (once; a note that is not there or is stale leaves the defaults).
   useLayoutEffect(() => {
@@ -297,15 +347,45 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
     setMode('signIn');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- deliberately once
 
-  // On mount: is this visitor a guest, an account, or unknown? A failed or unreadable read only means no note about it.
+  // On mount: is this visitor a guest, an account, or unknown? Reads the shared session atom — the one AppShell's
+  // useSession() already subscribes to, and the one settleSession() above waits on — instead of a fresh
+  // `client.getSession()` call, so this screen costs no session read beyond the one the shell already makes for every
+  // page (the same "never a second request, a second cache" rule route-guard.ts follows for the atom it reads). A
+  // client with no atom (a test double) falls back to the direct read. A failed or unreadable read only means no note
+  // about it.
   useEffect(() => {
     let alive = true;
-    client
-      .getSession()
-      .then((reply) => alive && setSession(classifySession(reply)))
-      .catch(() => alive && setSession('unknown'));
+    const atom = client.$store?.atoms.session;
+    if (atom === undefined) {
+      client
+        .getSession()
+        .then((reply) => alive && setSession(classifySession(reply)))
+        .catch(() => alive && setSession('unknown'));
+      return () => {
+        alive = false;
+      };
+    }
+    const classifyFromAtom = (value: SessionAtomValue) => classifySession({ data: value.data, error: value.error });
+    const value = atom.get();
+    if (!stillReading(value)) {
+      setSession(classifyFromAtom(value));
+      return;
+    }
+    // A nanostores atom calls its listener synchronously, with the current value, from inside `subscribe` itself
+    // (see settleSession above): `unsubscribe` is not assigned yet if that first call already settled, so it is
+    // detached right after `subscribe` returns instead of from inside the listener.
+    let unsubscribe: (() => void) | undefined;
+    let done = false;
+    unsubscribe = atom.subscribe((next) => {
+      if (stillReading(next) || done) return;
+      done = true;
+      if (alive) setSession(classifyFromAtom(next));
+      unsubscribe?.();
+    });
+    if (done) unsubscribe();
     return () => {
       alive = false;
+      unsubscribe?.();
     };
   }, [client]);
 
@@ -316,11 +396,34 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
   }, [attention]);
 
   const choose = (next: Mode, focusTab = false) => {
-    if (busy) return;
+    if (coachDisabled) return;
     setMode(next);
     setFieldErrors({});
     setFormError(null);
     if (focusTab) tabs.current[next]?.focus();
+  };
+
+  // The Start card (spec P3.1): ensureSession() (creates or reuses the anonymous session, never a second identity) ->
+  // resetSessionExpired() -> settleSession() on the shared atom (so the next screen never sees the guest/no-session read the
+  // coach flow guards against) -> navigate. A failed attempt is always a PlayerSessionError; the server's own wording is
+  // never shown, so the message is a single calm key regardless of the failure's kind.
+  const onStart = async () => {
+    if (startSending.current) return;
+    startSending.current = true;
+    setStarting(true);
+    setStartFailed(false);
+    try {
+      await deps.ensureSession();
+    } catch {
+      startSending.current = false;
+      setStarting(false);
+      setStartFailed(true);
+      return;
+    }
+    deps.resetSessionExpired();
+    await settleSession(client.$store?.atoms.session);
+    deps.navigate(startTarget);
+    // `starting`/`startSending` stay set: the screen is leaving.
   };
 
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -403,16 +506,28 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
 
       {notice !== null ? <Notice className="mt-6">{notice}</Notice> : null}
 
-      <Card className="mt-6 flex flex-col gap-5">
-        {session === 'account' ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-xl leading-tight font-bold tracking-tight">{t('signedIn.title')}</p>
-            <Button className="w-full sm:w-auto sm:self-start" onClick={() => deps.navigate(redirect)}>
-              {t('signedIn.continue')}
-            </Button>
-          </div>
-        ) : (
-          <>
+      {carryThrough ? null : session === 'account' ? (
+        <Card className="mt-6 flex flex-col gap-4">
+          <p className="text-xl leading-tight font-bold tracking-tight">{t('signedIn.title')}</p>
+          <Button className="w-full sm:w-auto sm:self-start" onClick={() => deps.navigate(redirect)}>
+            {t('signedIn.continue')}
+          </Button>
+        </Card>
+      ) : (
+        <>
+          {!startHidden ? (
+            <Card className="mt-6 flex flex-col gap-4">
+              <p className="text-xl leading-tight font-bold tracking-tight">{t('start.title')}</p>
+              <p className="text-base leading-normal text-muted">{t('start.body')}</p>
+              {startFailed ? <Notice tone="warn">{t('start.error')}</Notice> : null}
+              <Button className="w-full" loading={starting} disabled={busy} onClick={() => void onStart()}>
+                {t(starting ? 'start.busy' : 'start.button')}
+              </Button>
+            </Card>
+          ) : null}
+          {!startHidden ? <p className="mt-6 text-base font-bold text-muted">{t('start.coach')}</p> : null}
+
+          <Card className={clsx('flex flex-col gap-5', startHidden ? 'mt-6' : 'mt-4')}>
             <div role="tablist" aria-label={t('tabs.label')} className="grid grid-cols-[3fr_2fr] gap-2">
               {(['signUp', 'signIn'] as const).map((tabMode) => {
                 const selected = mode === tabMode;
@@ -428,7 +543,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
                     aria-selected={selected}
                     aria-controls={panelId}
                     tabIndex={selected ? 0 : -1}
-                    disabled={busy}
+                    disabled={coachDisabled}
                     onClick={() => choose(tabMode)}
                     onKeyDown={onTabKey}
                     className={clsx(TAB, selected ? 'border-accent bg-accent-2 text-ink' : 'border-line bg-paper text-ink')}
@@ -459,7 +574,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
                         type="text"
                         name="name"
                         autoComplete="name"
-                        disabled={busy}
+                        disabled={coachDisabled}
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                       />
@@ -476,7 +591,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
                       autoComplete="email"
                       autoCapitalize="none"
                       spellCheck={false}
-                      disabled={busy}
+                      disabled={coachDisabled}
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                     />
@@ -494,7 +609,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
                       type="password"
                       name="password"
                       autoComplete={mode === 'signUp' ? 'new-password' : 'current-password'}
-                      disabled={busy}
+                      disabled={coachDisabled}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                     />
@@ -522,14 +637,17 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
 
                 {status === 'done' ? <Notice>{t('success')}</Notice> : null}
 
-                <Button type="submit" loading={busy} className="w-full">
+                {/* DESIGN.md "one primary action per view": while the Start card is shown, IT is the only Ink-filled
+                    button, so the coach submit stays secondary; once Start is hidden (a coach-only redirect) the coach
+                    form is the screen's one action and gets the primary treatment back. */}
+                <Button type="submit" variant={startHidden ? 'primary' : 'secondary'} loading={busy} disabled={starting} className="w-full">
                   {t(busy ? (mode === 'signUp' ? 'submit.busySignUp' : 'submit.busySignIn') : mode === 'signUp' ? 'submit.signUp' : 'submit.signIn')}
                 </Button>
               </form>
             </div>
-          </>
-        )}
-      </Card>
+          </Card>
+        </>
+      )}
     </main>
   );
 }

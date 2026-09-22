@@ -4,7 +4,13 @@ import type { MessageBundle } from '../../lib/i18n';
 // lib/i18n.ts.
 //
 // Kazakh text still needs a native-speaker review (bead fc-cjh): it was written without one, so wording, register and word
-// order may need changes. Russian and English are the reference texts.
+// order may need changes. Russian and English are the reference texts. This includes the newer `start.*` keys (auth-gate
+// spec P3): the child is addressed informally (kk сен / ru ты), the coach formally (kk сіз / ru вы), per PRODUCT.md.
+//
+// - `start.*` is the Start card (auth-gate spec §2.4): a signed-out visitor's one-tap way into training, no form, no
+//   account. `start.button`'s English is "Start training" (not just "Start"), matching the landing page's CTA and the
+//   kid-sized button the spec calls for. `start.coach` is the quiet secondary heading above the coach tabs, asking the
+//   question the Start card itself cannot answer.
 //
 // - Players never need an account; the lead says so. A coach account is for people who add drills to Open Sport Commons.
 // - There is no reset email (the server sends no mail), so the password hint says so; that is a fact, not a promise.
@@ -69,6 +75,14 @@ export default {
       server: 'Біздің жағымыздан қате шықты. Сәлден соң қайта көр.',
       generic: 'Аяқтай алмадық. Қайта көр.',
     },
+    start: {
+      title: 'Жаттығуды бастау',
+      body: 'Аккаунт қажет емес. Прогресің осы телефонда сақталады.',
+      button: 'Бастау',
+      busy: 'Бастап жатырмыз…',
+      error: 'Бастау мүмкін болмады. Байланысты тексеріп, қайта көр.',
+      coach: 'Сіз бапкерсіз бе немесе жаттығу қосқыңыз келе ме?',
+    },
   },
   ru: {
     eyebrow: 'Аккаунт',
@@ -123,6 +137,14 @@ export default {
       server: 'Что-то пошло не так на нашей стороне. Попробуй через минуту.',
       generic: 'Не получилось завершить. Попробуй ещё раз.',
     },
+    start: {
+      title: 'Начать тренировку',
+      body: 'Аккаунт не нужен. Твой прогресс остаётся на этом телефоне.',
+      button: 'Начать',
+      busy: 'Запускаем…',
+      error: 'Не получилось начать. Проверь связь и попробуй ещё раз.',
+      coach: 'Вы тренер или хотите добавить упражнение?',
+    },
   },
   en: {
     eyebrow: 'Account',
@@ -176,6 +198,14 @@ export default {
       offline: 'No connection. Check your internet and try again.',
       server: 'Something went wrong on our side. Try again in a moment.',
       generic: 'We could not finish that. Try again.',
+    },
+    start: {
+      title: 'Start training',
+      body: 'No account needed. Your progress stays with you on this phone.',
+      button: 'Start training',
+      busy: 'Starting…',
+      error: 'Could not start. Check your connection and try again.',
+      coach: 'Are you a coach, or want to add a drill?',
     },
   },
 } satisfies MessageBundle;

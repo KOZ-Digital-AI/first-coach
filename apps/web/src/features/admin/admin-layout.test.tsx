@@ -456,20 +456,36 @@ describe('routes/admin/route.tsx', () => {
   }
 
   // The app-wide Better Auth client captures the global fetch when lib/auth.ts is first imported (see lib/auth.test.ts), so a
-  // stub installed here would not be used and an admin session cannot be served. What can be pinned without the network is
-  // the fail-closed half: the route reads the real hook, so it starts out loading and, with no answer or a failed request
-  // (the test environment has no API on the page origin), never shows any of the admin area.
-  test('reads the real session hook: loading first, and with no usable answer never any admin content', async () => {
-    const router = buildFileRouter('/admin/drills');
-    mount(router, 'en');
-    expect((await screen.findByRole('status')).textContent).toMatch(/checking/i);
-    noAdminContent();
-    await settle();
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    });
-    noAdminContent();
-    expect(where(router).pathname).not.toBe('/admin/impact');
+  // stub installed here would not be used and an admin session cannot be served: the real hook's read fails (the test
+  // environment has no API on the page origin), which is the OFFLINE branch of the beforeLoad guard (route-guard.ts §2.3) —
+  // with nothing remembered on this device (no `fc:last-player`), that is a redirect, exactly like a clean "no session"
+  // answer.
+  //
+  // UPDATED (auth-gate spec §2, P1): this test used to pin the gap the file's doc comment documented ("there is no
+  // beforeLoad gate… a child route's own beforeLoad/loader still starts for a signed-out visitor"), so it mounted the route,
+  // watched the layout's own render-time "checking access…" status appear, and only ever asserted the WEAKER "no admin
+  // content" / "did not navigate to /admin/impact". `admin/route.tsx` now has `beforeLoad: requireAccount()`, so a
+  // signed-out visitor is redirected to sign-in before the layout — and its "checking access…" status — ever renders at
+  // all: the previous assertions were checking a state (`role="status"`) this route can no longer reach on a first visit.
+  test('a signed-out visitor is redirected by beforeLoad, before the admin layout renders and before any /api/admin call', async () => {
+    const realFetch = globalThis.fetch;
+    const calls: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(typeof input === 'string' ? input : input.toString());
+      return realFetch(input as never, init);
+    }) as typeof fetch;
+    try {
+      const router = buildFileRouter('/admin/drills');
+      mount(router, 'en');
+      await waitFor(() => expect(where(router).pathname).toBe('/account/sign-in'), { timeout: 4000 });
+      expect(where(router).redirect).toBe('/admin/drills');
+      // The layout's own render-time "checking access…" status never appears: beforeLoad decided before it could mount.
+      expect(screen.queryByRole('status')).toBeNull();
+      noAdminContent();
+      expect(calls.some((url) => url.includes('/api/admin'))).toBe(false);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 });
 

@@ -7,7 +7,7 @@ import { I18nextProvider } from 'react-i18next';
 import { createI18n, type LOCALES } from '../../lib/i18n';
 import LanguageSwitch from '../i18n/header-extra';
 import i18nMessages from '../i18n/i18n.messages';
-import { isAdminSession, Shell } from './Shell';
+import { isAdminSession, Shell, type NavTier } from './Shell';
 import shellMessages from './shell.messages';
 
 // The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the
@@ -73,17 +73,20 @@ const PATHS = [
 interface Options {
   path?: string;
   locale?: Locale;
+  // Default 'visitor' matches Shell's own fail-closed default (auth-gate-spec.md §3.1): a test that does not care
+  // about the nav must say so explicitly once tier-aware content is involved.
+  tier?: NavTier;
   isAdmin?: boolean;
   version?: string;
   slots?: { header?: readonly ComponentType[]; root?: readonly ComponentType[] };
 }
 
 /** A real router (memory history) with the Shell as the root layout: the same wiring routes/__root.tsx does. */
-async function renderShell({ path = '/', locale = 'en', isAdmin, version, slots }: Options = {}) {
+async function renderShell({ path = '/', locale = 'en', tier, isAdmin, version, slots }: Options = {}) {
   const instance = createI18n({ modules, languages: [locale], storage: noStorage, root: { lang: '' }, dev: false });
   const rootRoute = createRootRoute({
     component: () => (
-      <Shell isAdmin={isAdmin} version={version} slots={slots}>
+      <Shell tier={tier} isAdmin={isAdmin} version={version} slots={slots}>
         <Outlet />
       </Shell>
     ),
@@ -131,9 +134,29 @@ describe('brand mark', () => {
 
 // --- navigation -------------------------------------------------------------------------------
 
+// auth-gate-spec.md §3.2: the START_HREF a visitor's primary action carries — built the same way Shell.tsx builds it
+// (signInUrl('/train')), so a change to that helper's encoding breaks this constant too, not silently drifts from it.
+const START_HREF = '/account/sign-in?redirect=%2Ftrain';
+
 describe('primary navigation', () => {
-  test('lists Train, Open Commons, Contribute, Progress and Video Coach · Beta in English, in that order', async () => {
-    await renderShell();
+  // Replaces the old tier-agnostic "lists Train, Open Commons, Contribute, Progress and Video Coach · Beta" test: Shell
+  // is tier-aware now (auth-gate-spec.md §3.2), so "what the primary nav lists" is three different, true answers.
+  test('visitor: Open Commons and Start only — no Train, Progress, Contribute or Video', async () => {
+    await renderShell({ tier: 'visitor' });
+    const links = primaryNav().getAllByRole('link');
+    expect(links.map((link) => link.textContent)).toEqual(['Open Commons', 'Start']);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/commons', START_HREF]);
+  });
+
+  test('anonymous player: Train, Open Commons, Progress and Video Coach · Beta, in that order', async () => {
+    await renderShell({ tier: 'player' });
+    const links = primaryNav().getAllByRole('link');
+    expect(links.map((link) => link.textContent)).toEqual(['Train', 'Open Commons', 'Progress', 'Video Coach · Beta']);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/train', '/commons', '/progress', '/video']);
+  });
+
+  test('coach account: all five destinations, in today\'s order', async () => {
+    await renderShell({ tier: 'account' });
     const links = primaryNav().getAllByRole('link');
     expect(links.map((link) => link.textContent)).toEqual([
       'Train',
@@ -146,8 +169,8 @@ describe('primary navigation', () => {
   });
 
   for (const locale of ['kk', 'ru'] as const) {
-    test(`renders the items in the active language (${locale}), not English`, async () => {
-      await renderShell({ locale });
+    test(`renders the account-tier items in the active language (${locale}), not English`, async () => {
+      await renderShell({ locale, tier: 'account' });
       const nav = primaryNav(locale);
       for (const key of NAV_KEYS) {
         const label = shellMessages[locale].nav[key];
@@ -163,7 +186,7 @@ describe('primary navigation', () => {
 
   test('the Beta marker is written words in every language, not only a tint', async () => {
     for (const locale of ['kk', 'ru', 'en'] as const) {
-      await renderShell({ locale });
+      await renderShell({ locale, tier: 'account' });
       const label = primaryNav(locale).getAllByRole('link').at(-1)?.textContent ?? '';
       expect(label).toMatch(/·\s*(Beta|Бета)$/);
       cleanup();
@@ -171,25 +194,57 @@ describe('primary navigation', () => {
   });
 
   test('re-labels when the language is switched through the header slot', async () => {
-    await renderShell({ slots: { header: [LanguageSwitch] } });
+    await renderShell({ tier: 'account', slots: { header: [LanguageSwitch] } });
     expect(primaryNav().getByRole('link', { name: 'Train' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Русский' }));
     expect(await primaryNav('ru').findByRole('link', { name: shellMessages.ru.nav.train })).toBeTruthy();
     expect(primaryNav('ru').queryByRole('link', { name: 'Train' })).toBeNull();
   });
+
+  test('the Start item links to /account/sign-in?redirect=%2Ftrain', async () => {
+    await renderShell({ tier: 'visitor' });
+    const start = primaryNav().getByRole('link', { name: 'Start' });
+    expect(start.getAttribute('href')).toBe(START_HREF);
+    // It is also an ordinary tab in the bottom tab bar (§3.2: "a tab bar that stays one shape"), with the same target.
+    expect(tabBar().getByRole('link', { name: 'Start' }).getAttribute('href')).toBe(START_HREF);
+  });
+
+  test('the language switch is rendered at every tier (DESIGN.md: never hidden)', async () => {
+    for (const tier of ['visitor', 'player', 'account'] as const) {
+      await renderShell({ tier, slots: { header: [LanguageSwitch] } });
+      expect(within(screen.getByRole('banner')).getByRole('group', { name: 'Language' })).toBeTruthy();
+      cleanup();
+    }
+  });
 });
 
 describe('bottom tab bar', () => {
-  test('carries the same five destinations as the primary navigation', async () => {
-    await renderShell();
-    const bar = tabBar();
-    expect(bar.getAllByRole('link').map((link) => link.textContent)).toEqual(
-      primaryNav()
-        .getAllByRole('link')
-        .map((link) => link.textContent),
-    );
-    for (const key of NAV_KEYS) {
-      expect(bar.getByRole('link', { name: shellMessages.en.nav[key] }).getAttribute('href')).toBe(NAV_HREFS[key]);
+  // Replaces the old tier-agnostic "carries the same five destinations" test: the tab bar mirrors whatever the
+  // primary navigation lists at that tier (auth-gate-spec.md §3.2 "the bottom tab bar carries the same destinations
+  // as the primary navigation, at every tier"), not a fixed five.
+  test('carries the same destinations as the primary navigation, at every tier', async () => {
+    for (const tier of ['visitor', 'player', 'account'] as const) {
+      await renderShell({ tier });
+      const bar = tabBar();
+      const nav = primaryNav();
+      expect(bar.getAllByRole('link').map((link) => link.textContent)).toEqual(
+        nav.getAllByRole('link').map((link) => link.textContent),
+      );
+      expect(bar.getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(
+        nav.getAllByRole('link').map((link) => link.getAttribute('href')),
+      );
+      cleanup();
+    }
+  });
+
+  test('lays out its real number of tabs (2 visitor, 4 player, 5 account), not a hard-coded five', async () => {
+    const counts: Record<NavTier, number> = { visitor: 2, player: 4, account: 5 };
+    for (const [tier, count] of Object.entries(counts) as [NavTier, number][]) {
+      await renderShell({ tier });
+      const bar = screen.getByRole('navigation', { name: shellMessages.en.nav.tabs });
+      expect(within(bar).getAllByRole('link')).toHaveLength(count);
+      expect(bar.querySelector('ul')?.className).toContain(`grid-cols-${count}`);
+      cleanup();
     }
   });
 
@@ -282,6 +337,17 @@ describe('admin link', () => {
     const link = within(screen.getByRole('banner')).getByRole('link', { name: shellMessages.ru.admin });
     expect(link.getAttribute('href')).toBe('/admin');
     expect(shellMessages.ru.admin).not.toBe('Admin');
+  });
+
+  test('still needs an admin account, at every tier: tier alone never shows or hides it', async () => {
+    for (const tier of ['visitor', 'player', 'account'] as const) {
+      await renderShell({ tier, isAdmin: false });
+      expect(document.querySelector('a[href="/admin"]')).toBeNull();
+      cleanup();
+      await renderShell({ tier, isAdmin: true });
+      expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Admin' })).toBeTruthy();
+      cleanup();
+    }
   });
 });
 
@@ -376,7 +442,7 @@ describe('active route', () => {
   });
 
   test('a sub-page keeps its section active', async () => {
-    await renderShell({ path: '/train/drill/42' });
+    await renderShell({ path: '/train/drill/42', tier: 'account' });
     expect(activeLabels(primaryNav())).toEqual(['Train']);
     expect(activeLabels(tabBar())).toEqual(['Train']);
   });
@@ -393,7 +459,7 @@ describe('active route', () => {
   });
 
   test('is shown by a shape as well as by colour: only the active item carries an indicator element', async () => {
-    await renderShell({ path: '/progress' });
+    await renderShell({ path: '/progress', tier: 'account' });
     for (const nav of [primaryNav(), tabBar()]) {
       const marked = nav
         .getAllByRole('link')
@@ -404,7 +470,7 @@ describe('active route', () => {
   });
 
   test('the indicator follows the route when it changes', async () => {
-    const { router } = await renderShell({ path: '/train' });
+    const { router } = await renderShell({ path: '/train', tier: 'account' });
     expect(activeLabels(primaryNav())).toEqual(['Train']);
     await act(async () => {
       await router.navigate({ to: '/video' as never });

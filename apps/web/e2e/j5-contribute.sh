@@ -203,16 +203,21 @@ fi   # pw_open itself recorded BLOCKED (no usable browser) or FAIL
 if [ "$WEB_ON" = 1 ]; then
   WEB_OK=1
   pw resize 1280 2400 >/dev/null   # tall: nothing needs scrolling under the sticky header
-  pw_run "player: START TRAINING makes a player session and opens the onboarding wizard" '(async page => {
+  pw_run "player: START TRAINING leads to the sign-in gate, and Start opens the wizard" '(async page => {
     await page.locator("#main-content").getByRole("link", { name: "Start training" }).click();
+    await page.waitForURL("**/account/sign-in**");
+    await page.getByRole("button", { name: "Start training" }).click();
     await page.waitForURL("**/train/onboarding");
     await page.getByRole("heading", { name: "A few questions to get started" }).waitFor();
     return page.url(); })'
   if [ "$(pw cookie-list | jq -r '.result // ""' | grep -c 'session_token')" -ge 1 ]; then pass "player: the visitor now holds a (anonymous) session cookie"
   else fail "player: the visitor now holds a (anonymous) session cookie" "  $(pw cookie-list | jq -r '.result // ""' | head -c 400)"; fi
   if [ "$WEB_OK" = 1 ]; then
-    pw_run "player: pressing Contribute in the navigation leads to /account/sign-in with a return path" '(async page => {
-      await page.getByLabel("Main navigation").getByRole("link", { name: "Contribute" }).click();
+    # An anonymous player gets no Contribute tab at all (auth-gate-spec.md §3.2: "a tab that always bounces you to a
+    # sign-up form is exactly the каша being removed"), so a player who reaches for /contribute anyway (a typed URL, an
+    # old bookmark) is what is exercised here: the route-level gate (requireAccount) still redirects them.
+    pw_run "player: opening /contribute directly (no Contribute tab for a player) leads to /account/sign-in with a return path" '(async page => {
+      await page.goto('"$(js_str "$STACK_URL/contribute")"');
       await page.waitForURL("**/account/sign-in**");
       await page.getByRole("heading", { name: "Coach account" }).waitFor();
       return page.url(); })'
@@ -252,6 +257,9 @@ if [ "$WEB_ON" = 1 ] && pw_open /; then
     page_text "coach: the sign-in screen text"
     text_has "coach: the screen offers 'Create coach account' and 'Sign in'" "$PW_OUT" "Create coach account"
     text_has "coach: ... and explains that players never need an account" "$PW_OUT" "Players never need an account"
+    if requests_list | grep -q '/api/contribute/meta'; then
+      fail "gate: a signed-out visitor opening /contribute is redirected before GET /api/contribute/meta is requested" "$(requests_list | sed 's/^/    /')"
+    else pass "gate: a signed-out visitor opening /contribute is redirected before GET /api/contribute/meta is requested"; fi
   fi
 
   since=$(last_request_index); since=${since:-0}   # the submission window starts at the sign-up click

@@ -1,9 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test';
 import { createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';
 import { I18nextProvider } from 'react-i18next';
+import { PlayerSessionError } from '../../lib/auth';
 import { createI18n, i18n, LOCALES } from '../../lib/i18n';
 import { ApiProblem, notifyUnauthorized } from '../../lib/problem';
-import { Route, SignInDepsContext } from '../../routes/account/sign-in';
+import { Route, type SessionAtom, SignInDepsContext } from '../../routes/account/sign-in';
 import { installSessionExpired } from './session-expired';
 import sessionMessages from './session-expired.messages';
 import messages from './sign-in.messages';
@@ -34,9 +35,31 @@ afterAll(async () => {
   for (const locale of LOCALES) i18n.removeResourceBundle(locale, SESSION_NAMESPACE);
   await i18n.changeLanguage(INITIAL_LANGUAGE);
 });
+/*
+ * Cross-file hygiene, same rule as apps/web/src/features/contribute/form.test.tsx: bun runs every test file of the web
+ * package in ONE process with ONE happy-dom window, so whatever this file leaves on the window/document (element-query
+ * bookkeeping that happy-dom never trims) is still there for the files that run after it. After every test the DOM is
+ * empty, so the lists are emptied the way happy-dom itself empties them when a node changes.
+ */
+function resetHappyDomCaches(): void {
+  const targets: object[] = [document, document.documentElement, document.body, window];
+  for (const target of targets) {
+    for (const symbol of Object.getOwnPropertySymbols(target)) {
+      const value: unknown = (target as Record<symbol, unknown>)[symbol];
+      if ((symbol.description === 'affectsCache' || symbol.description === 'affectsComputedStyleCache') && Array.isArray(value)) {
+        for (const item of value) if (typeof item === 'object' && item !== null) (item as { result: unknown }).result = null;
+        value.length = 0;
+      } else if (symbol.description === 'querySelectorCache' && value instanceof Map) {
+        value.clear();
+      }
+    }
+  }
+}
+
 afterEach(async () => {
   cleanup();
   await i18n.changeLanguage('en');
+  resetHappyDomCaches();
 });
 
 // Note: a failed matcher whose received value is a happy-dom node was seen to pass silently under bun:test (it hid a missing
@@ -87,6 +110,40 @@ interface Options {
   storage?: ReturnType<typeof fakeStorage> | null;
   /** Leave resetSessionExpired to the real one from ./session-expired instead of a logging spy. */
   realResetExpired?: boolean;
+  /** The Start card's `ensureSession`. Default: resolves at once, like a session that already existed. */
+  ensureSession?: () => Promise<unknown>;
+  /** `client.$store.atoms.session`, for the "Start waits for the session atom to settle" test. Default: none (settleSession
+   * then has nothing to wait for, as in every other test here). */
+  atom?: SessionAtom;
+}
+
+/**
+ * A controllable `client.$store.atoms.session`-shaped atom (see settleSession in routes/account/sign-in.tsx): starts
+ * "still reading" so settleSession subscribes and waits; `settle()` flips it idle and notifies, like Better Auth's own
+ * signal-driven refresh landing. `refetch` resolves at once (settleSession then falls through to the subscribe below,
+ * exactly as it does when Better Auth's own refresh has superseded ours).
+ */
+type FakeAtomValue = { isPending?: boolean; isRefetching?: boolean; refetch: () => Promise<void> };
+
+function fakeAtom(): SessionAtom & { settle: (patch?: Record<string, unknown>) => void } {
+  let value: FakeAtomValue = {
+    isPending: false,
+    isRefetching: true,
+    refetch: () => Promise.resolve(),
+  };
+  const listeners = new Set<(value: FakeAtomValue) => void>();
+  return {
+    get: () => value,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      listener(value); // nanostores calls the listener once, synchronously, on subscribe
+      return () => listeners.delete(listener);
+    },
+    settle: (patch = {}) => {
+      value = { ...value, isPending: false, isRefetching: false, ...patch };
+      for (const listener of [...listeners]) listener(value);
+    },
+  };
 }
 
 /** The real route component inside a real (memory) router, with the auth client, storage and navigation injected. */
@@ -113,6 +170,7 @@ async function renderScreen(options: Options = {}) {
         return (options.signIn ?? (() => Promise.resolve(ok())))(input);
       },
     },
+    ...(options.atom ? { $store: { atoms: { session: options.atom } } } : {}),
   };
   const storage = options.storage === undefined ? fakeStorage() : options.storage;
   const instance = createI18n({ modules, languages: [locale], storage: noStorage, root: { lang: '' }, dev: false });
@@ -136,6 +194,7 @@ async function renderScreen(options: Options = {}) {
           now: () => NOW,
           resetSession: () => void log.push('resetSession'),
           ...(realResetExpired ? {} : { resetSessionExpired: () => void log.push('resetSessionExpired') }),
+          ensureSession: options.ensureSession ?? (() => Promise.resolve({ user: { id: 'anon', isAnonymous: true } })),
           navigate: (to: string) => void log.push(`navigate:${to}`),
         }}
       >
@@ -171,6 +230,12 @@ async function chooseSignIn() {
 async function submitSignIn() {
   await act(async () => {
     fireEvent.click(submitButton(/^sign in$/i));
+  });
+}
+
+async function pressStart() {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /^start training$/i }));
   });
 }
 
@@ -793,9 +858,21 @@ describe('a player who is training as a guest keeps their progress', () => {
     expect(screen.getByRole('tablist')).toBeTruthy();
   });
 
-  test('a user who is already a signed-in account gets "already signed in" and a Continue button instead of the form', async () => {
+  // UPDATED for the auth-gate spec (§2.5): an account session with a VALID `?redirect=` is now carried straight through
+  // (replace navigate, no form, no flash) instead of stopping on "already signed in" + Continue. The no-`?redirect=` case
+  // below ("a coach account with no ?redirect= still sees...") keeps the old screen, which is what this test used to pin.
+  test('a coach account sent here with a valid ?redirect= is carried straight through, without ever showing "already signed in"', async () => {
     const { log } = await renderScreen({
       path: search('/train/roadmap'),
+      session: () => Promise.resolve({ data: { user: { id: 'u', isAnonymous: false } }, error: null }),
+    });
+    await waitFor(() => expect(navigations(log)).toEqual(['navigate:/train/roadmap']));
+    expect(screen.queryByText(/already signed in/i) === null).toBe(true);
+    expect(screen.queryByRole('tablist') === null).toBe(true);
+  });
+
+  test('a coach account with no ?redirect= still sees "You are already signed in" and Continue', async () => {
+    const { log } = await renderScreen({
       session: () => Promise.resolve({ data: { user: { id: 'u', isAnonymous: false } }, error: null }),
     });
     expect(await screen.findByText(/already signed in/i)).toBeTruthy();
@@ -804,7 +881,7 @@ describe('a player who is training as a guest keeps their progress', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
     });
-    expect(navigations(log)).toEqual(['navigate:/train/roadmap']);
+    expect(navigations(log)).toEqual(['navigate:/']);
   });
 
   test('a session whose user says nothing about being anonymous is not taken for an account', async () => {
@@ -823,6 +900,127 @@ describe('a player who is training as a guest keeps their progress', () => {
       fireEvent.click(await screen.findByRole('button', { name: /^continue$/i }));
     });
     expect(navigations(log)).toEqual(['navigate:/']);
+  });
+});
+
+// --- the Start card (auth-gate spec P3) ---------------------------------------------------------
+//
+// The one-tap door for a player: no form, no account. `ensureSession` stands in for lib/auth's ensurePlayerSession
+// (injected via SignInDepsContext, never the module global, per the bead's contract).
+
+describe('the Start card: a kid-sized way in, no form, no account', () => {
+  const anonymous = () => Promise.resolve<Reply>({ data: { user: { id: 'anon', isAnonymous: true } }, error: null });
+  const account = () => Promise.resolve<Reply>({ data: { user: { id: 'u', isAnonymous: false } }, error: null });
+
+  test('a visitor with no session sees the Start card first, with the coach tabs below it', async () => {
+    await renderScreen();
+    const start = await screen.findByRole('button', { name: /^start training$/i });
+    const tablist = screen.getByRole('tablist');
+    // DOCUMENT_POSITION_FOLLOWING: the tablist comes AFTER the Start button in document order.
+    expect(Boolean(start.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+  });
+
+  test('Start creates the anonymous session once and goes to ?redirect= (default /train)', async () => {
+    const calls: string[] = [];
+    const { log } = await renderScreen({
+      ensureSession: () => {
+        calls.push('ensureSession');
+        return Promise.resolve({ user: { id: 'anon', isAnonymous: true } });
+      },
+    });
+    await pressStart();
+    expect(calls).toEqual(['ensureSession']);
+    await waitFor(() => expect(navigations(log)).toEqual(['navigate:/train']));
+    cleanup();
+
+    const withRedirect = await renderScreen({ path: search('/train/roadmap') });
+    await pressStart();
+    await waitFor(() => expect(navigations(withRedirect.log)).toEqual(['navigate:/train/roadmap']));
+  });
+
+  test('Start waits for the session atom to settle before navigating, so the next screen never sees "no session"', async () => {
+    const atom = fakeAtom();
+    const { log } = await renderScreen({ atom });
+    await pressStart();
+    await waitFor(() => expect(screen.getByRole('button', { name: /^starting/i })).toBeTruthy());
+    expect(navigations(log)).toHaveLength(0); // settleSession is still awaiting the atom
+    await act(async () => {
+      atom.settle();
+    });
+    await waitFor(() => expect(navigations(log)).toEqual(['navigate:/train']));
+  });
+
+  test('Start that fails offline shows the calm error and leaves the button usable — nothing is scolded', async () => {
+    const { log } = await renderScreen({
+      ensureSession: () => Promise.reject(new PlayerSessionError('ensurePlayerSession: could not read the current session', { kind: 'offline' })),
+    });
+    await pressStart();
+    const notice = await screen.findByText(/could not start/i);
+    expect(notice.textContent).not.toMatch(/could not read the current session/i); // never the internal error text
+    const button = screen.getByRole('button', { name: /^start training$/i }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    expect(navigations(log)).toHaveLength(0);
+  });
+
+  test('Start is pressed only once: a second press while busy sends no second sign-in', async () => {
+    const pending = deferred<unknown>();
+    const calls: string[] = [];
+    await renderScreen({
+      ensureSession: () => {
+        calls.push('ensureSession');
+        return pending.promise;
+      },
+    });
+    const button = screen.getByRole('button', { name: /^start training$/i }) as HTMLButtonElement;
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(button.disabled).toBe(true);
+    await act(async () => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    expect(calls).toEqual(['ensureSession']);
+    await act(async () => pending.resolve({ user: { id: 'anon', isAnonymous: true } }));
+  });
+
+  test('an anonymous player sent here for /contribute sees the coach tabs and NO Start button', async () => {
+    await renderScreen({ path: search('/contribute'), session: anonymous });
+    await screen.findByRole('tablist');
+    expect(screen.queryByRole('button', { name: /^start training$/i }) === null).toBe(true);
+    expect(screen.getByText(/training as a guest/i)).toBeTruthy(); // the existing guest note is untouched
+  });
+
+  test('an anonymous player sent here for /train is carried straight through to /train', async () => {
+    const { log } = await renderScreen({ path: search('/train'), session: anonymous });
+    await waitFor(() => expect(navigations(log)).toEqual(['navigate:/train']));
+    expect(screen.queryByRole('tablist') === null).toBe(true);
+  });
+
+  test('a coach account sent here with ?redirect=/contribute is carried straight through', async () => {
+    const { log } = await renderScreen({ path: search('/contribute'), session: account });
+    await waitFor(() => expect(navigations(log)).toEqual(['navigate:/contribute']));
+    expect(screen.queryByRole('tablist') === null).toBe(true);
+  });
+
+  test('?redirect= is still validated: an absolute URL, a protocol-relative path and /account/sign-in itself all fall back to /, so Start still goes to /train', async () => {
+    for (const value of ['https://evil.example/', '//evil.example', '/account/sign-in']) {
+      const { log } = await renderScreen({ path: search(value) });
+      await pressStart();
+      await waitFor(() => expect(navigations(log)).toEqual(['navigate:/train']));
+      cleanup();
+    }
+  });
+
+  // The pre-existing describe('the "your session expired" notice ...') block above already renders this same screen
+  // (Start card included) and asserts the notice shows and the Sign in tab opens; nothing here needed to change for it.
+
+  test('every new start.* key exists in kk, ru and en', () => {
+    for (const locale of LOCALES) {
+      for (const key of ['title', 'body', 'button', 'busy', 'error', 'coach'] as const) {
+        expect(messages[locale].start[key].trim().length).toBeGreaterThan(0);
+      }
+    }
   });
 });
 

@@ -370,10 +370,12 @@ if [ "$WEB_ON" = 1 ]; then
         await page.getByRole("heading", { level: 1 }).first().waitFor().catch(() => {});
         let listSeen = true; await page.locator("main ol > li").first().waitFor({ timeout: 6000 }).catch(() => { listSeen = false; });
         const main = await page.locator("main").innerText().catch(() => "");
-        return JSON.stringify({ shell: await page.evaluate(() => document.querySelector("#root").children.length > 0), listSeen, missingTitles: missing(main, A.titles), badge: /Available offline/.test(main), main: main.slice(0, 500), device: { queryCache: Object.keys(await idbAll().catch(() => ({}))).some((k) => k.endsWith(":query-cache")), session: await page.evaluate(() => Object.keys(localStorage).some((k) => /^fc:.*:session$/.test(k))) } }); }' 30000
+        return JSON.stringify({ shell: await page.evaluate(() => document.querySelector("#root").children.length > 0), listSeen, missingTitles: missing(main, A.titles), badge: /Available offline/.test(main), main: main.slice(0, 500), path: page.url().replace(/^https?:\/\/[^\/]+/, "").split(/[?#]/)[0], device: { queryCache: Object.keys(await idbAll().catch(() => ({}))).some((k) => k.endsWith(":query-cache")), session: await page.evaluate(() => Object.keys(localStorage).some((k) => /^fc:.*:session$/.test(k))) } }); }' 30000
       if [ "$WEB_OK" = 1 ]; then
         jchk "offline reload: the app shell is served by the service worker (the page loads with no network and the React app mounts)" "$PW_OUT" '.navError == null and .shell == true'
         jchk "offline reload: /train renders today's session (every drill title) and the 'Available offline' badge" "$PW_OUT" '.listSeen == true and (.missingTitles | length) == 0 and .badge == true'
+        jchk "offline: /train still opens with the network down — the gate answers from the cached session, it never waits for get-session" "$PW_OUT" '.navError == null and .path == "/train"'
+        jchk "offline: the remembered player (localStorage fc:last-player) is never redirected to sign-in" "$PW_OUT" '.path != "/account/sign-in"'
         [ "$(jq -r '.listSeen // false' <<<"$PW_OUT")" = true ] || echo "  observed offline /train (first 500 chars): $(jq -r '.main // .navError' <<<"$PW_OUT" | tr '\n' '|'); on the device at that moment: persisted query cache=$(jq -r '.device.queryCache' <<<"$PW_OUT"), downloaded session=$(jq -r '.device.session' <<<"$PW_OUT")" >&2
       fi
     fi
@@ -388,9 +390,10 @@ if [ "$WEB_ON" = 1 ]; then
         await page.getByRole("heading", { level: 1 }).first().waitFor().catch(() => {});
         let drillSeen = true; await page.getByText(/Drill 1 of/i).first().waitFor({ timeout: 6000 }).catch(() => { drillSeen = false; });
         const main = await page.locator("main").innerText().catch(() => "");
-        return JSON.stringify({ drillSeen, missing: missing(main, A.phrases), main: main.slice(0, 400) }); }' 30000
+        return JSON.stringify({ drillSeen, missing: missing(main, A.phrases), main: main.slice(0, 400), path: page.url().replace(/^https?:\/\/[^\/]+/, "").split(/[?#]/)[0] }); }' 30000
       if [ "$WEB_OK" = 1 ]; then
         jchk "offline reload of /train/drill/$first_id: the drill player renders with ALL of the drill's text (title, goal, steps, mistakes, safety, easier, harder)" "$PW_OUT" '.navError == null and .drillSeen == true and (.missing | length) == 0'
+        jchk "offline: /train/drill/$first_id opens from the cache with the same rule" "$PW_OUT" ".navError == null and .path == \"/train/drill/$first_id\""
         [ "$(jq -r '.drillSeen // false' <<<"$PW_OUT")" = true ] || echo "  observed offline drill page (first 400 chars): $(jq -r '.main // .navError' <<<"$PW_OUT" | tr '\n' '|')" >&2
       fi
     fi

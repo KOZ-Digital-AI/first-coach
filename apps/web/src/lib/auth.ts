@@ -23,11 +23,14 @@
  *     error is the rejection's cause.
  *
  * ensurePlayerSessionOutcome() (additive, fc-mol-9l4.16) is ensurePlayerSession() plus one fact: `{ session, created }`.
- * `created` is true only when THIS attempt had to sign in anonymously (a brand-new player, who cannot be onboarded yet, so a
- * screen may skip asking the API "are you onboarded?"). It is false for a session that already existed, for one another tab
- * created (the recovered re-read), and for every call made after the attempt has settled: "just created" is a one-shot fact
- * of the call that triggered the creation, never a property of the memoised session (a player who has since onboarded must
- * not be sent back to onboarding). It resolves the very session ensurePlayerSession() does; nothing about that call changed.
+ * `created` is true for every caller that joins the attempt which had to sign in anonymously (a brand-new player, who cannot
+ * be onboarded yet, so a screen may skip asking the API "are you onboarded?"), AND for the first call after that attempt has
+ * settled that has not yet observed it (the auth gate's sign-in screen, P3, is itself now such a caller: it calls
+ * `ensureSession()` and navigates before the page that actually needs the fact ever mounts, so the fact must survive past
+ * settlement to reach it). It is false for a session that already existed, for one another tab created (the recovered
+ * re-read), and for every call after the first one that observed it: "just created" is a one-shot fact of the CREATION, not
+ * a property of the memoised session (a player who has since onboarded must not be sent back to onboarding) and not tied to
+ * one specific caller either. It resolves the very session ensurePlayerSession() does; nothing about that call changed.
  *
  * Every rejection is a `PlayerSessionError`: `kind` is 'offline' when the cause is a network failure (fetch rejects with a
  * TypeError) or `online()` is false (default `navigator.onLine !== false`, read when the failure happens), else 'failed';
@@ -126,6 +129,13 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
   let attemptSettled = false;
   /** The sessions an anonymous sign-in returned (never one that was only read), so `created` can tell them apart. */
   const signedIn = new WeakSet<PlayerSession>();
+  /**
+   * The most recently created session, not yet observed by an `ensurePlayerSessionOutcome()` caller — cleared the first
+   * time one reports `created: true` for it. Lets the fact survive past the creating attempt's own settlement, for a
+   * caller (e.g. the page the auth gate's sign-in screen navigates to) that only asks about it afterwards; see the
+   * header comment on `ensurePlayerSessionOutcome`.
+   */
+  let unobservedCreation: PlayerSession | undefined;
 
   const fail = (message: string, cause?: unknown) =>
     new PlayerSessionError(message, { kind: isNetworkFailure(cause) || !online() ? 'offline' : 'failed', cause });
@@ -154,6 +164,7 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
     if (failed(reply.error)) throw fail(SIGN_IN_FAILED, reply.error);
     if (!isSession(reply.data)) throw fail(SIGN_IN_NO_USER);
     signedIn.add(reply.data);
+    unobservedCreation = reply.data;
     return reply.data;
   }
 
@@ -207,16 +218,23 @@ export function createPlayerAuth(deps: PlayerAuthDeps) {
     return started;
   }
 
-  /** ensurePlayerSession() that also says whether this call's attempt created the (anonymous) session. */
+  /**
+   * ensurePlayerSession() that also says whether the (anonymous) session was just created: by this call's own attempt
+   * (joined while it was still in flight), or by an earlier attempt whose creation nobody has reported yet. Either way
+   * the fact is consumed here: a later call sees `created: false`, even for the same session.
+   */
   async function ensurePlayerSessionOutcome(): Promise<PlayerSessionOutcome> {
     const joinsAttempt = attempt === undefined || !attemptSettled;
     const session = await ensurePlayerSession();
-    return { session, created: joinsAttempt && signedIn.has(session) };
+    const created = (joinsAttempt && signedIn.has(session)) || unobservedCreation === session;
+    if (created) unobservedCreation = undefined;
+    return { session, created };
   }
 
   /** Forgets the remembered session: the next ensurePlayerSession() reads it again. */
   function resetPlayerSession(): void {
     attempt = undefined;
+    unobservedCreation = undefined;
   }
 
   return { ensurePlayerSession, ensurePlayerSessionOutcome, resetPlayerSession };

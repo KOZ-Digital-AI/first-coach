@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '../../components/ui/error-state';
 import { Skeleton } from '../../components/ui/skeleton';
+import { requireAccount } from '../../features/account/route-guard';
 import { useSession } from '../../lib/auth';
 // Side-effect import: registers the i18n instance before the first render (see the convention in lib/i18n.ts).
 import '../../lib/i18n';
@@ -24,9 +25,15 @@ import '../../lib/i18n';
  * session is loaded, has no error, is a readable session object and passes every rule. Loading, an error and anything the
  * layout cannot read (an HTML page from a proxy, `{}`, `{ user: null }`) each render a state screen with no admin content.
  *
- * Known gap (backlog): there is no `beforeLoad` gate. The check runs at render time from the session hook, so a child route's
- * own `beforeLoad`/loader still starts for a signed-out visitor; such code must not depend on this layout and its API calls
- * are refused by requireAdmin anyway. A `beforeLoad` check would need an async session read outside React.
+ * `beforeLoad: requireAccount()` (features/account/route-guard.ts, auth-gate spec §2) closes the gap this file used to
+ * document: a signed-out visitor (no session, or only the silent anonymous player session) is redirected to
+ * `/account/sign-in?redirect=<this page>` BEFORE this route, or any child route's own `beforeLoad`/loader, ever runs — so no
+ * `/api/admin` call fires and no admin screen flashes on a first visit. That beforeLoad gate only rules out "no real account";
+ * it says nothing about the admin ROLE, so the render-time check below (`resolveAccess`, `SignedOut`, `Unauthorized`) stays
+ * exactly as it is: it is what decides "admin" vs. "signed in but not an admin" (`SignedOut` is now reachable only when a
+ * session that passed the beforeLoad gate later ENDS while the page is open — a mid-session expiry, not a first visit), and it
+ * is still the only thing standing between a coach and the review queue's real content: requireAdmin (apps/api/src/auth/
+ * middleware.ts) is the actual gate, on every request, whatever either check here shows.
  *
  * Readings of the criteria (ambiguous in the bead):
  * - "signed-out" includes an anonymous player session: every visitor gets one silently (lib/auth.ts), so "has a session" is
@@ -216,4 +223,4 @@ function AdminLayout() {
   return <AdminLayoutView session={useSession()} />;
 }
 
-export const Route = createFileRoute('/admin')({ component: AdminLayout });
+export const Route = createFileRoute('/admin')({ beforeLoad: requireAccount(), component: AdminLayout });

@@ -5,6 +5,14 @@ API on a throw-away database (the API also serves the real built web app, same o
 browser through `playwright-cli`, asserts against the real API and the real SQLite file, and reports
 honestly. `lib.test.sh` is its own test.
 
+The app sits behind one auth gate. The public surface is landing (`/`), Open Commons, the legal pages,
+sign-in, `/recover`, `/unauthorized` and 404, plus `GET /health`; everything else (`/train`, `/progress`,
+`/video`, `/settings/*`, `/contribute`, `/admin`) needs a session before the page renders — a
+signed-out visitor is redirected to `/account/sign-in` before the route's own component, and before any of
+its API calls, ever run. A gate script whose journey needs a player now presses **Start** on
+`/account/sign-in` (a kid-sized button that creates the anonymous session with no form) rather than
+arriving on a player screen straight off the landing click.
+
 ```bash
 bash apps/web/e2e/lib.test.sh      # exit 0 = the harness works (about 15 s, any cwd)
 ```
