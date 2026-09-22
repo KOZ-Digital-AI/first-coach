@@ -4,5 +4,5 @@ contact_links:
     url: https://first-coach-production.up.railway.app/#/contribute
     about: Форма в приложении — упражнение придёт команде на work@koz-ai.com. The in-app form emails the team.
   - name: Сообщить о проблеме безопасности · Report a safety or security problem
-    url: https://github.com/MelsovCOZY/first-coach/blob/master/SECURITY.md
+    url: https://github.com/KOZ-Digital-AI/first-coach/blob/master/SECURITY.md
     about: Пожалуйста, не публично — напишите на work@koz-ai.com. Please report privately.
