@@ -1,12 +1,11 @@
-# FIRST COACH / БІРІНШІ БАПКЕР — Genesis v0.1 (lite)
+# Первый тренер / Бірінші бапкер / First Coach — lite
 
-Every child deserves a great first coach.
 A free, open football school: 60 drills from the Open Sport Commons, each with an animation,
 steps, timer, common mistakes and safety notes; a personal 4-week roadmap; skill tests with
 before/after comparison; a skill tree; a contribution form and a moderation queue.
 Kazakh, Russian and English.
 
-Created by KOZ AI. Opened to everyone on the 60th birthday of Kairat Boranbayev.
+Created by KOZ AI.
 
 ## What is inside
 
@@ -32,12 +31,9 @@ Open http://localhost:8080
 
 Any static hosting works (Railway, Vercel, Netlify, GitHub Pages, nginx).
 
-**Production (Railway, current setup)**: the root `Dockerfile` copies `lite/` into the image and
-sets `WEB_DIST=/app/lite`, so the existing Hono server serves this app at `/` while `/api`, `/health`
-and the `/data` volume stay as they were. Delete those two lines to serve `apps/web/dist` again.
-
-**Separate service**: `lite/Dockerfile` (nginx, listens on `$PORT`) also runs on its own,
-for example as a second Railway service with Root Directory `lite`.
+**Railway**: add a new service from this repo, set **Root Directory** to `lite`.
+The `lite/Dockerfile` (nginx, listens on `$PORT`) is picked up automatically. The main app's
+Dockerfile only copies `apps/`, `config/` and `scripts/`, so this folder does not affect it.
 
 **Vercel**: `vercel deploy --prod` from this folder. **Netlify**: drag the folder into app.netlify.com/drop.
 
@@ -51,11 +47,17 @@ From the repo root, after editing `config/commons/football`:
 python3 lite/build_data.py
 ```
 
+## Where coaches' drills go
+
+Set `CONTACT_EMAIL` at the top of `js/app.js`. After a coach fills in the form, the app offers
+"Send by email" with the drill already written into the message. Without an address it offers
+Share (on phones) and Copy.
+
 ## Honest limits of v0.1
 
 - All 60 drills are **FIRST COACH Community Drafts** until a real coach reviews them.
-- Contributions and moderation are stored on the device where they were made (no server yet).
-  The next step is to connect them to the API of the main `first-coach` repo.
+- Contributions reach the team by email (see above); the moderation screen (`#/admin`) only sees
+  drills added on the same device. The next step is to connect it to the API of the main repo.
 - The video check is a coach's checklist the child or parent fills in; automatic AI analysis is the next stage.
 - Kazakh interface copy needs a native-speaker review.
 
