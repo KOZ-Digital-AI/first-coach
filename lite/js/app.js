@@ -13,6 +13,9 @@
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  // Where coaches' drills are sent. Leave empty to offer Share / Copy only.
+  const CONTACT_EMAIL = '';
+
   // ---------- storage ----------
   const KEY = 'first-coach-lite:v1';
   const DEF = { lang: null, profile: null, levels: null, xp: {}, sessions: [], current: null, tests: [], contrib: [], seq: 0, last: null, lib: {} };
@@ -32,6 +35,14 @@
     return s;
   }
   const L = o => (o ? (o[lang] || o.ru || o.en || '') : '');
+  // Word form after a number: Russian has three forms, English two, Kazakh one.
+  function pl(path, n) {
+    const f = t(path);
+    if (!Array.isArray(f)) return f;
+    if (lang === 'ru') { const a = n % 10, b = n % 100; return f[a === 1 && b !== 11 ? 0 : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? 1 : 2] || f[f.length - 1]; }
+    if (lang === 'en') return f[n === 1 ? 0 : 1] || f[0];
+    return f[0];
+  }
   const trackOf = slug => TR.find(x => x.slug === slug);
   const trackName = slug => { const x = trackOf(slug); return x ? L(x.names) : slug; };
   window.FCAnim.setLabels(k => t('anim.' + k));
@@ -180,16 +191,32 @@
   };
 
   // ---------- views ----------
+  const SHOWCASE = ['juggling-alternating-feet', 'ball-mastery-inside-ping-pong', 'dribbling-five-cone-slalom', 'passing-wall-inside-foot', 'ball-mastery-sole-pull-push', 'juggling-drop-bounce-catch'];
+  let showTimer = null, showIdx = 0;
+  function startShowcase() {
+    const box = $('#showcase'); if (!box) return;
+    const paint = () => {
+      const d = BY.get(SHOWCASE[showIdx % SHOWCASE.length]);
+      const el = $('#showAnim'); if (!el || !d) return;
+      window.FCAnim.mount(el, d.slug, { track: d.track, alt: L(d.title), autoplay: true });
+      $('#showTitle').textContent = L(d.title);
+      $('#showTrack').textContent = trackName(d.track);
+      $('#showLink').setAttribute('href', '#/drill/' + d.slug);
+      $$('#showDots i').forEach((x, i) => x.classList.toggle('on', i === showIdx % SHOWCASE.length));
+    };
+    paint();
+    showTimer = setInterval(() => { showIdx++; paint(); }, 6500);
+  }
   function viewHome() {
     const has = !!st.profile;
     const count = f => DRILLS.filter(f).length;
     const kit = [
-      [t('d.eq.nothing'), count(d => d.equipment === 'nothing')],
-      [t('d.eq.ball'), count(d => d.equipment === 'nothing' || d.equipment === 'ball')],
-      [t('d.eq.ball_wall'), count(d => d.equipment !== 'cones')],
-      [t('lib.all'), DRILLS.length],
+      count(d => d.equipment === 'nothing'),
+      count(d => d.equipment === 'nothing' || d.equipment === 'ball'),
+      count(d => d.equipment !== 'cones'),
+      DRILLS.length,
     ];
-    const preview = ['ball-mastery-sole-taps', 'dribbling-five-cone-slalom', 'passing-wall-inside-foot', 'juggling-bounce-juggle'].map(s => BY.get(s));
+    after(startShowcase);
     return `
     <section class="hero">
       <div class="stack" style="gap:18px">
@@ -198,59 +225,43 @@
         <p class="lead">${esc(t('home.intro'))}</p>
         <div class="cta">
           <a class="btn btn-primary" href="${has ? '#/plan' : '#/start'}">${esc(has ? t('home.continue') : t('home.start'))} →</a>
-          <a class="btn btn-secondary" href="#/contribute">${esc(t('home.contribute'))}</a>
+          <a class="btn btn-secondary" href="#/library">${esc(t('home.browse'))}</a>
         </div>
+        <ul class="facts">${t('home.facts').map(x => `<li>${esc(x)}</li>`).join('')}</ul>
       </div>
-      <aside class="card-ink hero-card on-ink" aria-label="${esc(t('home.cardLabel'))}">
-        <div class="row between"><span class="label">${esc(t('home.cardLabel'))}</span><span class="label">22.09.2026</span></div>
-        ${animBox(BY.get('juggling-alternating-feet'))}
-        <div class="row" style="align-items:flex-end;gap:18px;flex-wrap:nowrap">
-          <div class="sixty" aria-hidden="true">60</div>
-          <div class="caps">${esc(t('home.years'))}<br>${esc(t('home.sessions'))}<br>${esc(t('home.free'))}</div>
-        </div>
-        <p class="ded">${esc(t('home.dedication'))}</p>
-        <p>${esc(t('home.credit'))}</p>
+      <aside class="card-ink hero-card on-ink" id="showcase" aria-live="polite">
+        <span class="label">${esc(t('home.demoLabel'))}</span>
+        <div class="anim-wrap" style="position:relative"><div class="anim" id="showAnim"></div></div>
+        <a class="show-cap" id="showLink" href="#/library"><span class="tag tag-accent" id="showTrack"></span><b id="showTitle"></b><span aria-hidden="true">→</span></a>
+        <div class="dots-row" id="showDots" aria-hidden="true">${SHOWCASE.map(() => '<i></i>').join('')}</div>
       </aside>
     </section>
-    <div class="stats">
-      <div><b>${DRILLS.length}</b><span>${esc(t('home.stats.drills'))}</span></div>
-      <div><b>${TR.length}</b><span>${esc(t('home.stats.tracks'))}</span></div>
-      <div><b>3</b><span>${esc(t('home.stats.langs'))}</span></div>
-      <div><b>0 ₸</b><span>${esc(t('home.stats.price'))}</span></div>
-    </div>
 
     <section class="section">
-      <div class="eyebrow">${esc(t('home.howEyebrow'))}</div>
-      <h2 class="h2" style="margin-top:10px">${esc(t('home.howTitle'))}</h2>
-      <p class="lead" style="margin-top:12px">${esc(t('home.howIntro'))}</p>
+      <h2 class="h2">${esc(t('home.howTitle'))}</h2>
       <ol class="flow" style="padding:0">${t('home.steps').map(s => `<li><div><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div></li>`).join('')}</ol>
     </section>
 
-    <section class="section two">
-      <div class="stack">
-        <h2 class="h2">${esc(t('home.lowTitle'))}</h2>
-        <p class="lead">${esc(t('home.lowBody'))}</p>
-        <div class="kit">${kit.map(k => `<div><b>${k[1]}</b><span>${esc(k[0])}</span></div>`).join('')}</div>
-      </div>
-      <div class="stack">
-        <h2 class="h2">${esc(t('home.previewTitle'))}</h2>
-        <p class="lead">${esc(t('home.previewBody'))}</p>
-        <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">${preview.map(dcard).join('')}</div>
-      </div>
+    <section class="section">
+      <h2 class="h2">${esc(t('home.skillsTitle'))}</h2>
+      <p class="lead" style="margin-top:12px">${esc(t('home.skillsBody'))}</p>
+      <div class="skills">${TR.map(x => `<button type="button" class="skill-card" data-act="libTrack" data-v="${x.slug}"><span class="skill-name">${esc(L(x.names))}</span><span class="muted small">${esc(L((x.outcomes || [])[0]))}</span><span class="tag">${esc(t('home.drillsN', { n: DRILLS.filter(d => d.track === x.slug).length }))}</span></button>`).join('')}</div>
     </section>
 
     <section class="section">
-      <h2 class="h2">${esc(t('home.commonsTitle'))}</h2>
-      <p class="lead" style="margin-top:12px">${esc(t('home.commonsBody'))}</p>
-      <div class="trust">${t('home.trust').map(x => `<div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join('')}</div>
-      <p class="notice warn" style="margin-top:14px">${esc(t('home.honest'))}</p>
-      <div class="cta" style="margin-top:14px"><a class="btn btn-primary" href="#/contribute">${esc(t('home.contribute'))}</a><a class="btn btn-secondary" href="#/library">${esc(t('nav.library'))}</a></div>
+      <h2 class="h2">${esc(t('home.kitTitle'))}</h2>
+      <p class="lead" style="margin-top:12px">${esc(t('home.kitBody'))}</p>
+      <div class="kit">${kit.map((n, i) => `<div><b>${n}</b><span>${esc(t('home.kit')[i])}</span></div>`).join('')}</div>
     </section>
 
     <section class="section two">
-      <div><h2 class="h2">${esc(t('home.privacyTitle'))}</h2><ul class="privacy">${t('home.privacy').map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-      <div><h2 class="h2">${esc(t('home.nextTitle'))}</h2><div class="timeline">${t('home.next').map(x => `<div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join('')}</div>
-      <p class="north">${esc(t('home.north'))}</p></div>
+      <div class="stack"><h2 class="h2">${esc(t('home.safeTitle'))}</h2><ul class="privacy">${t('home.safe').map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      <div class="card stack coach">
+        <h2 class="h3">${esc(t('home.coachTitle'))}</h2>
+        <p class="muted" style="margin:0">${esc(t('home.coachBody'))}</p>
+        <a class="btn btn-primary" href="#/contribute" style="align-self:flex-start">${esc(t('home.coachCta'))} →</a>
+        <p class="small muted" style="margin:0">${esc(t('home.honest'))}</p>
+      </div>
     </section>`;
   }
 
@@ -299,33 +310,43 @@
   }
 
   // --- plan ---
+  const times = d => (lang === 'ru' ? d + (d >= 2 && d <= 4 ? ' раза' : ' раз') : d);
+  const dayDiff = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
   function viewPlan() {
     if (!st.profile) { location.replace('#/start'); return ''; }
     const cur = ensureSession(), p = st.profile, lv = st.levels, [g, w1, w2] = focusTracks();
     const items = cur.items.map(i => ({ i, d: drill(i.slug) })).filter(x => x.d);
     const mins = items.reduce((a, x) => a + x.d.minutes, 0);
     const roleTag = r => r === 'warmup' ? tag(t('plan.warmup')) : '';
+    const start = st.planStart || (st.sessions[0] && st.sessions[0].date) || today();
+    const day = dayDiff(start, today()), week = Math.min(4, Math.floor(day / 7) + 1);
+    const perWeek = [0, 0, 0, 0];
+    st.sessions.forEach(x => { const w = Math.floor(dayDiff(start, x.date) / 7); if (w >= 0 && w < 4) perWeek[w]++; });
+    const trainedToday = st.sessions.some(x => x.date === today()) && !Object.keys(cur.done).length;
+    const cycleDone = day >= 28;
     return `<div class="page-head"><div class="eyebrow">${esc(t('plan.eyebrow'))}</div><h1 class="h1">${esc(t('plan.title'))}</h1></div>
     <div class="plan">
-      <div class="stack">
-        <div class="card-ink stack on-ink" style="gap:14px">
+      <div class="card stack plan-today">
+        ${cycleDone ? `<p class="notice" style="margin:0">${esc(t('plan.cycleDone'))} <a href="#/tests">${esc(t('nav.tests'))} →</a></p>` : trainedToday ? `<p class="notice" style="margin:0">${esc(t('plan.restToday'))}</p>` : ''}
+        <div class="row between"><h2 class="h3">${esc(t('plan.today'))}</h2>${tag(t('plan.sessionNo', { n: (st.sessions.length || 0) + 1 }))}</div>
+        <p class="muted" style="margin:0">${esc(t('plan.total', { m: mins, k: items.length }))}</p>
+        <a class="btn btn-primary btn-block" href="#/session">▶ ${esc(t('plan.start'))}</a>
+        <div class="session-list">${items.map(({ i, d }) => `<a class="srow ${cur.done[i.slug] ? 'done' : ''}" href="#/drill/${esc(d.slug)}">${animBox(d)}<div><h4>${cur.done[i.slug] ? '✓ ' : ''}${esc(L(d.title))}</h4><div class="meta">${roleTag(i.role)}${tag(trackName(d.track), 'tag-accent')}${tag(d.minutes + ' ' + t('d.min'))}</div></div></a>`).join('')}</div>
+      </div>
+      <div class="stack plan-side">
+        <div class="card-ink stack on-ink" style="gap:12px">
           <span class="small" style="color:var(--on-ink-muted);font-weight:800;letter-spacing:.1em;text-transform:uppercase">${esc(t('plan.level'))}</span>
           <div class="big-level">${esc(t('plan.levels')[overall()])}</div>
-          <div class="small" style="color:var(--on-ink-muted)">${esc(t('plan.goal'))}: <b style="color:var(--on-ink)">${esc(trackName(p.goal))}</b></div>
-          <div class="small" style="color:var(--on-ink-muted)">${esc(t('plan.schedule', { d: p.days, m: p.minutes }))}</div>
+          <div class="small" style="color:var(--on-ink-muted)">${esc(t('plan.goal'))}: <b style="color:var(--on-ink)">${esc(trackName(p.goal))}</b> · ${esc(t('plan.schedule', { d: times(p.days), m: p.minutes }))}</div>
+          <div class="weeks">${[0, 1, 2, 3].map(w => `<div class="${w + 1 === week && !cycleDone ? 'cur' : ''}"><span>${esc(t('plan.week', { n: w + 1 }))}</span><div class="wdots">${Array.from({ length: p.days }, (_, k) => `<i class="${k < perWeek[w] ? 'on' : ''}"></i>`).join('')}</div></div>`).join('')}</div>
+          <div class="small" style="color:var(--on-ink-muted)">${esc(t('plan.weekOf', { n: week }))} · ${esc(t('plan.weekProgress', { d: perWeek[week - 1], t: p.days }))}</div>
         </div>
         <div class="card stack">
           <h3 class="h3">${esc(t('plan.skill'))}</h3>
           <div class="levels">${TSLUGS.map(s => `<div class="lvl"><span><b>${esc(trackName(s))}</b> ${s === g ? tag(t('plan.goalTag'), 'tag-accent') : (s === w1 || s === w2) ? tag(t('plan.weakTag'), 'tag-warn') : ''}</span><span class="small muted">${lv[s]}/5</span>
             <div class="pips">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= lv[s] ? 'on' : ''}"></i>`).join('')}</div></div>`).join('')}</div>
         </div>
-        <div class="row"><a class="btn btn-secondary btn-sm" href="#/tests">${esc(t('plan.test'))}</a><a class="btn btn-ghost btn-sm" href="#/start">${esc(t('plan.edit'))}</a></div>
-      </div>
-      <div class="card stack">
-        <div class="row between"><h2 class="h3">${esc(t('plan.today'))}</h2>${tag(t('plan.sessionNo', { n: (st.sessions.length || 0) + 1 }))}</div>
-        <p class="muted" style="margin:0">${esc(t('plan.total', { m: mins, k: items.length }))}</p>
-        <div class="session-list">${items.map(({ i, d }) => `<a class="srow ${cur.done[i.slug] ? 'done' : ''}" href="#/drill/${esc(d.slug)}">${animBox(d)}<div><h4>${cur.done[i.slug] ? '✓ ' : ''}${esc(L(d.title))}</h4><div class="meta">${roleTag(i.role)}${tag(trackName(d.track), 'tag-accent')}${tag(d.minutes + ' ' + t('d.min'))}</div></div></a>`).join('')}</div>
-        <a class="btn btn-primary btn-block" href="#/session">${esc(t('plan.start'))} →</a>
+        <div class="row"><a class="btn btn-secondary btn-sm" href="#/tests">${esc(t('plan.test'))}</a><a class="btn btn-ghost btn-sm" href="#/start">${esc(t('plan.edit'))}</a>${cycleDone ? `<button type="button" class="btn btn-ghost btn-sm" data-act="newPlan">${esc(t('plan.newPlan'))}</button>` : ''}</div>
       </div>
     </div>`;
   }
@@ -345,7 +366,7 @@
       <div class="dose"><b>${esc(doseText(d))}</b>${tag(d.minutes + ' ' + t('d.min'))}</div>
       <div class="timer">
         <div class="ring" id="ring"><svg viewBox="0 0 112 112"><circle class="track" cx="56" cy="56" r="48"/><circle class="prog" cx="56" cy="56" r="48" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="0"/></svg><div class="num" id="ringNum">0:00</div></div>
-        <div class="stack" style="gap:8px"><span class="small muted">${esc(t('s.timer'))}${x.durationSec ? ' · 1 × ' + x.durationSec + ' ' + esc(t('t.units.s')) : ''}</span>
+        <div class="stack" style="gap:8px"><span class="small muted">${esc(x.durationSec ? t('s.timerSet') : t('s.timerAll'))}</span>
           <div class="row"><button type="button" class="btn btn-primary btn-sm" data-act="timer" id="timerBtn">▶ ${esc(t('s.start'))}</button><button type="button" class="btn btn-ghost btn-sm" data-act="timerReset">↺ ${esc(t('s.reset'))}</button></div></div>
       </div>
       ${n > 1 ? `<div class="stack" style="gap:6px"><span class="small muted">${esc(t('s.setsDone'))}</span><div class="sets">${Array.from({ length: n }, (_, i) => `<button type="button" data-act="set" data-v="${i}" aria-pressed="${sets[d.slug] && sets[d.slug][i] ? 'true' : 'false'}">${i + 1}</button>`).join('')}</div></div>` : ''}
@@ -353,8 +374,9 @@
   }
   function initTimer(d) {
     stopTimer();
-    const total = (d.dose && d.dose.durationSec) || d.minutes * 60;
-    timer = { total, left: total, iv: null, slug: d.slug };
+    const perSet = !!(d.dose && d.dose.durationSec);
+    const total = perSet ? d.dose.durationSec : d.minutes * 60;
+    timer = { total, left: total, iv: null, slug: d.slug, perSet };
     paintTimer();
   }
   function paintTimer() {
@@ -374,8 +396,10 @@
       const now = Date.now(); timer.left -= (now - last) / 1000; last = now;
       if (timer.left <= 0) {
         timer.left = 0; clearInterval(timer.iv); timer.iv = null; beep();
-        const b = $$('.sets button').find(x => x.getAttribute('aria-pressed') !== 'true');
-        if (b) b.click();
+        if (timer.perSet) {
+          const b = $$('.sets button').find(x => x.getAttribute('aria-pressed') !== 'true');
+          if (b) b.click();
+        }
       }
       paintTimer();
     }, 200);
@@ -405,12 +429,11 @@
         <div class="stack pb">${drillBody(d)}</div>
         <div class="player-side stack ps">
           ${timerCard(d)}
-          <div class="row" style="flex-wrap:nowrap">
-            <button type="button" class="btn btn-secondary btn-block" data-act="swap" data-v="easier" ${canEasier ? '' : 'disabled'}>↓ ${esc(t('s.easier'))}</button>
-            <button type="button" class="btn btn-secondary btn-block" data-act="swap" data-v="harder" ${canHarder ? '' : 'disabled'}>↑ ${esc(t('s.harder'))}</button>
-          </div>
-          <button type="button" class="btn btn-accent btn-block" data-act="drillDone" style="min-height:58px;font-size:17px">✓ ${esc(t('s.done'))}</button>
-          <p class="small muted" style="margin:0">${esc(t('foot.drafts'))} · CC BY-SA 4.0</p>
+          <button type="button" class="btn btn-accent btn-block" data-act="drillDone" style="min-height:58px;font-size:17px">✓ ${esc(idx === cur.items.length - 1 ? t('s.finish') : t('s.next'))}</button>
+          ${canEasier || canHarder ? `<div class="stack" style="gap:6px"><span class="small muted">${esc(t('s.swapQ'))}</span><div class="row" style="flex-wrap:nowrap">
+            <button type="button" class="btn btn-secondary btn-block btn-sm" data-act="swap" data-v="easier" ${canEasier ? '' : 'disabled'}>↓ ${esc(t('s.easier'))}</button>
+            <button type="button" class="btn btn-secondary btn-block btn-sm" data-act="swap" data-v="harder" ${canHarder ? '' : 'disabled'}>↑ ${esc(t('s.harder'))}</button>
+          </div></div>` : ''}
         </div>
       </div></div>`;
   }
@@ -418,7 +441,7 @@
     if ($('.sheet')) return;
     const el = document.createElement('div');
     el.className = 'sheet'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
-    el.innerHTML = `<div><h2 class="h3" style="text-align:center">${esc(t('s.rateQ'))}</h2><div class="rate">
+    el.innerHTML = `<div><h2 class="h3" style="text-align:center">${esc(t('s.rateQ'))}</h2><p class="small muted" style="text-align:center;margin:-6px 0 0">${esc(t('s.rateHint'))}</p><div class="rate">
       <button type="button" data-act="rate" data-v="easy"><span>😀</span>${esc(t('s.easy'))}</button>
       <button type="button" data-act="rate" data-v="ok"><span>🙂</span>${esc(t('s.ok'))}</button>
       <button type="button" data-act="rate" data-v="hard"><span>😅</span>${esc(t('s.hard'))}</button></div></div>`;
@@ -469,14 +492,20 @@
     return `<div class="fin">
       <div class="burst" aria-hidden="true">🏆</div>
       <h1 class="h1" style="font-size:clamp(34px,7vw,60px)">${esc(t('s.finTitle'))}</h1>
-      <div class="fin-stats"><div><b>${l.minutes}</b><span>${esc(t('s.finMin'))}</span></div><div><b>${l.drills}</b><span>${esc(t('s.finDrills'))}</span></div><div><b>${streak()}</b><span>${esc(t('s.finStreak'))}</span></div></div>
+      <div class="fin-stats"><div><b>${l.minutes}</b><span>${esc(pl('s.finMin', l.minutes))}</span></div><div><b>${l.drills}</b><span>${esc(pl('s.finDrills', l.drills))}</span></div><div><b>${streak()}</b><span>${esc(pl('s.finStreak', streak()))}</span></div></div>
       ${l.fresh && l.fresh.length ? `<div class="stack" style="gap:8px;align-items:center"><span class="small muted">${esc(t('s.badge'))}</span><div class="row" style="justify-content:center">${l.fresh.map(k => `<span class="badge-new">★ ${esc(t('b.' + k))}</span>`).join('')}</div></div>` : ''}
       <div class="stack" style="gap:8px">${ch.length ? ch.map(([tr, v]) => `<p class="notice ${v < 0 ? 'warn' : ''}" style="margin:0">${esc(t(v > 0 ? 's.adaptUp' : 's.adaptDown', { t: trackName(tr) }))}</p>`).join('') : `<p class="notice" style="margin:0">${esc(t('s.adaptSame'))}</p>`}</div>
-      <div class="cta" style="justify-content:center"><a class="btn btn-primary" href="#/plan">${esc(t('s.again'))} →</a><a class="btn btn-secondary" href="#/progress">${esc(t('s.toProgress'))}</a></div>
+      <p class="muted" style="margin:0">${esc(t('s.restNote'))}</p>
+      <div class="cta" style="justify-content:center"><a class="btn btn-primary" href="#/progress">${esc(t('s.toProgress'))} →</a><a class="btn btn-secondary" href="#/plan">${esc(t('s.again'))}</a></div>
     </div>`;
   }
 
   // --- drill detail ---
+  const VERIFY = ['COMMUNITY', 'REVIEWED', 'EXPERT VERIFIED', 'ACADEMY VERIFIED'];
+  function verifyTag(d) {
+    const i = d.custom ? Math.max(0, VERIFY.indexOf(d.status)) : 0;
+    return i > 0 ? tag(t('a.levels')[i], 'tag-accent') : tag(t('d.pending'), 'tag-warn');
+  }
   function viewDrill(slug) {
     const d = drill(slug);
     if (!d) return `<div class="page-head"><p class="lead">404</p><a class="btn btn-secondary" href="#/library">${esc(t('d.back'))}</a></div>`;
@@ -490,12 +519,11 @@
         <div class="player-side stack ps">
           ${timerCard(d)}
           <div class="card stack small">
-            <div class="row between"><span class="muted">${esc(t('d.age'))}</span><b>${esc(t('d.years', { a: d.ageMin }))}</b></div>
+            <div class="row between"><span class="muted">${esc(t('d.age'))}</span><b>${esc(d.ageMax >= 99 ? t('d.years', { a: d.ageMin }) : t('d.range', { a: d.ageMin, b: d.ageMax }))}</b></div>
+            <div class="row between"><span class="muted">${esc(t('d.equipment'))}</span><b>${esc(t('d.eq.' + d.equipment))}</b></div>
             <div class="row between"><span class="muted">${esc(t('d.space'))}</span><b>${esc(t('d.sp.' + d.space))}</b></div>
-            <div class="row between"><span class="muted">${esc(t('d.author'))}</span><b>${esc(d.author)}</b></div>
-            <div class="row between"><span class="muted">${esc(t('d.source'))}</span><span class="tag tag-warn">${esc(d.custom ? d.status : t('d.draft'))}</span></div>
-            <div class="row between"><span class="muted">${esc(t('d.license'))}</span><b>CC BY-SA 4.0</b></div>
-            <div class="row between"><span class="muted">${esc(t('d.version'))}</span><b>v${esc(d.semver || '1.0.0')}</b></div>
+            <div class="row between"><span class="muted">${esc(t('d.author'))}</span><b>${esc(/^FIRST COACH/i.test(d.author || '') ? t('d.team') : d.author)}</b></div>
+            <div class="row between"><span class="muted">${esc(t('d.status'))}</span>${verifyTag(d)}</div>
             ${(d.regressionSlugs || []).length ? `<div class="stack" style="gap:6px"><span class="muted">↓ ${esc(t('s.easier'))}</span><div class="row">${d.regressionSlugs.map(link).join('')}</div></div>` : ''}
             ${(d.progressionSlugs || []).length ? `<div class="stack" style="gap:6px"><span class="muted">↑ ${esc(t('s.harder'))}</span><div class="row">${d.progressionSlugs.map(link).join('')}</div></div>` : ''}
           </div>
@@ -509,8 +537,7 @@
     const f = Object.assign({ track: '', eq: '', lvl: 0 }, st.lib || {});
     const list = allDrills().filter(d => (!f.track || d.track === f.track) && (!f.eq || d.equipment === f.eq) && (!f.lvl || d.level === f.lvl));
     const chip = (k, v, label) => `<button type="button" class="chip" data-act="lib" data-k="${k}" data-v="${v}" aria-pressed="${String(f[k]) === String(v) ? 'true' : 'false'}">${esc(label)}</button>`;
-    return `<div class="page-head"><div class="eyebrow">CC BY-SA 4.0</div><h1 class="h1">${esc(t('lib.title'))}</h1><p class="lead">${esc(t('lib.intro'))}</p>
-      <div class="row"><a class="btn btn-secondary btn-sm" href="commons.json" download="open-sport-commons-football-v0.1.json">⤓ ${esc(t('lib.download'))}</a><a class="btn btn-ghost btn-sm" href="#/contribute">+ ${esc(t('nav.contribute'))}</a></div></div>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('lib.eyebrow'))}</div><h1 class="h1">${esc(t('lib.title'))}</h1><p class="lead">${esc(t('lib.intro'))}</p></div>
       <div class="filters">
         <div class="chips">${chip('track', '', t('lib.all'))}${TR.map(x => chip('track', x.slug, L(x.names))).join('')}</div>
         <div class="chips">${chip('eq', '', t('lib.anyEq'))}${['nothing', 'ball', 'ball_wall', 'cones'].map(k => chip('eq', k, t('d.eq.' + k))).join('')}</div>
@@ -528,7 +555,7 @@
     th.forEach(x => { if (test.direction === 'lower' ? v <= x : v >= x) lv++; });
     return lv;
   }
-  const unit = test => t('t.units.' + test.unit);
+  const unit = (test, n) => pl('t.units.' + test.unit, n == null ? 5 : Math.round(n));
   const hist = slug => st.tests.filter(x => x.slug === slug);
   function delta(test, a, b) {
     if (a == null || b == null || !a) return '';
@@ -543,13 +570,13 @@
   }
   function viewTests() {
     const age = (st.profile || DEF_PROFILE).age;
-    return `<div class="page-head"><div class="eyebrow">Skill tests</div><h1 class="h1">${esc(t('t.title'))}</h1><p class="lead">${esc(t('t.intro'))}</p></div>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('t.eyebrow'))}</div><h1 class="h1">${esc(t('t.title'))}</h1><p class="lead">${esc(t('t.intro'))}</p></div>
       <div class="grid">${TESTS.map(x => {
         const h = hist(x.slug), last = h[h.length - 1], prev = h[h.length - 2];
         return `<a class="card stack" href="#/test/${x.slug}" style="text-decoration:none">
           <div class="row between">${tag(trackName(x.skill), 'tag-accent')}${tag(t('d.eq.' + x.equipment))}</div>
           <h2 class="h3">${esc(t('t.names.' + x.slug))}</h2>
-          ${last ? `<div class="row" style="align-items:baseline"><span class="big-num" style="font-size:44px">${last.value}</span><span class="muted">${esc(unit(x))}</span>${delta(x, prev && prev.value, last.value)}</div>
+          ${last ? `<div class="row" style="align-items:baseline"><span class="big-num" style="font-size:44px">${last.value}</span><span class="muted">${esc(unit(x, last.value))}</span>${delta(x, prev && prev.value, last.value)}</div>
             <div class="band">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= testLevel(x, last.value, age) ? 'on' : ''}"></i>`).join('')}</div>` : `<span class="muted">${esc(t('t.never'))}</span>`}
           <span class="btn btn-secondary btn-sm" style="align-self:flex-start">${esc(t('t.go'))} →</span></a>`;
       }).join('')}</div>`;
@@ -579,12 +606,13 @@
           <div class="card stack">
             <span class="small muted">${esc(t('t.result'))} (${esc(unit(x))})</span>
             <div class="stepper"><button type="button" data-act="tv" data-v="-1" aria-label="−1">−</button><input id="tv" inputmode="decimal" value="${testVal}" aria-label="${esc(t('t.result'))}"><button type="button" data-act="tv" data-v="1" aria-label="+1">+</button></div>
+            ${x.unit !== 's' ? `<span class="small muted">${esc(t('t.countHint'))}</span>` : ''}
             <button type="button" class="btn btn-accent btn-block" data-act="saveTest" data-v="${slug}">✓ ${esc(t('t.save'))}</button>
           </div>
           ${h.length ? `<div class="card stack"><h2 class="h3">${esc(t('t.history'))}</h2>${spark(h.map(y => y.value))}
             ${h.length > 1 ? `<div class="row between"><span class="muted">${esc(t('t.prev'))}: <b>${h[h.length - 2].value}</b></span><span>${esc(t('t.today'))}: <b>${last.value}</b> ${delta(x, h[h.length - 2].value, last.value)}</span></div>` : ''}
             <div class="row between small"><span class="muted">${esc(t('t.level'))}</span><b>${testLevel(x, last.value, age)}/5</b></div>
-            <div class="stack small" style="gap:4px">${h.slice(-6).reverse().map(y => `<div class="row between"><span class="muted">${esc(fmtDate(y.date))}</span><b>${y.value} ${esc(unit(x))}</b></div>`).join('')}</div></div>` : ''}
+            <div class="stack small" style="gap:4px">${h.slice(-6).reverse().map(y => `<div class="row between"><span class="muted">${esc(fmtDate(y.date))}</span><b>${y.value} ${esc(unit(x, y.value))}</b></div>`).join('')}</div></div>` : ''}
         </div>
       </div></div>`;
   }
@@ -594,14 +622,14 @@
     if (!st.profile) return `<div class="page-head"><h1 class="h1">${esc(t('p.title'))}</h1><p class="lead">${esc(t('p.empty'))}</p><a class="btn btn-primary" href="#/start" style="align-self:flex-start">${esc(t('home.start'))} →</a></div>`;
     const S = st.sessions, mins = S.reduce((a, s) => a + s.minutes, 0), drillsDone = S.reduce((a, s) => a + s.drills.length, 0), b = badges(), lv = st.levels;
     const legend = t('p.legend');
-    return `<div class="page-head"><div class="eyebrow">My journey</div><h1 class="h1">${esc(t('p.title'))}</h1><p class="lead">${esc(t('p.compare'))}</p></div>
-      <div class="metrics"><div class="metric"><b>${S.length}</b><span>${esc(t('p.sessions'))}</span></div><div class="metric"><b>${mins}</b><span>${esc(t('p.minutes'))}</span></div><div class="metric"><b>${streak()}</b><span>${esc(t('p.streak'))}</span></div><div class="metric"><b>${drillsDone}</b><span>${esc(t('p.drills'))}</span></div></div>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('p.eyebrow'))}</div><h1 class="h1">${esc(t('p.title'))}</h1><p class="lead">${esc(t('p.compare'))}</p></div>
+      <div class="metrics"><div class="metric"><b>${S.length}</b><span>${esc(pl('p.sessions', S.length))}</span></div><div class="metric"><b>${mins}</b><span>${esc(pl('p.minutes', mins))}</span></div><div class="metric"><b>${streak()}</b><span>${esc(pl('p.streak', streak()))}</span></div><div class="metric"><b>${drillsDone}</b><span>${esc(pl('p.drills', drillsDone))}</span></div></div>
       <section class="section stack"><h2 class="h3">${esc(t('p.badges'))}</h2><div class="badges">${Object.keys(b).map(k => `<span class="bdg ${b[k] ? 'on' : ''}">${b[k] ? '★ ' : ''}${esc(t('b.' + k))}</span>`).join('')}</div></section>
       <section class="section stack"><div class="row between"><h2 class="h3">${esc(t('p.tree'))}</h2><div class="legend"><span>✓ ${esc(legend[0])}</span><span>● ${esc(legend[1])}</span><span>○ ${esc(legend[2])}</span></div></div>
         <div class="tree">${TR.map(x => `<section><div class="row between"><b>${esc(L(x.names))}</b>${tag(lv[x.slug] + '/5', 'tag-accent')}</div>
           ${x.nodes.map((n, i) => { const c = i < lv[x.slug] - 1 ? 'm' : i === lv[x.slug] - 1 ? 'c' : 'l'; return `<div class="node ${c}"><i>${c === 'm' ? '✓' : ''}</i><span>${esc(L(n.names))}</span></div>`; }).join('')}</section>`).join('')}</div></section>
-      <section class="section stack"><h2 class="h3">${esc(t('p.tests'))}</h2><div class="grid">${TESTS.map(x => { const h = hist(x.slug); const l = h[h.length - 1]; return `<a class="card stack" href="#/test/${x.slug}" style="text-decoration:none"><b>${esc(t('t.names.' + x.slug))}</b>${l ? `<div class="row" style="align-items:baseline"><span class="big-num" style="font-size:36px">${l.value}</span><span class="muted">${esc(unit(x))}</span>${h.length > 1 ? delta(x, h[h.length - 2].value, l.value) : ''}</div>${spark(h.map(y => y.value))}` : `<span class="muted">${esc(t('t.never'))}</span>`}</a>`; }).join('')}</div></section>
-      <section class="section row"><a class="btn btn-secondary" href="#/start/4">${esc(t('p.reset'))}</a><a class="btn btn-ghost" href="#/video">${esc(t('nav.video'))} · Beta</a><button type="button" class="btn btn-danger" data-act="wipe">${esc(t('p.wipe'))}</button></section>`;
+      <section class="section stack"><h2 class="h3">${esc(t('p.tests'))}</h2><div class="grid">${TESTS.map(x => { const h = hist(x.slug); const l = h[h.length - 1]; return `<a class="card stack" href="#/test/${x.slug}" style="text-decoration:none"><b>${esc(t('t.names.' + x.slug))}</b>${l ? `<div class="row" style="align-items:baseline"><span class="big-num" style="font-size:36px">${l.value}</span><span class="muted">${esc(unit(x, l.value))}</span>${h.length > 1 ? delta(x, h[h.length - 2].value, l.value) : ''}</div>${spark(h.map(y => y.value))}` : `<span class="muted">${esc(t('t.never'))}</span>`}</a>`; }).join('')}</div></section>
+      <section class="section row"><a class="btn btn-secondary" href="#/start/4">${esc(t('p.reset'))}</a><a class="btn btn-ghost" href="#/video">${esc(t('p.video'))}</a><button type="button" class="btn btn-danger" data-act="wipe">${esc(t('p.wipe'))}</button></section>`;
   }
 
   // --- contribute ---
@@ -609,12 +637,19 @@
   function viewContribute(slug) {
     const base = slug ? drill(slug) : null;
     if (sent) {
-      return `<div class="fin"><div class="burst" aria-hidden="true">🤝</div><h1 class="h1" style="font-size:clamp(34px,7vw,60px)">${esc(t('c.thanksTitle'))}</h1><p class="lead" style="margin:0 auto">${esc(t('c.thanksBody'))}</p>
-        <div class="cta" style="justify-content:center"><button type="button" class="btn btn-primary" data-act="another">${esc(t('c.another'))}</button><a class="btn btn-secondary" href="#/library">${esc(t('nav.library'))}</a></div></div>`;
+      const canShare = !!navigator.share;
+      return `<div class="fin"><div class="burst" aria-hidden="true">🤝</div><h1 class="h1" style="font-size:clamp(34px,7vw,60px)">${esc(t('c.thanksTitle'))}</h1>
+        <p class="lead" style="margin:0 auto">${esc(CONTACT_EMAIL ? t('c.thanksEmail') : canShare ? t('c.thanksShare') : t('c.thanksCopy'))}</p>
+        <div class="cta" style="justify-content:center">
+          ${CONTACT_EMAIL ? `<a class="btn btn-primary" href="${esc(mailtoFor(st.contrib[0]))}">✉ ${esc(t('c.email'))}</a>` : ''}
+          ${canShare ? `<button type="button" class="btn ${CONTACT_EMAIL ? 'btn-secondary' : 'btn-primary'}" data-act="shareContrib">${esc(t('c.share'))}</button>` : ''}
+          <button type="button" class="btn btn-secondary" data-act="copyContrib">${esc(t('c.copy'))}</button>
+        </div>
+        <button type="button" class="btn btn-ghost" data-act="another" style="justify-self:center">+ ${esc(t('c.another'))}</button></div>`;
     }
     const f = k => esc(t('c.f.' + k));
     const v = (k, def) => esc(base ? def : '');
-    return `<div class="page-head"><div class="eyebrow">CONTRIBUTE A METHOD</div><h1 class="h1">${esc(t('c.title'))}</h1><p class="lead">${esc(t('c.intro'))}</p>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('c.eyebrow'))}</div><h1 class="h1">${esc(t('c.title'))}</h1><p class="lead">${esc(t('c.intro'))}</p>
       ${base ? `<p class="notice">${esc(t('c.improve', { t: L(base.title) }))}</p>` : ''}</div>
       <form class="card form" id="cform" novalidate>
         <input type="hidden" name="improves" value="${esc(base ? base.slug : '')}">
@@ -637,10 +672,19 @@
           <div class="field full"><label for="f-author">${f('author')} *</label><input id="f-author" name="author" required placeholder="${esc(t('c.ph.author'))}"></div>
           <label class="check full"><input type="checkbox" name="rights" id="f-rights" required><span>${esc(t('c.rights'))}</span></label>
         </div>
-        <p class="notice warn" style="margin:0">${esc(t('c.note'))}</p>
         <button type="submit" class="btn btn-primary" style="align-self:flex-start">${esc(t('c.submit'))} →</button>
       </form>`;
   }
+  function contribText(c) {
+    if (!c) return '';
+    const F = k => t('c.f.' + k);
+    const rows = [[F('title'), c.title], [F('skill'), trackName(c.skill)], [F('age'), c.age], [F('level'), c.level], [F('minutes'), c.minutes],
+      [F('equipment'), t('d.eq.' + c.equipment)], [F('goal'), c.goal], [F('instructions'), c.instructions], [F('mistakes'), c.mistakes],
+      [F('progression'), c.progression], [F('regression'), c.regression], [F('safety'), c.safety], [F('source'), c.source], [F('author'), c.author]];
+    if (c.improves) rows.unshift([t('a.improvement'), L((drill(c.improves) || {}).title) || c.improves]);
+    return rows.filter(r => r[1]).map(r => r[0] + ': ' + r[1]).join('\n\n');
+  }
+  const mailtoFor = c => 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent(t('c.subject') + ': ' + (c ? c.title : '')) + '&body=' + encodeURIComponent(contribText(c));
   function submitContribution(form) {
     const fd = new FormData(form), o = {};
     ['improves', 'title', 'sport', 'skill', 'age', 'level', 'minutes', 'equipment', 'goal', 'instructions', 'mistakes', 'safety', 'progression', 'regression', 'source', 'author'].forEach(k => { o[k] = String(fd.get(k) || '').trim(); });
@@ -665,10 +709,10 @@
           ${c.status !== 'approved' ? `<button type="button" class="btn btn-accent btn-sm" data-act="adm" data-k="approve" data-v="${c.id}">✓ ${esc(t('a.approve'))}</button>` : ''}
           ${c.status === 'pending' ? `<button type="button" class="btn btn-secondary btn-sm" data-act="adm" data-k="changes" data-v="${c.id}">${esc(t('a.changes'))}</button>` : ''}
           ${c.status !== 'rejected' ? `<button type="button" class="btn btn-danger btn-sm" data-act="adm" data-k="reject" data-v="${c.id}">${esc(t('a.reject'))}</button>` : ''}
-          ${c.status === 'approved' ? `<label class="small muted" for="v-${c.id}">${esc(t('a.verify'))}</label><select id="v-${c.id}" data-act-change="verify" data-v="${c.id}" class="chip">${['COMMUNITY', 'REVIEWED', 'EXPERT VERIFIED', 'ACADEMY VERIFIED'].map(x => `<option ${c.verify === x ? 'selected' : ''}>${x}</option>`).join('')}</select><a class="btn btn-ghost btn-sm" href="#/drill/c-${c.id}">→</a>` : ''}
+          ${c.status === 'approved' ? `<label class="small muted" for="v-${c.id}">${esc(t('a.verify'))}</label><select id="v-${c.id}" data-act-change="verify" data-v="${c.id}" class="chip">${VERIFY.map((x, i) => `<option value="${x}" ${c.verify === x ? 'selected' : ''}>${esc(t('a.levels')[i])}</option>`).join('')}</select><a class="btn btn-ghost btn-sm" href="#/drill/c-${c.id}">→</a>` : ''}
         </div></article>`;
     };
-    return `<div class="page-head"><div class="eyebrow">Admin</div><h1 class="h1">${esc(t('a.title'))}</h1><p class="notice warn">${esc(t('a.note'))}</p></div>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('a.eyebrow'))}</div><h1 class="h1">${esc(t('a.title'))}</h1><p class="muted" style="margin:0">${esc(t('a.note'))}</p></div>
       <section class="stack"><h2 class="h3">${esc(t('a.pending'))} · ${pend.length}</h2><div class="adm">${pend.length ? pend.map(card).join('') : `<p class="muted">${esc(t('a.empty'))}</p>`}</div></section>
       ${done.length ? `<section class="section stack"><h2 class="h3">${esc(t('a.approved'))}</h2><div class="adm">${done.map(card).join('')}</div></section>` : ''}`;
   }
@@ -690,7 +734,7 @@
     const miss = rub ? rub.criteria.filter(c => vid.ans[c.key] === 'n') : [];
     const answered = rub ? rub.criteria.filter(c => vid.ans[c.key]).length : 0;
     const rec = allDrills().filter(d => d.track === tr && d.level <= targetLevel(lv[tr] || 1) && (!st.profile || fits(d, st.profile))).slice(0, 3);
-    return `<div class="page-head"><div class="row"><span class="eyebrow">AI VIDEO COACH</span>${tag(t('v.beta'), 'tag-warn')}</div><h1 class="h1">${esc(t('v.title'))}</h1><p class="lead">${esc(t('v.intro'))}</p></div>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('v.eyebrow'))}</div><h1 class="h1">${esc(t('v.title'))}</h1><p class="lead">${esc(t('v.intro'))}</p></div>
       <div class="player-grid">
         <div class="stack">
           <div class="card stack"><h2 class="h3">${esc(t('v.pick'))}</h2><div class="chips">${TR.map(x => `<button type="button" class="chip" data-act="vtrack" data-v="${x.slug}" aria-pressed="${x.slug === tr ? 'true' : 'false'}">${esc(L(x.names))}</button>`).join('')}</div></div>
@@ -713,6 +757,13 @@
       </div>`;
   }
 
+  function fallbackCopy(txt, done) {
+    const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* nothing more to try */ }
+    ta.remove();
+  }
+
   // ---------- router ----------
   const ROUTES = { '': viewHome, start: viewStart, plan: viewPlan, session: viewSession, done: viewDone, drill: viewDrill, library: viewLibrary, tests: viewTests, test: viewTest, progress: viewProgress, contribute: viewContribute, admin: viewAdmin, video: viewVideo };
   const NAV = { '': 'home', start: 'train', plan: 'train', session: 'train', done: 'train', drill: 'library', library: 'library', tests: 'tests', test: 'tests', progress: 'progress', contribute: 'contribute', admin: 'admin', video: 'progress' };
@@ -721,6 +772,8 @@
   function parse() { const h = location.hash.replace(/^#\/?/, ''); const i = h.indexOf('/'); return i < 0 ? { r: h, arg: '' } : { r: h.slice(0, i), arg: decodeURIComponent(h.slice(i + 1)) }; }
   function render(keepScroll) {
     stopTimer(); stopSw();
+    if (showTimer) { clearInterval(showTimer); showTimer = null; }
+    document.title = t('title');
     $$('.sheet').forEach(x => x.remove());
     const { r, arg } = parse();
     if (r !== 'contribute') sent = false;
@@ -751,7 +804,9 @@
     obLevel(v, k) { ob.lv[k] = +v; render(true); },
     obNext() { ob.step = Math.min(4, ob.step + 1); render(false); window.scrollTo(0, 0); },
     obBack() { ob.step = Math.max(0, ob.step - 1); render(false); window.scrollTo(0, 0); },
-    obBuild() { st.profile = Object.assign({}, ob.p); st.levels = Object.assign({}, ob.lv); st.xp = {}; st.current = null; save(); ob = null; location.hash = '#/plan'; },
+    obBuild() { st.profile = Object.assign({}, ob.p); st.levels = Object.assign({}, ob.lv); st.xp = {}; st.current = null; st.planStart = today(); save(); ob = null; location.hash = '#/plan'; },
+    newPlan() { st.planStart = today(); st.current = null; save(); render(false); },
+    libTrack(v) { st.lib = { track: v, eq: '', lvl: 0 }; save(); location.hash = '#/library'; },
     animSlow(v, k, el) { const a = el.closest('.anim-wrap').querySelector('.anim').__fc; const on = el.getAttribute('aria-pressed') !== 'true'; a.setSpeed(on ? 0.5 : 1); el.setAttribute('aria-pressed', String(on)); },
     animPause(v, k, el) { const a = el.closest('.anim-wrap').querySelector('.anim').__fc; const playing = a.toggle(); el.setAttribute('aria-pressed', String(!playing)); el.textContent = playing ? '❚❚' : '▶'; },
     timer() { toggleTimer(); },
@@ -779,6 +834,13 @@
     swReset() { stopSw(); const el = $('#sw'); if (el) el.textContent = '0.0'; },
     another() { sent = false; render(false); },
     back() { if (history.length > 1) history.back(); else location.hash = '#/library'; },
+    shareContrib() { const c = st.contrib[0]; if (c && navigator.share) navigator.share({ title: t('c.subject'), text: contribText(c) }).catch(() => {}); },
+    copyContrib() {
+      const txt = contribText(st.contrib[0]);
+      const done = () => toast(t('c.copied'));
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, done));
+      else fallbackCopy(txt, done);
+    },
     adm(v, k) { adminAct(k, v); },
     vtrack(v) { vid.track = v; vid.ans = {}; render(true); },
     vans(v, k) { vid.ans[k] = v; render(true); },
@@ -793,7 +855,7 @@
   });
   document.addEventListener('change', e => {
     if (e.target.id === 'vfile' && e.target.files && e.target.files[0]) { if (vid.url) URL.revokeObjectURL(vid.url); vid.url = URL.createObjectURL(e.target.files[0]); render(true); }
-    if (e.target.dataset && e.target.dataset.actChange === 'verify') { const c = st.contrib.find(x => x.id === e.target.dataset.v); if (c) { c.verify = e.target.value; save(); toast('✓ ' + c.verify); } }
+    if (e.target.dataset && e.target.dataset.actChange === 'verify') { const c = st.contrib.find(x => x.id === e.target.dataset.v); if (c) { c.verify = e.target.value; save(); toast('✓ ' + t('a.levels')[Math.max(0, VERIFY.indexOf(c.verify))]); } }
   });
   document.addEventListener('submit', e => { if (e.target.id === 'cform') { e.preventDefault(); submitContribution(e.target); } });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { const s = $('.sheet'); if (s) s.remove(); } });

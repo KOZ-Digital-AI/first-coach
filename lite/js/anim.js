@@ -91,13 +91,13 @@
     let cur = null;
     return { set(v) { const s = v == null ? '' : String(v); if (s !== cur) { cur = s; tx.textContent = s; } } };
   }
-  function ringLayer(svg) {
-    const c = S('circle', { r: 0, class: 'a-flash' }, svg);
+  function ringLayer(svg, cls) {
+    const c = S('circle', { r: 0, class: 'a-flash ' + (cls || '') }, svg);
     return {
       set(x, y, k) { // k: 0..1 progress of the flash, or -1 hidden
         if (k < 0) { c.setAttribute('r', 0); c.style.opacity = 0; return; }
         c.setAttribute('cx', r1(x)); c.setAttribute('cy', r1(y));
-        c.setAttribute('r', r1(6 + k * 16)); c.style.opacity = r1(1 - k);
+        c.setAttribute('r', r1(5 + k * 13)); c.style.opacity = r1(0.9 * (1 - k));
       }
     };
   }
@@ -130,6 +130,28 @@
   const thighTop = (f, leg) => { const l = f[leg]; return { x: lerp(f.hip.x, l.k.x, 0.72), y: lerp(f.hip.y, l.k.y, 0.72) - BR - 5 }; };
   const handsAt = f => ({ x: f.RA.h.x + 4, y: f.RA.h.y - 4 });
 
+  // Fading dots behind a moving ball: shows where it came from.
+  function mkTrail(parent, r, cls) {
+    const dots = [0, 1, 2, 3].map(i => S('circle', { r: r1(r * (0.85 - i * 0.14)), class: 'a-trail-dot ' + (cls || ''), style: 'opacity:0' }, parent));
+    let hist = [];
+    return {
+      add(x, y, visible) {
+        const last = hist[hist.length - 1];
+        if (!visible || (last && Math.hypot(x - last[0], y - last[1]) > 40)) hist = [];
+        if (visible) hist.push([x, y]);
+        if (hist.length > 14) hist.shift();
+        dots.forEach((d, i) => {
+          const p = hist[hist.length - 1 - (i + 1) * 3];
+          const moved = p && Math.hypot(p[0] - x, p[1] - y) > r * 1.2;
+          if (moved) { d.setAttribute('cx', r1(p[0])); d.setAttribute('cy', r1(p[1])); d.style.opacity = r1(0.34 - i * 0.075); }
+          else d.style.opacity = 0;
+        });
+      }
+    };
+  }
+  const ln = (el, a, b) => { el.setAttribute('x1', r1(a.x)); el.setAttribute('y1', r1(a.y)); el.setAttribute('x2', r1(b.x)); el.setAttribute('y2', r1(b.y)); };
+  const mix = (a, b, u) => ({ x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u) });
+
   function renderSide(svg, spec) {
     S('rect', { width: W, height: H, class: 'a-bg' }, svg);
     S('rect', { y: G, width: W, height: H - G, class: 'a-turf' }, svg);
@@ -137,35 +159,54 @@
     const fig = S('g', spec.mirror ? { transform: 'translate(320 0) scale(-1 1)' } : {}, svg);
     const sh = S('ellipse', { cy: G + 1.5, rx: 24, ry: 3.2, class: 'a-shadow' }, fig);
     const bsh = S('ellipse', { cy: G + 1.5, rx: 7, ry: 2, class: 'a-shadow' }, fig);
-    const fa = S('polyline', { class: 'a-limb a-arm a-far' }, fig);
-    const fl = S('polyline', { class: 'a-limb a-leg a-far' }, fig);
+    const trail = mkTrail(fig, BR, 'a-trail-side');
+    const mkArm = far => {
+      const c = far ? ' a-far' : '';
+      return { up: S('line', { class: 'a-seg a-arm' + c }, fig), fore: S('line', { class: 'a-seg a-arm' + c }, fig),
+        sleeve: S('line', { class: 'a-sleeve' + (far ? ' a-far-cloth' : '') }, fig), hand: S('circle', { r: 3.4, class: 'a-hand' + (far ? ' a-far-fill' : '') }, fig) };
+    };
+    const mkLeg = (far, weak) => {
+      const c = far ? ' a-far' : '', w = weak ? ' a-weak' : '';
+      return { thigh: S('line', { class: 'a-seg a-leg' + c + w }, fig), shin: S('line', { class: 'a-seg a-leg' + c + w }, fig),
+        sock: S('line', { class: 'a-sock' + (far ? ' a-far-cloth' : '') + (weak ? ' a-weak-sock' : '') }, fig),
+        boot: S('line', { class: 'a-boot' + (far ? ' a-far-boot' : '') + (weak ? ' a-weak-boot' : '') }, fig),
+        shorts: S('line', { class: 'a-shorts' + (far ? ' a-far-cloth' : '') }, fig) };
+    };
+    const FA = mkArm(true), FL = mkLeg(true, false);
     const tor = S('line', { class: 'a-jersey' }, fig);
     const hd = S('circle', { r: 9.5, class: 'a-head' }, fig);
-    const nl = S('polyline', { class: 'a-limb a-leg' + (spec.weak ? ' a-weak' : '') }, fig);
-    const na = S('polyline', { class: 'a-limb a-arm' }, fig);
+    const hair = S('path', { class: 'a-hair' }, fig);
+    const NL = mkLeg(false, !!spec.weak), NA = mkArm(false);
     const bg = S('g', { class: 'a-ballg' + (spec.ghost ? ' a-ghost' : '') }, fig);
     S('circle', { r: BR, class: 'a-ball' }, bg);
     S('path', { d: 'M0,-3.4 L3.2,-1 L2,2.8 L-2,2.8 L-3.2,-1Z', class: 'a-ball-patch' }, bg);
-    const ring = ringLayer(fig);
+    const ring = ringLayer(fig, 'a-flash-side');
     const lab = mkLabel(svg), cnt = mkCounter(svg);
-    const pl = (...p) => p.map(q => r1(q.x) + ',' + r1(q.y)).join(' ');
+    const setLeg = (g, hip, l) => {
+      ln(g.thigh, hip, l.k); ln(g.shin, l.k, l.a);
+      ln(g.shorts, hip, mix(hip, l.k, 0.48));
+      ln(g.sock, mix(l.k, l.a, 0.5), l.a);
+      ln(g.boot, { x: l.a.x - (l.toe.x - l.a.x) * 0.3, y: l.a.y - (l.toe.y - l.a.y) * 0.3 }, l.toe);
+    };
+    const setArm = (g, a) => { ln(g.up, a.s, a.e); ln(g.fore, a.e, a.h); ln(g.sleeve, a.s, mix(a.s, a.e, 0.5)); g.hand.setAttribute('cx', r1(a.h.x)); g.hand.setAttribute('cy', r1(a.h.y)); };
     return (t, n) => {
       const o = spec.frame(t, n), f = o.f;
-      fa.setAttribute('points', pl(f.LA.s, f.LA.e, f.LA.h));
-      fl.setAttribute('points', pl(f.hip, f.L.k, f.L.a, f.L.toe));
-      nl.setAttribute('points', pl(f.hip, f.R.k, f.R.a, f.R.toe));
-      na.setAttribute('points', pl(f.RA.s, f.RA.e, f.RA.h));
-      tor.setAttribute('x1', r1(f.hip.x)); tor.setAttribute('y1', r1(f.hip.y));
-      tor.setAttribute('x2', r1(f.neck.x)); tor.setAttribute('y2', r1(f.neck.y));
+      setArm(FA, f.LA); setLeg(FL, f.hip, f.L);
+      ln(tor, f.hip, f.neck);
       hd.setAttribute('cx', r1(f.head.x)); hd.setAttribute('cy', r1(f.head.y));
+      const hx = f.head.x, hy = f.head.y;
+      hair.setAttribute('d', `M${r1(hx - 9.6)} ${r1(hy + 1)}A9.6 9.6 0 0 1 ${r1(hx + 7.5)} ${r1(hy - 6)}Q${r1(hx + 1)} ${r1(hy - 3.5)} ${r1(hx - 3)} ${r1(hy - 2)}Z`);
+      setLeg(NL, f.hip, f.R); setArm(NA, f.RA);
       sh.setAttribute('cx', r1(f.hip.x + 4));
       if (o.ball) {
-        bg.style.opacity = o.ball.o == null ? 1 : o.ball.o;
+        const op = o.ball.o == null ? 1 : o.ball.o;
+        bg.style.opacity = op;
         bg.setAttribute('transform', `translate(${r1(o.ball.x)} ${r1(o.ball.y)}) rotate(${Math.round(o.ball.x * 9 + o.ball.y * 5) % 360})`);
         const hgt = clamp((G - BR - o.ball.y) / 110, 0, 0.7);
         bsh.setAttribute('cx', r1(o.ball.x)); bsh.setAttribute('rx', r1(7 * (1 - hgt)));
-        bsh.style.opacity = o.ball.o == null ? 1 - hgt : o.ball.o * (1 - hgt);
-      } else { bg.style.opacity = 0; bsh.style.opacity = 0; }
+        bsh.style.opacity = op * (1 - hgt);
+        trail.add(o.ball.x, o.ball.y, op > 0.6 && !spec.ghost);
+      } else { bg.style.opacity = 0; bsh.style.opacity = 0; trail.add(0, 0, false); }
       if (o.ring) ring.set(o.ring.x, o.ring.y, o.ring.k); else ring.set(0, 0, -1);
       lab.set(o.label || null);
       cnt.set(o.count);
@@ -205,8 +246,9 @@
       frame(t, n) {
         const done = contacts.filter(c => c[0] <= t).length;
         const near = contacts.find(c => Math.abs(c[0] - t) < 0.06);
+        const hit = contacts.find(c => t >= c[0] && t < c[0] + 0.12);
         return {
-          f: fk(kf(t, frames)), ball: track(t, pts),
+          f: fk(kf(t, frames)), ball: track(t, pts), ring: hit ? { x: hit[1], y: hit[2] + BR, k: (t - hit[0]) / 0.12 } : null,
           count: opts.noCount ? null : n * N + done,
           label: opts.label || (near && seq[contacts.indexOf(near)] === 'T' ? 'thigh' : null),
         };
@@ -226,6 +268,7 @@
       frame(t, n) {
         return {
           f: fk(kf(t, frames)), ball: track(t, pts), count: n + (t >= 0.3 ? 1 : 0),
+          ring: t >= 0.3 && t < 0.4 ? { x: c.x, y: c.y + BR, k: (t - 0.3) / 0.1 } : (t >= 0.75 && t < 0.85 ? { x: gx, y: G, k: (t - 0.75) / 0.1 } : null),
           label: t > 0.22 && t < 0.44 ? 'touch' : (t > 0.66 && t < 0.86 ? 'bounce' : null),
         };
       }
@@ -372,7 +415,8 @@
 
   // ---------- FEET VIEW (close-up from above) ----------
   const FB = 17; // ball radius in the feet view
-  const SHOE = 'M0,-25 C8,-25 11,-15 11,-4 C11,8 9,20 0,24 C-9,20 -11,8 -11,-4 C-11,-15 -8,-25 0,-25Z';
+  const SOLE = 'M0,-26.5 C9.5,-26.5 12.8,-15 12.3,-3 C11.8,9.5 10.2,20.5 0,25.5 C-10.2,20.5 -11.8,9.5 -12.3,-3 C-12.8,-15 -9.5,-26.5 0,-26.5Z';
+  const UPPER = 'M0,-24.5 C7.8,-24.5 10.6,-14.5 10.2,-3 C9.8,8.5 8.6,18.5 0,22.5 C-8.6,18.5 -9.8,8.5 -10.2,-3 C-10.6,-14.5 -7.8,-24.5 0,-24.5Z';
   const LR = { x: 138, y: 142, r: -6, lift: 0 }, RR = { x: 182, y: 142, r: 6, lift: 0 };
 
   function renderFeet(svg, spec) {
@@ -387,10 +431,15 @@
     S('path', { d: 'M0,-6 L5.7,-1.9 L3.5,4.9 L-3.5,4.9 L-5.7,-1.9Z M0,-6 L0,-13 M5.7,-1.9 L12.4,-4 M3.5,4.9 L7.7,10.7 M-3.5,4.9 L-7.7,10.7 M-5.7,-1.9 L-12.4,-4', class: 'a-ball-patch a-ball-lines' }, ball);
     const mk = (weak) => {
       const g = S('g', {}, svg);
-      S('path', { d: SHOE, class: 'a-shoe' + (weak ? ' a-weakshoe' : '') }, g);
-      S('path', { d: 'M-4,-10 H4 M-4,-4 H4 M-4,2 H4', class: 'a-lace' }, g);
+      S('path', { d: SOLE, class: 'a-sole' }, g);
+      S('path', { d: UPPER, class: 'a-shoe' + (weak ? ' a-weakshoe' : '') }, g);
+      S('path', { d: 'M-7.5,-17 C-4,-21 4,-21 7.5,-17 C5,-19.5 -5,-19.5 -7.5,-17Z', class: 'a-toecap' }, g);
+      S('path', { d: 'M-4,-11 H4 M-4.3,-6 H4.3 M-4.5,-1 H4.5', class: 'a-lace' }, g);
+      S('ellipse', { cx: 0, cy: 11.5, rx: 6.4, ry: 7.2, class: 'a-sockcuff' }, g);
+      S('ellipse', { cx: 0, cy: 11.5, rx: 4.2, ry: 5, class: 'a-leg-top' }, g);
       return g;
     };
+    const trail = mkTrail(svg, FB, 'a-trail-grass');
     const fL = mk(spec.weak), fR = mk(false);
     const ring = ringLayer(svg);
     const lab = mkLabel(svg), cnt = mkCounter(svg, 'a-count-light');
@@ -410,8 +459,9 @@
       place(fL, shL, L); place(fR, shR, R);
       ball.setAttribute('transform', `translate(${r1(B.x)} ${r1(B.y)}) rotate(${Math.round(B.rot || 0)})`);
       ball.style.opacity = B.o == null ? 1 : B.o;
+      trail.add(B.x, B.y, !spec.ghost && (B.o == null || B.o > 0.6));
       shB.setAttribute('transform', `translate(${r1(B.x + 3)} ${r1(B.y + 5)})`);
-      shB.style.opacity = B.o == null ? 1 : B.o;
+      shB.style.opacity = spec.ghost ? 0 : (B.o == null ? 1 : B.o);
       if (o.ring) ring.set(spec.mirror ? W - o.ring.x : o.ring.x, o.ring.y, o.ring.k); else ring.set(0, 0, -1);
       lab.set(o.label || null);
       cnt.set(o.count);
@@ -426,7 +476,8 @@
     return {
       view: 'feet', ghost: opts.ghost, period: 1150,
       frame(t, n) {
-        return { L: kf(t, fl), R: kf(t, fr), ball: { x: 160, y: 88, rot: 0 }, count: n * 2 + (t >= 0.25 ? 1 : 0) + (t >= 0.75 ? 1 : 0), label: opts.ghost ? 'imagine' : null };
+        const hit = t >= 0.25 && t < 0.35 ? (t - 0.25) / 0.1 : (t >= 0.75 && t < 0.85 ? (t - 0.75) / 0.1 : -1);
+        return { L: kf(t, fl), R: kf(t, fr), ball: { x: 160, y: 88, rot: 0 }, ring: hit >= 0 ? { x: 160, y: 88, k: hit } : null, count: n * 2 + (t >= 0.25 ? 1 : 0) + (t >= 0.75 ? 1 : 0), label: opts.ghost ? 'imagine' : null };
       }
     };
   }
@@ -467,6 +518,7 @@
         return {
           L: { x: 116 + 5 * bL, y: 128, r: -4 + 6 * bL, lift: 0 }, R: { x: 204 - 5 * bR, y: 128, r: 4 - 6 * bR, lift: 0 },
           ball: { x, y: 128, rot: x * 6 }, count: opts.noCount ? null : n * 2 + (t >= 0.5 ? 1 : 0),
+          ring: t < 0.1 ? { x: 194, y: 128, k: t / 0.1 } : (t >= 0.5 && t < 0.6 ? { x: 126, y: 128, k: (t - 0.5) / 0.1 } : null),
           label: opts.signal && (n % 4) === 3 ? 'callNumber' : null,
         };
       }
@@ -625,6 +677,7 @@
     };
   }
   function topBall(svg) {
+    const trail = mkTrail(svg, 6.2, 'a-trail-grass');
     const sh = S('ellipse', { rx: 6, ry: 4.8, class: 'a-shadow' }, svg);
     const g = S('g', {}, svg);
     S('circle', { r: 6.2, class: 'a-ball a-ball-top' }, g);
@@ -634,6 +687,7 @@
         g.setAttribute('transform', `translate(${r1(x)} ${r1(y)})`);
         sh.setAttribute('transform', `translate(${r1(x + 1.5)} ${r1(y + 2)})`);
         g.style.opacity = sh.style.opacity = o == null ? 1 : o;
+        trail.add(x, y, o == null || o > 0.6);
       }
     };
   }

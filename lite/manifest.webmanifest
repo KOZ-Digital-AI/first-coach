@@ -1,7 +1,7 @@
 {
-  "name": "FIRST COACH · Бірінші бапкер",
-  "short_name": "FIRST COACH",
-  "description": "Every child deserves a great first coach. Free, open football training.",
+  "name": "Первый тренер — бесплатная футбольная школа",
+  "short_name": "Первый тренер",
+  "description": "Бесплатные футбольные тренировки для детей.",
   "start_url": "./#/",
   "scope": "./",
   "display": "standalone",
