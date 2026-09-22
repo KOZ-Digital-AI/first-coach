@@ -105,8 +105,10 @@ const TRIGGER =
   'inline-flex min-h-tap max-w-full cursor-pointer items-center gap-2 rounded-control border border-line bg-paper px-3 font-bold text-ink hover:bg-bg';
 const ITEM =
   'flex min-h-tap w-full cursor-pointer items-center gap-2.5 rounded-control px-3 text-start font-bold text-ink hover:bg-bg aria-disabled:cursor-default aria-disabled:opacity-70';
+// whitespace-nowrap (fc-zfg.9): the header row never wraps at >=900px (Shell.tsx), so this link must never squeeze
+// "Coach sign-in" onto two lines either.
 const VISITOR_LINK =
-  'inline-flex min-h-tap items-center rounded-control px-2 text-sm text-muted underline decoration-1 underline-offset-4 hover:text-ink';
+  'inline-flex min-h-tap items-center whitespace-nowrap rounded-control px-2 text-sm text-muted underline decoration-1 underline-offset-4 hover:text-ink';
 
 export interface AccountControlsProps {
   session: AccountSessionState;
@@ -160,7 +162,10 @@ export function AccountControls({ session, deps }: AccountControlsProps) {
 
   if (reading.kind === 'visitor') {
     return (
-      <div className="px-4 py-2">
+      // Tighter side padding than the signed-in trigger below (fc-zfg.9: the header row must never wrap at >=900px;
+      // this is the only header-extra state that has to share the row with the full desktop nav and the language
+      // switch at once - the signed-in panel trigger keeps its own padding).
+      <div className="px-0.5 py-2">
         <Link to={PATHS.signIn} className={VISITOR_LINK}>
           {t('coachSignIn')}
         </Link>
