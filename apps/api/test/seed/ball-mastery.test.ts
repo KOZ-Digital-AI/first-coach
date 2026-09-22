@@ -11,8 +11,8 @@
 // numbered instruction steps (one text whose lines are numbered) and free-text progression /
 // regression (they are drill slugs, so they must resolve within the drills the seed loader sees).
 //
-// Source of the content requirements: the spec sections 13, 15 and 16 in the repo's
-// `message (7).txt`, PRODUCT.md (children from about 6, Kazakh first among equals, safe
+// Source of the content requirements: sections 13, 15 and 16 of the original product brief,
+// PRODUCT.md (children from about 6, Kazakh first among equals, safe
 // unsupervised) and CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";

@@ -16,7 +16,7 @@
 //     (higher-is-better: each boundary >=; lower-is-better: <=);
 //   - a "successes out of N attempts" test cannot have a boundary above N.
 //
-// Source of the content requirements: the spec section 7 in the repo's `message (7).txt`,
+// Source of the content requirements: the spec section 7 in the original product brief,
 // PRODUCT.md (children from about 6, Kazakh first among equals, safe unsupervised) and
 // CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";

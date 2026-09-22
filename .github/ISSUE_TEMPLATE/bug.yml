@@ -1,0 +1,22 @@
+name: Что-то не работает · Something is broken
+description: Ошибка в приложении или в тексте · A bug in the app or in the copy
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes: { label: Что случилось · What happened }
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes: { label: Как повторить · Steps to reproduce, placeholder: "1. Открыть …\n2. Нажать …" }
+  - type: input
+    id: device
+    attributes: { label: Телефон или компьютер, браузер · Device and browser, placeholder: "Samsung A12, Chrome" }
+  - type: dropdown
+    id: lang
+    attributes:
+      label: Язык интерфейса · Interface language
+      options: [Қазақша, Русский, English]
+  - type: markdown
+    attributes:
+      value: Пожалуйста, не прикладывайте скриншоты с именами или лицами детей. · Please do not attach screenshots showing children's names or faces.

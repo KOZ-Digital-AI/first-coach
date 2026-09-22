@@ -1,0 +1,54 @@
+name: Предложить упражнение · Propose a drill
+description: Новое упражнение или улучшение существующего · A new drill or an improvement
+title: "Упражнение: "
+labels: ["drill"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо! Пишите для ребёнка, который тренируется один: на «ты», коротко, одно действие в шаге.
+        Не присылайте материалы FIFA, UEFA и коммерческих изданий. Не публикуйте фото и данные детей.
+        Thank you! Write for a child training alone. No FIFA, UEFA or commercial material. No photos or data of children.
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Навык · Skill
+      options: [Контроль мяча · Ball mastery, Дриблинг · Dribbling, Пас и первый приём · Passing & first touch, Слабая нога · Weak foot, Жонглирование и координация · Juggling & coordination]
+    validations: { required: true }
+  - type: input
+    id: title
+    attributes: { label: Название · Name }
+    validations: { required: true }
+  - type: input
+    id: age
+    attributes: { label: Возраст и уровень 1–3 · Age and level 1–3, placeholder: "8–12 лет, уровень 1" }
+  - type: dropdown
+    id: equipment
+    attributes:
+      label: Что нужно · Equipment
+      options: [Ничего · Nothing, Мяч · Ball, Мяч и стена · Ball and wall, Мяч и конусы · Ball and cones]
+  - type: textarea
+    id: steps
+    attributes: { label: Как выполнять · How to do it, placeholder: "1. …\n2. …\n3. …" }
+    validations: { required: true }
+  - type: textarea
+    id: mistakes
+    attributes: { label: Частые ошибки · Common mistakes }
+  - type: textarea
+    id: variants
+    attributes: { label: Как упростить и усложнить · Easier and harder versions }
+  - type: textarea
+    id: safety
+    attributes: { label: Безопасность · Safety }
+    validations: { required: true }
+  - type: input
+    id: author
+    attributes: { label: Автор и роль · Author and role, placeholder: "Айгерим, учитель физкультуры" }
+    validations: { required: true }
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Права · Rights
+      options:
+        - label: Я автор этого упражнения или имею право им поделиться по CC BY-SA 4.0 · I wrote this drill or may share it under CC BY-SA 4.0
+          required: true

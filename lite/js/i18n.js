@@ -33,7 +33,7 @@ window.FC_I18N = {
       coachTitle: 'Бапкерлер мен дене шынықтыру мұғалімдеріне',
       coachBody: 'Өз жаттығуыңызбен бөлісіңіз: қарапайым форманы толтырыңыз, біз оны тексеріп, қосымшаға қосамыз. Авторлық сақталады.',
       coachCta: 'Жаттығу қосу',
-      honest: 'Жаттығуларды жоба командасы құрастырды, қазір оларды бапкерлер тексеріп жатыр.',
+      honest: 'Алғашқы жаттығуларды жоба командасы жасанды интеллекттің көмегімен дайындады, қазір оларды бапкерлер тексеріп жатыр.',
     },
     ob: {
       eyebrow: 'Футбол', title: 'Алғашқы жоспарыңды құрайық', step: '{n}-қадам / {t}',
@@ -109,6 +109,8 @@ window.FC_I18N = {
       thanksCopy: 'Жаттығу осы құрылғыда сақталды. Мәтінді көшіріп, жоба командасына жіберіңіз.',
       share: 'Бөлісу', copy: 'Мәтінді көшіру', copied: 'Мәтін көшірілді', email: 'Хатпен жіберу', another: 'Тағы біреуін қосу',
       required: 'Жұлдызшасы бар өрістерді толтырыңыз.', subject: 'Бірінші бапкер: жаңа жаттығу',
+      sendTo: 'Хат мына мекенжайға жіберіледі:', attachHint: 'Бейне немесе фото таңдаған болсаңыз, оларды хатқа тіркеңіз.',
+      mail: { head: 'ЖАҢА ЖАТТЫҒУ · Бірінші бапкер', attach: 'Файлдар: {files} — оларды осы хатқа тіркеңіз.', consent: 'Автор бұл жаттығуды CC BY-SA 4.0 лицензиясымен бөлісуге құқығы бар екенін растады.', sent: '«Бірінші бапкер» қосымшасынан жіберілді · {date} · № {id}' },
     },
     a: {
       eyebrow: 'Команда үшін', title: 'Жаттығуларды тексеру', note: 'Мұнда осы құрылғыда қосылған жаттығулар көрінеді.',
@@ -174,7 +176,7 @@ window.FC_I18N = {
       coachTitle: 'Тренерам и учителям физкультуры',
       coachBody: 'Поделитесь своим упражнением: заполните простую форму, мы проверим его и добавим в приложение. Авторство сохраняется.',
       coachCta: 'Добавить упражнение',
-      honest: 'Упражнения составлены командой проекта и сейчас проходят проверку тренерами.',
+      honest: 'Стартовые упражнения подготовлены командой проекта с помощью ИИ и сейчас проходят проверку тренерами.',
     },
     ob: {
       eyebrow: 'Футбол', title: 'Соберём твой первый план', step: 'Шаг {n} из {t}',
@@ -250,6 +252,8 @@ window.FC_I18N = {
       thanksCopy: 'Упражнение сохранено на этом устройстве. Скопируйте текст и отправьте его команде проекта.',
       share: 'Поделиться', copy: 'Скопировать текст', copied: 'Текст скопирован', email: 'Отправить письмом', another: 'Добавить ещё одно',
       required: 'Заполните поля со звёздочкой.', subject: 'Первый тренер: новое упражнение',
+      sendTo: 'Письмо уйдёт на адрес', attachHint: 'Если вы выбирали видео или фото, прикрепите их к письму.',
+      mail: { head: 'НОВОЕ УПРАЖНЕНИЕ · Первый тренер', attach: 'Файлы: {files} — прикрепите их к этому письму.', consent: 'Автор подтвердил, что имеет право поделиться упражнением по лицензии CC BY-SA 4.0.', sent: 'Отправлено из приложения «Первый тренер» · {date} · № {id}' },
     },
     a: {
       eyebrow: 'Для команды', title: 'Проверка упражнений', note: 'Здесь видны упражнения, добавленные на этом устройстве.',
@@ -315,7 +319,7 @@ window.FC_I18N = {
       coachTitle: 'For coaches and PE teachers',
       coachBody: 'Share your own drill: fill in a simple form, we review it and add it to the app. Your authorship is kept.',
       coachCta: 'Add a drill',
-      honest: 'The drills were written by the project team and are now being reviewed by coaches.',
+      honest: 'The starter drills were prepared by the project team with the help of AI and are now being reviewed by coaches.',
     },
     ob: {
       eyebrow: 'Football', title: 'Let’s build your first plan', step: 'Step {n} of {t}',
@@ -391,6 +395,8 @@ window.FC_I18N = {
       thanksCopy: 'The drill is saved on this device. Copy the text and send it to the project team.',
       share: 'Share', copy: 'Copy text', copied: 'Text copied', email: 'Send by email', another: 'Add another one',
       required: 'Please fill in the fields marked with a star.', subject: 'First Coach: a new drill',
+      sendTo: 'The email goes to', attachHint: 'If you picked a video or photo, attach it to the email.',
+      mail: { head: 'NEW DRILL · First Coach', attach: 'Files: {files} — please attach them to this email.', consent: 'The author confirmed they have the right to share this drill under CC BY-SA 4.0.', sent: 'Sent from the First Coach app · {date} · No. {id}' },
     },
     a: {
       eyebrow: 'For the team', title: 'Drill review', note: 'This shows drills added on this device.',

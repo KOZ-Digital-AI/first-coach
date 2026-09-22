@@ -14,7 +14,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // Where coaches' drills are sent. Leave empty to offer Share / Copy only.
-  const CONTACT_EMAIL = '';
+  const CONTACT_EMAIL = 'work@koz-ai.com';
 
   // ---------- storage ----------
   // G holds what the device shares (language, players, coaches' drills); st holds the signed-in player's own data.
@@ -252,7 +252,7 @@
       <aside class="card-ink hero-card on-ink" id="showcase" aria-live="polite">
         <span class="label">${esc(t('home.demoLabel'))}</span>
         <div class="anim-wrap" style="position:relative"><div class="anim" id="showAnim"></div></div>
-        <a class="show-cap" id="showLink" href="#/library"><span class="tag tag-accent" id="showTrack"></span><b id="showTitle"></b><span aria-hidden="true">→</span></a>
+        <a class="show-cap" id="showLink" href="#/library"><span class="tag tag-accent" id="showTrack"></span><b id="showTitle"></b></a>
         <div class="dots-row" id="showDots" aria-hidden="true">${SHOWCASE.map(() => '<i></i>').join('')}</div>
       </aside>
     </section>
@@ -660,6 +660,7 @@
       const canShare = !!navigator.share;
       return `<div class="fin"><div class="burst" aria-hidden="true">🤝</div><h1 class="h1" style="font-size:clamp(34px,7vw,60px)">${esc(t('c.thanksTitle'))}</h1>
         <p class="lead" style="margin:0 auto">${esc(CONTACT_EMAIL ? t('c.thanksEmail') : canShare ? t('c.thanksShare') : t('c.thanksCopy'))}</p>
+        ${CONTACT_EMAIL ? `<p class="small muted" style="margin:0">${esc(t('c.sendTo'))} <b>${esc(CONTACT_EMAIL)}</b>${G.contrib[0] && G.contrib[0].files && G.contrib[0].files.length ? '<br>' + esc(t('c.attachHint')) : ''}</p>` : ''}
         <div class="cta" style="justify-content:center">
           ${CONTACT_EMAIL ? `<a class="btn btn-primary" href="${esc(mailtoFor(G.contrib[0]))}">✉ ${esc(t('c.email'))}</a>` : ''}
           ${canShare ? `<button type="button" class="btn ${CONTACT_EMAIL ? 'btn-secondary' : 'btn-primary'}" data-act="shareContrib">${esc(t('c.share'))}</button>` : ''}
@@ -680,7 +681,7 @@
           <div class="field"><label for="f-age">${f('age')}</label><input id="f-age" name="age" value="${esc(base ? base.ageMin + '+' : '8+')}"></div>
           <div class="field"><label for="f-level">${f('level')}</label><select id="f-level" name="level">${[1, 2, 3].map(i => `<option value="${i}" ${base && base.level === i ? 'selected' : ''}>${esc(t('d.level'))} ${i}</option>`).join('')}</select></div>
           <div class="field"><label for="f-minutes">${f('minutes')}</label><input id="f-minutes" name="minutes" type="number" min="1" max="60" value="${base ? base.minutes : 5}"></div>
-          <div class="field"><label for="f-eq">${f('equipment')}</label><select id="f-eq" name="equipment">${['nothing', 'ball', 'ball_wall', 'cones'].map(k => `<option value="${k}" ${base && base.equipment === k ? 'selected' : ''}>${esc(t('d.eq.' + k))}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-eq">${f('equipment')}</label><select id="f-eq" name="equipment">${['nothing', 'ball', 'ball_wall', 'cones'].map(k => `<option value="${k}" ${(base ? base.equipment === k : k === 'ball') ? 'selected' : ''}>${esc(t('d.eq.' + k))}</option>`).join('')}</select></div>
           <div class="field full"><label for="f-goal">${f('goal')}</label><input id="f-goal" name="goal" value="${v('goal', L(base && base.goal))}"></div>
           <div class="field full"><label for="f-ins">${f('instructions')} *</label><textarea id="f-ins" name="instructions" required placeholder="${esc(t('c.ph.instructions'))}">${v('instructions', L(base && base.instructions))}</textarea></div>
           <div class="field"><label for="f-mis">${f('mistakes')}</label><textarea id="f-mis" name="mistakes">${v('mistakes', base ? (base.mistakes || []).map(L).join('\n') : '')}</textarea></div>
@@ -695,16 +696,25 @@
         <button type="submit" class="btn btn-primary" style="align-self:flex-start">${esc(t('c.submit'))} →</button>
       </form>`;
   }
+  // The message a coach sends to the team: labelled lines first, then one block per long answer.
   function contribText(c) {
     if (!c) return '';
-    const F = k => t('c.f.' + k);
-    const rows = [[F('title'), c.title], [F('skill'), trackName(c.skill)], [F('age'), c.age], [F('level'), c.level], [F('minutes'), c.minutes],
-      [F('equipment'), t('d.eq.' + c.equipment)], [F('goal'), c.goal], [F('instructions'), c.instructions], [F('mistakes'), c.mistakes],
-      [F('progression'), c.progression], [F('regression'), c.regression], [F('safety'), c.safety], [F('source'), c.source], [F('author'), c.author]];
-    if (c.improves) rows.unshift([t('a.improvement'), L((drill(c.improves) || {}).title) || c.improves]);
-    return rows.filter(r => r[1]).map(r => r[0] + ': ' + r[1]).join('\n\n');
+    const F = k => t('c.f.' + k), line = '────────────────────────';
+    const short = [[F('title'), c.title], [t('a.improvement'), c.improves ? '«' + (L((drill(c.improves) || {}).title) || c.improves) + '»' : ''],
+      [F('skill'), trackName(c.skill)], [F('age'), c.age], [F('level'), c.level ? t('d.level') + ' ' + c.level : ''],
+      [F('minutes'), c.minutes], [F('equipment'), c.equipment ? t('d.eq.' + c.equipment) : '']];
+    const long = [[F('goal'), c.goal], [F('instructions'), c.instructions], [F('mistakes'), c.mistakes],
+      [F('progression'), c.progression], [F('regression'), c.regression], [F('safety'), c.safety]];
+    const out = [t('c.mail.head'), line];
+    short.filter(r => r[1]).forEach(r => out.push(r[0] + ': ' + r[1]));
+    long.filter(r => r[1]).forEach(r => out.push('', r[0].toUpperCase(), r[1]));
+    out.push('', F('author').split('—')[0].trim().toUpperCase(), c.author);
+    if (c.source) out.push(F('source') + ': ' + c.source);
+    if (c.files && c.files.length) out.push('', t('c.mail.attach', { files: c.files.map(f => f.name).join(', ') }));
+    out.push('', line, t('c.mail.consent'), t('c.mail.sent', { date: fmtDate(today()) + ' ' + new Date().getFullYear(), id: c.id }));
+    return out.join('\n');
   }
-  const mailtoFor = c => 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent(t('c.subject') + ': ' + (c ? c.title : '')) + '&body=' + encodeURIComponent(contribText(c));
+  const mailtoFor = c => 'mailto:' + CONTACT_EMAIL + '?subject=' + encodeURIComponent(t('c.subject') + ' — «' + (c ? c.title : '') + '»') + '&body=' + encodeURIComponent(contribText(c));
   function submitContribution(form) {
     const fd = new FormData(form), o = {};
     ['improves', 'title', 'sport', 'skill', 'age', 'level', 'minutes', 'equipment', 'goal', 'instructions', 'mistakes', 'safety', 'progression', 'regression', 'source', 'author'].forEach(k => { o[k] = String(fd.get(k) || '').trim(); });
