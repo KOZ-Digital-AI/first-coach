@@ -20,7 +20,7 @@
 // Track-specific criterion: at least 4 drills need NO equipment at all (balance, rhythm and
 // footwork), so a player who has "Nothing" still gets a session.
 //
-// Source of the content requirements: the spec in the repo's `message (7).txt` (sections 2, 8,
+// Source of the content requirements: the spec in the original product brief (sections 2, 8,
 // 15, 16), PRODUCT.md (children from about 6, Kazakh first among equals, safety) and
 // CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";

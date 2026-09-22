@@ -15,7 +15,7 @@
 //   - `instructions` is ONE text per locale: the numbered steps live inside it, one per line.
 //   - Progression and regression are lists of drill slugs, resolved by the seeding job.
 //
-// Source of the content requirements: the spec in the repo's `message (7).txt` (sections 2, 8,
+// Source of the content requirements: the spec in the original product brief (sections 2, 8,
 // 16), PRODUCT.md (children from about 6, Kazakh first among equals, safety) and
 // CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";

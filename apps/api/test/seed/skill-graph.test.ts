@@ -5,7 +5,7 @@
 // (schema, integrity, ranges, three locales everywhere, ordering) and a few language and
 // consistency heuristics. They do NOT pin node names or exact counts beyond the criteria's ranges.
 //
-// Source of the content requirements: the spec sections 3 and 15 in the repo's `message (7).txt`,
+// Source of the content requirements: the spec sections 3 and 15 in the original product brief,
 // PRODUCT.md (children from about 6, Kazakh first among equals, safety) and CONTENT-LICENSE.md
 // (original wording only).
 import { describe, expect, test } from "bun:test";

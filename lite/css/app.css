@@ -598,3 +598,4 @@ button, a, select { touch-action: manipulation; }
 @media (max-width: 380px) { .brand small { display: none; } }
 [hidden] { display: none !important; }
 .brand small { white-space: nowrap; }
+.show-cap b::after { content: ' →'; }
