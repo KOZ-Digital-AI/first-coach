@@ -1,0 +1,75 @@
+/* Drill animation styles, shared by the app and gift.html. Colours come from the --anim tokens of the page. */
+.anim svg { display: block; width: 100%; height: 100%; }
+.a-bg { fill: var(--anim-bg); }
+.a-turf { fill: var(--anim-turf); }
+.a-ground { stroke: var(--anim-ground); stroke-width: 1.5; }
+.a-shadow { fill: var(--anim-shadow); }
+.a-limb { fill: none; stroke: var(--fig); stroke-linecap: round; stroke-linejoin: round; }
+.a-leg { stroke-width: 8; }
+.a-arm { stroke-width: 6.2; }
+.a-far { stroke: var(--fig-far); }
+.a-weak { stroke: var(--weak); }
+.a-jersey { stroke: var(--jersey); stroke-width: 15; stroke-linecap: round; }
+.a-head { fill: var(--fig); }
+.a-ball { fill: var(--ball); stroke: var(--ball-line); stroke-width: 1.6; }
+.a-ball-top { stroke-width: 1.2; }
+.a-ball-patch { fill: var(--ball-line); }
+.a-ball-lines { stroke: var(--ball-line); stroke-width: 1.4; stroke-linecap: round; }
+.a-ghost .a-ball { fill: none; stroke: var(--mark); stroke-dasharray: 5 4; stroke-width: 2; }
+.a-ghost .a-ball-patch { display: none; }
+.a-grass { fill: var(--grass); }
+.a-stripe { fill: var(--grass-2); }
+.a-zone { fill: none; stroke: var(--mark); stroke-width: 1.5; stroke-dasharray: 6 5; opacity: .75; }
+.a-zone-label { fill: var(--mark); font: 800 10px var(--font); letter-spacing: .05em; opacity: .9; }
+.a-trail { fill: none; stroke: var(--mark); stroke-width: 1.4; stroke-dasharray: 3 5; opacity: .5; }
+.a-cone { fill: var(--cone); }
+.a-cone-top { fill: var(--cone-top); }
+.a-marker { fill: #1b1f1d; opacity: .8; }
+.a-tbody { fill: var(--jersey-top); stroke: rgba(0,0,0,.35); stroke-width: 1; }
+.a-tp2 .a-tbody { fill: #e9eef7; }
+.a-thead { fill: var(--thead); }
+.a-tfoot { fill: var(--thead); }
+.a-kick { fill: #ffffff; }
+.a-kick-weak { fill: var(--weak); }
+.a-wall { fill: var(--wall); }
+.a-wall-lines { stroke: var(--wall-line); stroke-width: 1; fill: none; }
+.a-target { fill: #fff; opacity: .9; }
+.a-target-in { fill: var(--cone); }
+.a-dist { stroke: var(--mark); stroke-width: 1; stroke-dasharray: 2 4; opacity: .55; }
+.a-cross { stroke: var(--mark); stroke-width: 2; stroke-dasharray: 5 5; opacity: .55; fill: none; }
+.a-arrow { fill: var(--mark); font: 800 15px var(--font); }
+.a-clock { fill: var(--mark); font: 800 13px var(--font); opacity: .9; }
+.a-flash { fill: none; stroke: var(--mark); stroke-width: 2.2; }
+.a-shoe { fill: #141b17; }
+.a-weakshoe { fill: var(--weak); }
+.a-lace { stroke: #ffffff; stroke-width: 1.4; opacity: .65; fill: none; }
+.a-pill { fill: var(--pill-bg); opacity: .92; }
+.a-pill-text { fill: var(--pill-fg); font: 800 10.5px var(--font); letter-spacing: .07em; text-transform: uppercase; }
+.a-count { fill: var(--fig); font: 800 26px var(--font); font-variant-numeric: tabular-nums; opacity: .85; }
+.a-count-light { fill: #ffffff; }
+.a-card { fill: #ffffff; }
+.a-card-num { fill: #101815; font: 800 24px var(--font); }
+.a-card-num-sm { font-size: 18px; }
+.a-signal { transition: opacity .2s ease; }
+.a-sight { stroke: #ffffff; stroke-width: 1.4; stroke-dasharray: 2 4; transition: opacity .2s ease; }
+.a-seg { stroke: var(--fig); stroke-linecap: round; fill: none; }
+.a-seg.a-far { stroke: var(--fig-far); }
+.a-seg.a-weak { stroke: var(--weak); }
+.a-shorts { stroke: var(--shorts); stroke-width: 12; stroke-linecap: round; }
+.a-sock { stroke: var(--sock); stroke-width: 8.6; stroke-linecap: round; }
+.a-weak-sock { stroke: var(--weak); }
+.a-boot { stroke: var(--boot); stroke-width: 8.4; stroke-linecap: round; }
+.a-far-boot { opacity: .75; }
+.a-weak-boot { stroke: #8a4d06; }
+.a-sleeve { stroke: var(--jersey); stroke-width: 8.6; stroke-linecap: round; }
+.a-far-cloth { opacity: .72; }
+.a-hand { fill: var(--fig); }
+.a-far-fill { fill: var(--fig-far); }
+.a-hair { fill: var(--hair); }
+.a-flash-side { stroke: var(--jersey); stroke-width: 2.4; }
+.a-trail-dot { fill: var(--fig); }
+.a-trail-grass { fill: #ffffff; }
+.a-sole { fill: #eef1ee; }
+.a-toecap { fill: rgba(255,255,255,.28); }
+.a-sockcuff { fill: #f5f7f4; }
+.a-leg-top { fill: #d9b28f; }
