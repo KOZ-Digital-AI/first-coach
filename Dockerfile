@@ -39,6 +39,12 @@ COPY apps/api/src apps/api/src
 COPY config config
 COPY --from=build /app/apps/web/dist apps/web/dist
 
+# Genesis release (2026-09-22): the public site is the lightweight static app in lite/
+# (no build step, works offline). The API (/api, /health) and the /data volume are
+# unchanged. To serve the full React app from apps/web/dist again, delete these two lines.
+COPY lite lite
+ENV WEB_DIST=/app/lite
+
 # Everything writable lives under /data. No VOLUME instruction: Railway attaches its
 # volume at run time, and a plain `docker run -v` works the same way. The mkdir only
 # makes the paths exist when nothing is mounted.
