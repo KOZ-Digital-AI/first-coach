@@ -787,6 +787,56 @@
       </div>`;
   }
 
+  // --- the gift page: a letter, then a button that opens the school to every child ---
+  function viewGift() {
+    const facts = [[DRILLS.length, t('gift.stats')[0]], [TR.length, t('gift.stats')[1]], [3, t('gift.stats')[2]], ['0 ₸', t('gift.stats')[3]]];
+    return `<section class="gift" lang="${lang}">
+      <div class="gift-top">
+        <span class="gift-brand"><img src="icons/favicon.svg" alt="" width="30" height="30"><b>${esc(t('brand'))}</b></span>
+        <div class="gift-langs">${['kk', 'ru', 'en'].map(l => `<button type="button" data-act="lang" data-v="${l}" aria-pressed="${l === lang}">${{ kk: 'ҚАЗ', ru: 'РУС', en: 'ENG' }[l]}</button>`).join('')}</div>
+      </div>
+      <div class="gift-eyebrow">${esc(t('gift.eyebrow'))}</div>
+      <div class="gift-hero">
+        <div class="gift-60" aria-hidden="true">60</div>
+        <div class="gift-anims on-ink">${['juggling-alternating-feet', 'dribbling-five-cone-slalom', 'ball-mastery-inside-ping-pong'].map(sl => `<div class="anim" data-anim="${sl}" data-track="${BY.get(sl).track}"></div>`).join('')}</div>
+      </div>
+      <article class="gift-letter">
+        <h1>${esc(t('gift.title'))}</h1>
+        ${t('gift.letter').map(x => `<p>${esc(x)}</p>`).join('')}
+        <p class="gift-sign">${esc(t('gift.sign'))}</p>
+      </article>
+      <div class="gift-launch" id="giftLaunch">
+        <button type="button" class="launch" data-act="giftOpen"><span class="launch-ring" aria-hidden="true"></span><span class="launch-ball" aria-hidden="true">⚽</span><b>${esc(t('gift.button'))}</b></button>
+      </div>
+      <div class="gift-open" id="giftOpen" hidden>
+        <h2>${esc(t('gift.openTitle'))}</h2>
+        <p class="gift-sub">${esc(t('gift.openSub'))}</p>
+        <div class="gift-stats">${facts.map((f, i) => `<div><b data-count="${typeof f[0] === 'number' ? f[0] : ''}">${typeof f[0] === 'number' ? 0 : f[0]}</b><span>${esc(f[1])}</span></div>`).join('')}</div>
+        <div class="gift-qr"><img src="icons/qr-app.svg" alt="QR" width="200" height="200"><div><p>${esc(t('gift.qr'))}</p><a href="#/">first-coach-production.up.railway.app</a></div></div>
+        <div class="gift-next"><h3>${esc(t('gift.nextTitle'))}</h3><ul>${t('gift.next').map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+        <div class="gift-cta"><a class="btn gift-btn" href="#/">${esc(t('gift.app'))} →</a><a class="btn gift-btn-ghost" href="https://github.com/KOZ-Digital-AI/first-coach" target="_blank" rel="noopener">${esc(t('gift.code'))}</a></div>
+        <button type="button" class="gift-replay" data-act="giftReplay">↺ ${esc(t('gift.replay'))}</button>
+      </div>
+    </section>`;
+  }
+  function giftOpen() {
+    const launch = $('#giftLaunch'), open = $('#giftOpen');
+    if (!launch || !open) return;
+    launch.classList.add('gone');
+    setTimeout(() => {
+      launch.hidden = true; open.hidden = false; open.classList.add('show');
+      confetti(); setTimeout(confetti, 700);
+      try { if (navigator.vibrate) navigator.vibrate([60, 40, 120]); } catch (e) { /* no vibration */ }
+      $$('[data-count]', open).forEach(el => {
+        const to = +el.dataset.count; if (!to) return;
+        const t0 = performance.now();
+        const step = now => { const k = Math.min(1, (now - t0) / 1600); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+        requestAnimationFrame(step);
+      });
+      open.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 450);
+  }
+
   // --- players (light sign-in, stored on this device only) ---
   const AVATARS = ['⚽', '🦁', '🐯', '🦊', '🐺', '🦅', '🐼', '🐸', '🐬', '🐻', '🐱', '🚀'];
   const COLORS = ['#2e7d53', '#3b62a8', '#df8a1d', '#d9485f', '#7c4dcc', '#0e8a9a'];
@@ -882,7 +932,7 @@
   }
 
   // ---------- router ----------
-  const ROUTES = { login: viewLogin, '': viewHome, start: viewStart, plan: viewPlan, session: viewSession, done: viewDone, drill: viewDrill, library: viewLibrary, tests: viewTests, test: viewTest, progress: viewProgress, contribute: viewContribute, admin: viewAdmin, video: viewVideo };
+  const ROUTES = { '60': viewGift, gift: viewGift, login: viewLogin, '': viewHome, start: viewStart, plan: viewPlan, session: viewSession, done: viewDone, drill: viewDrill, library: viewLibrary, tests: viewTests, test: viewTest, progress: viewProgress, contribute: viewContribute, admin: viewAdmin, video: viewVideo };
   const NAV = { login: 'train', '': 'home', start: 'train', plan: 'train', session: 'train', done: 'train', drill: 'library', library: 'library', tests: 'tests', test: 'tests', progress: 'progress', contribute: 'contribute', admin: 'admin', video: 'progress' };
   let queue = [], lastRoute = null;
   const after = fn => queue.push(fn);
@@ -987,6 +1037,8 @@
     meToggle(v, k, el) { const m = $('#meMenu'); if (!m) return; m.hidden = !m.hidden; el.setAttribute('aria-expanded', String(!m.hidden)); },
     authSwitch() { signOut('#/login'); },
     authLogout() { signOut('#/'); },
+    giftOpen() { giftOpen(); },
+    giftReplay() { render(false); window.scrollTo(0, 0); },
     installApp() { if (!installEvt) return; installEvt.prompt(); installEvt.userChoice.finally(() => { installEvt = null; meMenu(); }); },
   };
   document.addEventListener('click', e => {
