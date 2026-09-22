@@ -15,8 +15,11 @@ Created by KOZ AI.
   `config/commons/football` (skill graph, 60 drills, 5 tests, rubrics) with `build_data.py`.
 - **Animations**: `js/anim.js` draws every drill as SVG (side view, feet close-up, pitch diagram).
   No video files, no third-party footage — nothing to license, fast on a cheap Android phone.
-- **Privacy**: progress, test results and contributions live in the browser (`localStorage`).
-  Video self-check never uploads the video.
+- **Players**: a light sign-in with local profiles (name or nickname, avatar, colour, optional 4-digit PIN).
+  Several children can share one phone or a school tablet; each has their own plan and progress.
+  No email or password is asked of a child. A forgotten PIN is reset behind a grown-up maths question.
+- **Privacy**: profiles, progress, test results and contributions live in the browser (`localStorage`).
+  The PIN keeps siblings out; it is not account security. Video self-check never uploads the video.
 
 ## Run locally
 

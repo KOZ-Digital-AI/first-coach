@@ -17,15 +17,35 @@
   const CONTACT_EMAIL = '';
 
   // ---------- storage ----------
-  const KEY = 'first-coach-lite:v1';
-  const DEF = { lang: null, profile: null, levels: null, xp: {}, sessions: [], current: null, tests: [], contrib: [], seq: 0, last: null, lib: {} };
-  let st;
-  try { st = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { st = Object.assign({}, DEF); }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* storage unavailable: app still works for this visit */ } };
+  // G holds what the device shares (language, players, coaches' drills); st holds the signed-in player's own data.
+  const OLD_KEY = 'first-coach-lite:v1', GKEY = 'first-coach:global', PKEY = id => 'first-coach:p:' + id;
+  const DEF = { profile: null, levels: null, xp: {}, sessions: [], current: null, tests: [], seq: 0, last: null, planStart: null };
+  const read = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable: app still works for this visit */ } };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  let G = Object.assign({ lang: null, profiles: [], current: null, contrib: [], lib: {} }, read(GKEY) || {});
+  (function migrate() {
+    const old = read(OLD_KEY);
+    if (!old) return;
+    G.lang = G.lang || old.lang || null;
+    G.contrib = (G.contrib || []).concat(old.contrib || []);
+    if (old.profile && !G.profiles.length) {
+      const id = uid(), data = {};
+      Object.keys(DEF).forEach(k => { if (old[k] !== undefined) data[k] = old[k]; });
+      G.profiles.push({ id, name: '', avatar: 0, color: 0, pin: null, createdAt: new Date().toISOString() });
+      write(PKEY(id), data);
+      G.current = id;
+    }
+    write(GKEY, G);
+    try { localStorage.removeItem(OLD_KEY); } catch (e) { /* ignore */ }
+  })();
+  const me = () => G.profiles.find(p => p.id === G.current) || null;
+  let st = Object.assign({}, DEF, (me() && read(PKEY(G.current))) || {});
+  const save = () => { write(GKEY, G); if (me()) write(PKEY(G.current), st); };
 
   // ---------- i18n ----------
   const detect = () => { const n = (navigator.language || 'ru').toLowerCase(); return n.startsWith('kk') ? 'kk' : n.startsWith('en') ? 'en' : 'ru'; };
-  let lang = st.lang || detect();
+  let lang = G.lang || detect();
   const get = (o, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
   function t(path, vars) {
     let s = get(I[lang], path);
@@ -53,7 +73,7 @@
   const fmtDate = s => { try { return new Date(s + 'T12:00:00').toLocaleDateString(lang === 'kk' ? 'kk-KZ' : lang === 'en' ? 'en-GB' : 'ru-RU', { day: 'numeric', month: 'short' }); } catch (e) { return s; } };
 
   // ---------- drills ----------
-  const custom = () => st.contrib.filter(c => c.status === 'approved').map(c => ({
+  const custom = () => G.contrib.filter(c => c.status === 'approved').map(c => ({
     slug: 'c-' + c.id, custom: true, track: c.skill, level: +c.level || 1, minutes: +c.minutes || 5, equipment: c.equipment || 'ball',
     space: 'home_3x3', partner: false, ageMin: 5, ageMax: 99,
     title: { kk: c.title, ru: c.title, en: c.title }, goal: { kk: c.goal, ru: c.goal, en: c.goal },
@@ -208,7 +228,7 @@
     showTimer = setInterval(() => { showIdx++; paint(); }, 6500);
   }
   function viewHome() {
-    const has = !!st.profile;
+    const has = !!(me() && st.profile);
     const count = f => DRILLS.filter(f).length;
     const kit = [
       count(d => d.equipment === 'nothing'),
@@ -224,7 +244,7 @@
         <h1 class="h1">${esc(t('home.headline'))}</h1>
         <p class="lead">${esc(t('home.intro'))}</p>
         <div class="cta">
-          <a class="btn btn-primary" href="${has ? '#/plan' : '#/start'}">${esc(has ? t('home.continue') : t('home.start'))} →</a>
+          <a class="btn btn-primary" href="#/plan">${esc(has ? t('home.continue') : t('home.start'))} →</a>
           <a class="btn btn-secondary" href="#/library">${esc(t('home.browse'))}</a>
         </div>
         <ul class="facts">${t('home.facts').map(x => `<li>${esc(x)}</li>`).join('')}</ul>
@@ -324,7 +344,7 @@
     st.sessions.forEach(x => { const w = Math.floor(dayDiff(start, x.date) / 7); if (w >= 0 && w < 4) perWeek[w]++; });
     const trainedToday = st.sessions.some(x => x.date === today()) && !Object.keys(cur.done).length;
     const cycleDone = day >= 28;
-    return `<div class="page-head"><div class="eyebrow">${esc(t('plan.eyebrow'))}</div><h1 class="h1">${esc(t('plan.title'))}</h1></div>
+    return `<div class="page-head"><div class="eyebrow">${esc(t('auth.hello', { name: nameOf(me()) }))}</div><h1 class="h1">${esc(t('plan.title'))}</h1></div>
     <div class="plan">
       <div class="card stack plan-today">
         ${cycleDone ? `<p class="notice" style="margin:0">${esc(t('plan.cycleDone'))} <a href="#/tests">${esc(t('nav.tests'))} →</a></p>` : trainedToday ? `<p class="notice" style="margin:0">${esc(t('plan.restToday'))}</p>` : ''}
@@ -429,7 +449,7 @@
         <div class="stack pb">${drillBody(d)}</div>
         <div class="player-side stack ps">
           ${timerCard(d)}
-          <button type="button" class="btn btn-accent btn-block" data-act="drillDone" style="min-height:58px;font-size:17px">✓ ${esc(idx === cur.items.length - 1 ? t('s.finish') : t('s.next'))}</button>
+          <div class="dock"><button type="button" class="btn btn-accent btn-block" data-act="drillDone" style="min-height:58px;font-size:17px">✓ ${esc(idx === cur.items.length - 1 ? t('s.finish') : t('s.next'))}</button></div>
           ${canEasier || canHarder ? `<div class="stack" style="gap:6px"><span class="small muted">${esc(t('s.swapQ'))}</span><div class="row" style="flex-wrap:nowrap">
             <button type="button" class="btn btn-secondary btn-block btn-sm" data-act="swap" data-v="easier" ${canEasier ? '' : 'disabled'}>↓ ${esc(t('s.easier'))}</button>
             <button type="button" class="btn btn-secondary btn-block btn-sm" data-act="swap" data-v="harder" ${canHarder ? '' : 'disabled'}>↑ ${esc(t('s.harder'))}</button>
@@ -534,7 +554,7 @@
 
   // --- library ---
   function viewLibrary() {
-    const f = Object.assign({ track: '', eq: '', lvl: 0 }, st.lib || {});
+    const f = Object.assign({ track: '', eq: '', lvl: 0 }, G.lib || {});
     const list = allDrills().filter(d => (!f.track || d.track === f.track) && (!f.eq || d.equipment === f.eq) && (!f.lvl || d.level === f.lvl));
     const chip = (k, v, label) => `<button type="button" class="chip" data-act="lib" data-k="${k}" data-v="${v}" aria-pressed="${String(f[k]) === String(v) ? 'true' : 'false'}">${esc(label)}</button>`;
     return `<div class="page-head"><div class="eyebrow">${esc(t('lib.eyebrow'))}</div><h1 class="h1">${esc(t('lib.title'))}</h1><p class="lead">${esc(t('lib.intro'))}</p></div>
@@ -544,7 +564,7 @@
         <div class="chips">${chip('lvl', 0, t('lib.anyLvl'))}${[1, 2, 3].map(k => chip('lvl', k, t('d.level') + ' ' + k)).join('')}</div>
       </div>
       <p class="small muted">${esc(t('lib.count', { n: list.length }))}</p>
-      ${list.length ? `<div class="grid">${list.map(dcard).join('')}</div>` : `<p class="notice warn">${esc(t('lib.empty'))}</p>`}`;
+      ${list.length ? `<div class="grid drills">${list.map(dcard).join('')}</div>` : `<p class="notice warn">${esc(t('lib.empty'))}</p>`}`;
   }
 
   // --- tests ---
@@ -629,7 +649,7 @@
         <div class="tree">${TR.map(x => `<section><div class="row between"><b>${esc(L(x.names))}</b>${tag(lv[x.slug] + '/5', 'tag-accent')}</div>
           ${x.nodes.map((n, i) => { const c = i < lv[x.slug] - 1 ? 'm' : i === lv[x.slug] - 1 ? 'c' : 'l'; return `<div class="node ${c}"><i>${c === 'm' ? '✓' : ''}</i><span>${esc(L(n.names))}</span></div>`; }).join('')}</section>`).join('')}</div></section>
       <section class="section stack"><h2 class="h3">${esc(t('p.tests'))}</h2><div class="grid">${TESTS.map(x => { const h = hist(x.slug); const l = h[h.length - 1]; return `<a class="card stack" href="#/test/${x.slug}" style="text-decoration:none"><b>${esc(t('t.names.' + x.slug))}</b>${l ? `<div class="row" style="align-items:baseline"><span class="big-num" style="font-size:36px">${l.value}</span><span class="muted">${esc(unit(x, l.value))}</span>${h.length > 1 ? delta(x, h[h.length - 2].value, l.value) : ''}</div>${spark(h.map(y => y.value))}` : `<span class="muted">${esc(t('t.never'))}</span>`}</a>`; }).join('')}</div></section>
-      <section class="section row"><a class="btn btn-secondary" href="#/start/4">${esc(t('p.reset'))}</a><a class="btn btn-ghost" href="#/video">${esc(t('p.video'))}</a><button type="button" class="btn btn-danger" data-act="wipe">${esc(t('p.wipe'))}</button></section>`;
+      <section class="section row"><a class="btn btn-secondary" href="#/start/4">${esc(t('p.reset'))}</a><a class="btn btn-ghost" href="#/video">${esc(t('p.video'))}</a><button type="button" class="btn btn-danger" data-act="wipe">${esc(t('auth.delete'))}</button></section>`;
   }
 
   // --- contribute ---
@@ -641,7 +661,7 @@
       return `<div class="fin"><div class="burst" aria-hidden="true">🤝</div><h1 class="h1" style="font-size:clamp(34px,7vw,60px)">${esc(t('c.thanksTitle'))}</h1>
         <p class="lead" style="margin:0 auto">${esc(CONTACT_EMAIL ? t('c.thanksEmail') : canShare ? t('c.thanksShare') : t('c.thanksCopy'))}</p>
         <div class="cta" style="justify-content:center">
-          ${CONTACT_EMAIL ? `<a class="btn btn-primary" href="${esc(mailtoFor(st.contrib[0]))}">✉ ${esc(t('c.email'))}</a>` : ''}
+          ${CONTACT_EMAIL ? `<a class="btn btn-primary" href="${esc(mailtoFor(G.contrib[0]))}">✉ ${esc(t('c.email'))}</a>` : ''}
           ${canShare ? `<button type="button" class="btn ${CONTACT_EMAIL ? 'btn-secondary' : 'btn-primary'}" data-act="shareContrib">${esc(t('c.share'))}</button>` : ''}
           <button type="button" class="btn btn-secondary" data-act="copyContrib">${esc(t('c.copy'))}</button>
         </div>
@@ -690,15 +710,15 @@
     ['improves', 'title', 'sport', 'skill', 'age', 'level', 'minutes', 'equipment', 'goal', 'instructions', 'mistakes', 'safety', 'progression', 'regression', 'source', 'author'].forEach(k => { o[k] = String(fd.get(k) || '').trim(); });
     if (!o.title || !o.instructions || !o.author || !fd.get('rights')) { toast(t('c.required')); return; }
     const files = Array.from(form.querySelector('#f-media').files || []).map(f => ({ name: f.name, size: f.size, type: f.type }));
-    st.contrib.unshift(Object.assign(o, { id: Date.now().toString(36), status: 'pending', verify: 'COMMUNITY', files, createdAt: new Date().toISOString(), history: [{ at: new Date().toISOString(), what: 'submitted' }] }));
+    G.contrib.unshift(Object.assign(o, { id: Date.now().toString(36), status: 'pending', verify: 'COMMUNITY', files, createdAt: new Date().toISOString(), history: [{ at: new Date().toISOString(), what: 'submitted' }] }));
     save(); sent = true; render(true);
   }
 
   // --- admin ---
   let editing = null;
   function viewAdmin() {
-    const pend = st.contrib.filter(c => c.status === 'pending' || c.status === 'changes');
-    const done = st.contrib.filter(c => c.status === 'approved' || c.status === 'rejected');
+    const pend = G.contrib.filter(c => c.status === 'pending' || c.status === 'changes');
+    const done = G.contrib.filter(c => c.status === 'approved' || c.status === 'rejected');
     const card = c => {
       const ed = editing === c.id;
       return `<article><div class="row between"><div class="row">${tag(t('a.st.' + c.status), c.status === 'approved' ? 'tag-accent' : c.status === 'rejected' ? '' : 'tag-warn')}${tag(trackName(c.skill))}${c.improves ? tag(t('a.improvement')) : ''}</div><span class="small muted">${esc(new Date(c.createdAt).toLocaleString())}</span></div>
@@ -717,7 +737,7 @@
       ${done.length ? `<section class="section stack"><h2 class="h3">${esc(t('a.approved'))}</h2><div class="adm">${done.map(card).join('')}</div></section>` : ''}`;
   }
   function adminAct(k, id) {
-    const c = st.contrib.find(x => x.id === id); if (!c) return;
+    const c = G.contrib.find(x => x.id === id); if (!c) return;
     const log = what => { c.history = c.history || []; c.history.push({ at: new Date().toISOString(), what }); };
     if (k === 'edit') { editing = id; }
     else if (k === 'save') { c.title = $('#e-title').value.trim() || c.title; c.instructions = $('#e-ins').value.trim() || c.instructions; editing = null; log('edited'); }
@@ -757,6 +777,93 @@
       </div>`;
   }
 
+  // --- players (light sign-in, stored on this device only) ---
+  const AVATARS = ['⚽', '🦁', '🐯', '🦊', '🐺', '🦅', '🐼', '🐸', '🐬', '🐻', '🐱', '🚀'];
+  const COLORS = ['#2e7d53', '#3b62a8', '#df8a1d', '#d9485f', '#7c4dcc', '#0e8a9a'];
+  const hashPin = (id, pin) => { let h = 5381; for (const c of id + ':' + pin) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0; return h.toString(36); };
+  const nameOf = p => (p && p.name) || t('auth.player');
+  const avatar = (p, size) => `<span class="av av-${size || 'md'}" style="--c:${COLORS[(p && p.color) || 0]}" aria-hidden="true">${AVATARS[(p && p.avatar) || 0]}</span>`;
+  let pending = null, nf = null, pinBuf = '', gate = null;
+  function signIn(id) {
+    G.current = id; st = Object.assign({}, DEF, read(PKEY(id)) || {}); save();
+    const next = pending || (st.profile ? '#/plan' : '#/start');
+    pending = null; pinBuf = ''; gate = null;
+    location.hash = next;
+  }
+  function signOut(to) { G.current = null; st = Object.assign({}, DEF); save(); location.hash = to || '#/'; }
+  function viewLogin(arg) {
+    if (arg === 'new' || !G.profiles.length) return viewNewPlayer();
+    if (arg.startsWith('pin/')) return viewPin(arg.slice(4));
+    return `<div class="auth">
+      <div class="auth-head"><h1 class="h1">${esc(t('auth.who'))}</h1><p class="lead">${esc(t('auth.whoHint'))}</p></div>
+      <div class="prof-grid">
+        ${G.profiles.map(p => { const n = ((read(PKEY(p.id)) || {}).sessions || []).length; return `<button type="button" class="prof" data-act="authPick" data-v="${p.id}">${avatar(p, 'lg')}<b>${esc(nameOf(p))}${p.pin ? ' <span class="lock" aria-label="PIN">🔒</span>' : ''}</b><span class="small muted">${esc(t('auth.sessionsN', { n }))}</span></button>`; }).join('')}
+        <a class="prof prof-add" href="#/login/new"><span class="av av-lg av-add" aria-hidden="true">+</span><b>${esc(t('auth.add'))}</b></a>
+      </div></div>`;
+  }
+  function viewNewPlayer() {
+    nf = nf || { name: '', avatar: Math.floor(Math.random() * AVATARS.length), color: Math.floor(Math.random() * COLORS.length), pin: '' };
+    return `<div class="auth"><form class="auth-card" id="nfForm" novalidate>
+      <div class="auth-preview">${avatar(nf, 'xl')}<h1 class="h2">${esc(nf.name || t('auth.newTitle'))}</h1></div>
+      <div class="field"><label for="nf-name">${esc(t('auth.name'))}</label><input id="nf-name" maxlength="20" autocomplete="off" placeholder="${esc(t('auth.namePh'))}" value="${esc(nf.name)}"><small>${esc(t('auth.nameHint'))}</small></div>
+      <div class="field"><span class="lbl">${esc(t('auth.avatar'))}</span><div class="av-grid" role="group">${AVATARS.map((a, i) => `<button type="button" class="av-pick" data-act="nfAvatar" data-v="${i}" aria-pressed="${i === nf.avatar}" aria-label="${a}" style="--c:${COLORS[nf.color]}">${a}</button>`).join('')}</div></div>
+      <div class="field"><span class="lbl">${esc(t('auth.color'))}</span><div class="sw-row" role="group">${COLORS.map((c, i) => `<button type="button" class="sw" data-act="nfColor" data-v="${i}" aria-pressed="${i === nf.color}" style="--c:${c}" aria-label="${c}"></button>`).join('')}</div></div>
+      <div class="field"><label for="nf-pin">${esc(t('auth.pin'))}</label><input id="nf-pin" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="• • • •" value="${esc(nf.pin)}"><small>${esc(t('auth.pinHint'))}</small></div>
+      <button type="submit" class="btn btn-accent btn-block" style="min-height:54px;font-size:17px">${esc(t('auth.create'))} →</button>
+      ${G.profiles.length ? `<a class="btn btn-ghost" href="#/login">← ${esc(t('auth.back'))}</a>` : ''}
+    </form></div>`;
+  }
+  function createPlayer() {
+    const name = (nf.name || '').trim(), pin = (nf.pin || '').trim();
+    if (!name) { toast(t('auth.nameReq')); const i = $('#nf-name'); if (i) i.focus(); return; }
+    if (pin && !/^\d{4}$/.test(pin)) { toast(t('auth.pinBad')); return; }
+    const id = uid();
+    G.profiles.push({ id, name, avatar: nf.avatar, color: nf.color, pin: pin ? hashPin(id, pin) : null, createdAt: new Date().toISOString() });
+    nf = null;
+    signIn(id);
+  }
+  function viewPin(id) {
+    const p = G.profiles.find(x => x.id === id);
+    if (!p) { location.replace('#/login'); return ''; }
+    return `<div class="auth auth-narrow">
+      <div class="auth-preview">${avatar(p, 'xl')}<h1 class="h2">${esc(t('auth.hello', { name: nameOf(p) }))}</h1><p class="muted" style="margin:0">${esc(t('auth.enterPin'))}</p></div>
+      <div class="pin-dots" id="pinDots" aria-live="polite">${[0, 1, 2, 3].map(i => `<i class="${i < pinBuf.length ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="keypad">${['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map(k => k ? `<button type="button" data-act="pinKey" data-v="${k}" data-k="${id}" aria-label="${k === '⌫' ? 'delete' : k}">${k}</button>` : '<span></span>').join('')}</div>
+      ${gate ? `<div class="card stack" style="width:100%"><label for="gateIn" class="small">${esc(t('auth.gate', gate))}</label><div class="row" style="flex-wrap:nowrap"><input id="gateIn" class="pin-input" inputmode="numeric" maxlength="3" style="flex:1"><button type="button" class="btn btn-primary" data-act="gateOk" data-v="${id}">${esc(t('auth.gateBtn'))}</button></div></div>`
+        : `<button type="button" class="btn btn-ghost btn-sm" data-act="pinForgot">${esc(t('auth.forgot'))}</button>`}
+      <a class="btn btn-ghost btn-sm" href="#/login">← ${esc(t('auth.back'))}</a>
+    </div>`;
+  }
+  function pinKey(k, id) {
+    const p = G.profiles.find(x => x.id === id); if (!p) return;
+    if (k === '⌫') pinBuf = pinBuf.slice(0, -1); else if (pinBuf.length < 4) pinBuf += k;
+    const dots = $('#pinDots');
+    if (dots) dots.innerHTML = [0, 1, 2, 3].map(i => `<i class="${i < pinBuf.length ? 'on' : ''}"></i>`).join('');
+    if (pinBuf.length === 4) {
+      if (hashPin(id, pinBuf) === p.pin) { signIn(id); return; }
+      pinBuf = '';
+      if (dots) { dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake'); setTimeout(() => { dots.innerHTML = '<i></i><i></i><i></i><i></i>'; }, 350); }
+      try { if (navigator.vibrate) navigator.vibrate(120); } catch (e) { /* no vibration */ }
+      toast(t('auth.wrongPin'));
+    }
+  }
+  function meMenu() {
+    const box = $('#me'); if (!box) return;
+    const p = me();
+    box.innerHTML = p
+      ? `<button type="button" class="me-btn" data-act="meToggle" aria-haspopup="true" aria-expanded="false">${avatar(p, 'sm')}<span class="me-name">${esc(nameOf(p))}</span></button>
+        <div class="menu" id="meMenu" hidden>
+          <div class="menu-head">${avatar(p, 'md')}<b>${esc(nameOf(p))}</b></div>
+          <a href="#/progress">${esc(t('auth.menuProgress'))}</a>
+          ${installEvt ? `<button type="button" data-act="installApp">${esc(t('auth.install'))}</button>` : ''}
+          <button type="button" data-act="authSwitch">${esc(t('auth.switch'))}</button>
+          <button type="button" data-act="authLogout">${esc(t('auth.logout'))}</button>
+        </div>`
+      : `<a class="btn btn-secondary btn-sm me-in" href="#/login">${esc(t('auth.signin'))}</a>`;
+  }
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; meMenu(); });
+
   function fallbackCopy(txt, done) {
     const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
@@ -765,8 +872,8 @@
   }
 
   // ---------- router ----------
-  const ROUTES = { '': viewHome, start: viewStart, plan: viewPlan, session: viewSession, done: viewDone, drill: viewDrill, library: viewLibrary, tests: viewTests, test: viewTest, progress: viewProgress, contribute: viewContribute, admin: viewAdmin, video: viewVideo };
-  const NAV = { '': 'home', start: 'train', plan: 'train', session: 'train', done: 'train', drill: 'library', library: 'library', tests: 'tests', test: 'tests', progress: 'progress', contribute: 'contribute', admin: 'admin', video: 'progress' };
+  const ROUTES = { login: viewLogin, '': viewHome, start: viewStart, plan: viewPlan, session: viewSession, done: viewDone, drill: viewDrill, library: viewLibrary, tests: viewTests, test: viewTest, progress: viewProgress, contribute: viewContribute, admin: viewAdmin, video: viewVideo };
+  const NAV = { login: 'train', '': 'home', start: 'train', plan: 'train', session: 'train', done: 'train', drill: 'library', library: 'library', tests: 'tests', test: 'tests', progress: 'progress', contribute: 'contribute', admin: 'admin', video: 'progress' };
   let queue = [], lastRoute = null;
   const after = fn => queue.push(fn);
   function parse() { const h = location.hash.replace(/^#\/?/, ''); const i = h.indexOf('/'); return i < 0 ? { r: h, arg: '' } : { r: h.slice(0, i), arg: decodeURIComponent(h.slice(i + 1)) }; }
@@ -776,6 +883,11 @@
     document.title = t('title');
     $$('.sheet').forEach(x => x.remove());
     const { r, arg } = parse();
+    if (['start', 'plan', 'session', 'done', 'progress', 'tests', 'test', 'video'].includes(r) && !me()) {
+      pending = location.hash; location.replace('#/login'); return;
+    }
+    if (r === 'login' && !arg.startsWith('pin/')) pinBuf = '';
+    document.body.dataset.route = r || 'home';
     if (r !== 'contribute') sent = false;
     if (r !== 'start') ob = null;
     queue = [];
@@ -789,6 +901,8 @@
     $$('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === cur ? 'page' : 'false'));
     $$('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang ? 'true' : 'false'));
     $$('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+    const sel = $('#langSel'); if (sel) sel.value = lang;
+    meMenu();
     queue.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
     const key = r + '/' + arg;
     if (!keepScroll && key !== lastRoute) window.scrollTo(0, 0);
@@ -798,7 +912,7 @@
 
   // ---------- events ----------
   const ACT = {
-    lang(v) { lang = v; st.lang = v; save(); render(true); },
+    lang(v) { lang = v; G.lang = v; save(); render(true); },
     obSet(v, k) { ob.p[k] = isNaN(+v) ? v : +v; const adv = k === 'age' || k === 'goal'; if (adv) ob.step++; render(true); if (adv) window.scrollTo(0, 0); },
     obToggle(v, k) { ob.p[k] = !ob.p[k]; if (k !== 'ball' && ob.p[k] && (k === 'wall' || k === 'cones')) ob.p.ball = true; if (k === 'ball' && !ob.p.ball) { ob.p.wall = false; ob.p.cones = false; } render(true); },
     obLevel(v, k) { ob.lv[k] = +v; render(true); },
@@ -806,7 +920,7 @@
     obBack() { ob.step = Math.max(0, ob.step - 1); render(false); window.scrollTo(0, 0); },
     obBuild() { st.profile = Object.assign({}, ob.p); st.levels = Object.assign({}, ob.lv); st.xp = {}; st.current = null; st.planStart = today(); save(); ob = null; location.hash = '#/plan'; },
     newPlan() { st.planStart = today(); st.current = null; save(); render(false); },
-    libTrack(v) { st.lib = { track: v, eq: '', lvl: 0 }; save(); location.hash = '#/library'; },
+    libTrack(v) { G.lib = { track: v, eq: '', lvl: 0 }; save(); location.hash = '#/library'; },
     animSlow(v, k, el) { const a = el.closest('.anim-wrap').querySelector('.anim').__fc; const on = el.getAttribute('aria-pressed') !== 'true'; a.setSpeed(on ? 0.5 : 1); el.setAttribute('aria-pressed', String(on)); },
     animPause(v, k, el) { const a = el.closest('.anim-wrap').querySelector('.anim').__fc; const playing = a.toggle(); el.setAttribute('aria-pressed', String(!playing)); el.textContent = playing ? '❚❚' : '▶'; },
     timer() { toggleTimer(); },
@@ -815,7 +929,7 @@
     swap(v) { swapDrill(v); },
     drillDone() { openRate(); },
     rate(v) { rateDrill(v); },
-    lib(v, k) { st.lib = Object.assign({}, st.lib, { [k]: k === 'lvl' ? +v : v }); save(); render(true); },
+    lib(v, k) { G.lib = Object.assign({}, G.lib, { [k]: k === 'lvl' ? +v : v }); save(); render(true); },
     tv(v) { const i = $('#tv'); const n = Math.max(0, (parseFloat(String(i.value).replace(',', '.')) || 0) + +v); i.value = String(Math.round(n * 10) / 10); },
     saveTest(slug) {
       const x = TESTS.find(y => y.slug === slug), v = parseFloat(String($('#tv').value).replace(',', '.'));
@@ -834,9 +948,9 @@
     swReset() { stopSw(); const el = $('#sw'); if (el) el.textContent = '0.0'; },
     another() { sent = false; render(false); },
     back() { if (history.length > 1) history.back(); else location.hash = '#/library'; },
-    shareContrib() { const c = st.contrib[0]; if (c && navigator.share) navigator.share({ title: t('c.subject'), text: contribText(c) }).catch(() => {}); },
+    shareContrib() { const c = G.contrib[0]; if (c && navigator.share) navigator.share({ title: t('c.subject'), text: contribText(c) }).catch(() => {}); },
     copyContrib() {
-      const txt = contribText(st.contrib[0]);
+      const txt = contribText(G.contrib[0]);
       const done = () => toast(t('c.copied'));
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, done));
       else fallbackCopy(txt, done);
@@ -845,7 +959,25 @@
     vtrack(v) { vid.track = v; vid.ans = {}; render(true); },
     vans(v, k) { vid.ans[k] = v; render(true); },
     vclear() { if (vid.url) URL.revokeObjectURL(vid.url); vid.url = null; render(true); },
-    wipe() { if (confirm(t('p.wipeQ'))) { const l = st.lang; st = Object.assign({}, DEF, { lang: l }); save(); location.hash = '#/'; render(false); } },
+    wipe() {
+      const p = me(); if (!p || !confirm(t('auth.deleteQ', { name: nameOf(p) }))) return;
+      try { localStorage.removeItem(PKEY(p.id)); } catch (e) { /* ignore */ }
+      G.profiles = G.profiles.filter(x => x.id !== p.id); signOut('#/');
+    },
+    authPick(v) { const p = G.profiles.find(x => x.id === v); if (!p) return; if (p.pin) { pinBuf = ''; gate = null; location.hash = '#/login/pin/' + v; } else signIn(v); },
+    nfAvatar(v) { nf.avatar = +v; render(true); },
+    nfColor(v) { nf.color = +v; render(true); },
+    pinKey(v, k) { pinKey(v, k); },
+    pinForgot() { const a = 3 + Math.floor(Math.random() * 6), b = 4 + Math.floor(Math.random() * 5); gate = { a, b, ans: a * b }; render(true); const i = $('#gateIn'); if (i) i.focus(); },
+    gateOk(v) {
+      const i = $('#gateIn'), p = G.profiles.find(x => x.id === v);
+      if (!i || !p || !gate) return;
+      if (+i.value === gate.ans) { p.pin = null; save(); signIn(v); } else { toast(t('auth.gateWrong')); i.value = ''; }
+    },
+    meToggle(v, k, el) { const m = $('#meMenu'); if (!m) return; m.hidden = !m.hidden; el.setAttribute('aria-expanded', String(!m.hidden)); },
+    authSwitch() { signOut('#/login'); },
+    authLogout() { signOut('#/'); },
+    installApp() { if (!installEvt) return; installEvt.prompt(); installEvt.userChoice.finally(() => { installEvt = null; meMenu(); }); },
   };
   document.addEventListener('click', e => {
     const el = e.target.closest('[data-act]');
@@ -854,11 +986,26 @@
     if (fn) { e.preventDefault(); fn(el.dataset.v, el.dataset.k, el); }
   });
   document.addEventListener('change', e => {
+    if (e.target.id === 'langSel') { ACT.lang(e.target.value); return; }
     if (e.target.id === 'vfile' && e.target.files && e.target.files[0]) { if (vid.url) URL.revokeObjectURL(vid.url); vid.url = URL.createObjectURL(e.target.files[0]); render(true); }
-    if (e.target.dataset && e.target.dataset.actChange === 'verify') { const c = st.contrib.find(x => x.id === e.target.dataset.v); if (c) { c.verify = e.target.value; save(); toast('✓ ' + t('a.levels')[Math.max(0, VERIFY.indexOf(c.verify))]); } }
+    if (e.target.dataset && e.target.dataset.actChange === 'verify') { const c = G.contrib.find(x => x.id === e.target.dataset.v); if (c) { c.verify = e.target.value; save(); toast('✓ ' + t('a.levels')[Math.max(0, VERIFY.indexOf(c.verify))]); } }
   });
-  document.addEventListener('submit', e => { if (e.target.id === 'cform') { e.preventDefault(); submitContribution(e.target); } });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { const s = $('.sheet'); if (s) s.remove(); } });
+  document.addEventListener('submit', e => {
+    if (e.target.id === 'cform') { e.preventDefault(); submitContribution(e.target); }
+    if (e.target.id === 'nfForm') { e.preventDefault(); createPlayer(); }
+  });
+  document.addEventListener('input', e => {
+    if (!nf) return;
+    if (e.target.id === 'nf-name') { nf.name = e.target.value; const h = $('.auth-preview h1'); if (h) h.textContent = nf.name || t('auth.newTitle'); }
+    if (e.target.id === 'nf-pin') { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); nf.pin = e.target.value; }
+  });
+  document.addEventListener('click', e => { const m = $('#meMenu'); if (m && !m.hidden && !e.target.closest('#me')) m.hidden = true; });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { const s = $('.sheet'); if (s) s.remove(); const m = $('#meMenu'); if (m) m.hidden = true; }
+    const pinView = location.hash.startsWith('#/login/pin/');
+    if (pinView && /^[0-9]$/.test(e.key) && !(e.target && e.target.id === 'gateIn')) pinKey(e.key, location.hash.split('/').pop());
+    if (pinView && e.key === 'Backspace' && !(e.target && e.target.id === 'gateIn')) pinKey('⌫', location.hash.split('/').pop());
+  });
 
   // ---------- boot ----------
   document.getElementById('tabbar').innerHTML = [['plan', 'train'], ['library', 'library'], ['tests', 'tests'], ['progress', 'progress']]

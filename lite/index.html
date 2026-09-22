@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Первый тренер — бесплатная футбольная школа для детей</title>
   <meta name="description" content="Бесплатные футбольные тренировки для детей: 60 упражнений с анимацией, план на 4 недели, тесты и прогресс. Без регистрации, на казахском, русском и английском.">
-  <meta name="theme-color" content="#101815">
+  <meta name="theme-color" content="#f4f3ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Первый тренер">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta property="og:title" content="Первый тренер — бесплатная футбольная школа">
   <meta property="og:description" content="Бесплатные футбольные тренировки для детей: план, анимации упражнений, тесты. Без регистрации.">
   <meta property="og:image" content="https://first-coach-production.up.railway.app/icons/og.png">
@@ -18,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap">
-  <link rel="stylesheet" href="css/app.css?v=10">
+  <link rel="stylesheet" href="css/app.css?v=12">
 </head>
 <body>
   <header class="topbar">
@@ -38,15 +41,19 @@
       <button type="button" data-act="lang" data-v="ru" data-lang="ru">РУС</button>
       <button type="button" data-act="lang" data-v="en" data-lang="en">ENG</button>
     </div>
+    <label class="lang-select"><span class="sr">Тіл · Язык · Language</span>
+      <select id="langSel"><option value="kk">ҚАЗ</option><option value="ru">РУС</option><option value="en">ENG</option></select>
+    </label>
+    <div class="me" id="me"></div>
   </header>
 
   <main id="app" tabindex="-1"></main>
 
   <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 
-  <script src="js/data.js?v=10"></script>
-  <script src="js/i18n.js?v=10"></script>
-  <script src="js/anim.js?v=10"></script>
-  <script src="js/app.js?v=10"></script>
+  <script src="js/data.js?v=12"></script>
+  <script src="js/i18n.js?v=12"></script>
+  <script src="js/anim.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
 </body>
 </html>
