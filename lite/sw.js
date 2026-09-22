@@ -1,7 +1,7 @@
 /* FIRST COACH service worker: cache the whole app so it opens offline after the first visit. */
-const CACHE = 'first-coach-lite-v15';
+const CACHE = 'first-coach-lite-v17';
 const ASSETS = [
-  './', 'index.html', 'css/app.css?v=15', 'js/data.js?v=15', 'js/i18n.js?v=15', 'js/anim.js?v=15', 'js/app.js?v=15', 'commons.json',
+  './', 'index.html', 'css/app.css?v=17', 'js/data.js?v=17', 'js/i18n.js?v=17', 'js/anim.js?v=17', 'js/app.js?v=17', 'commons.json',
   'manifest.webmanifest', 'icons/favicon.svg', 'icons/pwa-192x192.png', 'icons/pwa-512x512.png', 'icons/maskable-512x512.png',
 ];
 
