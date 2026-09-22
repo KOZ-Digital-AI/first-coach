@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FIRST COACH · Бірінші бапкер</title>
+  <meta name="description" content="Бесплатная открытая спортивная школа: 60 упражнений с анимацией, персональный план, тесты и прогресс. Every child deserves a great first coach.">
+  <meta name="theme-color" content="#101815">
+  <meta property="og:title" content="FIRST COACH · Бірінші бапкер">
+  <meta property="og:description" content="Every child deserves a great first coach. Free, open football training for every child in Kazakhstan.">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/pwa-192x192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap">
+  <link rel="stylesheet" href="css/app.css?v=7">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="FIRST COACH">
+      <img src="icons/favicon.svg" alt="" width="36" height="36">
+      <span><b>FIRST COACH</b><small>БІРІНШІ БАПКЕР</small></span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#/plan" data-nav="train" data-t="nav.train"></a>
+      <a href="#/library" data-nav="library" data-t="nav.library"></a>
+      <a href="#/tests" data-nav="tests" data-t="nav.tests"></a>
+      <a href="#/progress" data-nav="progress" data-t="nav.progress"></a>
+      <a href="#/contribute" data-nav="contribute" data-t="nav.contribute"></a>
+    </nav>
+    <div class="langs" role="group" aria-label="Language">
+      <button type="button" data-act="lang" data-v="kk" data-lang="kk">KZ</button>
+      <button type="button" data-act="lang" data-v="ru" data-lang="ru">RU</button>
+      <button type="button" data-act="lang" data-v="en" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <footer class="footer">
+    <span><b>FIRST COACH</b> · <span data-t="foot.made"></span></span>
+    <span data-t="foot.software"></span>
+    <span><a href="#/contribute" data-t="nav.contribute"></a> · <a href="#/video" data-t="nav.video"></a> · <a href="#/admin" data-t="nav.admin"></a></span>
+  </footer>
+
+  <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+
+  <script src="js/data.js?v=7"></script>
+  <script src="js/i18n.js?v=7"></script>
+  <script src="js/anim.js?v=7"></script>
+  <script src="js/app.js?v=7"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "FIRST COACH · Бірінші бапкер",
+  "short_name": "FIRST COACH",
+  "description": "Every child deserves a great first coach. Free, open football training.",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f3ee",
+  "theme_color": "#101815",
+  "icons": [
+    { "src": "icons/pwa-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/pwa-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
