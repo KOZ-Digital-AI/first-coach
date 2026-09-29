@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { pwaOptions } from '../vite.config';
 
-// : the precache must not contain the self-hosted pose model or the MediaPipe WASM runtime (~970 KB of
+// the precache must not contain the self-hosted pose model or the MediaPipe WASM runtime (~970 KB of
 // vision_wasm_*.js plus the .wasm files). The /video route fetches them over the network when it is opened.
 //
 // Reading of "matches globIgnores": a dist-relative file is left out of the precache when ANY globIgnores pattern

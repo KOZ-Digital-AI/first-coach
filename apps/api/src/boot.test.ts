@@ -321,7 +321,7 @@ describe("runBootHooks", () => {
   });
 
   test("without a dir argument, every *.boot.ts present in src/boot is run", async () => {
-    // Positive, open-world check: later beads add hooks there, so only assert
+    // Positive, open-world check: later modules add hooks there, so only assert
     // that whatever is on disk is discovered (vacuous when the dir is absent;
     // the test above pins where the default directory points).
     let onDisk: string[] = [];

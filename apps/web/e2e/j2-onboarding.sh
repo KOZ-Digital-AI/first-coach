@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j2-onboarding.sh: slice gate , journey J2 "a player onboards without signup, takes baseline
+# apps/web/e2e/j2-onboarding.sh: journey J2 "a player onboards without signup, takes baseline
 # skill tests and gets a roadmap". Integration proof on the REAL stack (real API process, real SQLite file with the real
 # seed, the real built web app served by the API, a real browser; nothing mocked, no OpenAI key needed):
 #   A. WEB   a fresh visitor (no cookie) presses START TRAINING on the landing page and answers the wizard in the browser:

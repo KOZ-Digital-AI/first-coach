@@ -53,7 +53,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
 
 const MINE_KEY = ['contributions', 'mine'] as const;
 const RETURN_PATH = '/contribute/mine';
-/** Where the contribute form (for a new contribution) lives. Owned by a sibling bead. */
+/** Where the contribute form (for a new contribution) lives. Owned by a sibling route. */
 const FORM_PATH = '/contribute';
 
 /** The states in which the owner can still withdraw (the API answers 409 otherwise). */

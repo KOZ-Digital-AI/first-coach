@@ -15,7 +15,7 @@ import { DEFAULT_LOCALE, toLocale } from '../../lib/i18n';
  * Onboarding step: baseline skill tests. Presentational and controlled: the tests come from props (the
  * onboarding options), the draft lives in the parent, nothing is fetched here.
  *
- * Readings chosen where the bead is silent (also reported to the parent):
+ * Readings chosen where the requirements are silent (also reported to the parent):
  *  - Draft entries exist only for a test that is skipped or has been touched. `value: null` with
  *    `skipped: false` means "not measured yet" (blank or unparsable box). A skipped test carries
  *    `value: 0` because the contract makes `value` required (the server then uses the self level).

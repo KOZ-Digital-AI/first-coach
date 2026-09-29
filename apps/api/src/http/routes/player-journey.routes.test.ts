@@ -18,7 +18,7 @@ import type { SessionEvent } from "../../shared/session";
 // migrated with the real migrations and loaded with the REAL football seed (config/commons), with the REAL
 // Better Auth handler mounted next to the route under test. Sessions are real cookies from /api/auth/*
 // (anonymous players and a sign-up); nothing is faked. Sessions and events are written by the merged
-// ingestEvents; profiles, roadmaps and test results are rows (the profile repository is another bead's).
+// ingestEvents; profiles, roadmaps and test results are rows (the profile repository is another module's).
 //
 // The clock is pinned with setSystemTime (the route reads `new Date()`), so "today" is NOW for every test.
 //

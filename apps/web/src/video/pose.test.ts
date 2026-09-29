@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import { POSE_MODEL_FILE, WASM_FILES } from '../../../../scripts/fetch-pose-model';
 import type { PoseLandmarkerLike, PoseVideo, PoseVisionModule } from './pose';
 
-// : lazy pose landmarker loader. Nothing here loads the real @mediapipe/tasks-vision package, the real model or
+// Lazy pose landmarker loader. Nothing here loads the real @mediapipe/tasks-vision package, the real model or
 // the network: the package is replaced by a recording fake (through the injected importer, and through mock.module for the
 // one test that exercises the default dynamic import), and the <video> is a fake that fires `seeked` like a browser does.
 

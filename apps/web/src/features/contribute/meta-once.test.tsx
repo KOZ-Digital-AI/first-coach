@@ -18,7 +18,7 @@ if (typeof document === 'undefined') {
 const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@testing-library/react');
 
 /*
- * Contract under test (, found by the j5 gate: 1 of 3 cold runs saw GET /api/contribute/meta TWICE before the POST,
+ * Contract under test (found by a gate run: 1 of 3 cold runs saw GET /api/contribute/meta TWICE before the POST,
  * 3 non-auth /api calls against a budget of 2): the form's GET /api/contribute/meta happens exactly once per visit.
  *
  * Why it fired twice. The screen hides the form whenever the session is being re-read (a Better Auth refetch keeps the PREVIOUS

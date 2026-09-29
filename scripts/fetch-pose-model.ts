@@ -1,4 +1,4 @@
-// : downloads the MediaPipe pose_landmarker_lite .task model and the @mediapipe/tasks-vision WASM files into
+// downloads the MediaPipe pose_landmarker_lite .task model and the @mediapipe/tasks-vision WASM files into
 // apps/web/public/mediapipe (git-ignored), so the Beta AI Video Coach is self-hosted: no third-party CDN at run time.
 //
 // Run by apps/web's `prebuild` script (`bun ../../scripts/fetch-pose-model.ts`), so `bun run build` fetches them first.

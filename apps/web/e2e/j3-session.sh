@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j3-session.sh: slice gate , journey J3 "a player trains today's session and records results".
+# apps/web/e2e/j3-session.sh: journey J3 "a player trains today's session and records results".
 # Integration proof on the REAL stack (real API process, real SQLite file with the real seed, the real built web app served by
 # the API, a real browser; nothing mocked, no OpenAI key needed). The journey starts from an ONBOARDED player made through the
 # UI (the J2 wizard, run 1: age 12, Basic, weak foot, "Ball + wall", yard, no partner, 3 days, 20 min) and then:
@@ -57,7 +57,7 @@
 #     DONE drills are DEPRIORITISED, not banned). The result NUMBER is stored but the picker does not read it (skill-test
 #     results are a separate flow). HISTORY: per player the later session is a different drill SET from day 1, and over the
 #     browser player plus the 5-player cohort repeated drills / later-session drills stays under 40 % (numbers printed). A
-#     per-player "no repeat at all" is NOT asserted: at short budgets the seed pool is small (backlog ) and the player id
+#     per-player "no repeat at all" is NOT asserted: at short budgets the seed pool is small and the player id
 #     seeds the tie-break, so a legitimate repeat would make the gate flaky.
 # Fail-slow (no set -e): every step reports. Cleanup: e2e_defer (never `trap ... EXIT` after sourcing lib.sh).
 # Ports: the API gets a free kernel-assigned port (lib.sh start_stack); nothing is ever bound to :4111 or :5173 and no process
@@ -207,7 +207,7 @@ run_wizard() {
 
 # --- "reflects the recorded results": the done-history rule ---------------------------------------------------------------------
 # The planner DEPRIORITISES the drills done in a player's previous 2 sessions; it does not ban them ("used only when nothing else
-# fits", session.ts rule 3), and the seed pool is small at short budgets (backlog ), so a repeat is legitimate and depends on
+# fits", session.ts rule 3), and the seed pool is small at short budgets, so a repeat is legitimate and depends on
 # the player id (it seeds the tie-break). A per-player "none repeat" would be a flaky gate. What the rule DOES guarantee, and what
 # this gate asserts instead:
 #   (a) per player: the later session is a different drill SET from day 1 (whenever day 1 had at least 2 drills);

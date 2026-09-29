@@ -63,7 +63,7 @@ python3 lite/build_data.py
 ```
 
 Полная платформа (`apps/`) запускается через [Bun](https://bun.sh): `bun install`, `cp .env.example .env`, `bun run dev`.
-Подробности — в [английском README](README.md#run-locally) и в [docs/runbook.md](docs/runbook.md).
+Подробности — в [английском README](README.md#run-locally).
 
 ## Как добавить упражнение (без GitHub)
 

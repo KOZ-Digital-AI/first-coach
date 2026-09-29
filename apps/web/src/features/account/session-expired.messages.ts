@@ -1,7 +1,7 @@
 import type { MessageBundle } from '../../lib/i18n';
 
 // Shown as a toast when a coach/admin session ends, just before the redirect to sign-in. Namespace `session-expired`.
-// The English text is fixed by the bead. Kazakh text still needs a native review.
+// The English text is fixed. Kazakh text still needs a native review.
 export default {
   kk: {
     message: 'Сессия аяқталды — қайта кіріңіз',

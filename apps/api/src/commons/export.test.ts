@@ -334,7 +334,9 @@ describe("buildExport: published drills, current versions, stored text", () => {
 
   test("a drill exports its CURRENT version: content, versionId, semver, and the history behind it", () => {
     const slug = firstSlug();
-    const versionId = addVersion(slug, "1.0.1", `json_set(content, '$.goal.en', 'Edited goal')`, "2026-09-22T10:00:00.000Z");
+    // Newer than the seeded 1.0.0, whose created_at is the real clock at load time: a fixed date here goes stale.
+    const later = new Date(Date.now() + 86_400_000).toISOString();
+    const versionId = addVersion(slug, "1.0.1", `json_set(content, '$.goal.en', 'Edited goal')`, later);
 
     const drill = drillsOf(buildExport(db)).find((each) => each.slug === slug);
 

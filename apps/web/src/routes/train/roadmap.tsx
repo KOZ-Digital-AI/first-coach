@@ -42,10 +42,10 @@ import { describeProblem, ApiProblem, type Translate } from '../../lib/problem';
  *    humanised), never blank and never a raw key.
  *  - With a saved plan and a failed refresh, the plan stays on screen with a notice ("Showing your last saved roadmap") and
  *    Try again; the fetch runs with networkMode 'always' so an offline refresh fails at once instead of waiting forever.
- *  - Nothing here compares the player with anyone, and nothing promises a professional career (PRODUCT.md).
+ *  - Nothing here compares the player with anyone, and nothing promises a professional career.
  *  - Only `Route` and the small RoadmapDepsContext seam are exported (the route splitter keeps every other export in the entry
  *    chunk, and this page pulls zod, the auth client and the API client, which belong in the lazy chunk; see onboarding.tsx).
- *  - The DESIGN.md roadmap item keeps its 3px Field Green left edge (its "only directional accent").
+ *  - The roadmap item keeps its 3px Field Green left edge (its "only directional accent").
  */
 
 const ME_KEY = ['me'] as const;

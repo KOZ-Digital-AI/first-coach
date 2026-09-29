@@ -16,7 +16,7 @@ import errorPagesMessages from './error-pages.messages';
 import { AppShell, Shell } from './Shell';
 import shellMessages from './shell.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. It verifies from the
 // repo root, where there is no DOM, so register happy-dom here BEFORE Testing Library is imported (same rule and guard
 // as features/shell/shell.test.tsx).
 if (typeof document === 'undefined') {

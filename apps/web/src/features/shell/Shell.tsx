@@ -13,10 +13,10 @@ import { signInUrl } from '../account/session-expired';
 
 /**
  * The app shell: every page is wrapped in it by routes/__root.tsx. Layout follows the prototype (first-coach-demo.html) and
- * DESIGN.md (Navigation, Layout): a sticky blurred paper header, the primary navigation, a footer, and, under 900px, a
+ * Design (Navigation, Layout): a sticky blurred paper header, the primary navigation, a footer, and, under 900px, a
  * bottom tab bar in place of the top navigation. Light theme only: there is no theme switch.
  *
- * Extension points for later beads (nobody edits this file to add UI):
+ * Extension points for later features (nobody edits this file to add UI):
  * - `features/<name>/header-extra.tsx` (slot `header`): rendered in the header, in module-path order, inside
  *   `<div data-slot="header">`. The language switch (features/i18n) and the account menu use it. Components arrive with their
  *   own padding; the region adds none.
@@ -33,11 +33,11 @@ import { signInUrl } from '../account/session-expired';
  *   `isAdminSession`, the same rule as the API guard (`requireAdmin`); it only decides what to SHOW, the server still refuses.
  * - Build version: the web build carries no version of its own (the Dockerfile sets BUILD_VERSION for the API process), so
  *   `AppShell` asks `GET /health`, which reports it. Offline or unavailable: the version line is simply left out.
- * - Privacy settings (/settings/privacy, ): a footer link beside the legal ones, shown to every visitor (the shell
+ * - Privacy settings (/settings/privacy): a footer link beside the legal ones, shown to every visitor (the shell
  *   knows no session kind, and a guest already has a player). A calm secondary entry: it is deliberately not a primary or tab-bar
  *   item, so it never competes with training. The label lives in nav-links.messages.ts. Video Coach · Beta (/video) was already
  *   the last item of both navigations (after Train), where the existing shell tests pin it.
- * - Nav destinations are plain strings, not literal route paths: the route beads that own /train, /commons, /contribute,
+ * - Nav destinations are plain strings, not literal route paths: the routes that own /train, /commons, /contribute,
  *   /progress, /video and /admin have not all landed, and a literal `to` for a missing route does not typecheck. They are
  *   still real router links (client-side navigation, `aria-current`).
  *
@@ -69,7 +69,7 @@ const PATHS: Record<'home' | 'admin' | 'privacy' | 'privacySettings' | 'terms' |
   recover: '/recover',
 };
 
-/** Container from DESIGN.md Layout: min(1180px, 100% - 40px), 100% - 24px on phones. */
+/** Container from the design layout rule: min(1180px, 100% - 40px), 100% - 24px on phones. */
 const CONTAINER = 'mx-auto w-[calc(100%-24px)] max-w-295 sm:w-[calc(100%-40px)]';
 
 /** The three navigation tiers of the auth gate (§3.1). Fail closed: an unread or absent session is `visitor`. */
@@ -169,13 +169,13 @@ export interface ShellProps {
   };
 }
 
-// Every link is at least 44px tall (DESIGN.md tap targets). The focus ring is the global :focus-visible rule in app.css.
+// Every link is at least 44px tall (design rule: tap targets). The focus ring is the global :focus-visible rule in app.css.
 // whitespace-nowrap: the top navigation must never squeeze a link's own text onto two lines ("Open Commons",
 // "Video Coach · Beta"); the row it sits in has its own no-wrap rule below instead.
 const TOP_LINK =
   'relative inline-flex min-h-tap items-center whitespace-nowrap rounded-control px-0.5 font-bold text-ink hover:bg-ink/5 motion-safe:transition-colors';
-// The one primary action a visitor sees (DESIGN.md: one primary action per view; button-primary: Ink fill, white text,
-// rounded-control, 44px). whitespace-nowrap for the same reason as TOP_LINK (: the header row never wraps).
+// The one primary action a visitor sees (design rule: one primary action per view; button-primary: Ink fill, white text,
+// rounded-control, 44px). whitespace-nowrap for the same reason as TOP_LINK (the header row never wraps).
 const START_TOP_LINK =
   'relative inline-flex min-h-tap items-center whitespace-nowrap rounded-control border border-ink bg-ink px-4 font-bold text-white hover:bg-ink/90 motion-safe:transition-colors';
 const TAB_LINK =
@@ -254,13 +254,13 @@ export function Shell({ children, tier = 'visitor', isAdmin = false, version, sl
           </Link>
 
           {/*
-           *  - desktop-nav breakpoint raised from 900px to 1220px (below it the nav stays `hidden` and the
+           * desktop-nav breakpoint raised from 900px to 1220px (below it the nav stays `hidden` and the
            * bottom tab bar carries navigation instead; keep this in lockstep with the tab bar's min-[1220px]:hidden
            * further down and the admin link's min-[1220px]:ms-0 beside it). Measured live (playwright, real browser,
            * apps/web dev server) with nowrap links, the compacted language switch and the tightened paddings/gaps
            * above and below: the header row's own natural (unconstrained) content width is 1030px (kk), 938px (en)
-           * and 1160px (ru, the widest - longer Cyrillic nav labels), all under CONTAINER's 1180px cap (DESIGN.md
-           * Layout: "min(1180px, 100% - 40px)"), so it's the RAMP-UP region that matters: CONTAINER equals
+           * and 1160px (ru, the widest - longer Cyrillic nav labels), all under CONTAINER's 1180px cap (design layout rule:
+           * "min(1180px, 100% - 40px)"), so it's the RAMP-UP region that matters: CONTAINER equals
            * `100% - 40px` until the viewport reaches 1220px, so a viewport narrower than 1220px hands the row less
            * than the 1160px ru needs even though 1160 < 1180. 1220px is the smallest breakpoint at which CONTAINER
            * has already reached its 1180px cap in every locale, giving ru a 20px margin instead of landing exactly on
@@ -365,7 +365,7 @@ export function Shell({ children, tier = 'visitor', isAdmin = false, version, sl
       </footer>
 
       {/*
-       * Replaces the top navigation under 1220px (: raised from 900px in lockstep with the nav's own
+       * Replaces the top navigation under 1220px (raised from 900px in lockstep with the nav's own
        * min-[1220px]:flex above - see that comment for the measured widths behind the number). Sticky (not fixed) at
        * the end of the page: it never hides content.
        */}

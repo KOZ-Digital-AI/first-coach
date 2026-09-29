@@ -19,7 +19,7 @@ import '../../lib/i18n';
  *   the flush is still running the text stays: it is still syncing.
  * - The flush is the EVENTS CLIENT's outbox `flush()` (features/train/events-client.ts `flushEventsOutbox`, the same instance
  *   `startEventsSync()` replays), which is single-flight (a second call while one runs returns that run's result), so this does
- *   not double-send next to `start()`'s own `online` handler (: a second outbox instance did, two POSTs), and a
+ *   not double-send next to `start()`'s own `online` handler (a second outbox instance did, two POSTs), and a
  *   delivered batch still writes the ['today'] / ['session-summary'] caches. Its result is not read, and a rejection (no player
  *   yet, storage failure) only ends the confirmation: the outbox keeps the entries and retries by itself.
  * - An `online` event with no `offline` before it (a spurious event) shows nothing and flushes nothing: `start()` already
@@ -28,13 +28,13 @@ import '../../lib/i18n';
  *
  * One polite status region (`role="status"`, `aria-live="polite"`, never an alert) is always in the page and only its content
  * changes, because a live region that is created together with its text is often not announced. Each message carries an icon
- * of a different shape (WifiOff / Wifi) plus words, never colour alone (DESIGN.md Second Signal Rule).
+ * of a different shape (WifiOff / Wifi) plus words, never colour alone (design rule: colour is never the only signal).
  */
 
 /** How long the back-online confirmation stays after the flush settles. */
 const DISMISS_AFTER_MS = 4000;
 
-/** The shell's container (DESIGN.md Layout): min(1180px, 100% - 40px), 100% - 24px on phones. */
+/** The shell's container (design layout rule): min(1180px, 100% - 40px), 100% - 24px on phones. */
 const CONTAINER = 'mx-auto w-[calc(100%-24px)] max-w-295 sm:w-[calc(100%-40px)]';
 
 type Phase = 'online' | 'offline' | 'restored';

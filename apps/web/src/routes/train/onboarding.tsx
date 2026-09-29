@@ -34,7 +34,7 @@ import { ApiProblem, describeProblem, type ProblemView } from '../../lib/problem
  *  3. Steps are picked by index. The LAST step (baseline) submits: ensurePlayerSession(), then POST /api/player/start, then
  *     the draft is cleared and the player goes to /train/roadmap. The start response (`{ profile, roadmap }`, the same shape
  *     GET /api/player/me answers) is written into the ['me'] query cache first, so the roadmap screen shows it without asking
- *     the API again while that entry is fresh (: the journey's call budget is sign-in, options, start).
+ *     the API again while that entry is fresh (the journey's call budget is sign-in, options, start).
  *  4. A 422/400 whose problem-details pointers name request fields jumps to the EARLIEST step that owns one of them and
  *     lists the rejected answers there (each step keeps its own copy of what is still wrong until that answer changes).
  *     Anything else (network, 5xx, a body that is not a StartResponse, a failed sign-in) stays on the last step as an

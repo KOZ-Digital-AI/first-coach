@@ -13,7 +13,7 @@
 - Приложение (`lite/`) хранит профили, прогресс и результаты тестов только в браузере (`localStorage`) и не отправляет
   данные игрока на сервер. ПИН-код профиля защищает от случайного входа брата или сестры, но не является защитой аккаунта.
 - Видео для самопроверки не загружается.
-- Полная платформа (`apps/`) хранит данные на сервере; порядок работы с ними описан в [docs/runbook.md](docs/runbook.md).
+- Полная платформа (`apps/`) хранит данные игроков на сервере.
 
 ---
 
@@ -26,4 +26,4 @@ as a security issue.
 
 The app in `lite/` keeps profiles, progress and test results in the browser only and never sends a player's data to a server;
 the profile PIN keeps siblings out and is not account security. Self-check videos are never uploaded.
-The full platform in `apps/` stores data on a server — see [docs/runbook.md](docs/runbook.md).
+The full platform in `apps/` stores player data on a server.

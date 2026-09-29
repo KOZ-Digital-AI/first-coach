@@ -1,4 +1,4 @@
-// : the video analysis agent (Mastra Agent, vision model, structured rubric scores).
+// The video analysis agent (Mastra Agent, vision model, structured rubric scores).
 // No test touches the network or needs a key: the model is a fake injected through the `model`
 // seam of createVideoAgent (ai/test's MockLanguageModelV4), and globalThis.fetch is replaced by a
 // counter in the "never fetches" test.

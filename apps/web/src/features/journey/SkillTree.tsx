@@ -37,7 +37,7 @@ const Dot: ComponentType<{ className?: string; 'aria-hidden'?: 'true' }> = (prop
   </svg>
 );
 
-// One marker shape per state (✓ ● ○): colour is never the only signal (DESIGN.md Second Signal Rule).
+// One marker shape per state (✓ ● ○): colour is never the only signal.
 const PRESENTATION = {
   mastered: { icon: Check, marker: 'text-accent', row: 'border-line bg-paper', name: 'text-ink' },
   training: { icon: Dot, marker: 'text-ink', row: 'border-ink bg-paper', name: 'text-ink' },

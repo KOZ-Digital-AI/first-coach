@@ -1,6 +1,6 @@
 import type { MessageBundle } from '../../lib/i18n';
 
-// `short`: the compact visible label on each language-switch button ( - DESIGN.md Navigation: the switch must
+// `short`: the compact visible label on each language-switch button (design navigation rule: the switch must
 // stay reachable at every width, so it becomes compact instead of wrapping the header). Like LANGUAGE_NAMES in
 // lib/i18n.ts, these three letters are never translated: the same { kk, ru, en } trio is repeated identically under
 // every locale block, so `t('short.kk')` reads 'Қаз' no matter which language is currently active.

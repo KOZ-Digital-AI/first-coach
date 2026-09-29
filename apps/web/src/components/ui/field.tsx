@@ -21,7 +21,7 @@ export type FieldProps = Omit<ComponentProps<'div'>, 'children' | 'id'> & {
   children: (control: FieldControlProps) => ReactNode;
 };
 
-/* DESIGN.md Inputs: 1px Chalk Line border, white fill, 12px radius, 44px minimum height, 12px 13px padding,
+/* Inputs: 1px Chalk Line border, white fill, 12px radius, 44px minimum height, 12px 13px padding,
  * Field Green border on focus (the global focus ring is inherited, not restyled). 16px text keeps it readable. */
 const controlClass = clsx(
   'min-h-tap w-full min-w-0 rounded-control border border-line bg-white px-3.25 py-3 text-base text-ink',

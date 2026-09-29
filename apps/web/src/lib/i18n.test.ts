@@ -265,7 +265,7 @@ describe('key parity checker (synthetic maps)', () => {
 });
 
 // Real files are read from disk (Bun.Glob), NOT via import.meta.glob (undefined under bun), so
-// every messages file added by any later bead is checked without editing this test.
+// every messages file added by any later change is checked without editing this test.
 const srcDir = join(import.meta.dir, '..');
 const realFiles = [...new Bun.Glob('**/*.messages.ts').scanSync({ cwd: srcDir })].sort();
 const realModules: MessageModules = {};
@@ -649,7 +649,7 @@ describe('language switch (features/i18n/header-extra.tsx)', () => {
     expect(i18n.language).toBe(INITIAL_LANGUAGE);
   });
 
-  // : the visible label is now the compact 3-letter short form (Қаз / Рус / Eng, i18n.messages.ts's `short`),
+  // the visible label is now the compact 3-letter short form (Қаз / Рус / Eng, i18n.messages.ts's `short`),
   // not the full native name - the header row must never wrap at >=1220px, and the full names are too wide for that.
   // The full native name is still there, just moved to the accessible name/title (next test).
   test('renders three buttons with the short labels Қаз, Рус and Eng, each in its own lang', () => {
@@ -800,7 +800,7 @@ describe('header slot contract (lib/slots.ts)', () => {
     expect(Extra).toBeDefined();
     const inst = createI18n({ modules: switchModules, languages: ['ru'] });
     render(createElement(I18nextProvider, { i18n: inst }, createElement(Extra!)));
-    // : short visible labels, see the "language switch" describe block above for the full contract.
+    // short visible labels, see the "language switch" describe block above for the full contract.
     expect(screen.getAllByRole('button').map((el) => el.textContent)).toEqual(['Қаз', 'Рус', 'Eng']);
   });
 });

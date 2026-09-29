@@ -33,7 +33,7 @@ interface ColumnShape {
   pk: 0 | 1;
 }
 
-/** The bead's columns. Positive containment only: a later ALTER TABLE ... ADD COLUMN must not break this. */
+/** The table's columns. Positive containment only: a later ALTER TABLE ... ADD COLUMN must not break this. */
 const EXPECTED_COLUMNS: ColumnShape[] = [
   { name: 'id', type: 'TEXT', notnull: 1, pk: 1 },
   { name: 'player_id', type: 'TEXT', notnull: 1, pk: 0 },
@@ -279,7 +279,7 @@ describe('009_video: applying', () => {
 });
 
 describe('009_video: shape', () => {
-  test("is STRICT and has the bead's columns with their types and nullability", () => {
+  test("is STRICT and has the table's columns with their types and nullability", () => {
     const db = migrated();
     expect(one<{ strict: number }>(db, "SELECT strict FROM pragma_table_list WHERE name = 'video_analyses'").strict).toBe(1);
     const actual = columns(db);
@@ -391,7 +391,7 @@ describe('009_video: rows', () => {
     expect(PoseFeatures.parse(JSON.parse(one<{ f: string }>(db, 'SELECT features_summary AS f FROM video_analyses').f))).toEqual(features);
   });
 
-  test("each of the bead's columns refuses NULL", () => {
+  test("each of the table's columns refuses NULL", () => {
     for (const { name } of EXPECTED_COLUMNS) {
       expect(accepts({ [name]: null }), name).toBe(false);
     }

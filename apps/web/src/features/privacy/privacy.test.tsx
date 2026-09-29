@@ -22,7 +22,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
 const { Route, PrivacyDepsContext } = await import('../../routes/settings/privacy');
 
 /*
- * The privacy settings screen (/settings/privacy), written from the bead's acceptance criteria:
+ * The privacy settings screen (/settings/privacy), written from the acceptance criteria:
  *  - explains in plain language what is stored (no name, no email, age in years, training results) and what is never done
  *    (no public profiles, no messaging, no ads, no global rankings);
  *  - two consent toggles, both off by default: video analysis (discloses that a few still frames go to an AI provider; under 13

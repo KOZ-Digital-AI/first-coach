@@ -16,7 +16,7 @@ import * as drillExtraModule from './drill-extra';
 import DrillExtra, { ExplainControl } from './drill-extra';
 import explainMessages from './explain.messages';
 
-// Same happy-dom guard as features/ai/ai-plan.test.tsx: the bead verifies from apps/web (the preload registers the DOM there),
+// Same happy-dom guard as features/ai/ai-plan.test.tsx: it verifies from apps/web (the preload registers the DOM there),
 // but a run from the repo root has none, so register it BEFORE Testing Library is imported.
 if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
@@ -29,7 +29,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
 // element (a huge circular object graph): it can take a minute. Compare with === and assert on the boolean instead.
 
 /*
- * , written from the bead's acceptance criteria (not from the implementation): the `drill` slot component
+ * Written from the acceptance criteria (not from the implementation): the `drill` slot component
  * (features/ai/drill-extra.tsx) adds "Explain more simply" to the drill player; the answer appears in a SEPARATE panel labelled
  * "AI-generated — the coach's original text is above" and never replaces the canonical instructions or the safety note;
  * unavailable / offline shows a calm message; loading, empty, error, disabled and success states; the button is disabled while a

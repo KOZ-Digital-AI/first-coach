@@ -60,7 +60,7 @@ export interface SessionAtomLike {
  * While it is loading or re-reading (`isPending` / `isRefetching`) nothing is reported: the data then may still be the previous
  * person's. A payload without a string user id counts as no session. Returns the unsubscribe function.
  *
- * A read that FAILED (: the atom's `error` is set and it holds no session: the device is offline, the server is
+ * A read that FAILED (the atom's `error` is set and it holds no session: the device is offline, the server is
  * down) is not an answer, so nothing is reported for it: reporting "no session" would sign the remembered player out of the
  * wiring just because the network is gone. An error that is an ANSWER (HTTP 401: the server says there is no session) still
  * reports "no session".
@@ -211,8 +211,8 @@ const realDeps = (): PlayerSessionWiringDeps => ({
 });
 
 /**
- * Wires the offline pieces to the player session (, fixed by : it never signs anybody in, so a visitor
- * who only opens the landing page or /legal/* gets no session and no cookie; and by : it makes no session read of
+ * Wires the offline pieces to the player session (it never signs anybody in, so a visitor
+ * who only opens the landing page or /legal/* gets no session and no cookie; and it makes no session read of
  * its own). Once a session id is reported, for THAT id:
  *  1. `configureEventsPlayer(id)`: from now on `submitEvents` goes through the outbox (offline/outbox.ts);
  *  2. `persistAppQueryClient({ queryClient, playerId: id, buildVersion })`: the query cache is restored from and saved to the

@@ -7,7 +7,7 @@ import { createI18n, LOCALES } from '../../lib/i18n';
 import { ConditionsStep, type ConditionsValue } from './ConditionsStep';
 import messages from './conditions-step.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the bead's verify
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the verify
 // command runs from the repo root, where there is no DOM. Register happy-dom here BEFORE Testing Library is imported
 // (same order rule as test/setup.ts and lib/i18n.test.ts); the `document` guard keeps it a no-op under the preload.
 if (typeof document === 'undefined') {

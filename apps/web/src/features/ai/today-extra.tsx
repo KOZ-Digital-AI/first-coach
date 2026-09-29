@@ -37,12 +37,12 @@ import { TODAY_QUERY_KEY } from '../train/events-client';
  *
  * Readings of the criteria where they are open, and gaps found:
  *  - "hidden when offline": the whole control is hidden (no button, no field, no request, not even the availability check); the
- *    offline banner already says the device is offline. This follows the bead's words over "disabled with a reason". A session
+ *    offline banner already says the device is offline. This follows the requirement over "disabled with a reason". A session
  *    that is ALREADY AI-planned is content, not a control, so it still shows offline.
  *  - "hidden when the setting disables it": GET /health carries `aiPlannerEnabled` (the admin setting), read here
  *    through the typed client (cached 5 minutes, one request). The control is hidden entirely only when it is EXACTLY false; an
  *    absent field (an older server), any other value or a failed /health keeps the control (the server decides on the press).
- *    NO KEY (, gate j8 U2): /health `aiAvailable` false does NOT hide the control any more. The button stays and a
+ *    NO KEY: /health `aiAvailable` false does NOT hide the control any more. The button stays and a
  *    press is answered by the server with the deterministic session and `fallback: no_key`, which shows the quiet standard-plan
  *    note (no error, no wait for /health). `no_key` and `disabled` then remove the button (nothing to retry); the other codes
  *    (timeout, invalid_output, provider_error) keep a "Try AI again".

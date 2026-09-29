@@ -26,7 +26,7 @@ const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@test
 // element (a huge circular object graph): it can take a minute. Compare to null / with === and assert on the boolean instead.
 
 /*
- * Contract under test (bug , found by the gate script j5-contribute.sh): after a successful sign-up or sign-in
+ * Contract under test (a bug): after a successful sign-up or sign-in
  * from /account/sign-in?redirect=/contribute the browser ends on /contribute showing the contribute form. It must not be sent
  * back to /account/sign-in ("You are already signed in. Continue").
  *

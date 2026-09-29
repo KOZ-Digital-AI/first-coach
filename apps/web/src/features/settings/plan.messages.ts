@@ -13,7 +13,7 @@ import type { MessageBundle } from '../../lib/i18n';
  *   item (`goal`, `weakest`), as in roadmap.messages.ts. A value it has no words for is shown as the server sent it.
  * - No plural keys: the day count is a bare number under its legend and minutes are "{{value}} min", so no Russian or Kazakh
  *   plural form is needed.
- * - The player is only ever measured against themselves; nothing here promises a professional career (PRODUCT.md).
+ * - The player is only ever measured against themselves; nothing here promises a professional career (product principles).
  */
 export default {
   kk: {

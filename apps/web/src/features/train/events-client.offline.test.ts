@@ -10,7 +10,7 @@ import { ApiProblem } from '../../lib/problem';
 import { createEventsClient } from './events-client';
 
 /*
- * : submitEvents goes through the offline outbox. The order is: enqueue (persisted) -> apply to the offline
+ * submitEvents goes through the offline outbox. The order is: enqueue (persisted) -> apply to the offline
  * session store and the ['today'] cache -> flush. Offline (or any failed send) resolves { status: 'queued' } and nothing is
  * lost; coming back online sends everything that waited as ONE batch. The legacy behaviour (no `offline` option) is pinned by
  * events-client.test.ts and events-client.summary.test.ts and is not repeated here.

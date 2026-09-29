@@ -16,8 +16,8 @@
 //   - `instructions` is one text; the numbered steps are its lines ("1. ...\n2. ...").
 //
 // Source of the content requirements: the spec sections 13 and 16 in the original product brief,
-// PRODUCT.md (children from about 6, Kazakh first among equals), CONTENT-LICENSE.md (original
-// wording only) and the clarifications of the bead (safe for unsupervised children).
+// the product principles (children from about 6, Kazakh first among equals), CONTENT-LICENSE.md (original
+// wording only) and the clarifications (safe for unsupervised children).
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { validateGraph } from "../../src/commons/graph";

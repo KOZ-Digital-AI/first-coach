@@ -7,7 +7,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * text still needs a native-speaker review.
  *
  * Plain language on purpose: a 10-year-old and a parent should both follow it (short sentences, "you" is the child). It says
- * only what the product does (apps/api/src/shared/privacy.ts, PRODUCT.md): the code is 16 letters and numbers, it is shown
+ * only what the product does (apps/api/src/shared/privacy.ts, the product principles): the code is 16 letters and numbers, it is shown
  * once, a new code replaces the old one, and whoever holds the code can get the progress back.
  *
  * - `replaceWarning` is on screen before the button is pressed; `replaces` is said again next to the code just made.

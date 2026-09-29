@@ -538,7 +538,7 @@ export function getSkillTests(db: Database, sport: string, locale?: Locale): Ski
 /**
  * The landing-page counters. `drills` = published drills; `tracks` = distinct primary skills of
  * published drills (a track is what DrillSummary.track names); `contributions` = contributed
- * versions (origin 'contribution') of published drills, 0 until the contributions bead writes
+ * versions (origin 'contribution') of published drills, 0 until contributions write
  * them; `sports` = every sport. Unpublished and unlinked drills count nowhere.
  */
 export function getStats(db: Database): CommonsStats {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j1a-seed.sh: slice gate , journey J1a "the Open Sport Commons seed loads".
+# apps/web/e2e/j1a-seed.sh: journey J1a "the Open Sport Commons seed loads".
 # Integration proof on the REAL stack (real API process, real SQLite file, no mocks, no browser, no OpenAI key):
 #   1. boot on an empty DB applies the migrations (001_commons and every later file) and loads the seed
 #   2. sqlite_count: 1 sport, 5 top-level skills, >= 15 sub-skill nodes, 5 skill tests, 60 drills, 60 published

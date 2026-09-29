@@ -43,7 +43,7 @@ import { beginSignOut, clearDrafts, resetSessionExpired, SIGN_IN_PATH } from './
  *   After a successful sign-out the controls of that user id stay hidden until the session hook reports something else.
  * - The panel is a disclosure (a button with aria-expanded and a list of links and a button), not `role="menu"`: the menu role
  *   promises arrow-key handling that a plain list does not need. Escape, a press outside or focus leaving close it.
- * - "My contributions" goes to /contribute: the contribute route bead owns the page and has not landed, so the exact
+ * - "My contributions" goes to /contribute: the contribute route owns the page and has not landed, so the exact
  *   destination for the list is unconfirmed (contract gap).
  * - Sign-out failure UI (an alert inside the panel, retry by pressing the button again) is not in the criteria; it was added
  *   because closing silently would leave a coach believing they had signed out on a shared device.
@@ -100,7 +100,7 @@ function readSession(session: AccountSessionState): Reading {
 /** Better Auth answers `{ data, error }` and does not throw: a non-null `error` means the session is still there. */
 const refused = (result: unknown): boolean => isRecord(result) && result.error !== null && result.error !== undefined;
 
-// Every control is at least 44px tall (DESIGN.md tap targets); the focus ring is the global :focus-visible rule in app.css.
+// Every control is at least 44px tall (design rule: tap targets); the focus ring is the global :focus-visible rule in app.css.
 const TRIGGER =
   'inline-flex min-h-tap max-w-full cursor-pointer items-center gap-2 rounded-control border border-line bg-paper px-3 font-bold text-ink hover:bg-bg';
 const ITEM =
@@ -162,7 +162,7 @@ export function AccountControls({ session, deps }: AccountControlsProps) {
 
   if (reading.kind === 'visitor') {
     return (
-      // Tighter side padding than the signed-in trigger below (: the header row must never wrap at >=900px;
+      // Tighter side padding than the signed-in trigger below (the header row must never wrap at >=900px;
       // this is the only header-extra state that has to share the row with the full desktop nav and the language
       // switch at once - the signed-in panel trigger keeps its own padding).
       <div className="px-0.5 py-2">

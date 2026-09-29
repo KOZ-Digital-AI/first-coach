@@ -18,7 +18,7 @@ if (typeof document === 'undefined') {
 const { cleanup, render, screen, within } = await import('@testing-library/react');
 
 /*
- * : each drill row of /train shows the drill's track (its primary skill) and its level, in kk, ru and en.
+ * Each drill row of /train shows the drill's track (its primary skill) and its level, in kk, ru and en.
  * TodayItem.track / TodayItem.level are OPTIONAL on the contract (a cached PWA session, or an older server, has neither),
  * so a row without them must render exactly as before: no empty label, no "undefined", no blank "Level:".
  * The server is a fake `fetch` handed to the real `createApi`; the strings expected below are literal on purpose, so a

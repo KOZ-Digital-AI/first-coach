@@ -1,6 +1,6 @@
 // The coach agent: a Mastra Agent that PICKS today's drills from the server's
 // candidate set and returns them as a structured AiPlan (shared/ai). It never writes the session:
-// 's validatePlan checks whatever it returns, and planWithFallback replaces anything
+// validatePlan checks whatever it returns, and planWithFallback replaces anything
 // doubtful with the deterministic session.
 //
 //   createCoachAgent({ model, candidates, graph, levels, locale }) -> Agent

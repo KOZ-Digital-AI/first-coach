@@ -22,7 +22,7 @@ import type { DrillContent } from "../shared/primitives";
 import { EXPLAIN_INSTRUCTIONS, EXPLAIN_MAX_CHARS } from "./explain";
 import type { ExplainAgentLike } from "./explain";
 
-// : POST /api/player/drills/:versionId/explain. Nothing here touches the network or needs an OpenAI key: the
+// POST /api/player/drills/:versionId/explain. Nothing here touches the network or needs an OpenAI key: the
 // explain agent is an injected fake (or, in one wiring test, the real Mastra agent on a stub model), and the key state is
 // an injected env. Every test runs the real route module on a fresh in-memory database migrated with the real
 // migrations and loaded with the REAL seed (config/commons), behind the REAL Better Auth handler; players are real

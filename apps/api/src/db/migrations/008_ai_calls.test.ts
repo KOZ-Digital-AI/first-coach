@@ -19,7 +19,7 @@ const BEFORE_007 = [
 ];
 const REAL_007 = '007_privacy.sql';
 
-/** The bead's kinds: fixed by the acceptance criteria (plan | explain | video), no shared constant exists. */
+/** The kinds: fixed by the requirements (plan | explain | video), no shared constant exists. */
 const KINDS = ['plan', 'explain', 'video'];
 
 /** Column-name segments (split on _) that would mean a prompt, a player's words or an image is stored. None may exist. */
@@ -32,7 +32,7 @@ interface ColumnShape {
   pk: 0 | 1;
 }
 
-/** The bead's columns. Positive containment only: a later ALTER TABLE ... ADD COLUMN must not break this. */
+/** The table's columns. Positive containment only: a later ALTER TABLE ... ADD COLUMN must not break this. */
 const EXPECTED_COLUMNS: ColumnShape[] = [
   { name: 'id', type: 'INTEGER', notnull: 0, pk: 1 },
   { name: 'player_id', type: 'TEXT', notnull: 0, pk: 0 },
@@ -272,7 +272,7 @@ describe('008_ai_calls: applying', () => {
 });
 
 describe('008_ai_calls: shape', () => {
-  test('is STRICT and has the bead\'s columns with their types and nullability', () => {
+  test('is STRICT and has the table\'s columns with their types and nullability', () => {
     const db = migrated();
     expect(one<{ strict: number }>(db, "SELECT strict FROM pragma_table_list WHERE name = 'ai_calls'").strict).toBe(1);
     const actual = columns(db);
@@ -335,7 +335,7 @@ describe('008_ai_calls: rows', () => {
     expect(count(db, 'ai_calls', 'player_id IS NULL')).toBe(1);
   });
 
-  test('each of the bead\'s NOT NULL columns refuses NULL', () => {
+  test('each of the table\'s NOT NULL columns refuses NULL', () => {
     for (const column of ['kind', 'model', 'candidate_ids', 'chosen_ids', 'latency_ms', 'created_at']) {
       expect(accepts({ [column]: null }), column).toBe(false);
     }

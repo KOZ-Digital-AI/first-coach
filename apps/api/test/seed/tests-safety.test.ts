@@ -60,7 +60,7 @@ async function testOf(slug: string): Promise<RawTest> {
 
 // --- what must not change ---------------------------------------------------------------------
 
-// sha256 of every field except `protocol`, for all five tests (baseline: master before ).
+// sha256 of every field except `protocol`, for all five tests (baseline: master before the safety wording change).
 const NON_PROTOCOL_SHA: Record<string, string> = {
   "juggling-max-touches": "5c53849ffe4d788ab533a0bef8fd3aa48b49d7f02b8d74469cb51922ff060017",
   "wall-passing-60s": "a3fdf2443a54d2c1921aab3f9dd569aab302aa5bcf1bdcc024a4d37cb18535f5",

@@ -7,7 +7,7 @@
 // SUPERSEDES the PROPOSED endpoint constants of ./commons (its `ENDPOINTS` and the query/params
 // schemas DrillListQuery, DrillParams, DrillQuery), whose paths other than
 // /api/commons/export.json were marked PROPOSED. The paths below are the criteria's; a later API
-// bead uses THIS file's ENDPOINTS. ./commons stays untouched, for its response schemas.
+// change uses THIS file's ENDPOINTS. ./commons stays untouched, for its response schemas.
 //
 // Bundled into the browser through the @api-types alias: imports ONLY "zod", "./primitives",
 // "./domain" and "./commons" (no node/bun APIs, no side effects). `z.toJSONSchema` is NOT used

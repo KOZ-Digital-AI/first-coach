@@ -25,7 +25,7 @@
 // server really aborts at the timeout; "never an error status for AI failures"; the call
 // budget.
 //
-// Follow-up bead: the API's problem() helper hardcodes type "about:blank" and cannot emit an
+// Follow-up: the API's problem() helper hardcodes type "about:blank" and cannot emit an
 // `ai_unavailable` problem yet.
 //
 // Requests are strict: an unknown key fails. Responses stay loose (unknown server keys are

@@ -14,7 +14,7 @@ import type { BaselineResult, StartRequest } from "../../shared/onboarding";
 import { ENDPOINTS, TodaySession } from "../../shared/session";
 import type { SwapRequest } from "../../shared/session";
 
-// POST /api/player/today/swap answers the updated TodaySession (: its items carry each drill's track and
+// POST /api/player/today/swap answers the updated TodaySession (its items carry each drill's track and
 // level). This file pins only that; the picker's rule is planner/swap.test.ts. Every test runs the real createApp on a
 // fresh in-memory database migrated with the real migrations and loaded with the REAL seed (config/commons), with the
 // REAL Better Auth handler and the REAL start and today routes mounted next to the route under test. Players are real

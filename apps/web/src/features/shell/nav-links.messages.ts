@@ -1,6 +1,6 @@
 import type { MessageBundle } from '../../lib/i18n';
 
-// Strings of the extra shell links added by . Namespace `nav-links` (from the file name), collected by the eager
+// Strings of the extra shell links (privacy settings and Video Coach). Namespace `nav-links` (from the file name), collected by the eager
 // glob in lib/i18n.ts; the shell reads it next to `shell`. It is a separate file so the shell bundle stays untouched.
 // The label names the page (/settings/privacy, "Your privacy") and must not read like the privacy POLICY link beside it
 // (`shell` footer.privacy: "Privacy" / "Құпиялылық" / "Конфиденциальность"). The Russian uses "приватность", the word the

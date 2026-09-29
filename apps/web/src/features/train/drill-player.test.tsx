@@ -13,7 +13,7 @@ import trustBadgeMessages from '../commons/trust-badge.messages';
 import messages from './drill-player.messages';
 import { createEventsClient } from './events-client';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web; the bead's verify command runs from
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web; the verify command runs from
 // the repo root, where there is no DOM. Register happy-dom BEFORE Testing Library is imported (a no-op under the preload).
 if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
@@ -23,7 +23,7 @@ const { act, cleanup, fireEvent, render, screen, waitFor, within } = await impor
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * The drill player (/train/drill/:itemId), written from the bead's acceptance criteria, not from the code:
+ * The drill player (/train/drill/:itemId), written from the acceptance criteria, not from the code:
  *  - it reads the item from the cached today session (works with no network) and shows an optional video (lazy, tap to play),
  *    the goal, reps/time with a simple count-up timer, common mistakes, progression, regression, required conditions and the
  *    safety note in a highlighted notice, plus every component of the `drill` slot;

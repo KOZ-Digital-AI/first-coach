@@ -1,4 +1,4 @@
-// : the coach agent (Mastra Agent + three read-only tools + AiPlan structured output).
+// The coach agent (Mastra Agent + three read-only tools + AiPlan structured output).
 // No test touches the network or needs a key: the model is a fake injected through the
 // `model` seam of createCoachAgent (ai/test's MockLanguageModelV4), and globalThis.fetch is
 // replaced by a counter in the "never fetches" test.

@@ -37,7 +37,7 @@
 //     that the player has the kit for (EQUIPMENT_OWNED). Deriving it from the date, not from the clock, keeps
 //     a day's session stable; totalMinutes = the items' minutes + SKILL_TEST_MINUTES when there is one.
 //     CONTRACT GAP: a persisted skill test (a nullable column in a later migration) would survive a stored
-//     result; until then a test that is answered (a later bead stores it) stops being due and drops out.
+//     result; until then a test that is answered (a later change stores it) stops being due and drops out.
 //   * The sport is the player-data model's default (football), as the journey and start routes.
 //   * itemIds are "item-1".."item-n" (unique within the session); the session id is a random UUID.
 import type { Database } from "bun:sqlite";

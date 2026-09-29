@@ -7,7 +7,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * review.
  *
  * Plain language on purpose: a 10-year-old and a parent should both follow it (short sentences, "you" is the child). It says
- * only what the product does (apps/api/src/shared/privacy.ts, PRODUCT.md): the code is 16 letters and numbers in 4 groups of 4,
+ * only what the product does (apps/api/src/shared/privacy.ts, the product principles): the code is 16 letters and numbers in 4 groups of 4,
  * upper or lower case, spaces and dashes do not matter, a wrong code is one plain answer (never which part was wrong), 5 tries
  * per 15 minutes, and replacing progress cannot be undone.
  *

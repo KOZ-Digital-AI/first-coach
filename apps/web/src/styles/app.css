@@ -1,12 +1,12 @@
 /*
- * Design tokens for FIRST COACH. DESIGN.md (repo root) is the source of truth:
+ * Design tokens for FIRST COACH. The design system is the source of truth:
  * every name and value below is recorded in its frontmatter, and tokens.test.ts
  * fails if the two diverge. Light theme only. Tokens only: no components, no layout.
  *
- * Deliberate deviation from DESIGN.md's font stack: the self-hosted variable
+ * Deliberate deviation from the design system's font stack: the self-hosted variable
  * font package registers its family as "Inter Variable", not "Inter". So
  * "Inter Variable" comes FIRST in --font-sans, then Inter (a locally installed
- * copy), then DESIGN.md's fallback tail unchanged. The package ships the
+ * copy), then the design system's fallback tail unchanged. The package ships the
  * cyrillic and cyrillic-ext subsets that Kazakh needs, and its CSS points at
  * same-origin font files, so no request leaves the app.
  */
@@ -63,7 +63,7 @@
     font-family: var(--font-sans);
   }
 
-  /* DESIGN.md Visible Focus Rule: never below 2px. */
+  /* Visible Focus Rule: never below 2px. */
   :focus-visible {
     outline: 3px solid var(--accent);
     outline-offset: 2px;

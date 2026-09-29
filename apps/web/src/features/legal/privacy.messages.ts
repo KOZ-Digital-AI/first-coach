@@ -4,7 +4,7 @@ import type { MessageBundle } from '../../lib/i18n';
 //
 // Plain language on purpose: a 10-year-old and a parent should both be able to follow it, so short sentences, no legal
 // terms, "we" is KOZ AI. It describes only what the product does (see the contract in apps/api/src/shared/privacy.ts and
-// PRODUCT.md); it promises nothing else. The whole page is marked as pending legal review (`status`).
+// product principles); it promises nothing else. The whole page is marked as pending legal review (`status`).
 // Kazakh text still needs a native review; the Kazakh anchors in privacy.test.tsx move with it.
 //
 // Shape: `sections.<id>.title` plus the keys PRIVACY_SECTIONS lists for that section (paragraphs, then a bulleted list,

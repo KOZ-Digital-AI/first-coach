@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as viteConfig from '../vite.config';
 
-// : PWA manifest, icons and service worker configuration.
+// PWA manifest, icons and service worker configuration.
 //
 // Two layers, neither needs a browser:
 //   1. the config read as data: `pwaOptions` (the object vite.config.ts hands to VitePWA);

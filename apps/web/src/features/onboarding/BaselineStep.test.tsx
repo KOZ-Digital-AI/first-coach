@@ -11,7 +11,7 @@ import messagesModule from './baseline-step.messages';
 import { BaselineStep, EQUIPMENT_OWNED, type BaselineDraftResult, type BaselineFinalResult } from './BaselineStep';
 
 /*
- * Written from the bead's acceptance criteria and the parent brief, not from the implementation:
+ * Written from the acceptance criteria, not from the implementation:
  *  - the tests come from props (no hard-coded list), each with its localized protocol shown BEFORE a
  *    numeric input that carries the unit;
  *  - slalom-like tests (a "lower is better" time) also take an optional errors counter (the estimator

@@ -36,7 +36,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
  * Readings of the criteria that the tests pin (the simplest reading each time):
  * - "undecided ones" = the states the API lets the owner withdraw from: pending and changes_requested.
  * - "Edit and resubmit" is a link to the edit screen of that contribution: /contribute/<id>/edit (a route param, not a search param;
- *   the screen is ).
+ *   the edit screen).
  * - The list keeps the order the API sends (newest first).
  * - "mutation buttons are disabled while a request is in flight": while a withdrawal runs, every Withdraw button, both dialog
  *   buttons and Refresh are disabled, and the dialog cannot be dismissed.

@@ -52,7 +52,7 @@ import { describeProblem } from '../../lib/problem';
  * - Retries. Queries do not retry by themselves; Try again is the way out.
  */
 
-/** Fewer eligible drills than this makes the choice too narrow for a player. Named in the bead: "fewer than 20 eligible drills". */
+/** Fewer eligible drills than this makes the choice too narrow for a player. Requirement: "fewer than 20 eligible drills". */
 const MIN_POOL = 20;
 
 type Status = TrustStatus;

@@ -5,7 +5,7 @@
 // imported; hooks may register things routes need).
 //
 // Boot hooks live in ./boot/ and are named `<name>.boot.ts`. Each exports
-// `onBoot(deps)`. Later beads add start-up work by dropping a file there,
+// `onBoot(deps)`. Later modules add start-up work by dropping a file there,
 // never by editing index.ts or this file.
 // - Hooks run one at a time in filename order (plain code-unit comparison; use
 //   a numeric prefix such as `10-env.boot.ts` to order them).

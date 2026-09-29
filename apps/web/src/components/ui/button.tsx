@@ -4,8 +4,8 @@ import { LoaderCircle } from 'lucide-react';
 import type { ComponentProps } from 'react';
 
 /*
- * Colours, radius and weight follow DESIGN.md (Components > Buttons), not the
- * illustrative names in the bead. No outline/ring utilities on purpose: the global
+ * Colours, radius and weight follow the design system (Components > Buttons), not the
+ * illustrative names in the original brief. No outline/ring utilities on purpose: the global
  * :focus-visible ring in app.css is inherited. Height is a floor (min-h-tap), never
  * fixed, and words may break, so a long Kazakh or Russian label wraps at 360px.
  *
@@ -22,7 +22,7 @@ const buttonVariants = cva(
         // The only filled dark control; lifts 1px on hover, and only when motion is allowed.
         primary: 'bg-ink text-white enabled:motion-safe:hover:-translate-y-px',
         secondary: 'bg-paper text-ink',
-        // DESIGN.md button-danger: Signal Red on the pale red tint. This pair measures 4.28:1,
+        // button-danger: Signal Red on the pale red tint. This pair measures 4.28:1,
         // below AA for small text; kept as specified, follow-up filed separately.
         danger: 'bg-danger-tint text-danger',
         // Ink wash on hover: accent-2 means "chosen", not "hovered".

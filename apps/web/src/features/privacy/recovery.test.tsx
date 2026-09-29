@@ -19,7 +19,7 @@ const { cleanup, render, screen, waitFor, within } = await import('@testing-libr
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * The recovery code panel (features/privacy/panels/recovery.panel.tsx), written from the acceptance criteria of :
+ * The recovery code panel (features/privacy/panels/recovery.panel.tsx), written from the acceptance criteria:
  * "creates a code with one button, shows it once in large grouped characters with copy and 'I wrote it down' confirmation,
  * warns that a new code replaces the old one, and never stores the code in browser storage". The panel plugs into the privacy
  * screen through the `privacy-panel` slot (lib/slots.ts), not by editing the screen.

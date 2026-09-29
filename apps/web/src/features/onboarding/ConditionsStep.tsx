@@ -43,10 +43,10 @@ function isComplete(options: ConditionsStepProps['options'], value: ConditionsVa
 }
 
 /*
- * DESIGN.md "Options and Selection": paper card, 12px radius; selected = Field Green border + Morning Mint fill
+ * Design rule "Options and Selection": paper card, 12px radius; selected = Field Green border + Morning Mint fill
  * + a check icon (the second signal) + the native checked state. Each card is a real radio inside its label, so the
  * browser gives one Tab stop per question, arrow-key movement and Space to pick. The input is visually hidden; the
- * focus ring is drawn on the card (DESIGN.md Visible Focus Rule). min-h-14 keeps every card above the 44px floor.
+ * focus ring is drawn on the card (design rule: visible focus). min-h-14 keeps every card above the 44px floor.
  */
 const CARD =
   'flex min-h-14 min-w-0 cursor-pointer items-center gap-3 rounded-control border p-4 text-base text-ink ' +

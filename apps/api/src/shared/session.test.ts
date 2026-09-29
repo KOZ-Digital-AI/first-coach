@@ -240,7 +240,7 @@ describe("TodaySession items", () => {
   });
 });
 
-// : an item carries the drill's primary skill (track) and level. Both are OPTIONAL on the client-facing
+// An item carries the drill's primary skill (track) and level. Both are OPTIONAL on the client-facing
 // schema: a cached PWA session, or an older server, has neither and must still parse.
 describe("TodaySession items: track and level", () => {
   const withItem = (item: Record<string, unknown>) => makeSession({ items: [item] });

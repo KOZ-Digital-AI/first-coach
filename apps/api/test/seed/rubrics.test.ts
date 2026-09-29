@@ -4,13 +4,12 @@
 // and English. A rubric says what the video coach will judge (criteria, each with a description and
 // "look for" cues that can be seen from body pose and still frames, WITHOUT ball tracking), how to
 // film (recording tips) and the minimum mean landmark visibility below which the clip is refused.
-// Every rubric is marked status COMMUNITY (a draft that still needs a native-speaker review, see
-// ). The shape is the video-coach `Rubric` contract (shared/video.ts) with texts in three
-// locales; bead 8nt.3 will serve it. These tests check the shape the criteria fix (schema, five
+// Every rubric is marked status COMMUNITY (a draft that still needs a native-speaker review). The shape is the video-coach `Rubric` contract (shared/video.ts) with texts in three
+// locales. These tests check the shape the criteria fix (schema, five
 // rubrics matching the five tracks, 4-7 criteria each, three locales everywhere) plus the safety
 // and tone rules of the content. They do NOT pin criterion keys, wording or the visibility numbers.
 //
-// Content rules asserted below (children from about 6, PRODUCT.md): no injury or medical claims,
+// Content rules asserted below (children from about 6): no injury or medical claims,
 // no professional-career promises, no comments on a child's body or appearance, no harsh words,
 // and nothing that needs the ball to be tracked.
 import { describe, expect, test } from "bun:test";

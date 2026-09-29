@@ -10,7 +10,7 @@ import i18nMessages from '../i18n/i18n.messages';
 import { isAdminSession, Shell, type NavTier } from './Shell';
 import shellMessages from './shell.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. It verifies from the
 // repo root, where there is no DOM, so register happy-dom here BEFORE Testing Library is imported (same rule and guard
 // as features/legal/privacy.test.tsx).
 if (typeof document === 'undefined') {
@@ -209,7 +209,7 @@ describe('primary navigation', () => {
     expect(tabBar().getByRole('link', { name: 'Start' }).getAttribute('href')).toBe(START_HREF);
   });
 
-  test('the language switch is rendered at every tier (DESIGN.md: never hidden)', async () => {
+  test('the language switch is rendered at every tier (design rule: never hidden)', async () => {
     for (const tier of ['visitor', 'player', 'account'] as const) {
       await renderShell({ tier, slots: { header: [LanguageSwitch] } });
       expect(within(screen.getByRole('banner')).getByRole('group', { name: 'Language' })).toBeTruthy();
@@ -248,7 +248,7 @@ describe('bottom tab bar', () => {
     }
   });
 
-  // : the breakpoint moved from 900px to 1220px (see Shell.tsx's comment on the nav element for the measured
+  // The breakpoint moved from 900px to 1220px (see Shell.tsx's comment on the nav element for the measured
   // widths behind the number - the header row's extras slot did not fit at 900px once the primary nav also showed).
   // Kept in lockstep, as the report's mutation table checks: the tab bar's own hidden-from breakpoint must always
   // equal the nav's own shown-from breakpoint, or there would be a width band with neither navigation visible.

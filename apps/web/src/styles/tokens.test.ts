@@ -2,15 +2,124 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-// Design-token contract for apps/web/src/styles/app.css. DESIGN.md (repo root)
+// Design-token contract for apps/web/src/styles/app.css. The design system
 // is the source of truth; the stylesheet must record exactly what it records.
 // Pure text tests: no DOM, no build. Runs from apps/web and from the repo root.
 
 const cssPath = join(import.meta.dir, 'app.css');
-const designPath = join(import.meta.dir, '..', '..', '..', '..', 'DESIGN.md');
 
 const rawCss = existsSync(cssPath) ? readFileSync(cssPath, 'utf8') : '';
-const design = readFileSync(designPath, 'utf8');
+// The design system's recorded values (token frontmatter, the Lifted Panel shadow and the Display scale),
+// kept here so the stylesheet is checked against them without an external document.
+const design = `---
+name: FIRST COACH / БІРІНШІ БАПКЕР
+description: A calm paper-and-ink training notebook for children and volunteer coaches, built mobile-first for phones.
+colors:
+  bg: "#f4f3ee"
+  paper: "#fffefa"
+  ink: "#101815"
+  muted: "#68716c"
+  line: "#d8ddd8"
+  accent: "#2e7d53"
+  accent-2: "#dff1e6"
+  warning: "#a16a18"
+  danger: "#b8473d"
+  danger-tint: "#f7e4e2"
+  white: "#ffffff"
+typography:
+  display:
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "clamp(48px, 7vw, 96px)"
+    fontWeight: 700
+    letterSpacing: "-0.065em"
+  numeral:
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "128px"
+    fontWeight: 800
+    letterSpacing: "-0.08em"
+  headline:
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "clamp(32px, 5vw, 60px)"
+    fontWeight: 700
+    letterSpacing: "-0.05em"
+  title:
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "20px"
+    fontWeight: 700
+    letterSpacing: "-0.025em"
+  body:
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "16px"
+    fontWeight: 400
+  label:
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "12px"
+    fontWeight: 700
+    letterSpacing: "0.12em"
+rounded:
+  control: "12px"
+  card: "18px"
+  pill: "999px"
+spacing:
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "24px"
+  section: "54px"
+components:
+  button-primary:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.white}"
+    rounded: "{rounded.control}"
+    padding: "14px 18px"
+    height: "44px"
+  button-secondary:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "14px 18px"
+    height: "44px"
+  button-danger:
+    backgroundColor: "{colors.danger-tint}"
+    textColor: "{colors.danger}"
+    rounded: "{rounded.control}"
+    padding: "14px 18px"
+    height: "44px"
+  card:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+    padding: "22px"
+  card-ink:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.white}"
+    rounded: "{rounded.card}"
+    padding: "28px"
+  input:
+    backgroundColor: "{colors.white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "12px 13px"
+    height: "44px"
+  option-selected:
+    backgroundColor: "{colors.accent-2}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "16px"
+  skill-pill:
+    backgroundColor: "{colors.accent-2}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "6px 9px"
+  progress-track:
+    backgroundColor: "{colors.line}"
+    rounded: "{rounded.pill}"
+    height: "10px"
+---
+
+- **Lifted Panel** (\`box-shadow: 0 18px 60px rgba(19, 34, 27, .08)\`): the large panel and the ink hero card only.
+- **Display** (700, clamp(48px, 7vw, 96px), line-height .94, tracking -.065em): page H1 only. One per screen.
+`;
 // Positive assertions run against comment-free CSS so a comment can never
 // satisfy them; the absence checks scan the raw text, comments included.
 const css = rawCss.replace(/\/\*[\s\S]*?\*\//g, '');
@@ -49,7 +158,7 @@ function property(block: string, prop: string): string | undefined {
   return m ? norm(m[1]) : undefined;
 }
 
-// --- DESIGN.md frontmatter ---------------------------------------------------
+// --- design frontmatter ---------------------------------------------------
 
 const frontmatter = design.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
 
@@ -118,13 +227,13 @@ const NINE = {
 const DESIGN_STACK_TAIL =
   'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
-describe('app.css exists and DESIGN.md is readable', () => {
+describe('app.css exists and the design values are recorded', () => {
   test('app.css is present next to this test', () => {
     expect(existsSync(cssPath)).toBe(true);
     expect(rawCss.length).toBeGreaterThan(0);
   });
 
-  test('DESIGN.md frontmatter records the colours, radii and display type parsed below', () => {
+  test('design frontmatter records the colours, radii and display type parsed below', () => {
     expect(Object.keys(designColors).length).toBeGreaterThanOrEqual(11);
     expect(Object.keys(designRounded).sort()).toEqual(['card', 'control', 'pill']);
     expect(designDisplay.fontSize).toBeDefined();
@@ -139,12 +248,12 @@ describe('colour tokens on :root', () => {
     });
   }
 
-  test('--danger-tint is #f7e4e2 and --white is #ffffff, as DESIGN.md records them', () => {
+  test('--danger-tint is #f7e4e2 and --white is #ffffff, as the design system records them', () => {
     expect(root['--danger-tint']).toBe('#f7e4e2');
     expect(root['--white']).toBe('#ffffff');
   });
 
-  test('every :root colour has the same name and value in DESIGN.md, and vice versa', () => {
+  test('every :root colour has the same name and value in the design document, and vice versa', () => {
     const cssColors = Object.fromEntries(
       Object.entries(root)
         .filter(([, value]) => /^#[0-9a-f]{6}$/.test(value))
@@ -166,7 +275,7 @@ describe('Tailwind theme mapping', () => {
     expect(themeInline['--color-accent-2']).toBe('var(--accent-2)');
   });
 
-  test('@theme static keeps card, control and pill radii as recorded in DESIGN.md', () => {
+  test('@theme static keeps card, control and pill radii as recorded in the design document', () => {
     expect(themeStatic['--radius-card']).toBe('18px');
     expect(themeStatic['--radius-control']).toBe('12px');
     expect(themeStatic['--radius-pill']).toBe('999px');
@@ -175,14 +284,14 @@ describe('Tailwind theme mapping', () => {
     expect(themeStatic['--radius-pill']).toBe(norm(designRounded.pill));
   });
 
-  test('@theme static records the soft large shadow exactly as DESIGN.md does', () => {
+  test('@theme static records the soft large shadow exactly as the design system does', () => {
     const recorded = design.match(/Lifted Panel\*\*\s*\(`box-shadow:\s*([^`]+)`\)/)?.[1];
     expect(recorded).toBeDefined();
     expect(themeStatic['--shadow-soft']).toBe('0 18px 60px rgba(19, 34, 27, .08)');
     expect(themeStatic['--shadow-soft']).toBe(norm(recorded ?? ''));
   });
 
-  test('@theme static records the display headline scale as DESIGN.md does', () => {
+  test('@theme static records the display headline scale as the design system does', () => {
     expect(themeStatic['--text-display']).toBe('clamp(48px, 7vw, 96px)');
     expect(themeStatic['--text-display']).toBe(norm(designDisplay.fontSize));
     expect(themeStatic['--text-display--line-height']).toBe('.94');
@@ -193,7 +302,7 @@ describe('Tailwind theme mapping', () => {
     expect(themeStatic['--text-display--font-weight']).toBe(norm(designDisplay.fontWeight));
   });
 
-  test('@theme static records the 44px tap target DESIGN.md records for controls', () => {
+  test('@theme static records the 44px tap target the design system records for controls', () => {
     expect(themeStatic['--spacing-tap']).toBe('44px');
     expect(themeStatic['--spacing-tap']).toBe(norm(designButton.height));
   });
@@ -205,7 +314,7 @@ describe('fonts', () => {
     expect(css).toMatch(/@import\s+["']@fontsource-variable\/inter["']\s*;/);
   });
 
-  test('--font-sans puts "Inter Variable" first, then Inter, then the DESIGN.md fallback tail', () => {
+  test('--font-sans puts "Inter Variable" first, then Inter, then the design fallback tail', () => {
     const stack = themeStatic['--font-sans'];
     expect(stack).toBeDefined();
     // norm() lower-cases, so the family names are compared in lower case.
@@ -214,7 +323,7 @@ describe('fonts', () => {
     expect(stack.endsWith(norm(DESIGN_STACK_TAIL))).toBe(true);
   });
 
-  test("--font-sans's fallback tail is the tail of the Inter stack DESIGN.md records", () => {
+  test("--font-sans's fallback tail is the tail of the Inter stack the design system records", () => {
     const recorded = norm(designDisplay.fontFamily);
     expect(recorded.startsWith('inter, ')).toBe(true);
     expect(recorded.slice('inter, '.length)).toBe(norm(DESIGN_STACK_TAIL));

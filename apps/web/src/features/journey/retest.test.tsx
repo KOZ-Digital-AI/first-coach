@@ -22,7 +22,7 @@ const { cleanup, fireEvent, render, screen, waitFor, within } = await import('@t
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * The retest screen (/progress/retest/:testSlug), written from the bead's acceptance criteria:
+ * The retest screen (/progress/retest/:testSlug), written from the acceptance criteria:
  *  - it shows the test protocol, the previous result and a numeric input;
  *  - after POST /api/player/test-results it shows "Your previous result: 14 · Today: 21 · +50%" (built from the RESPONSE),
  *    with a personal-best note when earned; a worse result is neutral, with encouragement to continue the plan;

@@ -899,7 +899,7 @@ function Attestation({
   const errorId = `${id}-error`;
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      {/* Selected = green border and mint fill AND the native tick: colour is never the only signal (DESIGN.md Options). */}
+      {/* Selected = green border and mint fill AND the native tick: colour is never the only signal (Options). */}
       <label
         htmlFor={id}
         className="flex min-h-tap cursor-pointer items-start gap-3 rounded-control border border-line bg-paper p-3.5 has-checked:border-accent has-checked:bg-accent-2"
@@ -926,7 +926,7 @@ function Attestation({
   );
 }
 
-/** DESIGN.md Progress: a 10px pill track, a Field Green fill, and the number beside it in words. */
+/** Progress: a 10px pill track, a Field Green fill, and the number beside it in words. */
 function Progress({ percent, locale }: { percent: number | null; locale: Locale }) {
   const { t } = useTranslation('form');
   const known = percent !== null;

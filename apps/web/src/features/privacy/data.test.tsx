@@ -19,7 +19,7 @@ const panelModule = await import('./panels/data.panel');
 const { DataPanel } = panelModule;
 
 /*
- * The data controls panel (features/privacy/panels/data.panel.tsx, ), written from the bead's acceptance criteria:
+ * The data controls panel (features/privacy/panels/data.panel.tsx), written from the acceptance criteria:
  *  - offers "Download my data" (saves the export JSON of GET /api/player/export) and "Delete my data" (DELETE /api/player)
  *    behind a confirm dialog that requires typing the LOCALIZED word DELETE and states the consequence;
  *  - after a successful deletion every local store of that player (React Query cache, offline session, outbox, drafts) is
@@ -48,7 +48,7 @@ const EXPORT_NAME = 'first-coach-export-2026-09-21.json';
 const KEY = {
   session: `fc:${ID}:session`,
   outbox: `fc:${ID}:outbox`,
-  extra: `fc:${ID}:something-a-later-bead-added`,
+  extra: `fc:${ID}:something-a-later-change-added`,
   otherSession: `fc:${OTHER}:session`,
   last: 'fc:last-player',
   draft: 'fc:draft:contribute-form',

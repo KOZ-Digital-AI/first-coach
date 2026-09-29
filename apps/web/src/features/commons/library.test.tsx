@@ -22,9 +22,9 @@ const { default: userEvent } = await import('@testing-library/user-event');
 const { Route } = await import('../../routes/commons/index');
 
 /*
- * The drill library screen (/commons), written from the bead's acceptance criteria:
+ * The drill library screen (/commons), written from the acceptance criteria:
  *  - lists the drills of GET /api/commons/drills as cards: title, track, level, minutes, equipment, age, TrustBadge, source and
- *    licence (all of them from the list itself, the extension of );
+ *    licence (all of them from the list itself);
  *  - filters for track, status, equipment and level whose options are the FACETS of the response (no hard-coded enums), plus a
  *    text search; the filters live in the URL search params (TanStack Router validateSearch), so a filtered view is shareable;
  *  - header: the "Sport knowledge as public infrastructure" intro, "Download Commons JSON" (export.json), "Contribute a method";

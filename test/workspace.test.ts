@@ -50,11 +50,6 @@ test("tsconfig.base.json is strict", async () => {
 describe(".gitignore", () => {
   const gitignore = join(root, ".gitignore");
 
-  test("keeps the bd/Dolt block", async () => {
-    const lines = (await Bun.file(gitignore).text()).split("\n");
-    expect(lines).toContain(".dolt/");
-    expect(lines).toContain(".beads/proxieddb/");
-  });
 
   test("ignores build/runtime artifacts but not .env.example", () => {
     const dir = tempDir();

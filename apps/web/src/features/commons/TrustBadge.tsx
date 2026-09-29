@@ -19,7 +19,7 @@ type Presentation = {
 };
 
 // Keyed by the contract's TrustStatus, so a new status is a compile error here. One shape per status: colour is never the
-// only signal (DESIGN.md Second Signal Rule). Tones stay neutral/accent (Ink text on both): trust is not an alert.
+// only signal (design rule: colour is never the only signal). Tones stay neutral/accent (Ink text on both): trust is not an alert.
 const PRESENTATION = {
   COMMUNITY: { key: 'community', icon: Users, verified: false, tone: 'neutral' },
   REVIEWED: { key: 'reviewed', icon: ClipboardCheck, verified: false, tone: 'neutral' },

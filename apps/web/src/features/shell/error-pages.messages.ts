@@ -1,7 +1,7 @@
 import type { MessageBundle } from '../../lib/i18n';
 
 // Not-found, unauthorized and something-went-wrong pages. Namespace `error-pages` (from the file name), registered by the
-// eager glob in lib/i18n.ts. Tone (PRODUCT.md): calm, plain, never scolding; it says what happened and the next small step,
+// eager glob in lib/i18n.ts. Tone (product principles): calm, plain, never scolding; it says what happened and the next small step,
 // and never blames the visitor. The Kazakh text still needs a native review.
 export default {
   kk: {

@@ -17,7 +17,7 @@ export type ErrorStateProps = Omit<ComponentProps<'div'>, 'title' | 'children' |
 };
 
 /*
- * Announced as a whole via role="alert". DESIGN.md Colors > Semantic: Signal Red is for errors and is always paired with
+ * Announced as a whole via role="alert". Colors > Semantic: Signal Red is for errors and is always paired with
  * words and an icon, so the decorative CircleAlert (aria-hidden) sits beside the title text and the border is red only as
  * a secondary cue. Ink title and muted message keep contrast (title ink on paper 17.88:1, muted 4.99:1); the icon is the
  * only red element that carries no text. On phones the Retry button spans the width for a thumb; from the sm breakpoint it hugs its label.

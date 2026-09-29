@@ -3,7 +3,7 @@ import type { MessageBundle } from '../../lib/i18n';
 // Landing page copy (the / route). Namespace `landing` (from the file name); registered by the eager glob in lib/i18n.ts.
 //
 // Calm, honest words for a child, a parent or a volunteer coach: the page names what the product is and does, and makes
-// no promise about the future (no monument, no professional career; PRODUCT.md and DESIGN.md).
+// no promise about the future (no monument, no professional career; product and design principles).
 // Kazakh text still needs a native-speaker review.
 //
 // - `card.summary.*` are the three sentences of the dark hero card, written in capitals as the criteria give them. They are

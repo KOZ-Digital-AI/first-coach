@@ -32,7 +32,7 @@ const { cleanup, render, screen, waitFor, within } = await import('@testing-libr
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * Written from the acceptance criteria of  (found by the gate script of ):
+ * Written from the acceptance criteria:
  *  - from pressing START TRAINING on a fresh browser (no session cookie) to MY ROADMAP the web app makes exactly
  *    POST /api/auth/sign-in/anonymous, GET /api/onboarding/football, POST /api/player/start (Better Auth get-session reads
  *    are excluded, as the gate counts them): no GET /api/player/today probe and no GET /api/player/me;

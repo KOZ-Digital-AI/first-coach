@@ -198,7 +198,7 @@ export const DATABASE_STATES = ["ok", "error"] as const;
 export const DatabaseState = z.enum(DATABASE_STATES);
 export type DatabaseState = z.infer<typeof DatabaseState>;
 
-/** Loose: later beads add fields (drill count, migration version). */
+/** Loose: later changes add fields (drill count, migration version). */
 export const HealthResponse = z.looseObject({
   ok: z.boolean(),
   version: z.string().min(1),

@@ -43,7 +43,7 @@
 //     query on this endpoint): the profile's locale is used.
 //   * Each item carries `track` (the drill's primary skill slug, omitted when none is linked) and `level` (its stored
 //     version's), exactly as GET /api/player/today has them.
-//   * CONTRACT/OWNERSHIP GAP: the session builders live, unexported, in player-today.routes.ts, which this bead
+//   * CONTRACT/OWNERSHIP GAP: the session builders live, unexported, in player-today.routes.ts, which this route
 //     does not own; the block "the session as GET /api/player/today has it" below is a copy of them and must
 //     follow them until both routes import one shared module.
 import type { Database } from "bun:sqlite";

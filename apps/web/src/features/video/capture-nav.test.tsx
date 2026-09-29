@@ -35,7 +35,7 @@ const { Route: ResultRoute } = await import('../../routes/video/result.$id');
 // element (a huge circular object graph): it can take a minute. Compare with === and assert on the boolean instead.
 
 /*
- * The capture screen hands its answer over to the result screen (, bug found by the 8nt.10 generator: nothing led to
+ * The capture screen hands its answer over to the result screen (a bug: nothing led to
  * /video/result/:id). Written from the acceptance criteria:
  *  - a successful analysis invalidates ['video','analyses'] and navigates to /video/result/<analysis.id> instead of rendering the
  *    result inline;

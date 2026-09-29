@@ -5,7 +5,7 @@ import type { MessageBundle } from '../../lib/i18n';
 // (a release name) are never translated. Nav labels stay short because five of them share a 360px tab bar (about 72px each).
 // `nav.start` (auth-gate-spec.md §3.4): the visitor's one primary action ("Start training", shortened here the way the
 // other tab labels are — it shares the same 360px tab bar). The longer sign-in-screen copy ("Start training", the full
-// sentence) lives in features/account/sign-in.messages.ts (`start.button`), a separate bead's file.
+// sentence) lives in features/account/sign-in.messages.ts (`start.button`), a separate module's file.
 // The Kazakh text still needs a native review.
 export default {
   kk: {

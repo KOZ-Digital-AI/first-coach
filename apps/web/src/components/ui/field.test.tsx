@@ -22,7 +22,7 @@ describe('Field label', () => {
     expect(screen.getByRole('textbox', { name: 'Notes' }).tagName).toBe('TEXTAREA');
   });
 
-  test('is 13px bold per DESIGN.md Inputs and wraps long Kazakh/Russian text', () => {
+  test('is 13px bold per the Inputs rule and wraps long Kazakh/Russian text', () => {
     render(<Field label="Жаттығудың толық атауын енгізіңіз">{(control) => <input {...control} />}</Field>);
     const label = screen.getByText('Жаттығудың толық атауын енгізіңіз');
     expect(label.classList.contains('text-[13px]')).toBe(true);
@@ -142,7 +142,7 @@ describe('Field error', () => {
 });
 
 describe('Field control', () => {
-  test('receives DESIGN.md input styling and a 44px tap height', () => {
+  test('receives the design system input styling and a 44px tap height', () => {
     render(<Field label="Name">{(control) => <input {...control} />}</Field>);
     const input = screen.getByRole('textbox', { name: 'Name' });
     for (const cls of ['min-h-tap', 'w-full', 'rounded-control', 'border', 'border-line', 'bg-white', 'text-ink']) {

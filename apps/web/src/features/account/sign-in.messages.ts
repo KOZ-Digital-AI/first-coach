@@ -5,7 +5,7 @@ import type { MessageBundle } from '../../lib/i18n';
 //
 // Kazakh text still needs a native-speaker review: it was written without one, so wording, register and word
 // order may need changes. Russian and English are the reference texts. This includes the newer `start.*` keys (auth-gate
-// spec P3): the child is addressed informally (kk сен / ru ты), the coach formally (kk сіз / ru вы), per PRODUCT.md.
+// spec P3): the child is addressed informally (kk сен / ru ты), the coach formally (kk сіз / ru вы), per the product principles.
 //
 // - `start.*` is the Start card (auth-gate spec §2.4): a signed-out visitor's one-tap way into training, no form, no
 //   account. `start.button`'s English is "Start training" (not just "Start"), matching the landing page's CTA and the
@@ -17,9 +17,9 @@ import type { MessageBundle } from '../../lib/i18n';
 // - `errors.*` never repeat the server's English text: wrong password does not say WHICH of email / password is wrong, and
 //   rate limited names the real limit (10 tries in 15 minutes, apps/api/src/auth/rate-limit.ts RATE_LIMITS).
 // - `guest.note` is shown to a player who is training as a guest: making an account keeps that progress. DEPENDENCY: that
-//   only holds once the API links the guest to the new account (onLinkAccount re-keys the player's data: bug bead
-//   ). Until then Better Auth deletes the guest user when the account is made. The client half (no sign-out,
-//   the guest cookie stays for the sign-up / sign-in call) is done in routes/account/sign-in.tsx. Reword the note if 70i.12
+//   only holds once the API links the guest to the new account (onLinkAccount re-keys the player's data).
+//   Until then Better Auth deletes the guest user when the account is made. The client half (no sign-out,
+//   the guest cookie stays for the sign-up / sign-in call) is done in routes/account/sign-in.tsx. Reword the note if that
 //   is not going to land.
 export default {
   kk: {

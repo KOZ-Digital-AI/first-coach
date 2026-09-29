@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j9-video-coach.sh: slice gate  (slice ), journey J9 "a player analyses a short clip with the Beta AI Video Coach".
+# apps/web/e2e/j9-video-coach.sh: journey J9 "a player analyses a short clip with the Beta AI Video Coach".
 # Integration proof on the REAL stack (real API process, real SQLite file with the real seed, the real built web app served by the API, a real
 # browser; nothing mocked, no stubbed model, no fake pose result). What it asserts, in the order of the criteria:
 #
@@ -45,7 +45,7 @@
 # Readings of the criteria where they are open (each is one line of the script):
 #   * "the pose model is fetched only on this screen": no request for /mediapipe/*, *.task, *.wasm, vision_wasm*, pose_landmarker*, or a
 #     tasks-vision chunk on /train, /commons, /progress; and at least the model file is requested on /video once a clip is chosen (the
-#     product loads it lazily, when a clip is coming: bead 8nt.6/8nt.9).
+#     product loads it lazily, when a clip is coming).
 #   * "the network log shows NO request carrying video bytes": no request whose content-type is video/*, audio/* or multipart/form-data,
 #     none whose body starts with the EBML (webm) or 'ftyp' (mp4) signature, and no non-GET request to a blob: URL. (The browser reports the
 #     GET of the blob: URL that the on-device decoder reads the clip from; that read never leaves the device, so it is not a network request.)

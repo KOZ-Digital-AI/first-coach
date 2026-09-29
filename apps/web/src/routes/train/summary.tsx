@@ -38,7 +38,7 @@ import { DEFAULT_LOCALE, formatNumber, toLocale } from '../../lib/i18n';
  *    never persisted, so after a reload the player lands on /train). Empty: nothing finished. Error: the cached summary is not
  *    the contract's shape (nothing sensible to show); its one action leads back to /train. Success: the summary.
  *  - Disabled: the screen has no mutation and sends no request, so there is no button that could be disabled in flight.
- *  - Links are plain anchors that navigate through the router (like /train's drill rows): the target routes belong to other beads.
+ *  - Links are plain anchors that navigate through the router (like /train's drill rows): the target routes belong to other modules.
  *  - Only `Route` and the small SummaryDepsContext seam are exported (see /train for why the page itself is not).
  */
 

@@ -14,7 +14,7 @@
 // carries only the error's class name and SQLite code, never the entry or the error message, and
 // answered with false.
 //
-// Readings of the criteria (decisions, not in the bead text):
+// Readings of the requirements (decisions):
 //   - the entry carries the profile HASH (sha-256 hex, computed by the caller); anything else in that
 //     slot is stored as NULL, never as text. A row without a player also gets a NULL hash: such a row
 //     belongs to nobody and is never erased by a cascade, so it holds nothing derived from a profile.

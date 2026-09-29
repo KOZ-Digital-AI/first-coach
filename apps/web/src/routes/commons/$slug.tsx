@@ -37,7 +37,7 @@ import { type DrillDetailSlotProps, useSlot } from '../../lib/slots';
  *   typed number removed (the list draws its own numbers), any other text is a single step.
  * - Age. The seeded drills give `ageMax: 99` for "no upper limit"; 99 or more reads as open-ended ("from 5"), never "5-99".
  * - Trust. DrillDetail carries no status of its own (contract gap; the list's DrillSummary has one, and its extension is on
- *   hold in bead hum.6). The status is the one the NEWEST review moved the drill to (`reviews[].to`), COMMUNITY when there is
+ *   hold). The status is the one the NEWEST review moved the drill to (`reviews[].to`), COMMUNITY when there is
  *   no review; the organisation on the badge is that review's. Every review is listed under it with its reviewer and note.
  * - Video. Only `media` entries of kind "video" are shown, as a native player: controls, `preload="none"` (the file is not
  *   fetched until the child presses play) and never `autoplay`. Images and documents are not shown (the criteria name a video).
@@ -45,9 +45,9 @@ import { type DrillDetailSlotProps, useSlot } from '../../lib/slots';
  *   in UTC, so one instant reads the same on every device.
  * - Version history. The API lists EVERY version, the current one included, newest first. The current one is marked with the
  *   word "Current"; an older one has an "Open version X" button. KNOWN API GAPS, said on screen and here, never papered over:
- *   the text of a superseded version cannot be read (backlog ), so "opened read-only" shows only what the history entry
+ *   the text of a superseded version cannot be read, so "opened read-only" shows only what the history entry
  *   holds (version, date, note) with a plain sentence that the text is not published yet; and the history has no
- *   "unpublished" marker (backlog ), so nothing is marked as withdrawn. Opening a version makes no request. It replaces
+ *   "unpublished" marker, so nothing is marked as withdrawn. Opening a version makes no request. It replaces
  *   the current version's sections, so the current text is never passed off as an older one; the title and the list stay.
  *   Which version is open is local state (not in the URL). Focus moves to the opened version's heading, and back to the title.
  * - States. loading = a named busy status; empty = the not-found state (a 404, or a 400 for a slug no drill can have): calm
@@ -57,9 +57,9 @@ import { type DrillDetailSlotProps, useSlot } from '../../lib/slots';
  * - Slot. Every component of the `drill-detail` slot (features/*\/drill-detail-extra.tsx) renders in
  *   `<div data-slot="drill-detail">` below the content, on success only (a slot has nothing to add to a missing drill). The
  *   slot has no props: a slot component reads the route param itself.
- * - Library link. /commons (the library, another bead) is not in the route tree yet, so the destination is typed `string`
+ * - Library link. /commons (the library, another module) is not in the route tree yet, so the destination is typed `string`
  *   (the same reading as the shell's navigation). It is still a router link.
- * - Nothing here compares a child with anyone or promises a professional career (PRODUCT.md).
+ * - Nothing here compares a child with anyone or promises a professional career.
  */
 
 /** Where the way back leads. Typed `string` on purpose: the library route is not in the tree yet (see above). */

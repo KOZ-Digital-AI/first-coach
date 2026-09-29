@@ -24,7 +24,7 @@ if (typeof document === 'undefined') {
 const { cleanup, render, screen, waitFor, within } = await import('@testing-library/react');
 
 /*
- * : an OFFLINE cold reload of /train and /train/drill/<itemId>. The device holds the player's data (the persisted
+ * An OFFLINE cold reload of /train and /train/drill/<itemId>. The device holds the player's data (the persisted
  * query cache, and the session the player downloaded), but the page starts with no network and no session answer: the auth
  * session cannot be read, so `ensurePlayerSession` rejects, and the API call for today's session fails with the offline
  * problem. Both routes must then show what the device holds, with the existing "Could not refresh" notice on /train, and keep

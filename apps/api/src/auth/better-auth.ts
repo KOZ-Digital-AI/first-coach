@@ -57,7 +57,7 @@ const roles = {
  * or "staging", is production: the secret (at least 32 characters) and BETTER_AUTH_URL
  * are required, and wildcards in BETTER_AUTH_TRUSTED_ORIGINS are refused. Consequence:
  * running the api locally needs NODE_ENV=development (the `dev` script in
- * apps/api/package.json does not set it yet; a follow-up bead adds it).
+ * apps/api/package.json does not set it yet; a follow-up adds it).
  * Error messages name the variable, never the secret's value.
  */
 export function resolveAuthConfig(db: Database, env: NodeJS.ProcessEnv = process.env): AuthConfig {

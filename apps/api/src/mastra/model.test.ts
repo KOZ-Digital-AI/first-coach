@@ -1,4 +1,4 @@
-// : model ids + availability from env, and the lazy Mastra instance.
+// Model ids + availability from env, and the lazy Mastra instance.
 // No test here touches the network: nothing calls a model, and the Mastra store is a
 // LibSQL file in a temp dir that afterEach removes.
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";

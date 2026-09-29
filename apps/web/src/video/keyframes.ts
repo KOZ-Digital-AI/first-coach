@@ -1,5 +1,5 @@
 // Keyframe sampler: picks 3..6 well-visible, evenly spread moments of a clip and turns each into a small, anonymised
-// JPEG that satisfies the merged contract (apps/api/src/shared/video.ts, ).
+// JPEG that satisfies the merged contract (apps/api/src/shared/video.ts).
 //
 // PRIVACY (risk:privacy): the raw video NEVER leaves the device. The only thing that leaves is what this module returns:
 // downscaled JPEG keyframes (<= 512 px on the longest side, <= 200 KB decoded, bare base64 starting "/9j/"), cropped to the

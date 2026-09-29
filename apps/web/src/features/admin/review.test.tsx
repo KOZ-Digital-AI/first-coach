@@ -23,7 +23,7 @@ const { act, cleanup, fireEvent, render, screen, waitFor } = await import('@test
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * Contract under test (, narrowed by the coordinator): /admin/contributions/:id is the dedicated review screen for ONE
+ * Contract under test: /admin/contributions/:id is the dedicated review screen for ONE
  * contribution. The queue (routes/admin/index.tsx) already shows the submission, the diff and a note-only decision; this screen adds
  * what the queue has no room for: the private video, a moderation checklist, inline edits of the content fields the API accepts for
  * the contribution's kind, and an approval that carries the edits, the initial trust status and an organisation label in ONE request

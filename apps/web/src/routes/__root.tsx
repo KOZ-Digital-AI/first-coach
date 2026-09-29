@@ -6,7 +6,7 @@ import { AppShell } from '../features/shell/Shell';
 // Side-effect import: registers the i18n instance before the first render (see the convention in lib/i18n.ts).
 import '../lib/i18n';
 
-// The header and root extension slots (lib/slots.ts) are rendered by the shell, so later beads still add UI
+// The header and root extension slots (lib/slots.ts) are rendered by the shell, so later changes still add UI
 // without editing this file.
 function RootLayout() {
   return (
@@ -18,7 +18,7 @@ function RootLayout() {
 
 /*
  * The root's two fallback screens (words: features/shell/error-pages.messages.ts, namespace `error-pages`). Calm and short,
- * never scolding (PRODUCT.md): what happened, then one clear next step.
+ * never scolding: what happened, then one clear next step.
  *
  * - notFoundComponent renders where the routed page would, so an unknown URL keeps the shell (header, navigation, footer).
  *   The primary action is home, the second is training.
@@ -28,7 +28,7 @@ function RootLayout() {
  *   (no errorComponent of its own, no router-level default) lands here. The error object is never shown to the visitor.
  */
 
-// Same page column and type scale as the other pages (DESIGN.md Layout, Typography); every link is at least 44px tall.
+// Same page column and type scale as the other pages (Layout, Typography); every link is at least 44px tall.
 const PAGE = 'mx-auto w-[calc(100%-24px)] max-w-190 py-10 sm:w-[calc(100%-40px)] sm:py-16';
 const EYEBROW = 'flex items-center gap-1.5 text-xs font-bold tracking-[.12em] text-accent uppercase';
 const HEADING = 'mt-3 text-[clamp(32px,5vw,60px)] leading-none font-bold tracking-[-.05em] wrap-break-word text-ink';

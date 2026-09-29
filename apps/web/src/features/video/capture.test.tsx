@@ -35,7 +35,7 @@ const { Route, VideoDepsContext } = await import('../../routes/video');
 // element (a huge circular object graph): it can take a minute. Compare to null / with === and assert on the boolean instead.
 
 /*
- * The Video Coach capture screen (/video), written from the acceptance criteria of  (risk:privacy, ui):
+ * The Video Coach capture screen (/video), written from the acceptance criteria:
  *  - the player picks a skill ("Analyse my dribbling") and reads the recording tips of the rubric (GET /api/video/rubrics/:skill);
  *  - WITHOUT videoAnalysis consent the consent step comes first (plain disclosure that still pictures go to an AI provider; under
  *    13 a guardian must have confirmed) and it links to the privacy settings: the screen never proceeds until the server says
@@ -62,7 +62,7 @@ const { Route, VideoDepsContext } = await import('../../routes/video');
  *  - a clip in which the player is not seen well enough (mean visibility below the rubric's minVisibility) is answered on the
  *    device with the 'rerecord' hint and NOTHING is sent;
  *  - the setting `videoCoachEnabled` has no public endpoint: it shows as a 403 from the analysis that is not 'consent required'.
- *  - CHANGED by : the answer is no longer rendered here. A finished analysis navigates to /video/result/<analysis.id>
+ *  - CHANGED: the answer is no longer rendered here. A finished analysis navigates to /video/result/<analysis.id>
  *    and a rerecord answer (from the server or from the device) to /video/result/<id or 'rerecord'>?rerecord=<reason>&skill=<slug>.
  *    The route takes the navigation through a seam (`navigate`, replaced by a mock here); capture-nav.test.tsx runs it through a
  *    real router. Every place that used to wait for the inline result heading now waits for that navigation.
@@ -606,7 +606,7 @@ describe('the consent gate', () => {
     expect(await screen.findByText(RUBRIC.recordingTips[0] as string)).toBeTruthy();
   });
 
-  // CHANGED by the cold review of  (send-time consent re-check). This test used to revoke the consent before Send
+  // CHANGED by the send-time consent re-check. This test used to revoke the consent before Send
   // and expect `analyse` to be called ONCE (the server's 403 being the only enforcement): it pinned the defect. The new
   // expectation is that nothing is sent at all and the gate is shown; the server's 403 path has its own test below.
   test('consent revoked (another tab) after the review: Send sends NOTHING, the gate is shown and the pictures are dropped', async () => {
@@ -1098,7 +1098,7 @@ describe('processing on the device', () => {
 // --- the answer on the device: not enough of the player was seen ---------------------------------------------------------------------
 
 describe('a clip the coach could not see', () => {
-  // CHANGED by : the hint used to be shown inline ("We could not see you well enough", "Nothing was sent.", a Film again
+  // CHANGED: the hint used to be shown inline ("We could not see you well enough", "Nothing was sent.", a Film again
   // button). The screen now navigates to the re-record variant of the result screen; every "nothing is sent / clip released"
   // assertion is kept.
   test('below the rubric minimum visibility: the screen navigates to the rerecord answer and NOTHING is sent', async () => {
@@ -1116,7 +1116,7 @@ describe('a clip the coach could not see', () => {
     expect(world.clips[0]?.release).toHaveBeenCalled();
   });
 
-  // CHANGED by : same navigation expectation instead of the inline hint.
+  // CHANGED: same navigation expectation instead of the inline hint.
   test('a clip with nobody in it is the same rerecord answer, not a crash', async () => {
     const world = makeWorld();
     world.pose.detectOnVideo.mockImplementation(async () => NOBODY);
@@ -1325,7 +1325,7 @@ describe('what is sent', () => {
     const view = renderVideo(world);
     await toReview(view);
     await view.user.click(button('Send for analysis'));
-    expect(await screen.findByText('Video analysis is unavailable right now')).toBeTruthy(); // : was 'Video Coach is switched off'
+    expect(await screen.findByText('Video analysis is unavailable right now')).toBeTruthy(); // was 'Video Coach is switched off'
     expect(hasRole('button', 'Try again')).toBe(false);
     expect((screen.getByRole('link', { name: 'Back to training' }) as HTMLAnchorElement).getAttribute('href')).toBe('/train');
   });
@@ -1333,7 +1333,7 @@ describe('what is sent', () => {
 
 // --- the result ----------------------------------------------------------------------------------------------------------------------
 
-// CHANGED by . This block used to pin the INLINE result (scores, focus, drills, "Analyse another clip") and the INLINE
+// CHANGED. This block used to pin the INLINE result (scores, focus, drills, "Analyse another clip") and the INLINE
 // rerecord view ("Film again"): the answer now lives on /video/result/:id (features/video/result.test.tsx pins what it shows).
 // What is pinned here is the hand-over: where the screen goes, and that it renders none of the answer itself.
 describe('the result', () => {

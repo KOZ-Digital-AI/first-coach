@@ -51,7 +51,7 @@ function contactEmail(): string | null {
   return /^[^\s@]+@[^\s@]+$/.test(value) ? value : null;
 }
 
-// 44px tall (DESIGN.md tap target), underlined so a link is never colour alone, and the visible focus ring comes from
+// 44px tall (tap target), underlined so a link is never colour alone, and the visible focus ring comes from
 // the global :focus-visible rule in styles/app.css.
 const LINK =
   'inline-flex min-h-tap items-center gap-1.5 rounded-control font-bold text-ink underline decoration-accent decoration-2 underline-offset-4 wrap-anywhere';

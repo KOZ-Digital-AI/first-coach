@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j10-privacy.sh: slice gate , journey J10 "the player controls their data and privacy".
+# apps/web/e2e/j10-privacy.sh: journey J10 "the player controls their data and privacy".
 # Integration proof on the REAL stack (real API process, real SQLite file with the real seed, the real built web app served by
 # the API, a real browser; nothing mocked, no OpenAI key needed). One player's whole privacy journey, UI -> API -> DB:
 #   0. SETUP    a second visitor (API) onboards, turns a consent on and makes a recovery code of its own, so "nothing about other

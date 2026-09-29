@@ -35,15 +35,15 @@ import '../../lib/i18n';
  * is still the only thing standing between a coach and the review queue's real content: requireAdmin (apps/api/src/auth/
  * middleware.ts) is the actual gate, on every request, whatever either check here shows.
  *
- * Readings of the criteria (ambiguous in the bead):
+ * Readings of the criteria (where they were ambiguous):
  * - "signed-out" includes an anonymous player session: every visitor gets one silently (lib/auth.ts), so "has a session" is
  *   not "signed in"; an admin needs a real account, and the sign-in page is the only way to one. requireAdmin agrees
  *   (anonymous -> 403), and only an explicit `isAnonymous === false` counts as a real account.
  * - "the unauthorized page" is rendered by this layout in place (URL unchanged, no redirect): no separate route exists.
  * - "sign-in with redirect" is `/account/sign-in?redirect=<encoded path, query and hash of the requested page>`. The sign-in
- *   screen is routes/account/sign-in.tsx (bead 70i.7, not part of this bead); it must accept only same-origin paths in `redirect`.
+ *   screen is routes/account/sign-in.tsx (not part of this route); it must accept only same-origin paths in `redirect`.
  * - Sub-navigation targets are /admin (the review queue: routes/admin/index.tsx is the index route of this layout; there is no
- *   /admin/queue route, ), /admin/drills, /admin/impact and /admin/settings (ADMIN_NAV below). `to` keeps its `as never`
+ *   /admin/queue route), /admin/drills, /admin/impact and /admin/settings (ADMIN_NAV below). `to` keeps its `as never`
  *   cast (the nav is one table of plain strings); the queue link matches its path exactly so it is not current on the others.
  * - Pages under this layout render their own <main> (the convention of the existing pages); the layout adds the nav only.
  */

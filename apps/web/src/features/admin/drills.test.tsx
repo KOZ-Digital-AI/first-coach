@@ -44,7 +44,7 @@ const { Route } = await import('../../routes/admin/drills');
  * - The organisation label field is shown for the two verified statuses; it is required for ACADEMY VERIFIED, optional for
  *   EXPERT VERIFIED (sent only when not blank) and never sent for REVIEWED.
  * - "shows the latest reviews entry": the newest review (by `at`) of the action response, in a "Latest review" block on the row.
- * - DrillDetail has no unpublished marker (backlog ), so after an unpublish the row leaves the list and a notice says
+ * - DrillDetail has no unpublished marker, so after an unpublish the row leaves the list and a notice says
  *   which drill was unpublished and why; the list is refetched.
  * - "Disabled while in flight": every mutation button and field of EVERY row is disabled while any action request runs.
  * Kazakh and Russian copy needs a native review: for those locales the tests pin only that text exists, is Cyrillic and never
@@ -160,7 +160,7 @@ const statusCalls = () => calls.filter((call) => call.path.endsWith('/status'));
 const unpublishCalls = () => calls.filter((call) => call.path.endsWith('/unpublish'));
 const actionCalls = () => [...statusCalls(), ...unpublishCalls()];
 
-/** The moderation rules of , applied to a request body that already parsed with the contract's schema. */
+/** The moderation rules, applied to a request body that already parsed with the contract's schema. */
 function applyStatus(row: Row, request: DrillStatusRequest): Response {
   if (request.toStatus === row.status)
     return problem(422, [{ pointer: '/toStatus', detail: 'same status' }]);

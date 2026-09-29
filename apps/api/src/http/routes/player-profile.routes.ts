@@ -31,7 +31,7 @@
 //     nothing and keeps today's session, so its done items survive; only a real change resets the day.
 //   * LOCAL DATE = the X-Timezone header (an IANA name; absent, blank or invalid means UTC, never an error), the
 //     rule of GET /api/player/today, which is what decides the session the client sees. The helpers are copied
-//     here (that route does not export them and is not this bead's to change).
+//     here (that route does not export them and is not this route's to change).
 //   * "Today's unfinished session" = the sessions row of (player, local date) whose finished_at IS NULL. A finished
 //     session and every other day's row (the picker's history) stay. The row's session_events go with it (the
 //     database's ON DELETE CASCADE): CONTRACT GAP, drill_done events of a dropped session are lost with it.

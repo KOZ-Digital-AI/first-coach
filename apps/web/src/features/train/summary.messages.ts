@@ -5,7 +5,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * `*.messages.ts` glob in lib/i18n.ts, so nothing outside this file registers it.
  * Numbers arrive already formatted for the language ({{total}}). Wording avoids plural forms on purpose (a label plus a
  * bare number: "Sessions finished  4"), so one phrase per language is enough.
- * Calm by design (DESIGN.md / PRODUCT.md): it praises turning up, compares only with the player's own past sessions, never
+ * Calm by design (design and product principles): it praises turning up, compares only with the player's own past sessions, never
  * with other children, promises no career and never scolds; the empty and error copy blames nobody.
  * The minutes figure is CUMULATIVE ("so far"), never "today": the API's minutesTrained sums every done drill ever.
  * Kazakh text still needs a native review (as everywhere else in this repo).

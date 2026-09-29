@@ -12,7 +12,7 @@
 // regression (they are drill slugs, so they must resolve within the drills the seed loader sees).
 //
 // Source of the content requirements: sections 13, 15 and 16 of the original product brief,
-// PRODUCT.md (children from about 6, Kazakh first among equals, safe
+// the product principles (children from about 6, Kazakh first among equals, safe
 // unsupervised) and CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";

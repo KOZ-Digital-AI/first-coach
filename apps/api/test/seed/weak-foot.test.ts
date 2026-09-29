@@ -20,7 +20,7 @@
 // (weak-foot-touches, ...), so the tests also insist a drill slug is never a skill slug.
 //
 // Source of the content requirements: the spec in the original product brief (sections 2, 8,
-// 16), PRODUCT.md (children from about 6, Kazakh first among equals, safety) and
+// 16), the product principles (children from about 6, Kazakh first among equals, safety) and
 // CONTENT-LICENSE.md (original wording only). "Weak foot" is the weaker foot of a player of
 // EITHER dominant foot, so the texts never say which side it is.
 import { describe, expect, test } from "bun:test";

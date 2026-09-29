@@ -8,7 +8,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * describeProblem, never worded here. Kazakh text still needs a native-speaker review.
  *
  * Plain language on purpose: a 10-year-old and a parent should both follow it (short sentences, no legal words, "you" is the
- * child). It says only what the product does (see the contract in apps/api/src/shared/privacy.ts, PRODUCT.md and the privacy
+ * child). It says only what the product does (see the contract in apps/api/src/shared/privacy.ts, the product principles and the privacy
  * policy in features/legal): it promises nothing else and never compares the player with anyone.
  *
  * - `stored` lists what is kept and what is not asked for; `never` lists what is never done.

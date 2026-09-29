@@ -38,7 +38,7 @@ export type TodayQuery = z.infer<typeof TodayQuery>;
  *
  * `track` and `level` are the drill's primary skill slug (DrillSummary.track: one of the skill graph's
  * tracks) and the ExperienceLevel of the drill VERSION the item points at. Both are OPTIONAL and additive: a session cached
- * by an older client, or answered by an older server, has neither and must still parse (see backlog  on strict
+ * by an older client, or answered by an older server, has neither and must still parse (see the strict schema of
  * DrillContent). The server omits `track` for a drill that has no primary skill linked yet; it always sends `level`.
  */
 export const TodayItem = z.object({

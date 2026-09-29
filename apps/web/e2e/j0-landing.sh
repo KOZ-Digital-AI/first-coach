@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j0-landing.sh: slice gate , journey J0 "a visitor lands, switches language and starts".
+# apps/web/e2e/j0-landing.sh: journey J0 "a visitor lands, switches language and starts".
 # Journey proof on the REAL stack, nothing mocked: the real API process on a fresh temp SQLite DB with the real seed,
 # serving the real built web app on the same origin, driven by a real browser (playwright-cli). Runs on its own free
 # port (the harness picks it); a process already holding :4111 or :5173 is neither used nor touched.
@@ -22,8 +22,8 @@
 #   7. 360px         no horizontal scroll on / in kk, ru and en
 #
 # Readings of the criteria (where they were open):
-#   - "exactly 1 /api request is made on load" is counted as the j2 onboarding gate counts (decision recorded on bead
-#     ): exactly ONE non-auth /api data request (GET /api/commons/stats), AND at most ONE Better Auth session
+#   - "exactly 1 /api request is made on load" is counted as the j2 onboarding gate counts:
+#     exactly ONE non-auth /api data request (GET /api/commons/stats), AND at most ONE Better Auth session
 #     READ (GET /api/auth/get-session, the shell reads the cookie for the Admin link; it carries no data), AND NO other
 #     /api/auth call (a POST sign-in / sign-up / anonymous sign-in on a landing view would create a player before the
 #     visitor asked for anything). /health is not under /api. The three are separate checks; a failure prints the full

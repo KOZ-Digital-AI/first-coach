@@ -10,7 +10,7 @@ import aiPlanMessages from './ai-plan.messages';
 import * as todayExtraModule from './today-extra';
 import TodayExtra, { AiPlanControl } from './today-extra';
 
-// Same happy-dom guard as features/offline/download.test.tsx: the bead verifies from apps/web (the preload registers the DOM
+// Same happy-dom guard as features/offline/download.test.tsx: it verifies from apps/web (the preload registers the DOM
 // there), but a run from the repo root has none, so register it BEFORE Testing Library is imported.
 if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
@@ -20,17 +20,17 @@ const { act, cleanup, fireEvent, render, screen, waitFor, within } = await impor
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * , written from the bead's acceptance criteria (not from the implementation): the `today` slot component
+ * Written from the acceptance criteria (not from the implementation): the `today` slot component
  * (features/ai/today-extra.tsx) shows "Personalise with AI" with an optional short note field; while running it shows progress
  * and keeps the current session usable; on planner 'ai' the session updates with an "AI-personalised from approved drills" tag
  * and a reason under each drill; on planner 'rules' it shows the quiet note "AI is unavailable — here is your standard plan"
- * (no error toast); hidden when offline or when the setting disables it (zo6.12: the /health aiPlannerEnabled flag); loading, empty, error, disabled and success states;
+ * (no error toast); hidden when offline or when the setting disables it (the /health aiPlannerEnabled flag); loading, empty, error, disabled and success states;
  * the mutation button is disabled while a request is in flight; strings in kk, ru and en.
  *
  * What is real: the component, the typed client (`createApi`, with the real Zod-parsing of the shared contract), the React
  * Query cache and the i18n bundle. What is replaced: `fetch` (the fake server below). Fixtures are test data only.
  *
- *  (gate j8 U2/U5) changes two criteria of the above: with no key on the server (/health aiAvailable false) the
+ * A later change alters two criteria of the above: with no key on the server (/health aiAvailable false) the
  * button STAYS and answers with the standard plan and the quiet note; the setting that disables the AI is read from /health
  * `aiPlannerEnabled` (hidden only when it is exactly false; absent means enabled).
  */
@@ -526,7 +526,7 @@ describe('offline', () => {
 });
 
 describe('no key on the server (/health aiAvailable false): the button stays and the answer is the standard plan', () => {
-  //  (gate j8 U2). This describe REPLACES the zo6.9 test "the server saying aiAvailable is false (no key) hides the
+  // This describe REPLACES the earlier test "the server saying aiAvailable is false (no key) hides the
   // control": the criteria say the same button stays and returns the deterministic session with the quiet note.
   const NO_KEY_REASON = 'The AI coach is not set up on this server.';
   const noKey = () => json({ ...session(), fallback: { code: 'no_key' } });
@@ -589,7 +589,7 @@ describe('no key on the server (/health aiAvailable false): the button stays and
 });
 
 describe('the admin setting that disables the AI (/health aiPlannerEnabled)', () => {
-  //  (gate j8 U5): only an aiPlannerEnabled that is EXACTLY false hides the control; absent means enabled.
+  // only an aiPlannerEnabled that is EXACTLY false hides the control; absent means enabled.
   test('aiPlannerEnabled false hides the control entirely: no button, no note field, no heading', async () => {
     const { calls } = mount({ health: () => health({ aiPlannerEnabled: false }) });
     await waitFor(() => expect(control() === null).toBe(true));

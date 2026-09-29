@@ -10,7 +10,7 @@
 // after `<` and `>` in the text were replaced by their full-width forms so the text cannot close
 // its own block or open another. The agent's instructions say what the blocks mean.
 //
-// Readings of the criteria (the bead names the tools, not their shapes):
+// Readings of the requirements (they name the tools, not their shapes):
 //   - the inputs are snapshotted (copied) when the tools are created;
 //   - listCandidateDrills takes an optional `skill` and lists the candidates that train it;
 //   - getProgress lists every skill of the graph with the player's level, 1 where none is known

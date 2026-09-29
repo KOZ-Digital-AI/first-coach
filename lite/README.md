@@ -14,7 +14,7 @@ Created by KOZ AI.
 - **Content**: `js/data.js` and `commons.json` are generated from the main repo's
   `config/commons/football` (skill graph, 60 drills, 5 tests, rubrics) with `build_data.py`.
 - **Animations**: `js/anim.js` draws every drill as SVG (side view, feet close-up, pitch diagram).
-  No video files, no third-party footage — nothing to license, fast on a phones.
+  No video files, no third-party footage — nothing to license, fast on any phone.
 - **Players**: a light sign-in with local profiles (name or nickname, avatar, colour, optional 4-digit PIN).
   Several children can share one phone or a school tablet; each has their own plan and progress.
   No email or password is asked of a child. A forgotten PIN is reset behind a grown-up maths question.

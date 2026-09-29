@@ -11,7 +11,7 @@ import trustBadgeMessages from '../commons/trust-badge.messages';
 import { createEventsClient } from './events-client';
 import todayMessages from './today.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the bead's verify
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the verify
 // command runs from the repo root, where there is no DOM. Register happy-dom here BEFORE Testing Library is imported
 // (same order rule as test/setup.ts and the wizard test); the `document` guard keeps it a no-op under the preload.
 if (typeof document === 'undefined') {
@@ -22,7 +22,7 @@ const { act, cleanup, render, screen, waitFor, within } = await import('@testing
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * Written from the bead's acceptance criteria, not from the implementation:
+ * Written from the acceptance criteria, not from the implementation:
  *  - /train shows today's session from GET /api/player/today (1 call): headline with the total minutes, an "n/m completed"
  *    pill, the ordered drill list (index, title, minutes, TrustBadge, done state with a check mark and a word), a roadmap
  *    focus panel and every component of the `today` slot;

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { resetSessionExpired } from '../features/account/session-expired';
 import { isApiProblem } from './problem';
 
-// : the app-wide `api` must be created with the retrying fetch, and the 401 handler must be installed at start-up.
+// the app-wide `api` must be created with the retrying fetch, and the 401 handler must be installed at start-up.
 // Everything here goes through the REAL `api` export (and the real bootstrap seam); what is stubbed is the global fetch
 // (looked up per call), `location` (happy-dom's, moved with history.pushState) and lib/auth's ensurePlayerSession /
 // resetPlayerSession (the real ones hold a Better Auth client that captured the global fetch when the module loaded).

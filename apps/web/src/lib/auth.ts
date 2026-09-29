@@ -22,7 +22,7 @@
  *     (another tab won, or the server said "already anonymous") that session is the answer; if not, the ORIGINAL sign-in
  *     error is the rejection's cause.
  *
- * ensurePlayerSessionOutcome() (additive, ) is ensurePlayerSession() plus one fact: `{ session, created }`.
+ * ensurePlayerSessionOutcome() (additive) is ensurePlayerSession() plus one fact: `{ session, created }`.
  * `created` is true for every caller that joins the attempt which had to sign in anonymously (a brand-new player, who cannot
  * be onboarded yet, so a screen may skip asking the API "are you onboarded?"), AND for the first call after that attempt has
  * settled that has not yet observed it (the auth gate's sign-in screen, P3, is itself now such a caller: it calls

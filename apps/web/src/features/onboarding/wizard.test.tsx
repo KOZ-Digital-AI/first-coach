@@ -13,7 +13,7 @@ import conditionsMessages from './conditions-step.messages';
 import profileMessages from './profile-step.messages';
 import wizardMessages from './wizard.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the bead's verify
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the verify
 // command runs from the repo root, where there is no DOM. Register happy-dom here BEFORE Testing Library is imported
 // (same order rule as test/setup.ts and the step tests); the `document` guard keeps it a no-op under the preload.
 if (typeof document === 'undefined') {
@@ -24,7 +24,7 @@ const { act, cleanup, render, screen, waitFor, within } = await import('@testing
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * Written from the bead's acceptance criteria, not from the implementation:
+ * Written from the acceptance criteria, not from the implementation:
  *  - /train/onboarding loads OnboardingOptions ONCE, shows a 4-segment progress line and "Step n / 4";
  *  - answers live in component state across Back/Continue, backed by a namespaced sessionStorage draft that is
  *    parsed with Zod and reset when it does not parse;

@@ -42,7 +42,7 @@
  * re-send a request. The retry therefore lives in a `fetch` decorator that `createApi({ fetch })` already accepts, and the
  * handler is what "registers" for the coach areas. The app-wide `api` in lib/api.ts is `createApi()` with the real fetch:
  * wiring `createApi({ fetch: withSessionRetry(...) })` and calling `installSessionExpired()` at start-up is not in this
- * bead's owned paths. Sign-in and start-up wiring (main.tsx) belong to other beads; so does restoring a draft on the form.
+ * owned paths. Sign-in and start-up wiring (main.tsx) belong to other modules; so does restoring a draft on the form.
  *
  * KNOWN LIMITS (accepted, not fixed here):
  * - Retry identity downgrade: on a player route the retry re-establishes an ANONYMOUS session. A signed-in coach who happens

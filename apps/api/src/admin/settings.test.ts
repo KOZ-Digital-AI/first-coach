@@ -31,7 +31,7 @@ const SETTINGS_REQUIRED = ['key', 'value', 'updated_at'];
 /** Declared column types of the 003 file alone, pinned so a STRICT type cannot drift. */
 const COLUMN_TYPES: Record<string, string> = { key: 'TEXT', value: 'TEXT', updated_at: 'TEXT' };
 
-/** What the bead's acceptance criteria give as the defaults, restated here on purpose (not imported). */
+/** What the requirements give as the defaults, restated here on purpose (not imported). */
 const CRITERIA_DEFAULTS: Settings = {
   minStatusByAgeBand: { u10: 'COMMUNITY', u14: 'COMMUNITY', adult: 'COMMUNITY' },
   uploadMaxMb: 50,

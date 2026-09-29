@@ -1794,7 +1794,7 @@ describe("20-seed boot hook", () => {
 // --- track files under <sport>/drills/ ---------------------------------------
 //
 // Layout pinned here: a sport's track files live at the sport root (<sport>/<track>.json) or in
-// <sport>/drills/<track>.json, the location the drill-content beads use. Everything under drills/ is
+// <sport>/drills/<track>.json, the location the drill content uses. Everything under drills/ is
 // a track file (never skill-graph / tests / rubrics). Any OTHER subdirectory is a SeedError, so a
 // mistyped folder cannot silently drop drills. Dot-entries and non-.json files stay ignored.
 

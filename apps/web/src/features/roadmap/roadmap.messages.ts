@@ -12,7 +12,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * - `goals` is keyed by the contract's Goal enum, like `profile-step.messages.ts` (same wording).
  * - `plan.weeks` and `plan.sessions` are plural keys ({{count}}); the screen joins the three parts with " · ". `minutes` is
  *   not a plural key ({{minutes}}): a Russian or Kazakh abbreviation ("мин") never changes with the number.
- * - Nothing here promises a professional career (PRODUCT.md): progress is measured against the player's own last time.
+ * - Nothing here promises a professional career (product principles): progress is measured against the player's own last time.
  */
 export default {
   kk: {

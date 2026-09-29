@@ -9,7 +9,7 @@ import { installSessionExpired } from './session-expired';
 import sessionMessages from './session-expired.messages';
 import messages from './sign-in.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. It verifies from the
 // repo root, where there is no DOM, so register happy-dom here BEFORE Testing Library is imported (same rule and guard
 // as features/legal/privacy.test.tsx).
 if (typeof document === 'undefined') {
@@ -906,7 +906,7 @@ describe('a player who is training as a guest keeps their progress', () => {
 // --- the Start card (auth-gate spec P3) ---------------------------------------------------------
 //
 // The one-tap door for a player: no form, no account. `ensureSession` stands in for lib/auth's ensurePlayerSession
-// (injected via SignInDepsContext, never the module global, per the bead's contract).
+// (injected via SignInDepsContext, never the module global, per the contract).
 
 describe('the Start card: a kid-sized way in, no form, no account', () => {
   const anonymous = () => Promise.resolve<Reply>({ data: { user: { id: 'anon', isAnonymous: true } }, error: null });

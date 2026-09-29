@@ -49,7 +49,7 @@ import { detectOnVideo, load as loadPoseModel, PoseError, type PoseVideo } from 
  *
  * Only `Route` and the small VideoDepsContext seam are exported (the route splitter leaves other exports in the entry chunk; see
  * routes/train/index.tsx for the same seam). The seam replaces the parts a test cannot run under happy-dom: the pose model, the
- * camera, the video decoder, the canvas sampler and the analysis call (POST /api/player/video-analyses, , built
+ * camera, the video decoder, the canvas sampler and the analysis call (POST /api/player/video-analyses, built
  * concurrently: the default is one api.post against the shared contract).
  *
  * Flow: skill pick -> consent gate -> tips (rubric) + record/choose -> on-device reading with a progress bar and Cancel ->
@@ -79,7 +79,7 @@ import { detectOnVideo, load as loadPoseModel, PoseError, type PoseVideo } from 
  *    never lands outside the limits. The elapsed time is read from an injectable clock (default performance.now()).
  *  - NOT SEEN WELL. Mean visibility below the rubric's minVisibility (or nobody detected, or fewer than 3 frames with a person) is
  *    answered ON THE DEVICE with the 'rerecord' hint and nothing is sent. The server's own rerecord answer is shown the same way.
- *  - SAMPLING. 6 frames per second (inside the 5-10 the pose module accepts; phones); 5 keyframes (3..6).
+ *  - SAMPLING. 6 frames per second (inside the 5-10 the pose module accepts; light enough for any phone); 5 keyframes (3..6).
  *    keyframes.ts' seek has no timeout, so the screen hands it a guarded one (10 s, and it refuses to start after Cancel).
  *  - CANCEL. Reading cannot be interrupted inside pose.ts, so Cancel flags the run: the next progress callback throws, and every
  *    later step of the run is skipped. Cancel while sending aborts the request and returns to the review.
@@ -201,7 +201,7 @@ function waitFor(target: EventTarget, events: readonly string[], timeoutMs: numb
 /**
  * Opens the clip in an off-screen <video> from an object URL that is revoked on release: the bytes stay on the device. A
  * MediaRecorder file reports an infinite duration until the end has been seen, so it is seeked to the end and back to get one.
- * (Not testable under happy-dom, which cannot decode media: covered by the browser QA of this bead.)
+ * (Not testable under happy-dom, which cannot decode media: covered by the browser QA.)
  */
 async function loadDomClip(blob: Blob): Promise<LoadedClip> {
   const url = URL.createObjectURL(blob);

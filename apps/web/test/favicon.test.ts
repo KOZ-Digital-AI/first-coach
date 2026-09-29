@@ -116,7 +116,7 @@ describe("public/favicon.svg", () => {
     expect(Buffer.byteLength(svg)).toBeLessThan(2048);
   });
 
-  test("uses the DESIGN.md brand tokens as literal hex: Ink #101815, Field Green #2e7d53, Notebook Page #fffefa", () => {
+  test("uses the brand tokens as literal hex: Ink #101815, Field Green #2e7d53, Notebook Page #fffefa", () => {
     const svg = read();
     for (const hex of ["#101815", "#2e7d53", "#fffefa"]) expect(svg.toLowerCase()).toContain(hex);
   });

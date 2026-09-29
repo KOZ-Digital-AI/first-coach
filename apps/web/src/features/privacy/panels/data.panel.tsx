@@ -52,7 +52,7 @@ import '../../../lib/i18n';
  *         own key, mirrored here as the plan screen mirrors it): a draft must never outlive the person who wrote it;
  *      2. the remembered player session (`resetPlayerSession`), so nothing hands the erased identity back;
  *      3. the in-memory React Query cache (`queryClient.clear()`);
- *      4. localStorage: the offline session and the outbox key of this player, every other `fc:<playerId>:*` key (a later bead's
+ *      4. localStorage: the offline session and the outbox key of this player, every other `fc:<playerId>:*` key (a later change's
  *         store is included without editing this file), and `fc:last-player` when it names this player. Another player of the
  *         same device is never touched;
  *      5. IndexedDB, through the `PersistStore` seam: the persisted query cache (`fc:<playerId>:query-cache`, lib/query-persist.ts)
@@ -126,7 +126,7 @@ function eraseLocalStorage(playerId: string): void {
   const store = getDefaultStore();
   if (store === undefined) return;
   const keys = new Set<string>([playerKeys(playerId).session, playerKeys(playerId).outbox]);
-  // Keys a later bead added under the same namespace go too. `Storage` can be listed; a bare KeyValueStore cannot.
+  // Keys a later change added under the same namespace go too. `Storage` can be listed; a bare KeyValueStore cannot.
   const listable = store as Partial<Storage>;
   const prefix = `${OFFLINE_KEY_PREFIX}:${playerId}:`;
   quietly(() => {

@@ -6,7 +6,7 @@ import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 
 /*
- * Class assertions are anchored to DESIGN.md (Components > Empty and Notice Blocks, Shapes,
+ * Class assertions are anchored to the design system (Components > Empty and Notice Blocks, Shapes,
  * Colors > Semantic) and the token names in app.css, not to anything the component writes about
  * itself. `classList.contains` matches whole tokens. Copy is Kazakh on purpose: nothing in a
  * primitive may fall back to an English string.
@@ -63,7 +63,7 @@ describe('EmptyState', () => {
     expect(descendants.every((element) => (element.textContent ?? '').trim() !== '')).toBe(true);
   });
 
-  test('uses the DESIGN.md empty block: dashed Chalk Line border, 18px card radius', () => {
+  test('uses the design system empty block: dashed Chalk Line border, 18px card radius', () => {
     render(<EmptyState {...EMPTY} data-testid="empty" />);
     const root = screen.getByTestId('empty');
     expect(tokens(root)).toContain('border-dashed');
@@ -167,7 +167,7 @@ describe('ErrorState', () => {
     expect(within(alert).getByText(ERROR.title)).toBeTruthy();
   });
 
-  test('uses Signal Red border and the 18px card radius from DESIGN.md', () => {
+  test('uses Signal Red border and the 18px card radius from the design system', () => {
     render(<ErrorState {...ERROR} onRetry={() => {}} />);
     const alert = screen.getByRole('alert');
     expect(tokens(alert)).toContain('border-danger');

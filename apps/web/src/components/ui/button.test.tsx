@@ -8,7 +8,7 @@ import { Button, type ButtonProps } from './button';
 const VARIANTS: NonNullable<ButtonProps['variant']>[] = ['primary', 'secondary', 'danger', 'ghost'];
 
 /*
- * Class assertions are anchored to DESIGN.md (Components > Buttons and the token
+ * Class assertions are anchored to the design system (Components > Buttons and the token
  * names in app.css), not to anything the component writes about itself.
  * `classList.contains` matches whole tokens, so `bg-ink/5` never satisfies `bg-ink`.
  */
@@ -115,8 +115,8 @@ describe('Button variants', () => {
     expect(button.classList.contains('text-ink')).toBe(true);
   });
 
-  // DESIGN.md button-danger: Signal Red text on the pale red tint. That pair measures 4.28:1,
-  // below AA for small text, but DESIGN.md is normative here; the follow-up is filed separately.
+  // button-danger: Signal Red text on the pale red tint. That pair measures 4.28:1,
+  // below AA for small text, but the design system is normative here.
   test('danger is Signal Red text on the pale red tint', () => {
     render(<Button variant="danger">Delete</Button>);
     const button = screen.getByRole('button', { name: 'Delete' });

@@ -1,5 +1,5 @@
 // Zod schemas for the commons seed files: skill-graph.json, tests.json, one
-// drill track file per track, and rubrics.json. Pure schemas: loading files is a later bead.
+// drill track file per track, and rubrics.json. Pure schemas: loading files is a later change.
 //
 // Seed files are AUTHORED content, so they are stricter than the wire contracts in
 // ../shared/commons: every text carries all three locales (kk, ru, en), non-blank; unknown

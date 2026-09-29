@@ -5,7 +5,7 @@ import { ApiProblem } from '../../lib/problem';
 import { createEventsClient } from './events-client';
 
 /*
- *  (additive change to the events client): after the existing ['today'] write, submitEvents also writes what the
+ * Additive change to the events client: after the existing ['today'] write, submitEvents also writes what the
  * summary screen needs to the in-memory key ['session-summary'] as { progress, nextSessionDate, sessionId } (sessionId is the
  * SERVER's session id, response.session.id). It is a cache write only: the key is not in the persisted allow-list.
  * The existing behaviour is pinned by events-client.test.ts and is not repeated here. The key is written as a literal on

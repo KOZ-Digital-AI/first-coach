@@ -23,10 +23,10 @@ const { default: userEvent } = await import('@testing-library/user-event');
 // element (a huge circular object graph): it can take a minute. Compare to null / with === and assert on the boolean instead.
 
 /*
- * Contract under test (, a bug fix on  / 0v3.9 / 0v3.10):
+ * Contract under test (a bug fix in the admin layout, queue and review screens):
  *  - the admin layout's "Review queue" link goes to /admin, the route that serves the queue (it used to go to /admin/queue, which
  *    no route serves);
- *  - each queue row links to the dedicated review screen, /admin/contributions/<id> (, merged, so the link is
+ *  - each queue row links to the dedicated review screen, /admin/contributions/<id> (so the link is
  *    unconditional).
  * The nav stays accessible: the current page carries aria-current (and a check icon), labels are localised, the links are 44px
  * tall and keep their keyboard order.
@@ -35,7 +35,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
  * inside a real memory-history router that has the routes the links point at; the only stand-in is the network (globalThis.fetch).
  *
  * Readings of the criteria (the simplest each time):
- * - The row's link is its TITLE (the h2 becomes a link): queue.messages.ts is not owned by this bead, so a new "open" string
+ * - The row's link is its TITLE (the h2 becomes a link): queue.messages.ts is not owned by this module, so a new "open" string
  *   cannot be added, and the title needs none. The existing inline Review button of the row is unchanged.
  * - "Review queue" is current only on the queue page itself (/admin), not on the other admin pages nor on a review screen: /admin
  *   is a prefix of every admin URL, so this link must match exactly.

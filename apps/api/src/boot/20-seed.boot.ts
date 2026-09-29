@@ -5,7 +5,7 @@
 //
 // Seed directory: `<repo root>/config/commons`, or SEED_DIR when set (read when the hook runs, not
 // at import; it is deliberately not part of env.ts). The DEFAULT directory missing is not an error
-// (the seed content beads create config/commons later, and the Docker image does not copy it yet):
+// (the seed content creates config/commons later, and the Docker image does not copy it yet):
 // one info line and no-op. An EXPLICIT directory (SEED_DIR or the dir option) that is missing or
 // not a directory aborts the boot with a SeedError: a typo must not start an empty commons.
 import { statSync } from "node:fs";

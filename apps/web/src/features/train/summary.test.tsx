@@ -7,7 +7,7 @@ import { createI18n } from '../../lib/i18n';
 import { Route, SummaryDepsContext } from '../../routes/train/summary';
 import summaryMessages from './summary.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the bead's verify command
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the verify command
 // may run from the repo root, where there is no DOM. Register happy-dom here BEFORE Testing Library is imported (same order
 // rule as test/setup.ts and today.test.tsx); the `document` guard keeps it a no-op under the preload.
 if (typeof document === 'undefined') {
@@ -18,7 +18,7 @@ const { cleanup, render, screen, waitFor, within } = await import('@testing-libr
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * Written from the bead's acceptance criteria and the coordinator's decision, not from the implementation:
+ * Written from the acceptance criteria, not from the implementation:
  *  - /train/summary shows "Session complete", the drills completed, the minutes trained so far, the current streak and the next
  *    session date, with links to My Journey (/progress) and back home (/), in a calm tone;
  *  - the values come from the query cache: ['session-summary'] = { progress, nextSessionDate, sessionId } written by the events

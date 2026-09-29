@@ -51,7 +51,7 @@ cd lite && python3 -m http.server 8080
 ## Код
 
 - **`lite/`** — чистые HTML/CSS/JS без сборки. Держим его маленьким и быстрым: никаких тяжёлых библиотек,
-  проверяем на ширине 375 px и на любом телефоне. Любой новый текст — сразу на трёх языках.
+  проверяем на ширине 375 px и на обычном Android-смартфоне. Любой новый текст — сразу на трёх языках.
   После изменения файлов увеличьте `?v=` в `lite/index.html` и `CACHE` в `lite/sw.js`.
 - **`apps/`** — Bun, Hono, React. Перед pull request: `bun run typecheck` и `bun test`.
 - Сообщения коммитов — в стиле [Conventional Commits](https://www.conventionalcommits.org/): `feat(lite): …`, `fix(api): …`, `docs: …`.
@@ -75,7 +75,7 @@ Thank you for helping! Ways to contribute:
 - **Coaches and PE teachers**: share a drill from the app (*For coaches* → *Send by email* to work@koz-ai.com),
   or review existing drills and tell us what to fix.
 - **Kazakh speakers**: proofread the interface copy (`lite/js/i18n.js`, `kk`) and the drills. A native-speaker review is our biggest gap.
-- **Developers**: pick an [issue](../../issues), improve the animations, accessibility or speed on phones.
+- **Developers**: pick an [issue](../../issues), improve the animations, accessibility or speed on any phone.
 
 Drills live in `config/commons/football/drills` (fields are listed in the table above). Write for a child training alone,
 keep safety notes mandatory, never copy FIFA, UEFA or commercial material, and mark AI-drafted text as a draft until a coach reviews it.

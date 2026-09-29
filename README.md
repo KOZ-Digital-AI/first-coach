@@ -6,7 +6,7 @@
 
 **A free, open football school for children.**
 60 drills with animations, a 4-week plan, skill tests and progress — in Kazakh, Russian and English.
-No email, no passwords, works offline on a phones.
+No email, no passwords, works offline on any phone.
 
 [**Open the app →**](https://first-coach-production.up.railway.app) &nbsp;·&nbsp; [Русская версия](README.ru.md) &nbsp;·&nbsp; [Contributing](CONTRIBUTING.md)
 
@@ -50,7 +50,7 @@ The one number we care about: how many children demonstrably improved a skill us
 | [`lite/`](lite) | **The app that is live today.** Plain HTML, CSS and JavaScript — no framework, no build step, ~140 KB gzipped. |
 | [`config/commons/football`](config/commons/football) | **Open Sport Commons**: the skill graph, 60 drills, 5 tests and video rubrics, each in Kazakh, Russian and English. |
 | [`apps/api`](apps/api), [`apps/web`](apps/web) | The full platform in development: accounts, server-side moderation, the AI planner and the AI video coach (Bun, Hono, React). |
-| [`docs/`](docs) | Operations runbook and screenshots. |
+| [`docs/`](docs) | Screenshots. |
 
 ## Two open parts
 
@@ -104,8 +104,7 @@ and `OPENAI_VISION_MODEL` (video, default the text model). The AI planner only
 picks from drills the server has already chosen, and when it fails the player
 gets the ordinary rule-based session.
 
-Operating a deployment (Railway, backups, admin accounts, takedown requests) is
-described in [docs/runbook.md](docs/runbook.md). Tests: `bun test`.
+Tests: `bun test`.
 
 ## Use the commons in another app
 

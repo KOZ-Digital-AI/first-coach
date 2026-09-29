@@ -24,7 +24,7 @@ import { register as registerEvents } from "./player-events.routes";
 import { register as registerStart } from "./player-start.routes";
 import { register as registerToday } from "./player-today.routes";
 
-// : POST /api/player/today/ai-plan. No test touches the network or needs an OpenAI key: the coach agent is
+// POST /api/player/today/ai-plan. No test touches the network or needs an OpenAI key: the coach agent is
 // an injected fake (or, in one wiring test, the real Mastra coach agent on a stub model), and the key state is an
 // injected env. Every test runs the real route modules on a fresh in-memory database migrated with the real migrations
 // and loaded with the REAL seed (config/commons), with the REAL Better Auth handler and the REAL start, today and events
@@ -389,7 +389,7 @@ describe("POST /api/player/today/ai-plan: a valid plan", () => {
 
 describe("POST /api/player/today/ai-plan: the note", () => {
   test("reaches the agent only inside a data block, and is stored and logged nowhere", async () => {
-    // a marker no seed drill text contains (the seed says "ankle" in its safety notes, so the bead's own example would not do)
+    // a marker no seed drill text contains (the seed says "ankle" in its safety notes, so the obvious example would not do)
     const note = "my zqx7-marker leg is tired";
     const agent = fakeAgent(validPlan);
     await boot({ createAgent: agent.createAgent, env: KEY_ENV });

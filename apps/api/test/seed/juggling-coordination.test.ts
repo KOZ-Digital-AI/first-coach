@@ -21,7 +21,7 @@
 // footwork), so a player who has "Nothing" still gets a session.
 //
 // Source of the content requirements: the spec in the original product brief (sections 2, 8,
-// 15, 16), PRODUCT.md (children from about 6, Kazakh first among equals, safety) and
+// 15, 16), the product principles (children from about 6, Kazakh first among equals, safety) and
 // CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";

@@ -4,7 +4,7 @@
 // The Dockerfile is parsed by instruction (comments stripped, continuation lines
 // joined), so a comment that mentions `EXPOSE 4111` cannot satisfy an assertion.
 // Assertions name what must hold; they never pin the exact instruction list, so a
-// later bead may add labels or args.
+// later change may add labels or args.
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { basename, join, posix } from "node:path";
@@ -364,7 +364,7 @@ describe("Dockerfile build stage", () => {
     expect(webBuild?.at ?? -1).toBeGreaterThan(firstSourceCopyAt(build));
   });
 
-  // : the web `prebuild` runs ../../scripts/fetch-pose-model.ts, so the web build needs scripts/ in the image.
+  // the web `prebuild` runs ../../scripts/fetch-pose-model.ts, so the web build needs scripts/ in the image.
   test("copies the repo-root scripts/ to /app/scripts before the web build (the web prebuild runs a script from there)", () => {
     const { build } = stagesOf();
     const webBuild = runCommands(build).find(({ command }) =>
@@ -585,8 +585,6 @@ describe(".dockerignore", () => {
     "apps/web/node_modules/vite/package.json",
     ".git",
     ".git/HEAD",
-    ".beads",
-    ".beads/config.yaml",
     "data",
     "data/app.db",
     ".env",

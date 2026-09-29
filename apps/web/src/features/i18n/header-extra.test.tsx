@@ -13,13 +13,13 @@ if (typeof document === 'undefined') {
 const { cleanup, fireEvent, render, screen } = await import('@testing-library/react');
 
 /*
- * : the component test for features/i18n/header-extra.tsx (a dedicated file, alongside lib/i18n.test.ts's
+ * The component test for features/i18n/header-extra.tsx (a dedicated file, alongside lib/i18n.test.ts's
  * broader "language switch" describe block, which pins the same contract from the i18n-system side).
  *
  * Design decision under test (two user screenshots, desktop widths >=900px): the header row must never wrap. The
  * language switch used to show each button's full native name (Қазақша / Русский / English), which was too wide for
  * the row to share with the full primary navigation at once, so ru/kk forced the header-extra slot onto a second row.
- * DESIGN.md Navigation says the switch must stay reachable and never drop an option, so it shrinks instead: each
+ * The design navigation rule says the switch must stay reachable and never drop an option, so it shrinks instead: each
  * button now shows a compact 3-letter label (Қаз / Рус / Eng, i18n.messages.ts's `short`), while the full native name
  * moves to the button's accessible name (aria-label) and its title, so nothing is actually lost - only the glyph
  * count on screen. State (which language is current) is unaffected: aria-pressed still marks exactly one button, and
@@ -85,7 +85,7 @@ describe('visible labels', () => {
 
 // --- accessible name / title -------------------------------------------------------------------
 
-describe('accessible name (: nothing is lost, only the visible glyph count)', () => {
+describe('accessible name (nothing is lost, only the visible glyph count)', () => {
   test('each button keeps the full native name as its aria-label and its title', () => {
     renderSwitch('en');
     expect(buttons().map((button) => button.getAttribute('aria-label'))).toEqual(LOCALES.map((locale) => LANGUAGE_NAMES[locale]));
@@ -119,7 +119,7 @@ describe('the language control shows the current language and switches it', () =
 
 // --- tap targets ---------------------------------------------------------------------------------
 
-describe('tap targets (DESIGN.md: at least 44px, even with the tighter padding)', () => {
+describe('tap targets (design rule: at least 44px, even with the tighter padding)', () => {
   test('every button keeps the 44px minimum width and height utilities', () => {
     renderSwitch('kk');
     for (const button of buttons()) {

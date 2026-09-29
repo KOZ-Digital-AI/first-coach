@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j4-progress.sh: slice gate , journey J4 "a player sees measurable progress and retests skills".
+# apps/web/e2e/j4-progress.sh: journey J4 "a player sees measurable progress and retests skills".
 # Integration proof on the REAL stack (real API process, real SQLite file with the real seed, the real built web app served by
 # the API, a real browser; nothing mocked, no OpenAI key needed). It continues from a player who FINISHED ONE SESSION through
 # the UI:

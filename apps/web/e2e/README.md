@@ -1,6 +1,6 @@
 # E2E harness library
 
-`lib.sh` is the shared bash library for slice gate scripts (`apps/web/e2e/<slice>.sh`). It boots the real
+`lib.sh` is the shared bash library for the journey scripts (`apps/web/e2e/<slice>.sh`). It boots the real
 API on a throw-away database (the API also serves the real built web app, same origin), drives a real
 browser through `playwright-cli`, asserts against the real API and the real SQLite file, and reports
 honestly. `lib.test.sh` is its own test.

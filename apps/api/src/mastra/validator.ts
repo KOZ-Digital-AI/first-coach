@@ -12,10 +12,10 @@
 // Pure apart from the injected `run` function: no clock reads, no network, no env. The only side
 // effect is the timeout timer planWithFallback owns (cleared before it returns).
 //
-// Readings of the criteria (each is a decision, not in the bead text):
+// Readings of the requirements (each is a decision):
 //   - `aiPlan` is `unknown` (it is model output). It is first parsed with the contract's AiPlan
 //     schema (shared/ai.ts: strict keys, integer minutes, non-empty reason, at least one item); a
-//     failure is the single issue "shape". The bead's own rules run on top of that.
+//     failure is the single issue "shape". The validator's own rules run on top of that.
 //   - the total window is inclusive: budget-2 .. budget+3. `budgetMinutes` is the drills' budget as
 //     the caller computes it; the deterministic session also counts a 2-minute skill test in its
 //     window, so a caller that keeps a test should pass budget minus the test's minutes.
@@ -24,9 +24,9 @@
 //   - "no URLs": a scheme://, a www. prefix, or a bare domain under a list of common TLDs
 //     (deliberately over-eager: a false positive only costs the fallback).
 //   - a blank (whitespace-only) reason is rejected: the contract's AI session needs a real reason.
-//   - `profile` is accepted for the signature the bead names but no rule reads it yet: the window
+//   - `profile` is accepted for the required signature but no rule reads it yet: the window
 //     comes from `budgetMinutes`. Kept so callers need not change when a profile rule arrives.
-//   - planWithFallback takes a third argument (ctx): the bead names (run, deterministic) but the
+//   - planWithFallback takes a third argument (ctx): the requirements name (run, deterministic) but the
 //     validator needs the candidate set and budget, and "missing key or disabled setting" needs
 //     flags. When both are off, "disabled" wins (an explicit setting beats a missing key).
 //   - the timeout defaults to AI_PLAN_TIMEOUT_MS (the contract's 20 s). `run` receives an AbortSignal

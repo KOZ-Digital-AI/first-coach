@@ -10,7 +10,7 @@
  *
  * This module is deliberately DOM-free and framework-free: no service worker, no React,
  * no network, no IndexedDB. Storage goes through the small `KeyValueStore` seam (a
- * `Storage` satisfies it), so later beads inject a real one and tests inject a Map.
+ * `Storage` satisfies it), so later code injects a real one and tests inject a Map.
  *
  * Every key is namespaced by player id (`fc:<playerId>:<name>`) so two players on a shared
  * device never overwrite each other. Every read is parsed with Zod; a parse failure resets

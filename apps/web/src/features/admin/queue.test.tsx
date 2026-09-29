@@ -36,7 +36,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
  * Cyrillic and never leaks 'undefined', a raw key or an unfilled {{placeholder}}.
  *
  * Readings of the criteria that the tests pin (the simplest reading each time):
- * - "each opens the review screen": the review is a view of this same route (the route file is the only page this bead owns), so
+ * - "each opens the review screen": the review is a view of this same route (the route file is the only page this module owns), so
  *   opening one costs no request: the list already carries the full payload. Back returns to the list.
  * - One request per tab: GET /api/admin/contributions?state=<tab>. Pending is the first tab and the one shown first.
  * - "attachment indicator" is shown only when the contribution has files ("Files: 2"); a possible duplicate is a written tag.

@@ -199,7 +199,7 @@ describe('anonymous players', () => {
 // --- the auth gate's visitor tier (auth-gate-spec.md §3, P2 auth-gate-shell) --------------------------------------------
 //
 // Rendered through the real Shell (not the bare <header><AccountControls/></header> rig above): a visitor tier adds the
-// primary Start link beside this feature's own "Coach sign-in" link, and DESIGN.md's "never hide the language switch"
+// primary Start link beside this feature's own "Coach sign-in" link, and the design rule "never hide the language switch"
 // still holds once Start is in the row too.
 
 describe('the auth-gate visitor tier, inside the real shell', () => {

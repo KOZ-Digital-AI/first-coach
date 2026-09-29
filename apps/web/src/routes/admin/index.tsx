@@ -38,12 +38,12 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * the created drill on an approval). No mock or fixture data in this file.
  *
  * Readings of the criteria (each pinned by queue.test.tsx):
- * - "each opens the review screen": the review is a view of this same route, not a second route (this bead owns one route file), and
+ * - "each opens the review screen": the review is a view of this same route, not a second route (this module owns one route file), and
  *   opening it costs no request because the list already carries the full payload and the diff. Back returns to the list, on the same
  *   tab, with focus on the button that opened it. It is component state, not the URL: the address does not name a contribution.
- *   Since  the admin layout's "Review queue" link goes to /admin (this route), and the title of every row is also a link to the
- *   dedicated review screen, /admin/contributions/<id> (routes/admin/contributions.$id.tsx, ): the title, not a new
- *   button, because this bead's messages file gets no new string. The row's inline Review button is unchanged.
+ *   The admin layout's "Review queue" link goes to /admin (this route), and the title of every row is also a link to the
+ *   dedicated review screen, /admin/contributions/<id> (routes/admin/contributions.$id.tsx): the title, not a new
+ *   button, because this route's messages file gets no new string. The row's inline Review button is unchanged.
  * - Tabs = one request each (`?state=`), pending first and selected; the tab list is a real ARIA tab list with arrow keys. The API
  *   has no counts and no pagination, so a tab shows no count and the list is the whole state.
  * - "attachment indicator": "Files: 2" with a paperclip, only when the contribution has files. "Possible duplicate" is a written

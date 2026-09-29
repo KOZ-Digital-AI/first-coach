@@ -31,7 +31,7 @@ import '../../lib/i18n';
 /**
  * /account/sign-in: the one door the auth gate opens onto (spec: auth-gate, package P3). A kid-sized Start card for a
  * player, and coach (contributor) sign-up / sign-in with Better Auth below it. Operate mode: calm and short; Start is the
- * only Ink-filled (primary) control on the screen, per DESIGN.md's one-primary-action rule.
+ * only Ink-filled (primary) control on the screen, per the one-primary-action rule.
  * All words live in features/account/sign-in.messages.ts (namespace `sign-in`).
  *
  * How it works
@@ -68,9 +68,9 @@ import '../../lib/i18n';
  *    shown as an info notice, and the screen then starts on the Sign in tab. After a successful sign-in the screen calls
  *    resetSessionExpired() so the 401 handler redirects again next time.
  *  - The guest note ("your progress stays with you") depends on the API linking the guest to the new account (onLinkAccount,
- *    bug bead ); see sign-in.messages.ts.
+ *    a fixed bug); see sign-in.messages.ts.
  *
- * The session atom (bug ). Better Auth refreshes its session atom (the one `useSession()` reads, and with it every
+ * The session atom. Better Auth refreshes its session atom (the one `useSession()` reads, and with it every
  * contributor gate: /contribute, /admin, the drill page's "Suggest improvement") only ~10 ms AFTER a sign-up / sign-in reply, from a
  * `setTimeout` that toggles `$sessionSignal`. Until then the atom still holds the OLD anonymous guest session, not refetching and not
  * pending, which looks like a settled answer: a gate that mounted in that window read "signed out" and sent the fresh coach straight
@@ -320,7 +320,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
   // Bumped when an error appears, so focus moves to it (a disabled submit button drops the keyboard's place).
   const [attention, setAttention] = useState<{ n: number; target: FieldName | 'form' }>({ n: 0, target: 'form' });
   const busy = status !== 'idle';
-  // While either side is busy, the OTHER side is locked too: only one primary action runs at a time (DESIGN.md).
+  // While either side is busy, the OTHER side is locked too: only one primary action runs at a time.
   const coachDisabled = busy || starting;
   const client = deps.client;
 
@@ -637,7 +637,7 @@ function SignInScreen({ deps, redirect }: { deps: SignInDeps; redirect: string }
 
                 {status === 'done' ? <Notice>{t('success')}</Notice> : null}
 
-                {/* DESIGN.md "one primary action per view": while the Start card is shown, IT is the only Ink-filled
+                {/* Design rule "one primary action per view": while the Start card is shown, IT is the only Ink-filled
                     button, so the coach submit stays secondary; once Start is hidden (a coach-only redirect) the coach
                     form is the screen's one action and gets the primary treatment back. */}
                 <Button type="submit" variant={startHidden ? 'primary' : 'secondary'} loading={busy} disabled={starting} className="w-full">

@@ -10,7 +10,7 @@ import problemMessages from '../../lib/problem.messages';
 import { RoadmapDepsContext, Route } from '../../routes/train/roadmap';
 import messages from './roadmap.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the bead's verify command
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web, but the verify command
 // runs from the repo root, where there is no DOM. Register happy-dom here BEFORE Testing Library is imported (same order
 // rule as test/setup.ts and the wizard test); the `document` guard keeps it a no-op under the preload.
 if (typeof document === 'undefined') {
@@ -20,7 +20,7 @@ if (typeof document === 'undefined') {
 const { act, cleanup, fireEvent, render, screen, waitFor, within } = await import('@testing-library/react');
 
 /*
- * Written from the bead's acceptance criteria, not from the implementation:
+ * Written from the acceptance criteria, not from the implementation:
  *  - /train/roadmap shows MY ROADMAP from GET /api/player/me: the current level label, a level per track, the goal,
  *    "N weeks · N sessions/week · N min/session", the 2-3 focus skills as roadmap items with current -> target level and the
  *    localized reason, and one primary button "Open today's training" that goes to /train;

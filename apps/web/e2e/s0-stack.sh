@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/s0-stack.sh: slice gate , slice S0 "the stack boots, is healthy and ships as one image".
+# apps/web/e2e/s0-stack.sh: slice S0 "the stack boots, is healthy and ships as one image".
 # Journey proof on the REAL stack, nothing mocked. Steps (S0_STEPS selects a subset, default "clone dev stack docker";
 # an unselected step is recorded BLOCKED, so a partial run can never exit 0 without E2E_ALLOW_BLOCKED=1):
 #   clone   git clone --local --no-hardlinks of this repo's HEAD (COMMITTED files only): bun install --frozen-lockfile,

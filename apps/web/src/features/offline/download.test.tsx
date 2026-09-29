@@ -13,7 +13,7 @@ import downloadMessages from './download.messages';
 import * as todayExtraModule from './today-extra';
 import TodayExtra, { OfflineDownload } from './today-extra';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the repo
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. It verifies from the repo
 // root, where there is no DOM, so register happy-dom here BEFORE Testing Library is imported (same rule and guard as
 // features/offline/banner.test.tsx).
 if (typeof document === 'undefined') {
@@ -24,7 +24,7 @@ const { act, cleanup, fireEvent, render, screen, waitFor, within } = await impor
 const { default: userEvent } = await import('@testing-library/user-event');
 
 /*
- * Written from the bead's acceptance criteria, not from the implementation:
+ * Written from the acceptance criteria, not from the implementation:
  *  - the `today` slot component shows "Download today's session" with progress, then an "Available offline" badge with the
  *    last-synced time, and a pending-sync count ("Saved on this device — will sync") when the outbox is not empty;
  *  - a failure shows a retry; offline with nothing downloaded it explains how to prepare next time;

@@ -21,7 +21,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
 const { Route, RecoverDepsContext } = await import('../../routes/recover');
 
 /*
- * The restore screen (/recover), written from the acceptance criteria of :
+ * The restore screen (/recover), written from the acceptance criteria:
  *  - accepts the recovery code with forgiving input (spaces, dashes, lower case);
  *  - ensures an anonymous session, calls POST /api/player/recover and lands on /train;
  *  - if this device already has training data (409) it asks before replacing (`replace: true`);
@@ -116,7 +116,7 @@ beforeEach(() => {
   }) as unknown as typeof fetch;
 });
 /*
- * Cross-file hygiene (the same fix as contribute/form.test.tsx, ). bun runs every test file of the web package in
+ * Cross-file hygiene (the same fix as contribute/form.test.tsx). bun runs every test file of the web package in
  * ONE process with ONE happy-dom window. happy-dom records every element query it has answered (each `querySelectorAll` behind a
  * Testing Library query) in bookkeeping lists on the document and on <html> (`affectsCache`, `affectsComputedStyleCache`) and in
  * the window's selector cache, and never trims them. This file asks thousands of questions, and the whole-package run then made

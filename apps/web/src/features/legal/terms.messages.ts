@@ -7,7 +7,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * Shape: page-level strings at the top, then `sections.<id>` with a `title`, a `lead` and (for some) `points`, a list
  * rendered as bullets in the key order written here. The section ids are listed in routes/legal/terms.tsx.
  *
- * Every statement comes from the bead criteria, README.md, CONTENT-LICENSE.md and PRODUCT.md; no legal term is invented.
+ * Every statement comes from the requirements, README.md, CONTENT-LICENSE.md and the product principles; no legal term is invented.
  * The safety notes repeat what the seeded drills already tell the child (warm up; soft ball or gentle passes against a
  * wall; away from roads, cars and streets). The attribution line itself is not translated: it is copied verbatim from
  * CONTENT-LICENSE.md in the route.

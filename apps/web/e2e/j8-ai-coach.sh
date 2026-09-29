@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j8-ai-coach.sh: slice gate , journey J8 "the AI Coach personalises today's session from approved drills only".
+# apps/web/e2e/j8-ai-coach.sh: journey J8 "the AI Coach personalises today's session from approved drills only".
 # Integration proof on the REAL stack (real API process, real SQLite file with the real seed, the real built web app served by the
 # API, a real browser; nothing mocked, no stubbed model). Two halves, exactly as the criteria split them:
 #

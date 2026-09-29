@@ -6,7 +6,7 @@
 // right), x/y normalised to the image (y grows downwards) and a 0..1 visibility. A frame in which no person was
 // detected has an empty `landmarks` array.
 //
-// Readings chosen where the acceptance criteria leave room (see the bead report):
+// Readings chosen where the acceptance criteria leave room:
 //  - "omitted (not guessed) when visibility is too low": a landmark is usable when it is finite and its visibility
 //    is >= MIN_LANDMARK_VISIBILITY (a missing visibility counts as 0). A metric is computed only from the frames
 //    where every landmark it needs is usable, and only when those frames are at least MIN_USABLE_FRAMES and at

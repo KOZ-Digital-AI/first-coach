@@ -8,7 +8,7 @@
  *    PRAGMA defer_foreign_keys if you need to defer FK checks.
  *  - Editing or renaming an applied file is forbidden (checksum and name are
  *    verified on every run).
- *  - Each file is owned by exactly one bead.
+ *  - Each file is owned by exactly one change.
  *  - Files are numbered NNN_name.sql from 001 with no gaps.
  */
 import type { Database } from 'bun:sqlite';

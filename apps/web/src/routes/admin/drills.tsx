@@ -57,7 +57,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  *   commons page) is then refetched so the server has the last word. A row nobody acted on shows no review: the list does not
  *   carry them and no detail call is made per row.
  * - Unpublish is a takedown, and this screen cannot undo it: a modal dialog (Radix, as settings/plan) states the consequence
- *   and needs a reason; "Keep it published" comes first in the buttons. DrillDetail has no unpublished marker (backlog ),
+ *   and needs a reason; "Keep it published" comes first in the buttons. DrillDetail has no unpublished marker,
  *   so the response cannot mark the row: it leaves the list, a notice above the list says which drill was unpublished and why
  *   (it takes focus, so a keyboard user is not dropped at the top of the page), and the list is refetched.
  * - Disabled. While ANY action request runs, every mutation button and field of every row is disabled (one shared lock, so an
@@ -68,7 +68,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  *   adds a warning; success = the rows. A failed action stays in its form or dialog with the generic message (a 404 says the
  *   drill is no longer published and refreshes the list).
  * - A drill title is a plain link to its public page (/commons/:slug).
- * - Nothing here ranks children or promises a professional career (PRODUCT.md).
+ * - Nothing here ranks children or promises a professional career.
  */
 
 const LIST_KEY = ['admin', 'drills'] as const;

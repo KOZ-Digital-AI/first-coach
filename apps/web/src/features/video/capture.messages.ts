@@ -6,7 +6,7 @@ import type { MessageBundle } from '../../lib/i18n';
  * server, ...) come from lib/problem.messages.ts through describeProblem, never worded here. The Kazakh and Russian text still
  * needs a native-speaker review.
  *
- * Plain language on purpose (PRODUCT.md): a 10-year-old and a parent should both follow it; "you" is the child. It says only
+ * Plain language on purpose (product principles): a 10-year-old and a parent should both follow it; "you" is the child. It says only
  * what the product does (contract: apps/api/src/shared/video.ts): the video never leaves the device; small pictures with the
  * face blurred and movement numbers are sent; those pictures are seen by an AI provider; it is a beta and it never ranks a
  * player against others (there is no overall score, only per-criterion scores of one clip).

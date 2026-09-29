@@ -1,5 +1,5 @@
 // RFC 9457 problem-details response helper. Imports only zod types and the
-// shared ProblemDetails primitive; the app-level error handler is a later bead.
+// shared ProblemDetails primitive; the app-level error handler is a later change.
 import type { ZodError } from "zod";
 import { PROBLEM_CONTENT_TYPE } from "../shared/primitives";
 import type { ProblemError } from "../shared/primitives";

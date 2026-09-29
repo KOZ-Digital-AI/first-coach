@@ -10,7 +10,7 @@
  *   `today`. Names match /^[A-Za-z][A-Za-z0-9_-]*$/ and are unique; a clash throws.
  * - Screens call `useTranslation('today')` and `t('title')`. Every module that calls
  *   `useTranslation` MUST import something from this file, so the instance is registered
- *   before its first render (main.tsx importing it is a later bead's wiring).
+ *   before its first render (main.tsx importing it is a later change's wiring).
  *
  * `i18n` (the module singleton) is registered as react-i18next's global instance, so no
  * <I18nextProvider> is needed in the app. Tests build isolated instances with `createI18n`.

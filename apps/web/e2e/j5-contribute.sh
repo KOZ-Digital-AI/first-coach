@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j5-contribute.sh: slice gate , journey J5 "a coach contributes a method and follows its review".
+# apps/web/e2e/j5-contribute.sh: journey J5 "a coach contributes a method and follows its review".
 # Integration proof on the REAL stack (real API process, real SQLite file with the real seed, the real built web app served by
 # the API, a real browser; nothing mocked, no OpenAI key needed):
 #   A. PLAYER  an anonymous PLAYER (a real player session, made by pressing START TRAINING) opens Contribute and is sent to
@@ -280,7 +280,7 @@ if [ "$WEB_ON" = 1 ] && pw_open /; then
       pass "coach: after signing up the sign-in screen returns to the redirect (/contribute) and the form is shown"
     else
       fail "coach: after signing up the sign-in screen returns to the redirect (/contribute) and the form is shown" \
-        "  criterion: sign-in returns to the redirect search param afterwards (bead 70i.7), /contribute then shows the form (70i.8)"$'\n'"  page showed: $SIGNUP"
+        "  criterion: sign-in returns to the redirect search param afterwards (the sign-in screen), /contribute then shows the form (the form)"$'\n'"  page showed: $SIGNUP"
       # keep the rest of the journey proven: the 'already signed in' screen has a Continue button that goes to the redirect
       if jq -e '.stuck == true' >/dev/null <<<"$SIGNUP"; then
         pw_run "coach (workaround for the FAIL above): presses Continue on the 'already signed in' screen and reaches the form" '(async page => {

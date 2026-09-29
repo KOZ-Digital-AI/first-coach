@@ -31,7 +31,7 @@ import { describeProblem } from '../../lib/problem';
  *
  * Readings of the criteria where they are open:
  * - Data. The typed client with the contract's own schema (`commons-api` ENDPOINTS.listDrills). One list call gives the cards
- *   ( put age, source, licence and organisation into DrillSummary, so no card needs a detail call) AND the facets.
+ *   (The API puts age, source, licence and organisation into DrillSummary, so no card needs a detail call) AND the facets.
  *   It is an infinite query cached under ['commons', 'list', 'library', locale, filters] (the persisted allow-list of
  *   lib/query-persist.ts matches the ['commons', 'list'] prefix); "Show more drills" follows `nextCursor`.
  * - Filters. The four selects are built from `facets`; no enum is written here. Words for a value come from the messages, the
@@ -52,7 +52,7 @@ import { describeProblem } from '../../lib/problem';
  * - Header. "Download Commons JSON" is a plain download link to export.json. "Contribute a method" is a plain link to
  *   /contribute, which is not in the route tree yet (the same reading as the landing page).
  * - Age. The seeded drills give `ageMax: 99` for "no upper limit"; 99 or more reads as open-ended ("Age from 5").
- * - Nothing here ranks children or promises a professional career (PRODUCT.md).
+ * - Nothing here ranks children or promises a professional career.
  */
 
 const QUERY_KEY = ['commons', 'list', 'library'] as const;
@@ -221,7 +221,7 @@ function Header() {
       </h1>
       <p className="m-0 mt-4 max-w-[62ch] text-lg leading-[1.45] wrap-break-word text-ink">{t('intro')}</p>
       <div className="mt-6 flex flex-col gap-3 min-[600px]:flex-row">
-        {/* Plain links: /contribute is a later bead's route (not in the tree yet), and the export is a file, not a page. */}
+        {/* Plain links: /contribute is a later route (not in the tree yet), and the export is a file, not a page. */}
         <a href="/contribute" className={LINK_PRIMARY}>
           <Plus aria-hidden="true" className="size-5 shrink-0" />
           {t('contribute')}

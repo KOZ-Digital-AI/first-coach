@@ -1,4 +1,4 @@
-// : the AI plan validator and the deterministic fallback wrapper.
+// The AI plan validator and the deterministic fallback wrapper.
 // Nothing here touches the network or OpenAI: the "provider" is an injected function.
 import { describe, expect, test } from "bun:test";
 import { AI_PLAN_TIMEOUT_MS } from "../shared/ai";

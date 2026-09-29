@@ -2,7 +2,7 @@
 // problem+json 404/500 handlers.
 //
 // Route modules live in ./http/routes/ and are named `<name>.routes.ts`. Each
-// exports `register(app, deps)`; later beads add routes by dropping a file
+// exports `register(app, deps)`; later modules add routes by dropping a file
 // there, never by editing this one.
 //
 // Conventions for route-module authors:
@@ -13,7 +13,7 @@
 //   and calls `app.use(...)` inside register().
 // - Headers set by middleware are NOT present on the app-level notFound/onError
 //   responses: Hono returns those handlers' own Response, so a later CORS or
-//   request-id bead must account for that (e.g. set headers inside the handlers).
+//   request-id middleware must account for that (e.g. set headers inside the handlers).
 // - A discovery failure (import error, syntax error, missing `register`, a
 //   rejecting register) aborts startup with an error that names the file.
 // - Mounts that must come after every discovered route (e.g. the static SPA
@@ -27,7 +27,7 @@ import { HTTPException } from "hono/http-exception";
 import { problem } from "./http/problem";
 import { resolveWebDist, serveWeb } from "./http/static";
 
-/** Everything route modules may need; later beads add fields. */
+/** Everything route modules may need; later modules add fields. */
 export type AppDeps = { db: Database; version: string };
 
 /** `webDist`: the built web app to serve; defaults to `resolveWebDist()` (WEB_DIST or apps/web/dist). */

@@ -1,6 +1,6 @@
 // The video analysis agent: a Mastra Agent that looks at a few keyframes of a
 // player's clip together with the numeric pose features and scores each criterion of the skill's
-// rubric (1-10, with a note). It returns a structured VideoAgentOutput; the route (a later bead)
+// rubric (1-10, with a note). It returns a structured VideoAgentOutput; the route (added separately)
 // adds the rubric labels, the recommended drills and the fixed fields to make a shared/video
 // VideoAnalysis.
 //

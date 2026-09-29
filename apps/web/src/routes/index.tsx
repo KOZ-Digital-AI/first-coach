@@ -17,7 +17,7 @@ import { formatNumber, toLocale } from '../lib/i18n';
 /**
  * / : the landing page. Persuade mode, but calm: one headline, one primary action, the dedication card, four real
  * numbers and the six steps of how the product works. All words live in features/landing/landing.messages.ts
- * (namespace `landing`). It says nothing about a monument and promises no career to a child (PRODUCT.md).
+ * (namespace `landing`). It says nothing about a monument and promises no career to a child.
  *
  * Readings of the criteria:
  * - START TRAINING / CONTRIBUTE are the two buttons. They navigate, so they are real links styled like the Button primitive
@@ -162,7 +162,7 @@ function DedicationCard() {
   return (
     <aside aria-label={t('card.label')}>
       <Card variant="ink" className="flex min-h-80 flex-col justify-between gap-8 min-[900px]:min-h-107.5">
-        {/* Numeral: 96px up to 600px, 128px above (DESIGN.md). Hidden from assistive tech: the summary starts with "60". */}
+        {/* Numeral: 96px up to 600px, 128px above. Hidden from assistive tech: the summary starts with "60". */}
         <p
           aria-hidden="true"
           className="text-[96px] leading-[.8] font-extrabold tracking-[-.08em] min-[600px]:text-[128px]"

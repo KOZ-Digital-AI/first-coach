@@ -1,4 +1,4 @@
-// : scripts/fetch-pose-model.ts downloads the MediaPipe pose_landmarker_lite .task model and the
+// scripts/fetch-pose-model.ts downloads the MediaPipe pose_landmarker_lite .task model and the
 // tasks-vision WASM files into apps/web/public/mediapipe so the app can self-host them (no third-party CDN at run time).
 //
 // Every test injects a STUBBED fetch: nothing here touches the network, and the real model is never downloaded.

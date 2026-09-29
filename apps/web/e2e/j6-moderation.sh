@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j6-moderation.sh: slice gate , journey J6 "an admin moderates contributions and curates trust in the commons".
+# apps/web/e2e/j6-moderation.sh: journey J6 "an admin moderates contributions and curates trust in the commons".
 # Integration proof on the REAL stack, nothing mocked: the real API process on a fresh temp SQLite DB with the real seed, serving the
 # real production web build on the same origin, driven by real browsers (playwright-cli; one session for the coach, one for the admin,
 # one for a player, so nobody is ever signed out to make room for somebody else). The API gets a free kernel-assigned port (lib.sh
@@ -40,13 +40,13 @@
 #   - "opens the review queue showing the coach's pending contribution with author and video": the queue row shows the title, kind,
 #     'Sent by' (the submitter's account name) and 'Files: 1'; the review screen (the queue title links to it) shows the author and the video.
 #   - "requests changes with a note ... the coach edits and resubmits": the resubmit is driven through the real route
-#     /contribute/<id>/edit. The 'Edit and resubmit' link of My contributions is asserted separately as a NOTE (bug  links to
+#     /contribute/<id>/edit. The 'Edit and resubmit' link of My contributions is asserted separately as a NOTE (a known bug links to
 #     /contribute?edit=<id> and is being fixed); it is not a failure here.
 #   - "the admin edits one field and approves with a single API call": one POST /api/admin/contributions/:id/decision carrying
 #     {action: approve, edits: {durationMin}, status} and no other mutation. The queue read that follows the answer is a GET, not a decision.
 #   - The improvement is a Genesis drill improved through POST /api/contributions (kind improvement): the web app has no suggest-improvement
 #     screen. Its approval runs through the admin review screen. 'Both visible in the drill's history': the API's history and the page's
-#     'Version history' list 1.1.0 and 1.0.0 (the text of the old version is an API gap, : the immutable row is compared in sqlite).
+#     'Version history' list 1.1.0 and 1.0.0 (the text of the old version is an API gap: the immutable row is compared in sqlite).
 #   - "eligible as a planner candidate": planner/candidates.ts run over the stack's real SQLite file with a profile that fits the drill.
 #   - "an already-downloaded session still works": the player's stored session (GET /api/player/today) still lists the unpublished drill,
 #     /train and the drill player still show it with all its text, also with the browser context OFFLINE (the service worker + device copy).
@@ -572,7 +572,7 @@ if [ "$BROWSER" = 1 ] && [ -n "$CID" ] && [ "$STEP5" = 1 ]; then
     jchk "coach: My contributions lists '$DRILL_NAME' as 'Changes requested' with the reviewer's note" "$PW_OUT" '.text | contains($n) and contains("Changes requested") and contains($note)' --arg n "$DRILL_NAME" --arg note "$CHANGES_NOTE"
   EDIT_HREF=$(jq -r '[.links[] | select(.[0] | startswith("Edit and resubmit")) | .[1]][0] // ""' <<<"$PW_OUT" 2>/dev/null)
   if [ "$EDIT_HREF" = "/contribute/$CID/edit" ]; then pass "coach: the 'Edit and resubmit' link of My contributions opens /contribute/<id>/edit"
-  else echo "NOTE     the 'Edit and resubmit' link of My contributions points at '$EDIT_HREF', not /contribute/$CID/edit (known bug ; not a failure of this gate). The resubmit below is driven through the real route." >&2; fi
+  else echo "NOTE     the 'Edit and resubmit' link of My contributions points at '$EDIT_HREF', not /contribute/$CID/edit (known bug; not a failure of this gate). The resubmit below is driven through the real route." >&2; fi
 
   pw_js "coach: /contribute/<id>/edit, change the safety text as asked, resubmit" "$(jq -nc --arg id "$CID" --arg n "$CHANGES_NOTE" '{id: $id, note: $n}')" 'async (page, A) => {
       await page.goto(origin() + "/contribute/" + A.id + "/edit");
@@ -740,7 +740,7 @@ if [ "$BROWSER" = 1 ] && [ "$STEP5" = 1 ]; then
       if [ -n "$VIDEO_SRC" ]; then
         vct=$(curl -s -o /dev/null -w '%{http_code} %{content_type}' --max-time "$E2E_HTTP_TIMEOUT" "$STACK_URL$VIDEO_SRC")
         case $vct in "200 video/"*) pass "detail: the video source $VIDEO_SRC is served as a video ($vct)" ;;
-          *) echo "NOTE     the public detail page's video points at '$VIDEO_SRC', which answers '$vct' (not a video): the /uploads route is not served yet (backlog ). Not a criterion of this gate." >&2 ;; esac
+          *) echo "NOTE     the public detail page's video points at '$VIDEO_SRC', which answers '$vct' (not a video): the /uploads route is not served yet. Not a criterion of this gate." >&2 ;; esac
       fi
     }
 fi

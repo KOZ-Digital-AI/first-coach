@@ -57,7 +57,7 @@ type ChoiceGroupProps<V extends string> = {
   onSelect: (value: V) => void;
 };
 
-/* DESIGN.md Options and Selection: paper card, 12px radius; selected = Field Green border + Morning Mint fill + a check
+/* Design rule Options and Selection: paper card, 12px radius; selected = Field Green border + Morning Mint fill + a check
  * icon (never colour alone). The native radio is visually hidden but stays focusable, so arrow keys and Space work; the
  * focus ring is drawn on the card. */
 function ChoiceGroup<V extends string>({ legend, name, values, selected, labelOf, onSelect }: ChoiceGroupProps<V>) {

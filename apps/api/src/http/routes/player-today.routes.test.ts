@@ -483,7 +483,7 @@ describe("GET /api/player/today: how the session is picked", () => {
   });
 });
 
-// --- : every item carries its drill's primary skill (track) and level ---------------
+// --- every item carries its drill's primary skill (track) and level ---------------
 
 /** The primary skill slug of the drill a version belongs to, read straight from the commons tables. */
 const primarySkillOf = (versionId: string): string | undefined =>

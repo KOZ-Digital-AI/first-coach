@@ -18,7 +18,7 @@
  * content, drill versions, `downloadedAt` and any progress made offline). Only a session with a
  * different id (a new day's plan) replaces it.
  *
- * Readings of the bead where it is ambiguous:
+ * Readings where the requirements are ambiguous:
  * - `applyLocalEvent(event)` and `status()` take no player id, so the store keeps an "active player":
  *   the id last passed to `downloadToday` or `getOffline` (in memory, so a restarted app re-selects it
  *   by reading first). Both also accept an explicit trailing `playerId`, which wins over the active one.
@@ -27,7 +27,7 @@
  * - A write that fails (quota, blocked storage) throws: silently losing a download or a tick would be
  *   worse than a visible error. "Nothing to apply" (no session, other session, unknown item, a
  *   malformed event) is not an error: `applyLocalEvent` returns undefined and writes nothing.
- * - This bead does not touch the outbox: queuing the event for replay belongs to the outbox bead.
+ * - This module does not touch the outbox: queuing the event for replay belongs to the outbox.
  */
 import { type Api, api as defaultApi } from '../lib/api';
 import { SessionEvent, TodaySession } from '@api-types/session';

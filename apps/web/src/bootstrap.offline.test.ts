@@ -9,7 +9,7 @@ import type { PlayerSessionWiringDeps } from './bootstrap';
 import { authClient, createPlayerAuthClient, useSession } from './lib/auth';
 import { PERSIST_MAX_AGE_MS, resolveBuildVersion } from './lib/query-persist';
 
-// : the offline pieces (session events through the outbox, the persisted query cache) were built but nothing called
+// the offline pieces (session events through the outbox, the persisted query cache) were built but nothing called
 // them. bootstrap.ts wires them once the player session id is known. Everything the wiring touches is a seam (the session
 // read, the session-change signal, the events client's two functions, the persister, the build version), so these tests use
 // fakes and no storage, no network and no timers.
@@ -21,10 +21,10 @@ import { PERSIST_MAX_AGE_MS, resolveBuildVersion } from './lib/query-persist';
 //   next wiring the events player is `undefined`.
 // - "sign-out stops sync": the events player becomes undefined, the sync's stop function is called, the persister is
 //   unsubscribed, and no new sync is started until an id is known again.
-// - : the wiring never signs anybody in. A fresh visitor (landing, /legal/*) therefore gets no session and no
+// - the wiring never signs anybody in. A fresh visitor (landing, /legal/*) therefore gets no session and no
 //   wiring at start-up; a session a SCREEN creates later (train / roadmap / onboarding) reaches the wiring through the atom,
 //   exactly once.
-// - : the session-change signal (the shared Better Auth session atom, which the shell's useSession also reads and
+// - the session-change signal (the shared Better Auth session atom, which the shell's useSession also reads and
 //   which fetches get-session itself) is the ONLY source of the id. There is no separate getSession read: a page load makes
 //   exactly one get-session request. Like the real atom, the fake signal delivers its current value on subscribe.
 // - a player switch (id -> another id, or -> signed out) also empties the in-memory query cache, otherwise the previous
@@ -72,7 +72,7 @@ function harness(options: { initial?: 'none' | string } = {}): Harness {
       return [() => void calls.push(`unpersist:${persist.playerId}`), Promise.resolve()];
     },
     resolveBuildVersion: () => 'build-test-1',
-    // : the wiring remembers the last player id on the device. An in-memory stand-in keeps these tests off the
+    // the wiring remembers the last player id on the device. An in-memory stand-in keeps these tests off the
     // real localStorage, where an id remembered by one test would be restored (wired) at the start of the next.
     lastPlayer: { read: () => remembered, write: (playerId) => void (remembered = playerId), clear: () => void (remembered = undefined) },
   };
@@ -300,7 +300,7 @@ describe('wireAppPlayerSession: never signs anybody in', () => {
     expect(source).not.toMatch(/signIn/);
   });
 
-  test('bootstrap.ts makes no session read of its own (: the atom is the only source)', () => {
+  test('bootstrap.ts makes no session read of its own (the atom is the only source)', () => {
     const source = readFileSync(join(import.meta.dir, 'bootstrap.ts'), 'utf8');
     expect(source).not.toMatch(/getSession/);
     expect(source).not.toMatch(/readExistingSession/);

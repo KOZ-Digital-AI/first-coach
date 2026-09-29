@@ -48,7 +48,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * - Tone. A lower result is neutral (no red, no alarm role): "Lower than last time", "Results go up and down", and a link to
  *   continue the plan. `changePct` is signed so that a positive number is ALWAYS an improvement, also for a time.
  * - Sport. `football`, as the onboarding wizard (the profile has no sport).
- * - Links. Back to /progress is a router Link; /train is a plain anchor because that route belongs to another bead and is
+ * - Links. Back to /progress is a router Link; /train is a plain anchor because that route belongs to another module and is
  *   not in the route tree yet (same reading as routes/progress/index.tsx).
  * - If the response somehow has no row for this test, the typed number is shown as today's result, with no comparison.
  */

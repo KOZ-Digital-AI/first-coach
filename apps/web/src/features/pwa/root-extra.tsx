@@ -22,9 +22,9 @@ import { resolveBuildVersion } from '../../lib/query-persist';
  *   price of never covering anything, and the alternative (a fixed toast) would sit on top of the drill controls.
  *
  * Readings of the criteria (where they were open):
- * - "toast": read as the transient-looking notice, not a Toaster mount (sonner is not wired into the shell by this bead).
+ * - "toast": read as the transient-looking notice, not a Toaster mount (sonner is not wired into the shell by this module).
  * - "exposes the build version (import.meta.env BUILD_VERSION) for the footer": the footer already gets its version from GET
- *   /health (features/shell/Shell.tsx, which this bead may not edit). This module exposes the build's own version as the named
+ *   /health (features/shell/Shell.tsx, which this module does not edit). This module exposes the build's own version as the named
  *   export `getBuildVersion()` (`resolveBuildVersion()`: VITE_BUILD_VERSION / BUILD_VERSION, else "dev") and shows it in the
  *   prompt as "Current version: ...", so the person can tell which build they run before deciding. The version being
  *   installed is not known to the page, so only the current one is shown.
@@ -37,10 +37,10 @@ import { resolveBuildVersion } from '../../lib/query-persist';
  *
  * One polite status region (`role="status"`, `aria-live="polite"`, never an alert) is always in the page and only its content
  * changes, because a live region that is created together with its text is often not announced. The state carries an icon of
- * its own shape plus words, never colour alone (DESIGN.md Second Signal Rule).
+ * its own shape plus words, never colour alone (design rule: colour is never the only signal).
  */
 
-/** The shell's container (DESIGN.md Layout): min(1180px, 100% - 40px), 100% - 24px on phones. */
+/** The shell's container (design layout rule): min(1180px, 100% - 40px), 100% - 24px on phones. */
 const CONTAINER = 'mx-auto w-[calc(100%-24px)] max-w-295 sm:w-[calc(100%-40px)]';
 
 /** The subset of registerSW's options the prompt uses. */

@@ -581,7 +581,7 @@ describe("POST /api/player/session-events: what is not an event's fault", () => 
   });
 });
 
-// --- : the session in the answer carries each drill's track and level, as GET /api/player/today does ---
+// --- the session in the answer carries each drill's track and level, as GET /api/player/today does ---
 
 const primarySkillOf = (versionId: string): string | undefined =>
   (

@@ -446,7 +446,7 @@ describe("POST /api/player/plan/reset", () => {
     expect(profileRow(player.id)).toEqual(profile);
 
     // The player is "not onboarded" again for the plan-bound routes until the baseline is redone.
-    // (those two routes are not this bead's, so only their status is pinned here, not their headers)
+    // (those two routes are not this route's, so only their status is pinned here, not their headers)
     expect((await app.request(ME, { headers: { cookie: player.cookie } })).status).toBe(404);
     expect((await today(player)).status).toBe(404);
   });

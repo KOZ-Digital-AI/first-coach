@@ -29,7 +29,7 @@
 // criteria say.
 //
 // The root design lists the admin settings fields (minimum trust status per age band, upload
-// size cap, AI planner on/off, video coach on/off, retest intervals); the settings bead fixes
+// size cap, AI planner on/off, video coach on/off, retest intervals); the settings work fixes
 // the exact field list, so `Settings` stays a loose object here.
 //
 // Gate-tested, NOT parse-tested (a schema parse cannot prove them): the call budget; that
@@ -206,8 +206,8 @@ export type ImpactMetrics = z.infer<typeof ImpactMetrics>;
 
 /**
  * The criteria name an "admin settings screen" but no fields, and nothing in the repo
- * (PRODUCT.md, DESIGN.md, first-coach-demo.html, the sibling contracts) names a
- * configurable value. So the field list is fixed by the settings bead; until then this is a
+ * (first-coach-demo.html, the product docs, the sibling contracts) names a
+ * configurable value. So the field list is fixed by the settings work; until then this is a
  * loose object that keeps whatever keys the server sends, in both directions.
  */
 export const Settings = z.looseObject({});

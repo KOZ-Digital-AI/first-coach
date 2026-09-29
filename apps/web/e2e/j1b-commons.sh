@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j1b-commons.sh: slice gate , journey J1b "a visitor browses the Open Sport Commons and downloads the open dataset".
+# apps/web/e2e/j1b-commons.sh: journey J1b "a visitor browses the Open Sport Commons and downloads the open dataset".
 # Journey proof on the REAL stack, nothing mocked: the real API process on a fresh temp SQLite DB with the real seed, serving the real
 # built web app on the same origin, driven by a real browser (playwright-cli). Own free port (the harness picks it); a process already
 # holding :4111 or :5173 is neither used nor touched.

@@ -11,7 +11,7 @@ export type EmptyStateProps = Omit<ComponentProps<'div'>, 'title' | 'children'> 
 };
 
 /*
- * DESIGN.md "Empty and Notice Blocks": dashed Chalk Line border with muted, encouraging copy, 18px card radius. Left-aligned
+ * "Empty and Notice Blocks": dashed Chalk Line border with muted, encouraging copy, 18px card radius. Left-aligned
  * so long Kazakh and Russian lines stay easy to read; the hint stays at the 16px body floor. Text may break anywhere
  * (wrap-anywhere) so a long word never pushes the block past 360px. Text only: no icon, so nothing needs a second signal.
  */

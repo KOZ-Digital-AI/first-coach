@@ -4,13 +4,13 @@ import { join } from 'node:path';
 import { QueryClient } from '@tanstack/react-query';
 import { configureEventsClient, makeEvent, submitEvents } from './features/train/events-client';
 
-// : the app's one QueryClient must be handed to the session events client at start-up, otherwise every train
+// the app's one QueryClient must be handed to the session events client at start-up, otherwise every train
 // screen's submitEvents rejects with "call configureEventsClient(...)". main.tsx cannot be imported in a test (it mounts
 // into #root and needs the generated route tree), so the wiring lives in the tiny `bootstrap.ts` seam
 // (`createAppQueryClient`): the behaviour is tested on the seam, and main.tsx is checked to go through it (the same
 // source-scan style entry.test.ts uses for main.tsx).
 //
-// Reading of the bead: "wire it (or export the QueryClient) + a test that main wiring calls it" -> we wire it (main.tsx
+// Reading of the requirement: "wire it (or export the QueryClient) + a test that main wiring calls it" -> we wire it (main.tsx
 // asks the seam for its QueryClient, the seam creates the client and calls configureEventsClient({ queryClient })).
 
 const mainSource = readFileSync(join(import.meta.dir, 'main.tsx'), 'utf8');

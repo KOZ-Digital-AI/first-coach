@@ -10,7 +10,7 @@
 //   - a drill is taken only when total + minutes <= budget + 3;
 //   - then fill from the rest of the pool until the total reaches budget - 2;
 //   - no drill twice.
-// EXTENDED (the bead's criteria), each rule below:
+// EXTENDED (the requirements), each rule below:
 //   1. WARM-UP first. The prototype has no warm-up rule; a warm-up-STYLE drill is a beginner (level 1)
 //      drill (the seed has no warm-up flag or tag; level 1 is the lightest thing it has). Choice: the
 //      ball-mastery track (GOAL_TO_TRACK.control, the ball-familiarity track) before any other, then

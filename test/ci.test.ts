@@ -3,7 +3,7 @@
 //
 // Assertions name what must hold (triggers, Bun pin, the ordered command chain)
 // and a short list of specific forbidden things (registry push, deploy, secrets,
-// write permissions). They never pin the exact step list, so a later bead may add
+// write permissions). They never pin the exact step list, so a later change may add
 // caching, labels or extra read-only steps.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";

@@ -43,7 +43,7 @@ import { TODAY_QUERY_KEY } from '../train/events-client';
  *    download could not change anything.
  *  - The player id comes from the auth session (`authClient.useSession`). The device store and the outbox are keyed by it, and
  *    it is not in the ['today'] cache. A cold start OFFLINE has no auth session to read, so the slot component
- *    falls back to the id of the last player of this device, `readLastPlayerId()` (bootstrap.ts, ): a live session
+ *    falls back to the id of the last player of this device, `readLastPlayerId()` (bootstrap.ts): a live session
  *    id always wins; with neither the player is "unknown"/"checking" as before. The fallback also applies while the session read
  *    is still pending (offline it may never answer), which changes nothing when a live id arrives: it then wins.
  *  - CONTRACT GAP: `downloadToday` sends no `X-Timezone` (the today screen does), so near midnight the server's "today" for the

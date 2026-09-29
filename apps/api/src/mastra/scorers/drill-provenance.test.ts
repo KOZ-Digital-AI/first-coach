@@ -1,4 +1,4 @@
-// : the drill-provenance scorer. Pure: no network, no key, no clock.
+// The drill-provenance scorer. Pure: no network, no key, no clock.
 // A plan item that cannot be traced to an approved (published) drill version scores 0.
 import { describe, expect, test } from "bun:test";
 import { drillProvenance } from "./drill-provenance";

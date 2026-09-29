@@ -28,7 +28,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * sessions"; the API's own limitations; and the player's EARLIER analyses of the same skill. There is NO overall score: the API has
  * none, and this screen never computes one (no sum, no mean, no "out of 100"). Every number shown is one criterion's own 1-10 score.
  *
- * DATA. There is NO single-item endpoint (contract ): the analysis is found by id in GET /api/player/video-analyses (the
+ * DATA. There is NO single-item endpoint (the merged API contract): the analysis is found by id in GET /api/player/video-analyses (the
  * caller's own rows only, newest first). An id that is not in that list is "not found". A finished analysis needs no second call.
  * The list is a React Query entry under ['video', 'analyses'], which is not on lib/query-persist's allow-list: nothing of it is
  * written to the device.

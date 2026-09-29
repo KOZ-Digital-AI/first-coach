@@ -5,7 +5,7 @@
 // contributor needs a registered account). The guard runs BEFORE the body is read, so an
 // unauthorised request can neither reach the store nor write a byte to disk.
 //
-// Abuse guards (contributions/guards.ts, ), all before any file is stored:
+// Abuse guards (contributions/guards.ts), all before any file is stored:
 //   POST   per-user daily limiter (429 + Retry-After), BEFORE the body is read; then, once the payload
 //          is valid, an identical undecided contribution of the same user is a 409 pointing at it;
 //   POST and PUT   a filled honeypot is a generic 422 on /website, judged before the rest of the payload.

@@ -22,7 +22,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
 const { DrillDetailDepsContext, Route } = await import('../../routes/commons/$slug');
 
 /*
- * The drill detail screen (/commons/:slug), written from the bead's acceptance criteria:
+ * The drill detail screen (/commons/:slug), written from the acceptance criteria:
  *  - shows one drill from GET /api/commons/drills/:slug: goal, numbered instructions, reps/time, common mistakes, progression,
  *    regression, required conditions (equipment, space, partner, age), safety, optional video (lazy, never autoplay),
  *    TrustBadge with reviewers, attribution block (author, source link, licence, date, semver) and a version history list
@@ -34,7 +34,7 @@ const { DrillDetailDepsContext, Route } = await import('../../routes/commons/$sl
  * (globalThis.fetch). The route is mounted in a real (memory-history) router. Fixtures are parsed with the shared contract
  * schema, so they cannot drift from the API. Kazakh copy needs a native review; the Kazakh assertions pin few strings.
  *
- * Known API gaps the tests do NOT paper over (backlog  and ): the history has no "unpublished" marker and the text
+ * Known API gaps the tests do NOT paper over: the history has no "unpublished" marker and the text
  * of a superseded version cannot be read, so opening an older version shows only what the history entry says.
  */
 
@@ -476,7 +476,7 @@ describe('the version history', () => {
     expect(within(panel).getByText('You are reading an earlier version. It is read-only.')).toBeTruthy();
     expect(within(panel).getByText('March 2, 2026')).toBeTruthy();
     expect(within(panel).getByText('Clearer step three.', { selector: 'dd' })).toBeTruthy();
-    // The gap is said out loud rather than papered over with the current text (backlog ).
+    // The gap is said out loud rather than papered over with the current text.
     expect(within(panel).getByText('The text of earlier versions is not published yet, so only this record is shown.')).toBeTruthy();
 
     // The current version's content is gone: it must not be passed off as the older text.

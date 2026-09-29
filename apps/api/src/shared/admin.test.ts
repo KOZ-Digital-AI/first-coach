@@ -713,11 +713,11 @@ describe("ImpactMetrics", () => {
 // --- GET|PUT /api/admin/settings ----------------------------------------------------------------------------------
 
 describe("Settings", () => {
-  test("an empty object parses (the field list belongs to the settings bead)", () => {
+  test("an empty object parses (the field list belongs to the settings work)", () => {
     expect(ok(Settings, {})).toBe(true);
   });
 
-  test("keys a later bead adds are kept, not stripped or rejected", () => {
+  test("keys a later change adds are kept, not stripped or rejected", () => {
     expect(Settings.parse({ someFutureSetting: true, nested: { a: 1 } })).toEqual({
       someFutureSetting: true,
       nested: { a: 1 },

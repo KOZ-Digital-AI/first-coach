@@ -37,7 +37,7 @@ import { type TodaySlotProps, useSlot } from '../../lib/slots';
  *     device holds nothing. A failed `ensureSession` never decides anything on its own: its answer is caught, as before.
  *  2. A player who is not onboarded (the server answers 404 "not onboarded") is sent to /train/onboarding (history replace, so
  *     Back does not bounce them here again). A player whose anonymous session THIS visit just created (ensureSession resolves
- *     `{ created: true }`, ) cannot be onboarded yet, so the answer is known without asking: the same redirect,
+ *     `{ created: true }`) cannot be onboarded yet, so the answer is known without asking: the same redirect,
  *     with no GET /api/player/today (the onboarding call budget is sign-in, options, start). A session that already existed
  *     still probes /today as before.
  *  3. Tapping a drill goes to the drill player, /train/drill/<itemId>. Finishing is one session_finished event through the
@@ -59,9 +59,9 @@ import { type TodaySlotProps, useSlot } from '../../lib/slots';
  *    (goal | weakest; Foundation | Basic | Intermediate | Advanced): known keys are worded here, anything else is shown as sent.
  *  - The API has no anonymous "no session" answer for a first visit, so the anonymous sign-in is ensured before the request
  *    (as the onboarding wizard does before it submits). If that fails the request still goes out: its own answer is the truth.
- *  - The drill player and the summary routes belong to other beads and are not in the route tree yet, so navigation is
+ *  - The drill player and the summary routes belong to other modules and are not in the route tree yet, so navigation is
  *    `router.history.push` with a path constant each (DRILL_PATH, SUMMARY_PATH), like the wizard's roadmap redirect.
- *  - The drill swap endpoint (POST /api/player/today/swap, bead urn.6) is not used: the criteria ask for no swap control.
+ *  - The drill swap endpoint (POST /api/player/today/swap) is not used: the requirements ask for no swap control.
  *  - Only `Route` and the small TodayDepsContext seam are exported (see the wizard for why the page itself is not).
  */
 

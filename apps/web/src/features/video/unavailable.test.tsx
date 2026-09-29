@@ -27,7 +27,7 @@ const { Route, VideoDepsContext } = await import('../../routes/video');
 // circular graph) and can take a minute. Compare to null / with === and assert on the boolean instead.
 
 /*
- *  (bug, ui): when the analysis endpoint answers 503 (type `ai_unavailable`: no OPENAI_API_KEY, or the provider is
+ * When the analysis endpoint answers 503 (type `ai_unavailable`: no OPENAI_API_KEY, or the provider is
  * down) or 403 'Video coach disabled', the capture screen must say, calmly and specifically, that the video analysis is
  * unavailable right now: ONE sentence that the rest of the app works and training is not affected, plus a link back to training.
  * Never the generic failure copy ('We could not get your feedback' / 'Something went wrong ...'), never a red alert. 'Disabled'
@@ -436,7 +436,7 @@ describe('kk and ru', () => {
     }
   }
 
-  test('the en copy is the exact wording the bead asks for', () => {
+  test('the en copy is the exact wording required', () => {
     expect(messages.en.analysisDown.title).toBe(UNAVAILABLE_EN);
     expect(messages.en.analysisDown.hint).toBe(SENTENCE_EN);
   });

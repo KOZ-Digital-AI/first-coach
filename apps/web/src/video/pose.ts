@@ -6,7 +6,7 @@
 // - The model and the WASM are self-hosted: same-origin URLs under /mediapipe, written there by scripts/fetch-pose-model.ts
 //   (pose_landmarker_lite.task and vision_wasm_*_internal.{js,wasm}). No third-party origin is ever contacted.
 // - detectOnVideo samples the RECORDED clip by seeking to evenly spaced times (5-10 fps) and running the landmarker on each
-//   still frame; it never plays the video in real time, so a phones can take as long as it needs.
+//   still frame; it never plays the video in real time, so a slower phone can take as long as it needs.
 //
 // Readings of the criteria (the simplest that fits):
 //  - "CPU delegate fallback": the landmarker is created with the GPU delegate first (faster where WebGL works); if that

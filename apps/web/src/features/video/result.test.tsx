@@ -21,7 +21,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
 // element (a huge circular object graph): it can take a minute. Compare with === and assert on the boolean instead.
 
 /*
- * The video analysis result screen (/video/result/:id), written from the bead's acceptance criteria:
+ * The video analysis result screen (/video/result/:id), written from the acceptance criteria:
  *  - "Your analysis" with a Beta tag, the limitation line "Pose only — the ball is not tracked yet", the confidence, each rubric
  *    criterion with its 1-10 score as a number AND a bar AND a note, the "Focus next" sentence, "Recommended next" drills linking to
  *    their commons pages with an "add to today's session" hint, and "Repeat assessment after 3 sessions";

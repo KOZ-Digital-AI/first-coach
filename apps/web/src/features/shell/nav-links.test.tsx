@@ -17,13 +17,13 @@ const { act, cleanup, fireEvent, render, screen, within } = await import('@testi
 // (a minute). Compare with === and assert on the boolean.
 
 /*
- * : the app shell links to Privacy settings (/settings/privacy) and to "Video Coach · Beta" (/video).
+ * The app shell links to Privacy settings (/settings/privacy) and to "Video Coach · Beta" (/video).
  *  - Privacy settings: reachable for every visitor kind that has a player (anonymous guests included), so the shell shows it
  *    with no session or role check; a real, keyboard-reachable link with aria-current on its own page; kk/ru/en label.
  *  - Video Coach · Beta: an optional entry that never blocks training; kk/ru/en label from the shell messages; keyboard
  *    reachable, aria-current on its own page.
  * The strings of the Privacy settings link live in features/shell/nav-links.messages.ts (namespace `nav-links`), not in
- * shell.messages.ts, so this bead does not edit the shell bundle. The bundle is loaded with a tolerant dynamic import so the
+ * shell.messages.ts, so this module does not edit the shell bundle. The bundle is loaded with a tolerant dynamic import so the
  * tests fail on behaviour (the link is missing), not on a missing module, before the implementation exists.
  * Kazakh and Russian copy still needs a native review: for those locales the tests pin that the text exists, is Cyrillic and
  * differs from English and from the privacy-policy link, never that it has one exact wording.

@@ -5,7 +5,7 @@ import { createI18n, LOCALES, namespaceOf } from '../../lib/i18n';
 import { GENESIS_DRAFT_SOURCE, TrustBadge } from './TrustBadge';
 import messages from './trust-badge.messages';
 
-// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. The bead verifies from the
+// The web preload (bunfig.toml -> test/setup.ts) only applies when bun runs from apps/web. It verifies from the
 // repo root, where there is no DOM, so register happy-dom here BEFORE Testing Library is imported (same rule and guard
 // as lib/i18n.test.ts).
 if (typeof document === 'undefined') {

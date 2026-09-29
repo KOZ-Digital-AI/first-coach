@@ -8,7 +8,7 @@
 //
 // Fail closed: anything that cannot be traced to a known published drill version scores 0.
 //
-// Readings of the criteria (each is a decision, not in the bead text):
+// Readings of the requirements (each is a decision):
 //   - `output` is `unknown` (it is model output). It is read as an AiPlan-shaped object,
 //     `{ items: [...] }`; anything else, and an empty item list, is the single flag kind "output"
 //     and scores 0 (an output that names nothing proves nothing).

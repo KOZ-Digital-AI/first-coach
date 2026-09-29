@@ -5,7 +5,7 @@ import type { SessionEvent } from '@api-types/session';
 import type { SessionSummary } from '../features/train/events-client';
 
 /*
- * : coming back online replays the queued events with exactly ONE POST /api/player/session-events, even though two
+ * coming back online replays the queued events with exactly ONE POST /api/player/session-events, even though two
  * things react to the `online` event: the connectivity banner (features/offline/root-extra.tsx, default flush) and the events
  * client's `startEventsSync()` (bootstrap.ts). Found by the real-stack gate j7-offline.sh: two identical POSTs 1 ms apart.
  *

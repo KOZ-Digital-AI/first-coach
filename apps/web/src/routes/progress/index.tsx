@@ -40,7 +40,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  *   It is shown rounded to one decimal, with a real minus sign, an icon and a written phrase, never colour alone; a fall is
  *   "lower than last time" in a neutral tone, never red, never a failure.
  * - Links, not router Links. START TRAINING and Retest now are plain anchors to TRAIN_PATH / retestPath(slug): those routes belong
- *   to other beads and are not in the route tree yet, so a typed <Link> could not compile. One constant / builder each to repoint.
+ *   to other modules and are not in the route tree yet, so a typed <Link> could not compile. One constant / builder each to repoint.
  * - Retries. The query does not retry by itself: Try again is the way out, so a failure is never a silent 7-second wait.
  * - Track names. Journey.tree carries only the track SLUG (no localised name, and a second call for it would break the
  *   1-call budget), so SkillTree shows its humanised slug.

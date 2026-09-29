@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 /**
- * Glob extension slots: later beads add UI to the app shell without editing
+ * Glob extension slots: later changes add UI to the app shell without editing
  * the shell (routes/__root.tsx) or the pages that host a slot.
  *
  * Convention for slot modules:

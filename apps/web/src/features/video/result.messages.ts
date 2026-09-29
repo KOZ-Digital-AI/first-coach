@@ -7,7 +7,7 @@ import type { MessageBundle } from '../../lib/i18n';
  *
  * Placeholders: {{level}} (a confidence word), {{sessions}} (a number), {{skill}} (a skill name from this file).
  * The "x / 10" of a criterion is a number pair, formatted in code with Intl, not a translatable string.
- * Tone (PRODUCT.md): the player is compared with their own earlier analyses only; nothing here scolds, ranks, hypes or promises
+ * Tone (product principles): the player is compared with their own earlier analyses only; nothing here scolds, ranks, hypes or promises
  * a future, and there is no wording of an overall score anywhere (the API has none). The pose-only limitation line is the
  * required sentence in English. Kazakh text still needs a native-speaker review.
  */

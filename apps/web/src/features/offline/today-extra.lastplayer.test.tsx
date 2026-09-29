@@ -8,7 +8,7 @@ import problemMessages from '../../lib/problem.messages';
 import { type OfflineSession, writeOfflineSession } from '../../offline/types';
 import downloadMessages from './download.messages';
 
-// Same happy-dom guard as download.test.tsx: the bead verifies from apps/web (the preload registers the DOM there), but a run
+// Same happy-dom guard as download.test.tsx: it verifies from apps/web (the preload registers the DOM there), but a run
 // from the repo root has none, so register it BEFORE Testing Library is imported.
 if (typeof document === 'undefined') {
   const { GlobalRegistrator } = await import('@happy-dom/global-registrator');
@@ -17,9 +17,9 @@ if (typeof document === 'undefined') {
 const { cleanup, render, screen, waitFor } = await import('@testing-library/react');
 
 /*
- * , written from the bead's acceptance criteria (not from the implementation): offline, with no session answer,
+ * Written from the acceptance criteria (not from the implementation): offline, with no session answer,
  * the `today` slot component (the DEFAULT export of today-extra.tsx, which reads the player from `authClient.useSession()`)
- * falls back to the last player of this device (`readLastPlayerId()`, bootstrap.ts, ) so the "Available offline"
+ * falls back to the last player of this device (`readLastPlayerId()`, bootstrap.ts) so the "Available offline"
  * badge shows for that player's downloaded session. A live session id wins; with neither, nothing changes ("unknown").
  *
  * What is real: the slot component, the device store (over the real happy-dom localStorage: the default store), the last-player

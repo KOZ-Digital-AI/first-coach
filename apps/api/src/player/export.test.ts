@@ -10,7 +10,7 @@ import { MIGRATIONS_DIR, migrate } from "../db/migrate";
 import { PROBLEM_CONTENT_TYPE } from "../shared/primitives";
 import { buildPlayerExport } from "./export";
 
-// : GET /api/player/export, the player's data as a JSON attachment.
+// GET /api/player/export, the player's data as a JSON attachment.
 //
 // Two layers, both on real migrated in-memory databases (nothing is mocked):
 //   * buildPlayerExport(db, playerId): the document. Tables are DISCOVERED from the schema (every table with a

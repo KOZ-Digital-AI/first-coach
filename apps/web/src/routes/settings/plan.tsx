@@ -43,7 +43,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  *   baseline". The safe button ("Keep my plan") comes first, so it has the initial focus; the destructive button has a word
  *   and an icon and is never colour alone. While the request runs both buttons are disabled and Escape / an outside click do
  *   not close the dialog. A failure stays in the dialog with a message and the same button to try again.
- * - "Navigates to the baseline step": the wizard (/train/onboarding, another bead) has no step in its URL. It restores its
+ * - "Navigates to the baseline step": the wizard (/train/onboarding, another module) has no step in its URL. It restores its
  *   answers from sessionStorage (`fc:onboarding-draft`, format v1: profile, conditions, baseline, step 0..2), so before
  *   navigating this screen writes that draft with the KEPT profile (the reset response's) at step 2, the baseline. A wizard
  *   that does not accept the draft starts at its first step, which is still the setup: nothing breaks.
@@ -57,7 +57,7 @@ import { describeProblem, isApiProblem } from '../../lib/problem';
  * - Server errors. A 422 whose pointers name one of the six fields shows that text (the server's own words) on the field, in
  *   words with an icon; anything else is a generic localised message above Save. Editing clears the error.
  * - Sport. `football`, as the wizard (the profile has no sport).
- * - Nothing here compares the player with anyone and nothing promises a professional career (PRODUCT.md).
+ * - Nothing here compares the player with anyone and nothing promises a professional career.
  */
 
 const SPORT = 'football';
@@ -166,7 +166,7 @@ const LINK_PRIMARY = `${LINK_BASE} border-ink bg-ink text-white motion-safe:tran
 const H2 = 'm-0 text-[28px] leading-none font-bold tracking-[-.05em] wrap-break-word text-ink';
 
 /*
- * DESIGN.md "Options and Selection": paper card, 12px radius; selected = Field Green border + Morning Mint fill + a check icon
+ * "Options and Selection": paper card, 12px radius; selected = Field Green border + Morning Mint fill + a check icon
  * (the second signal) + the native checked state. Each card is a real radio inside its label: one Tab stop per question,
  * arrow keys move, Space picks. The input is visually hidden; the focus ring is drawn on the card (Visible Focus Rule).
  * min-h-14 keeps every card above the 44px floor. A disabled card is dimmed with a not-allowed cursor.

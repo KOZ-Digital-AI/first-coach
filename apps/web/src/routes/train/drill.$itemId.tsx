@@ -35,7 +35,7 @@ import { ApiProblem, describeProblem, isApiProblem } from '../../lib/problem';
 import { type DrillSlotProps, useSlot } from '../../lib/slots';
 
 /**
- * /train/drill/:itemId: the drill player. An Operate-mode screen for one drill of today's session, used outdoors, on a cheap
+ * /train/drill/:itemId: the drill player. An Operate-mode screen for one drill of today's session, used outdoors, on a
  * phone, often with one hand. Copy lives in features/train/drill-player.messages.ts (kk / ru / en).
  *
  *  1. Data. The drill is read from the cached today session, React Query key ['today'] (TODAY_QUERY_KEY), the same cache /train
@@ -69,7 +69,7 @@ import { type DrillSlotProps, useSlot } from '../../lib/slots';
  *     page content. They take no props and read the ['today'] cache and the route param themselves.
  *
  * Readings of the criteria where they are open, and gaps found:
- *  - Only the first video of `content.media` is shown (kind "video"); images and documents are not shown: the bead asks for
+ *  - Only the first video of `content.media` is shown (kind "video"); images and documents are not shown: the requirements ask for
  *    "an optional short video". The video element does not exist until Play is tapped, so nothing is downloaded before.
  *  - "reps/time": the dose is shown as label: value pairs (Reps, Sets, Time), only those the drill has, with a timer beside it.
  *    `durationSec`, when there is one, is the target the timer reports as reached (in words).
@@ -188,7 +188,7 @@ const formatClock = (ms: number): string => {
 
 // --- styling ------------------------------------------------------------------------------------------------------------------
 
-/** Section heading: the Title role of DESIGN.md (20px, bold), because a phone screen has many of them. */
+/** Section heading: the Title role of the design system (20px, bold), because a phone screen has many of them. */
 const H2 = 'm-0 text-xl leading-tight font-bold tracking-tight wrap-break-word text-ink';
 const LIST = 'm-0 flex list-disc flex-col gap-2 pl-6 text-base text-ink';
 // Anchors that look like the Button primitive (which renders a <button>): 44px tall, visible focus from app.css.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# apps/web/e2e/j7-offline.sh: slice gate , journey J7 "a player installs the app and trains offline".
+# apps/web/e2e/j7-offline.sh: journey J7 "a player installs the app and trains offline".
 # Integration proof on the REAL stack: the real API process, a real SQLite file with the real seed, the PRODUCTION web build
 # served by the API (a service worker exists only in the build), a real Chromium through playwright-cli with the context
 # switched offline (context.setOffline). Nothing is mocked, no OpenAI key is needed.
@@ -40,7 +40,7 @@
 #     filename differing from the one the page ran before Update (captured before pressing Update) and no prompt left; the
 #     version string is NOT looked for inside the entry script text (it is no longer in the entry chunk). Whether the footer
 #     already showed v2 while the prompt was up is printed as a note, not asserted.
-#   * dist/mediapipe/ (the pose model .task and vision_wasm_* files) legitimately sits in dist since 8nt.11 so /video can fetch
+#   * dist/mediapipe/ (the pose model .task and vision_wasm_* files) legitimately sits in dist so /video can fetch
 #     it; the dist check only forbids video files there, and the precache and Cache Storage checks forbid any pose/mediapipe
 #     entry from being precached or cached.
 #   * The browser runs in UTC and en-US (playwright-cli config): downloadToday sends no X-Timezone (the server's "today" is then
@@ -203,7 +203,7 @@ if grep -qE 'StaleWhileRevalidate|NetworkFirst|CacheFirst|NetworkOnly|caches\.op
 else pass "service worker: no runtime caching strategy in sw.js"; fi
 if grep -qF 'NavigationRoute' <<<"$SW_JS" && grep -qF '/^\/api' <<<"$SW_JS"; then pass "service worker: navigations fall back to index.html with /api excluded (NavigationRoute denylist)"
 else fail "service worker: navigations fall back to index.html with /api excluded" "  tail of sw.js: ${SW_JS: -400}"; fi
-# dist/mediapipe/ (pose model .task, vision_wasm_*) is served from dist on purpose (8nt.11); only video is forbidden in dist.
+# dist/mediapipe/ (pose model .task, vision_wasm_*) is served from dist on purpose; only video is forbidden in dist.
 # That none of it is precached is asserted above (precache list) and on the device below (Cache Storage).
 media=$(find "$DIST1" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' \) 2>/dev/null)
 if [ -z "$media" ]; then pass "dist: the production build contains no video file (.mp4/.webm/.mov)"; else fail "dist: the production build contains no video file (.mp4/.webm/.mov)" "  $media"; fi

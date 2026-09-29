@@ -17,7 +17,7 @@
 // `graphProblems` for the seeding job and the gate.
 //
 // PROPOSED, not fixed by the criteria: every path except /api/commons/export.json (which
-// PRODUCT.md names) and the shapes marked "derived" below. A later API bead may rename them.
+// the product docs name) and the shapes marked "derived" below. A later API change may rename them.
 import { z } from "zod";
 import { Attribution, Count, SKILL_LEVEL_MAX, SKILL_LEVEL_MIN, Semver, SkillTest, Timestamp } from "./domain";
 import type { EndpointSpec } from "./domain";

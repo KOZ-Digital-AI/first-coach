@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# E2E harness library for slice gate scripts. SOURCE it, do not execute it. See README.md.
+# E2E harness library for slice end-to-end scripts. SOURCE it, do not execute it. See README.md.
 # Nothing is mocked: start_stack boots the real API on a fresh temp DB, the API serves the real built
 # web app on the same origin, playwright-cli drives a real browser. The summary and the exit code are
 # produced when the script exits. Needs bash >= 4, curl, jq, bun (playwright-cli: BLOCKED without it).

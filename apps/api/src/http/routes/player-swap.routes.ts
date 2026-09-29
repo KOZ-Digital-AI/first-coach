@@ -33,7 +33,7 @@
 //     locale and en, status, attribution, skill test, totals, the X-Timezone day) lives inside it. Rather than
 //     copy that ~150 lines, this route mounts the GET route on a PRIVATE app and calls it with the caller's
 //     cookie and X-Timezone header, so the two can never drift. CONTRACT GAP: exporting the view builder from
-//     player-today.routes.ts would let this be a plain function call (that file is not owned by this bead).
+//     player-today.routes.ts would let this be a plain function call (that file is outside this route's scope).
 //   * ?locale is accepted as on GET (the contract's postSwap declares no query; the client that opened its
 //     session in a locale needs the same locale back).
 import { Hono } from "hono";

@@ -23,7 +23,7 @@ const { default: userEvent } = await import('@testing-library/user-event');
 const { Route } = await import('../../routes/settings/plan');
 
 /*
- * The plan settings screen (/settings/plan), written from the bead's acceptance criteria:
+ * The plan settings screen (/settings/plan), written from the acceptance criteria:
  *  - the player changes goal, equipment, space, partner, days per week and minutes per session (option lists from
  *    GET /api/onboarding/:sport), saves with PATCH /api/player/profile and sees the rebuilt roadmap focus;
  *  - the save sends ONLY the changed fields;

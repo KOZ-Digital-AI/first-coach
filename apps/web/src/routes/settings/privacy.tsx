@@ -26,7 +26,7 @@ import '../../lib/i18n';
  *
  * THE PRIVACY-PANEL SLOT. Below the consents the screen renders every default-exported component of
  * features/privacy/panels/*.panel.tsx (lib/slots.ts, slot `privacy-panel`, no props). It is where the data panel (export, delete;
- * bead ) mounts WITHOUT editing this file. Panels come from `useSlot('privacy-panel')` and, in tests, from
+ * the data panel) mounts WITHOUT editing this file. Panels come from `useSlot('privacy-panel')` and, in tests, from
  * `PrivacyDepsContext`. They need nothing from the consents, so they are shown in every state (loading included: they are the
  * player's own controls and must not wait for a request they do not use).
  *
@@ -481,7 +481,7 @@ function PrivacyPage() {
         <p className="m-0 mt-5 text-lg leading-[1.45] wrap-break-word text-ink">{t('lead')}</p>
         <Explanation />
         {body}
-        {/* The privacy-panel slot: features/privacy/panels/*.panel.tsx mount here (the data panel of  among them). */}
+        {/* The privacy-panel slot: features/privacy/panels/*.panel.tsx mount here (the data panel among them). */}
         {panels.length === 0 ? null : (
           <div data-slot="privacy-panel" className="mt-4 grid gap-4">
             {panels.map((Panel, position) => (

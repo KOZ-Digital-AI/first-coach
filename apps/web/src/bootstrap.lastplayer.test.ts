@@ -9,7 +9,7 @@ import { persistAppQueryClient, type PersistStore } from './lib/query-persist';
 import { TodaySession } from '@api-types/session';
 import { type KeyValueStore, writeOfflineSession } from './offline/types';
 
-// : a cold start OFFLINE cannot ask the server who the player is (get-session fails), so the persisted query cache
+// a cold start OFFLINE cannot ask the server who the player is (get-session fails), so the persisted query cache
 // and the outbox were never wired and /train showed "Could not load". bootstrap.ts now remembers the last player id on the
 // device (localStorage `fc:last-player`) and, at start-up, wires that id BEFORE the session atom has answered. The atom stays the
 // only source of the id and of any change of it: it confirms, replaces or (sign-out) clears the remembered id. Everything the
@@ -622,7 +622,7 @@ describe('seedTodayFromDevice: the downloaded session of the last player, when t
   });
 });
 
-describe('a restore that is still pending when the player changes never hydrates the previous player (, cold review)', () => {
+describe('a restore that is still pending when the player changes never hydrates the previous player (cold review)', () => {
   // persistQueryClient's unsubscribe only stops the LATER save subscription: the restore that is already running still hydrates
   // afterwards. With the last player remembered, start-up wires A and starts A's (asynchronous, IndexedDB) restore; when the
   // session atom answers first with B (or with no session), A's late restore must not put A's ['today'] into B's cache, and B's

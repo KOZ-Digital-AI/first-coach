@@ -13,7 +13,7 @@ import type { MessageBundle } from '../../lib/i18n';
  *   Russian or Kazakh plural or case form is needed. Kazakh age bounds use "and older / and younger" for the same reason: a
  *   suffix after a number changes with the number.
  * - `version.gap` is the honest note of an API gap: the text of a superseded version cannot be read yet.
- * - Nothing here compares the player with anyone or promises a professional career (PRODUCT.md).
+ * - Nothing here compares the player with anyone or promises a professional career (product principles).
  */
 export default {
   kk: {

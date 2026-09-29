@@ -16,7 +16,7 @@
 //   - Progression and regression are lists of drill slugs, resolved by the seeding job.
 //
 // Source of the content requirements: the spec in the original product brief (sections 2, 8,
-// 16), PRODUCT.md (children from about 6, Kazakh first among equals, safety) and
+// 16), the product principles (children from about 6, Kazakh first among equals, safety) and
 // CONTENT-LICENSE.md (original wording only).
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";

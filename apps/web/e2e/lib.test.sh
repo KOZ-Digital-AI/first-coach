@@ -151,7 +151,7 @@ assert_eq "$(yes_if contains "$OUT" '"database":"ok"')|$(yes_if contains "$OUT" 
 
 # --- 4. sqlite_count against the migrated DB ----------------------------------------------------
 assert_eq "$(sqlite_count sqlite_master "type = 'table' AND name = 'schema_migrations'")" 1 "schema_migrations table exists in the migrated DB"
-shopt -s nullglob # the migrations dir may not exist yet (no migration bead has landed)
+shopt -s nullglob # the migrations dir may not exist yet (no migration has landed)
 MIGRATION_SQL=("$E2E_REPO_ROOT"/apps/api/src/db/migrations/*.sql)
 shopt -u nullglob
 assert_eq "$(sqlite_count schema_migrations)" "${#MIGRATION_SQL[@]}" "schema_migrations rows == .sql files on disk (${#MIGRATION_SQL[@]})"
