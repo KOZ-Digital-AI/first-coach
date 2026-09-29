@@ -21,6 +21,6 @@ export async function register(app: Hono, deps: AppDeps): Promise<void> {
   // here would 401 the public sign-in/sign-up endpoints too. auth.routes.test.ts is what proves the
   // admin sub-routes are still closed — it hits them with no session, an anonymous session and a
   // contributor session (each refused) and an admin session (which succeeds), so a regression in
-  // Better Auth's own gate fails CI instead of shipping.
+  // Better Auth's own gate fails the test suite instead of shipping.
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 }
